@@ -70,6 +70,20 @@ coverage/
 # Agent/AI working folder (local only)
 Agent/
 
+# Project documentation (not for production)
+info/
+
+# Test-only code (kept for sprint review)
+# src/test/
+# src/backend/__mocks__/
+# src/frontend/src/app/test-page/
+
+# Source art files (editor projects)
+*.pixil
+
+# Dev infrastructure
+github/discord_ids/
+
 # macOS
 .DS_Store
 .AppleDouble

@@ -58,17 +58,19 @@
 
       <!-- ITEMS LIST -->
       <ng-container *ngIf="activeTab === 'items' && items.length > 0">
-        <div class="inventory-slot" *ngFor="let item of items">
-
-          <div class="slot-icon">🔥</div>
-
+      <div class="inventory-slot" *ngFor="let item of items">
+        <div class="inventory-slot" [class]="'rarity-' + item.rarity.toLowerCase()">
+          <div class="slot-icon"></div>
           <div class="slot-info">
             <h4>{{item.stoveName || 'Stove #' + item.stoveId}}</h4>
+            <p>{{item.typeId}}</p>
             <p>Owner: {{item.currentOwnerId}}</p>
-            <p>Rarity: {{item.rarity}}</p>
+            <span class="rarity-badge" [class]="item.rarity.toLowerCase()">
+      {{item.rarity}}
+            </span>
           </div>
-
         </div>
+      </div>
       </ng-container>
 
     </div>

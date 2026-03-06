@@ -6,10 +6,10 @@
     <aside class="settings-sidebar">
       <h2>Settings</h2>
       <ul>
-        <li class="active">Account</li>
-        <li>Security</li>
-        <li>Appearance</li>
-        <li>Notifications</li>
+        <li [class.active]="activeTab === 'account'" (click)="setActiveTab('account')">Account</li>
+        <li [class.active]="activeTab === 'security'" (click)="setActiveTab('security')">Security</li>
+        <li [class.active]="activeTab === 'appearance'" (click)="navigateToWIP()">Appearance</li>
+        <li [class.active]="activeTab === 'notifications'" (click)="navigateToWIP()">Notifications</li>
       </ul>
     </aside>
 
@@ -22,16 +22,16 @@
         <div class="form-grid">
           <div class="input-group">
             <label>Username</label>
-            <input type="text" placeholder="EmberUser123">
+            <input type="text" placeholder="EmberUser123" readonly>
           </div>
 
           <div class="input-group">
             <label>Email</label>
-            <input type="email" placeholder="you@example.com">
+            <input type="email" placeholder="you@example.com" readonly>
           </div>
         </div>
 
-        <button class="btn-primary">Save Changes</button>
+        <button class="btn-primary" (click)="saveChanges()">Save Changes</button>
       </div>
 
       <div class="settings-section">
@@ -39,10 +39,10 @@
 
         <div class="input-group">
           <label>New Password</label>
-          <input type="password" placeholder="••••••••">
+          <input type="password" placeholder="••••••••" readonly>
         </div>
 
-        <button class="btn-danger">Update Password</button>
+        <button class="btn-danger" (click)="updatePassword()">Update Password</button>
       </div>
 
     </section>

@@ -9,11 +9,10 @@ export interface LootItem {
 
 export class LootBoxHelper {
     private pool: LootItem[] = [
-        { name: 'Common', color: '#b3e5fc', weight: 50 },
-        { name: 'Uncommon', color: '#81c784', weight: 30 },
-        { name: 'Rare', color: '#ba68c8', weight: 15 },
-        { name: 'Epic', color: '#ffcc80', weight: 4 },
-        { name: 'Legendary', color: '#ff8a80', weight: 1 }
+        { name: 'Common', color: 'rgba(179,229,252,0.45)', weight: 50 },
+        { name: 'Rare', color: '#2ecaca', weight: 30 },
+        { name: 'Epic', color: '#8e05a6', weight: 15 },
+        { name: 'Legendary', color: '#ff8a80', weight: 5 }
     ];
 
     items: LootItem[] = [];
@@ -39,10 +38,9 @@ export class LootBoxHelper {
     }
     public returnTypeId(item: LootItem): number {
         if (item.name === 'Common') return 1;
-        if (item.name === 'Uncommon') return 2;
-        if (item.name === 'Rare') return 3;
-        if (item.name === 'Epic') return 4;
-        if (item.name === 'Legendary') return 5;
+        if (item.name === 'Rare') return 5;
+        if (item.name === 'Epic') return 6;
+        if (item.name === 'Legendary') return 7;
 
         return -1;
     }
