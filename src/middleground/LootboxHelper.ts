@@ -51,9 +51,7 @@ export class LootBoxHelper {
         if (typeId === 7) return Rarity.LEGENDARY;
         return Rarity.COMMON;
     }
-    // TODO: Implement proper database saving with typeId and currentOwnerId
-    // private saveToDataBase(): void{
-    //     const service: StoveService = new StoveService(new Unit(false));
-    //     service.createStove(typeId, currentOwnerId);
-    // }
+
+
 }
+

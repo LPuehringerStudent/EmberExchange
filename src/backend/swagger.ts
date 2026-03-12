@@ -210,6 +210,56 @@ const options: swaggerJsdoc.Options = {
                         totalWeight: { type: "integer", description: "Total lootbox weight" },
                     },
                 },
+                CreateLootboxTypeResponse: {
+                    type: "object",
+                    properties: {
+                        lootboxTypeId: { type: "integer", description: "Created lootbox type ID" },
+                        name: { type: "string", description: "Lootbox type name" },
+                    },
+                    required: ["lootboxTypeId", "name"],
+                },
+                MiniGameSession: {
+                    type: "object",
+                    properties: {
+                        sessionId: { type: "integer", description: "Unique session ID" },
+                        playerId: { type: "integer", description: "Player who played" },
+                        gameType: { type: "string", description: "Type of mini-game" },
+                        result: { type: "string", description: "Result (win, loss, etc.)" },
+                        coinPayout: { type: "integer", description: "Coins earned" },
+                        finishedAt: { type: "string", format: "date-time", description: "When the game finished" },
+                    },
+                    required: ["sessionId", "playerId", "gameType", "result", "coinPayout", "finishedAt"],
+                },
+                CreateMiniGameSessionResponse: {
+                    type: "object",
+                    properties: {
+                        sessionId: { type: "integer", description: "Created session ID" },
+                        playerId: { type: "integer", description: "Player ID" },
+                        gameType: { type: "string", description: "Game type" },
+                    },
+                    required: ["sessionId", "playerId", "gameType"],
+                },
+                ChatMessage: {
+                    type: "object",
+                    properties: {
+                        messageId: { type: "integer", description: "Unique message ID" },
+                        senderId: { type: "integer", description: "Sender's player ID" },
+                        receiverId: { type: "integer", nullable: true, description: "Receiver's player ID (null for global)" },
+                        content: { type: "string", description: "Message content" },
+                        sentAt: { type: "string", format: "date-time", description: "When the message was sent" },
+                        isRead: { type: "integer", description: "Read status (0 = unread, 1 = read)" },
+                    },
+                    required: ["messageId", "senderId", "content", "sentAt", "isRead"],
+                },
+                CreateChatMessageResponse: {
+                    type: "object",
+                    properties: {
+                        messageId: { type: "integer", description: "Created message ID" },
+                        senderId: { type: "integer", description: "Sender ID" },
+                        receiverId: { type: "integer", nullable: true, description: "Receiver ID (null for global)" },
+                    },
+                    required: ["messageId", "senderId"],
+                },
             },
         },
     },
