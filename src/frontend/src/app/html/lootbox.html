@@ -1,6 +1,14 @@
-﻿<div id="app">
-  <div id="lootbox"></div>
-  <button id="openBtn" (click)="openBox()">Open</button>
+<div id="app">
+  <div id="lootbox-container">
+    <img 
+      id="chest-image" 
+      [src]="isOpening ? '/assets/chest_opening/open_chest.gif' : '/assets/chest_opening/chest_idle.gif'" 
+      alt="Lootbox"
+      (click)="!isOpening && openBox()">
+  </div>
+  <button id="openBtn" (click)="openBox()" [disabled]="isOpening">
+    {{ isOpening ? 'Opening...' : 'Open' }}
+  </button>
 </div>
 
 <div id="overlay" *ngIf="showOverlay">

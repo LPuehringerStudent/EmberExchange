@@ -19,6 +19,7 @@ export class LootboxComponent implements AfterViewInit {
   showOverlay = false;
   showPopup = false;
   resultText = '';
+  isOpening = false;
 
   ngAfterViewInit(): void {
   }
@@ -31,6 +32,9 @@ export class LootboxComponent implements AfterViewInit {
   }
 
   openBox(): void {
+    if (this.isOpening) return;
+    
+    this.isOpening = true;
     this.lootBoxHelper.buildStrip();
     this.items = this.lootBoxHelper.items;
     this.showOverlay = true;
@@ -74,6 +78,7 @@ export class LootboxComponent implements AfterViewInit {
     this.saveLoot(this.lootBoxHelper.returnTypeId(this.finalItem!))
     this.resultText = `You got: ${this.lootBoxHelper.finalItem?.name || 'Unknown'}`;
     this.showPopup = true;
+    this.isOpening = false;
     this.cdr.detectChanges();
   }
   saveLoot(typeId: number) {
@@ -85,6 +90,7 @@ export class LootboxComponent implements AfterViewInit {
   resetAll(): void {
     this.showOverlay = false;
     this.showPopup = false;
+    this.isOpening = false;
     const itemsEl = this.itemsElement?.nativeElement;
     if (itemsEl) {
       itemsEl.style.transform = 'translateX(0px)';
