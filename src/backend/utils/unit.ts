@@ -378,26 +378,23 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
     }
 
     function insertPlayerStatistics(): void {
+        const now = new Date().toISOString();
         const stats = [
-            { playerId: 2, totalLogins: 15, totalSessionMinutes: 450, totalLootboxesOpened: 3, totalListingsCreated: 2, totalListingsSold: 1, totalMiniGamesPlayed: 5, totalMessagesSent: 3, currentStoveCount: 3, highestCoinBalance: 5500, netWorthEstimate: 8000, marketActivityScore: 75 },
-            { playerId: 3, totalLogins: 10, totalSessionMinutes: 280, totalLootboxesOpened: 1, totalListingsCreated: 1, totalPurchases: 1, totalMiniGamesPlayed: 3, totalMessagesSent: 2, currentStoveCount: 2, highestCoinBalance: 3800, netWorthEstimate: 5500, marketActivityScore: 50 },
-            { playerId: 4, totalLogins: 20, totalSessionMinutes: 600, totalLootboxesOpened: 5, totalListingsCreated: 3, totalListingsSold: 2, totalSalesRevenue: 3000, totalMiniGamesPlayed: 8, luckiestWin: 1000, totalMessagesSent: 1, currentStoveCount: 4, highestCoinBalance: 12000, netWorthEstimate: 15000, marketActivityScore: 95 },
-            { playerId: 5, totalLogins: 5, totalSessionMinutes: 120, totalLootboxesOpened: 1, totalMiniGamesPlayed: 1, currentStoveCount: 1, highestCoinBalance: 2600, netWorthEstimate: 4000, marketActivityScore: 25 }
+            { playerId: 2, totalLogins: 15, totalSessionMinutes: 450, totalLootboxesOpened: 3, totalListingsCreated: 2, totalListingsSold: 1, totalPurchases: 0, totalMiniGamesPlayed: 5, luckiestWin: 0, totalMessagesSent: 3, currentStoveCount: 3, highestCoinBalance: 5500, netWorthEstimate: 8000, marketActivityScore: 75, updatedAt: now },
+            { playerId: 3, totalLogins: 10, totalSessionMinutes: 280, totalLootboxesOpened: 1, totalListingsCreated: 1, totalListingsSold: 0, totalPurchases: 1, totalMiniGamesPlayed: 3, luckiestWin: 0, totalMessagesSent: 2, currentStoveCount: 2, highestCoinBalance: 3800, netWorthEstimate: 5500, marketActivityScore: 50, updatedAt: now },
+            { playerId: 4, totalLogins: 20, totalSessionMinutes: 600, totalLootboxesOpened: 5, totalListingsCreated: 3, totalListingsSold: 2, totalPurchases: 0, totalMiniGamesPlayed: 8, luckiestWin: 1000, totalMessagesSent: 1, currentStoveCount: 4, highestCoinBalance: 12000, netWorthEstimate: 15000, marketActivityScore: 95, updatedAt: now },
+            { playerId: 5, totalLogins: 5, totalSessionMinutes: 120, totalLootboxesOpened: 1, totalListingsCreated: 0, totalListingsSold: 0, totalPurchases: 0, totalMiniGamesPlayed: 1, luckiestWin: 0, totalMessagesSent: 0, currentStoveCount: 1, highestCoinBalance: 2600, netWorthEstimate: 4000, marketActivityScore: 25, updatedAt: now }
         ];
         
-        const now = new Date().toISOString();
         for (const stat of stats) {
-            const stmt = unit.prepare<
-                unknown,
-                { playerId: number; totalLogins: number; totalSessionMinutes: number; totalLootboxesOpened: number; totalListingsCreated: number; totalListingsSold: number; totalPurchases: number; totalMiniGamesPlayed: number; luckiestWin: number; totalMessagesSent: number; currentStoveCount: number; highestCoinBalance: number; netWorthEstimate: number; marketActivityScore: number; updatedAt: string }
-            >(
+            const stmt = unit.prepare(
                 `insert into PlayerStatistics (playerId, totalLogins, totalSessionMinutes, totalLootboxesOpened, 
                  totalListingsCreated, totalListingsSold, totalPurchases, totalMiniGamesPlayed, luckiestWin,
                  totalMessagesSent, currentStoveCount, highestCoinBalance, netWorthEstimate, marketActivityScore, updatedAt) 
                  values (@playerId, @totalLogins, @totalSessionMinutes, @totalLootboxesOpened, @totalListingsCreated,
                  @totalListingsSold, @totalPurchases, @totalMiniGamesPlayed, @luckiestWin, @totalMessagesSent,
                  @currentStoveCount, @highestCoinBalance, @netWorthEstimate, @marketActivityScore, @updatedAt)`,
-                { ...stat, updatedAt: now }
+                stat
             );
             stmt.run();
         }
@@ -465,7 +462,7 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
         console.log("✅ StoveTypeStatistics inserted");
     }
 
-    if (!(alreadyPresent()) {
+    if (!(alreadyPresent())) {
         insertLootboxTypes();
         insertPlayers();
         insertStoveTypes();
