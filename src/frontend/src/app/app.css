@@ -24,6 +24,11 @@
   font-family: "Segoe UI", Roboto, Arial, sans-serif;
 }
 
+html, body {
+  min-height: 100vh;
+  height: 100%;
+}
+
 body {
   background: #e8e4dc;
   color: var(--charcoal);
