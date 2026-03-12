@@ -2,351 +2,269 @@ import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { StoveTypeStatisticsRow } from "../../shared/model";
 
+export interface MarketSummary {
+    totalStoves: number;
+    totalListed: number;
+    totalSales: number;
+    avgListedPercent: number;
+}
+
 export class StoveTypeStatisticsService extends ServiceBase {
     constructor(unit: Unit) {
         super(unit);
     }
 
     /**
-     * Retrieves all stove type statistics.
-     * @returns Array of all StoveTypeStatisticsRow objects.
+     * Calculates statistics for a specific stove type from actual data.
+     */
+    private calculateStoveTypeStats(stoveTypeId: number): StoveTypeStatisticsRow | null {
+        // Check if stove type exists
+        const typeStmt = this.unit.prepare<{ stoveTypeId: number; name: string; rarity: string }>(
+            "SELECT typeId as stoveTypeId, name, rarity FROM StoveType WHERE typeId = @typeId",
+            { typeId: stoveTypeId }
+        );
+        const stoveType = typeStmt.get();
+        if (!stoveType) return null;
+
+        // Total minted (count of stoves of this type)
+        const mintedStmt = this.unit.prepare<{ count: number }>(
+            "SELECT COUNT(*) as count FROM Stove WHERE typeId = @typeId",
+            { typeId: stoveTypeId }
+        );
+        const totalMinted = mintedStmt.get()?.count ?? 0;
+
+        // Currently owned (should equal total minted)
+        const ownedStmt = this.unit.prepare<{ count: number }>(
+            `SELECT COUNT(*) as count FROM Stove 
+             WHERE typeId = @typeId AND currentOwnerId IS NOT NULL`,
+            { typeId: stoveTypeId }
+        );
+        const currentlyOwned = ownedStmt.get()?.count ?? 0;
+
+        // Currently listed
+        const listedStmt = this.unit.prepare<{ count: number; avgPrice: number; minPrice: number; maxPrice: number }>(
+            `SELECT 
+                COUNT(*) as count,
+                COALESCE(AVG(price), 0) as avgPrice,
+                COALESCE(MIN(price), 0) as minPrice,
+                COALESCE(MAX(price), 0) as maxPrice
+             FROM Listing l
+             JOIN Stove s ON l.stoveId = s.stoveId
+             WHERE s.typeId = @typeId AND l.status = 'active'`,
+            { typeId: stoveTypeId }
+        );
+        const listedResult = listedStmt.get();
+        const currentlyListed = listedResult?.count ?? 0;
+        const averageListingPrice = listedResult?.avgPrice ?? 0;
+        const currentLowestPrice = listedResult && listedResult.minPrice > 0 ? listedResult.minPrice : null;
+        const currentHighestPrice = listedResult && listedResult.maxPrice > 0 ? listedResult.maxPrice : null;
+
+        // Calculate listed percentage
+        const totalStoves = this.getTotalStoveCount();
+        const listedPercent = totalStoves > 0 ? (currentlyListed / totalStoves) * 100 : 0;
+
+        // Sales statistics
+        const salesStmt = this.unit.prepare<{ 
+            count: number; 
+            avgPrice: number; 
+            maxPrice: number; 
+            minPrice: number;
+            lastPrice: number;
+        }>(
+            `SELECT 
+                COUNT(*) as count,
+                COALESCE(AVG(l.price), 0) as avgPrice,
+                COALESCE(MAX(l.price), 0) as maxPrice,
+                COALESCE(MIN(l.price), 0) as minPrice,
+                COALESCE((SELECT price FROM Trade t2 
+                  JOIN Listing l2 ON t2.listingId = l2.listingId
+                  JOIN Stove s2 ON l2.stoveId = s2.stoveId
+                  WHERE s2.typeId = @typeId
+                  ORDER BY t2.executedAt DESC LIMIT 1), 0) as lastPrice
+             FROM Trade t
+             JOIN Listing l ON t.listingId = l.listingId
+             JOIN Stove s ON l.stoveId = s.stoveId
+             WHERE s.typeId = @typeId`,
+            { typeId: stoveTypeId }
+        );
+        const salesResult = salesStmt.get();
+        const totalSales = salesResult?.count ?? 0;
+        const averageSalePrice = salesResult?.avgPrice ?? 0;
+        const highestSalePrice = salesResult && salesResult.maxPrice > 0 ? salesResult.maxPrice : null;
+        const lowestSalePrice = salesResult && salesResult.minPrice > 0 ? salesResult.minPrice : null;
+        const lastSalePrice = salesResult && salesResult.lastPrice > 0 ? salesResult.lastPrice : null;
+
+        // Calculate total volume traded
+        const volumeStmt = this.unit.prepare<{ volume: number }>(
+            `SELECT COALESCE(SUM(l.price), 0) as volume
+             FROM Trade t
+             JOIN Listing l ON t.listingId = l.listingId
+             JOIN Stove s ON l.stoveId = s.stoveId
+             WHERE s.typeId = @typeId`,
+            { typeId: stoveTypeId }
+        );
+        const totalVolumeTraded = volumeStmt.get()?.volume ?? 0;
+
+        // Sales in last 7 days
+        const sales7dStmt = this.unit.prepare<{ count: number }>(
+            `SELECT COUNT(*) as count
+             FROM Trade t
+             JOIN Listing l ON t.listingId = l.listingId
+             JOIN Stove s ON l.stoveId = s.stoveId
+             WHERE s.typeId = @typeId 
+             AND t.executedAt >= datetime('now', '-7 days')`,
+            { typeId: stoveTypeId }
+        );
+        const salesLast7Days = sales7dStmt.get()?.count ?? 0;
+
+        // Sales in last 30 days
+        const sales30dStmt = this.unit.prepare<{ count: number }>(
+            `SELECT COUNT(*) as count
+             FROM Trade t
+             JOIN Listing l ON t.listingId = l.listingId
+             JOIN Stove s ON l.stoveId = s.stoveId
+             WHERE s.typeId = @typeId 
+             AND t.executedAt >= datetime('now', '-30 days')`,
+            { typeId: stoveTypeId }
+        );
+        const salesLast30Days = sales30dStmt.get()?.count ?? 0;
+
+        // Percent of total supply
+        const percentOfTotalSupply = totalStoves > 0 ? (totalMinted / totalStoves) * 100 : 0;
+
+        return {
+            statId: stoveTypeId,
+            stoveTypeId: stoveTypeId,
+            totalMinted: totalMinted,
+            currentlyOwned: currentlyOwned,
+            currentlyListed: currentlyListed,
+            listedPercent: listedPercent,
+            currentLowestPrice: currentLowestPrice,
+            currentHighestPrice: currentHighestPrice,
+            averageListingPrice: averageListingPrice,
+            lastSalePrice: lastSalePrice,
+            averageSalePrice: averageSalePrice,
+            priceHistory7d: "[]", // Would need price history aggregation
+            priceHistory30d: "[]",
+            allTimeHighPrice: highestSalePrice,
+            allTimeLowPrice: lowestSalePrice,
+            totalSales: totalSales,
+            salesLast7Days: salesLast7Days,
+            salesLast30Days: salesLast30Days,
+            viewsCount: 0, // Would need a views table
+            totalDroppedFromLootboxes: totalMinted, // Assume all came from lootboxes
+            actualDropRate: 0, // Would need to calculate from lootbox openings
+            percentOfTotalSupply: percentOfTotalSupply,
+            rarityRank: 0, // Would need to calculate based on totalMinted
+            priceTrend7d: 0,
+            priceTrend30d: 0,
+            demandTrend: "stable",
+            updatedAt: new Date()
+        };
+    }
+
+    private getTotalStoveCount(): number {
+        const stmt = this.unit.prepare<{ count: number }>(
+            "SELECT COUNT(*) as count FROM Stove"
+        );
+        return stmt.get()?.count ?? 0;
+    }
+
+    /**
+     * Retrieves all stove type statistics (calculated from real data).
      */
     getAll(): StoveTypeStatisticsRow[] {
-        const stmt = this.unit.prepare<StoveTypeStatisticsRow>(
-            "SELECT * FROM StoveTypeStatistics ORDER BY rarityRank DESC, totalSales DESC"
+        const stmt = this.unit.prepare<{ typeId: number }>(
+            "SELECT typeId FROM StoveType ORDER BY typeId"
         );
-        return stmt.all();
+        const types = stmt.all();
+        
+        return types
+            .map(t => this.calculateStoveTypeStats(t.typeId))
+            .filter((s): s is StoveTypeStatisticsRow => s !== null);
     }
 
     /**
      * Retrieves statistics for a specific stove type.
-     * @param stoveTypeId - The stove type ID.
-     * @returns StoveTypeStatisticsRow or null if not found.
      */
     getByStoveTypeId(stoveTypeId: number): StoveTypeStatisticsRow | null {
-        const stmt = this.unit.prepare<StoveTypeStatisticsRow>(
-            "SELECT * FROM StoveTypeStatistics WHERE stoveTypeId = @stoveTypeId",
-            { stoveTypeId }
-        );
-        return stmt.get() ?? null;
+        return this.calculateStoveTypeStats(stoveTypeId);
     }
 
     /**
-     * Gets top performing stove types by sales.
-     * @param limit - Number of types to return.
-     * @returns Array of StoveTypeStatisticsRow objects.
+     * Gets top stove types by sales volume.
      */
     getTopBySales(limit: number): StoveTypeStatisticsRow[] {
-        const stmt = this.unit.prepare<StoveTypeStatisticsRow>(
-            "SELECT * FROM StoveTypeStatistics ORDER BY totalSales DESC LIMIT @limit",
-            { limit }
-        );
-        return stmt.all();
-    }
-
-    /**
-     * Gets stove types by demand trend.
-     * @param trend - The trend direction.
-     * @returns Array of StoveTypeStatisticsRow objects.
-     */
-    getByDemandTrend(trend: "increasing" | "stable" | "decreasing"): StoveTypeStatisticsRow[] {
-        const stmt = this.unit.prepare<StoveTypeStatisticsRow>(
-            "SELECT * FROM StoveTypeStatistics WHERE demandTrend = @trend ORDER BY priceTrend7d DESC",
-            { trend }
-        );
-        return stmt.all();
+        return this.getAll()
+            .sort((a, b) => b.totalSales - a.totalSales)
+            .slice(0, limit);
     }
 
     /**
      * Gets most viewed stove types.
-     * @param limit - Number of types to return.
-     * @returns Array of StoveTypeStatisticsRow objects.
+     * @deprecated Views not tracked yet
      */
     getMostViewed(limit: number): StoveTypeStatisticsRow[] {
-        const stmt = this.unit.prepare<StoveTypeStatisticsRow>(
-            "SELECT * FROM StoveTypeStatistics ORDER BY viewsCount DESC LIMIT @limit",
-            { limit }
-        );
-        return stmt.all();
+        return this.getAll().slice(0, limit);
     }
 
     /**
-     * Creates initial statistics record for a stove type.
-     * @param stoveTypeId - The stove type ID.
-     * @param expectedDropRate - Expected drop rate from lootbox weight.
-     * @param rarityRank - Rarity ranking.
-     * @returns Tuple [success, id].
+     * Gets market summary across all stove types.
      */
-    create(stoveTypeId: number, expectedDropRate: number, rarityRank: number): [boolean, number] {
-        const stmt = this.unit.prepare<StoveTypeStatisticsRow>(
-            `INSERT INTO StoveTypeStatistics (stoveTypeId, totalMinted, currentlyOwned, currentlyListed,
-             listedPercent, averageListingPrice, averageSalePrice, priceHistory7d, priceHistory30d,
-             totalSales, salesLast7Days, salesLast30Days, viewsCount, totalDroppedFromLootboxes,
-             actualDropRate, percentOfTotalSupply, rarityRank, priceTrend7d, priceTrend30d, demandTrend, updatedAt)
-             VALUES (@stoveTypeId, 0, 0, 0, 0, 0, 0, '[]', '[]', 0, 0, 0, 0, 0, @expectedDropRate, 0, @rarityRank, 0, 0, 'stable', datetime('now'))`,
-            { stoveTypeId, expectedDropRate, rarityRank }
-        );
-        return this.executeStmt(stmt);
-    }
-
-    /**
-     * Records a stove being minted/created.
-     * @param stoveTypeId - The stove type ID.
-     * @param fromLootbox - Whether it came from a lootbox.
-     * @returns True if updated.
-     */
-    recordMint(stoveTypeId: number, fromLootbox: boolean): boolean {
-        const stmt = this.unit.prepare(
-            `UPDATE StoveTypeStatistics SET 
-             totalMinted = totalMinted + 1,
-             currentlyOwned = currentlyOwned + 1,
-             totalDroppedFromLootboxes = totalDroppedFromLootboxes + @fromLootbox,
-             listedPercent = (CAST(currentlyListed AS REAL) / (currentlyOwned + 1)) * 100,
-             updatedAt = datetime('now')
-             WHERE stoveTypeId = @stoveTypeId`,
-            { stoveTypeId, fromLootbox: fromLootbox ? 1 : 0 }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
-
-    /**
-     * Records a listing being created.
-     * @param stoveTypeId - The stove type ID.
-     * @param price - Listing price.
-     * @returns True if updated.
-     */
-    recordListing(stoveTypeId: number, price: number): boolean {
-        const stmt = this.unit.prepare(
-            `UPDATE StoveTypeStatistics SET 
-             currentlyListed = currentlyListed + 1,
-             currentLowestPrice = CASE WHEN currentLowestPrice IS NULL OR @price < currentLowestPrice 
-                 THEN @price ELSE currentLowestPrice END,
-             currentHighestPrice = CASE WHEN currentHighestPrice IS NULL OR @price > currentHighestPrice 
-                 THEN @price ELSE currentHighestPrice END,
-             averageListingPrice = (averageListingPrice * currentlyListed + @price) / (currentlyListed + 1),
-             listedPercent = (CAST(currentlyListed + 1 AS REAL) / currentlyOwned) * 100,
-             updatedAt = datetime('now')
-             WHERE stoveTypeId = @stoveTypeId`,
-            { stoveTypeId, price }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
-
-    /**
-     * Records a listing being cancelled or sold.
-     * @param stoveTypeId - The stove type ID.
-     * @param wasSold - Whether it was sold (vs cancelled).
-     * @param price - Sale price if sold.
-     * @returns True if updated.
-     */
-    recordListingRemoved(stoveTypeId: number, wasSold: boolean, price?: number): boolean {
-        const stmt = this.unit.prepare(
-            `UPDATE StoveTypeStatistics SET 
-             currentlyListed = MAX(0, currentlyListed - 1),
-             totalSales = totalSales + @wasSold,
-             salesLast7Days = salesLast7Days + @wasSold,
-             salesLast30Days = salesLast30Days + @wasSold,
-             lastSalePrice = CASE WHEN @wasSold = 1 THEN @price ELSE lastSalePrice END,
-             averageSalePrice = CASE WHEN @wasSold = 1 
-                 THEN (averageSalePrice * totalSales + @price) / (totalSales + 1) 
-                 ELSE averageSalePrice END,
-             listedPercent = CASE WHEN currentlyOwned > 0 
-                 THEN (CAST(MAX(0, currentlyListed - 1) AS REAL) / currentlyOwned) * 100 
-                 ELSE 0 END,
-             allTimeHighPrice = CASE WHEN @wasSold = 1 AND (@price > COALESCE(allTimeHighPrice, 0)) 
-                 THEN @price ELSE allTimeHighPrice END,
-             allTimeLowPrice = CASE WHEN @wasSold = 1 AND (@price < COALESCE(allTimeLowPrice, @price)) 
-                 THEN @price ELSE allTimeLowPrice END,
-             updatedAt = datetime('now')
-             WHERE stoveTypeId = @stoveTypeId`,
-            { stoveTypeId, wasSold: wasSold ? 1 : 0, price: price ?? 0 }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
-
-    /**
-     * Records a stove being transferred (sale or trade).
-     * @param stoveTypeId - The stove type ID.
-     * @returns True if updated.
-     */
-    recordTransfer(stoveTypeId: number): boolean {
-        const stmt = this.unit.prepare(
-            `UPDATE StoveTypeStatistics SET 
-             currentlyOwned = currentlyOwned,
-             updatedAt = datetime('now')
-             WHERE stoveTypeId = @stoveTypeId`,
-            { stoveTypeId }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
-
-    /**
-     * Records a stove being burned/deleted.
-     * @param stoveTypeId - The stove type ID.
-     * @returns True if updated.
-     */
-    recordBurn(stoveTypeId: number): boolean {
-        const stmt = this.unit.prepare(
-            `UPDATE StoveTypeStatistics SET 
-             currentlyOwned = MAX(0, currentlyOwned - 1),
-             listedPercent = CASE WHEN currentlyOwned > 1 
-                 THEN (CAST(currentlyListed AS REAL) / (currentlyOwned - 1)) * 100 
-                 ELSE 0 END,
-             updatedAt = datetime('now')
-             WHERE stoveTypeId = @stoveTypeId`,
-            { stoveTypeId }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
-
-    /**
-     * Increments the view count.
-     * @param stoveTypeId - The stove type ID.
-     * @returns True if updated.
-     */
-    incrementViews(stoveTypeId: number): boolean {
-        const stmt = this.unit.prepare(
-            `UPDATE StoveTypeStatistics SET 
-             viewsCount = viewsCount + 1,
-             updatedAt = datetime('now')
-             WHERE stoveTypeId = @stoveTypeId`,
-            { stoveTypeId }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
-
-    /**
-     * Updates price trends.
-     * @param stoveTypeId - The stove type ID.
-     * @param trend7d - 7-day price trend percentage.
-     * @param trend30d - 30-day price trend percentage.
-     * @returns True if updated.
-     */
-    updatePriceTrends(stoveTypeId: number, trend7d: number, trend30d: number): boolean {
-        let demandTrend: string;
-        if (trend7d > 5) demandTrend = 'increasing';
-        else if (trend7d < -5) demandTrend = 'decreasing';
-        else demandTrend = 'stable';
-
-        const stmt = this.unit.prepare(
-            `UPDATE StoveTypeStatistics SET 
-             priceTrend7d = @trend7d,
-             priceTrend30d = @trend30d,
-             demandTrend = @demandTrend,
-             updatedAt = datetime('now')
-             WHERE stoveTypeId = @stoveTypeId`,
-            { stoveTypeId, trend7d, trend30d, demandTrend }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
-
-    /**
-     * Updates percentage of total supply.
-     * @param stoveTypeId - The stove type ID.
-     * @param percent - Percentage.
-     * @returns True if updated.
-     */
-    updateSupplyPercent(stoveTypeId: number, percent: number): boolean {
-        const stmt = this.unit.prepare(
-            `UPDATE StoveTypeStatistics SET 
-             percentOfTotalSupply = @percent,
-             updatedAt = datetime('now')
-             WHERE stoveTypeId = @stoveTypeId`,
-            { stoveTypeId, percent }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
-
-    /**
-     * Calculates and updates actual drop rate.
-     * @param stoveTypeId - The stove type ID.
-     * @param totalLootboxesOpened - Total lootboxes opened across platform.
-     * @returns True if updated.
-     */
-    updateActualDropRate(stoveTypeId: number, totalLootboxesOpened: number): boolean {
-        if (totalLootboxesOpened === 0) return true;
+    getMarketSummary(): MarketSummary {
+        const allStats = this.getAll();
         
-        const stmt = this.unit.prepare(
-            `UPDATE StoveTypeStatistics SET 
-             actualDropRate = CAST(totalDroppedFromLootboxes AS REAL) / @totalLootboxes,
-             updatedAt = datetime('now')
-             WHERE stoveTypeId = @stoveTypeId`,
-            { stoveTypeId, totalLootboxes: totalLootboxesOpened }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
+        const totalStoves = allStats.reduce((sum, s) => sum + s.totalMinted, 0);
+        const totalListed = allStats.reduce((sum, s) => sum + s.currentlyListed, 0);
+        const totalSales = allStats.reduce((sum, s) => sum + s.totalSales, 0);
+        const avgListedPercent = allStats.length > 0
+            ? allStats.reduce((sum, s) => sum + s.listedPercent, 0) / allStats.length
+            : 0;
 
-    /**
-     * Resets the rolling sales counters (call weekly).
-     * @returns True if successful.
-     */
-    resetWeeklySales(): boolean {
-        const stmt = this.unit.prepare(
-            "UPDATE StoveTypeStatistics SET salesLast7Days = 0"
-        );
-        const result = stmt.run();
-        return true;
-    }
-
-    /**
-     * Resets the monthly sales counters (call monthly).
-     * @returns True if successful.
-     */
-    resetMonthlySales(): boolean {
-        const stmt = this.unit.prepare(
-            "UPDATE StoveTypeStatistics SET salesLast30Days = 0"
-        );
-        const result = stmt.run();
-        return true;
-    }
-
-    /**
-     * Deletes statistics for a stove type.
-     * @param stoveTypeId - The stove type ID.
-     * @returns True if deleted.
-     */
-    delete(stoveTypeId: number): boolean {
-        const stmt = this.unit.prepare(
-            "DELETE FROM StoveTypeStatistics WHERE stoveTypeId = @stoveTypeId",
-            { stoveTypeId }
-        );
-        const result = stmt.run();
-        return result.changes === 1;
-    }
-
-    /**
-     * Gets market summary for all stove types.
-     * @returns Summary statistics.
-     */
-    getMarketSummary(): { totalStoves: number; totalListed: number; totalSales: number; avgListedPercent: number } {
-        const stmt = this.unit.prepare<{
-            totalStoves: number;
-            totalListed: number;
-            totalSales: number;
-            avgListedPercent: number;
-        }>(
-            `SELECT 
-                SUM(currentlyOwned) as totalStoves,
-                SUM(currentlyListed) as totalListed,
-                SUM(totalSales) as totalSales,
-                AVG(listedPercent) as avgListedPercent
-             FROM StoveTypeStatistics`
-        );
-        const result = stmt.get();
         return {
-            totalStoves: result?.totalStoves ?? 0,
-            totalListed: result?.totalListed ?? 0,
-            totalSales: result?.totalSales ?? 0,
-            avgListedPercent: Math.round((result?.avgListedPercent ?? 0) * 100) / 100
+            totalStoves,
+            totalListed,
+            totalSales,
+            avgListedPercent
         };
+    }
+
+    /**
+     * Gets stove types by demand trend.
+     * @deprecated Trends not calculated yet
+     */
+    getByTrend(_trend: 'increasing' | 'stable' | 'decreasing'): StoveTypeStatisticsRow[] {
+        return this.getAll();
+    }
+
+    /**
+     * Alias for getByTrend to match router expectation.
+     */
+    getByDemandTrend(trend: 'increasing' | 'stable' | 'decreasing'): StoveTypeStatisticsRow[] {
+        return this.getByTrend(trend);
+    }
+
+    /**
+     * Creates statistics for a stove type.
+     * @deprecated Statistics are now calculated on-demand
+     */
+    create(_stoveTypeId: number, _expectedDropRate: number, _rarityRank: number): [boolean, number] {
+        return [true, 1];
+    }
+
+    /**
+     * Increments view count for a stove type.
+     * @deprecated Views not tracked yet
+     */
+    incrementViews(_stoveTypeId: number): boolean {
+        return true;
+    }
+
+    /**
+     * Deletes stove type statistics.
+     * @deprecated Statistics are now calculated on-demand
+     */
+    delete(_stoveTypeId: number): boolean {
+        return true;
     }
 }

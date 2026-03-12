@@ -67,6 +67,11 @@ export class Unit {
 
 export function resetDatabase(connection: Database): void {
     // Drop all tables in correct order (respecting foreign keys)
+    // Statistics tables first (they reference main tables)
+    connection.exec("DROP TABLE IF EXISTS PlayerStatistics");
+    connection.exec("DROP TABLE IF EXISTS DailyStatistics");
+    connection.exec("DROP TABLE IF EXISTS StoveTypeStatistics");
+    // Main tables
     connection.exec("DROP TABLE IF EXISTS ChatMessage");
     connection.exec("DROP TABLE IF EXISTS Ownership");
     connection.exec("DROP TABLE IF EXISTS PriceHistory");
@@ -436,12 +441,12 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
     function insertStoveTypeStatistics(): void {
         const now = new Date().toISOString();
         const stats = [
-            { stoveTypeId: 1, totalMinted: 1, currentlyOwned: 1, currentlyListed: 0, averageListingPrice: 500, averageSalePrice: 500, totalSales: 1, salesLast7Days: 1, rarityRank: 9, percentOfTotalSupply: 16.67 },
-            { stoveTypeId: 2, totalMinted: 1, currentlyOwned: 1, currentlyListed: 0, averageListingPrice: 0, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 8, percentOfTotalSupply: 16.67 },
+            { stoveTypeId: 1, totalMinted: 1, currentlyOwned: 1, currentlyListed: 0, currentLowestPrice: 0, currentHighestPrice: 0, averageListingPrice: 500, averageSalePrice: 500, totalSales: 1, salesLast7Days: 1, rarityRank: 9, percentOfTotalSupply: 16.67 },
+            { stoveTypeId: 2, totalMinted: 1, currentlyOwned: 1, currentlyListed: 0, currentLowestPrice: 0, currentHighestPrice: 0, averageListingPrice: 0, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 8, percentOfTotalSupply: 16.67 },
             { stoveTypeId: 3, totalMinted: 1, currentlyOwned: 0, currentlyListed: 1, currentLowestPrice: 1500, currentHighestPrice: 1500, averageListingPrice: 1500, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 6, percentOfTotalSupply: 16.67 },
             { stoveTypeId: 4, totalMinted: 1, currentlyOwned: 1, currentlyListed: 1, currentLowestPrice: 2500, currentHighestPrice: 2500, averageListingPrice: 2500, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 5, percentOfTotalSupply: 16.67 },
-            { stoveTypeId: 5, totalMinted: 1, currentlyOwned: 0, currentlyListed: 0, averageListingPrice: 0, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 4, percentOfTotalSupply: 16.67 },
-            { stoveTypeId: 7, totalMinted: 1, currentlyOwned: 1, currentlyListed: 0, averageListingPrice: 0, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 2, percentOfTotalSupply: 16.67 }
+            { stoveTypeId: 5, totalMinted: 1, currentlyOwned: 0, currentlyListed: 0, currentLowestPrice: 0, currentHighestPrice: 0, averageListingPrice: 0, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 4, percentOfTotalSupply: 16.67 },
+            { stoveTypeId: 7, totalMinted: 1, currentlyOwned: 1, currentlyListed: 0, currentLowestPrice: 0, currentHighestPrice: 0, averageListingPrice: 0, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 2, percentOfTotalSupply: 16.67 }
         ];
         
         for (const stat of stats) {
