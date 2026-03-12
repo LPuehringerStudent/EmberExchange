@@ -8,6 +8,7 @@ import {UpdateLogComponent} from './typescript/update_log_component';
 import {MarketplaceComponent} from './typescript/marketplace.component';
 import {GamesComponent} from './typescript/games.component';
 import {NotFoundComponent} from './typescript/not-found.component';
+import {StatisticsComponent} from './typescript/statistics.component';
 
 export const routes: Routes = [
   { path: '', component: MainMenuComponent },
@@ -18,6 +19,7 @@ export const routes: Routes = [
   { path: 'settings', component: SettingsComponent },
   { path: 'test', component: TestPageComponent },
   { path: 'update-log', component: UpdateLogComponent },
+  { path: 'statistics', component: StatisticsComponent },
   { path: 'support', component: NotFoundComponent },
   { path: 'login', component: NotFoundComponent },
   { path: 'signup', component: NotFoundComponent },
