@@ -109,6 +109,59 @@ table(ChatMessage) {
     isRead: BOOLEAN
 }
 
+table(PlayerStatistics) {
+    primary_key(statId): INTEGER
+    foreign_key(playerId): INTEGER «UNIQUE»
+    totalLogins: INTEGER
+    lastLoginAt: TIMESTAMP
+    totalSessionMinutes: INTEGER
+    totalLootboxesOpened: INTEGER
+    totalListingsCreated: INTEGER
+    totalListingsSold: INTEGER
+    totalPurchases: INTEGER
+    totalSalesRevenue: INTEGER
+    totalMiniGamesPlayed: INTEGER
+    totalMessagesSent: INTEGER
+    currentStoveCount: INTEGER
+    highestCoinBalance: INTEGER
+    netWorthEstimate: INTEGER
+    marketActivityScore: INTEGER
+    updatedAt: TIMESTAMP
+}
+
+table(DailyStatistics) {
+    primary_key(statId): INTEGER
+    date: DATE «UNIQUE»
+    uniquePlayersLoggedIn: INTEGER
+    newPlayersJoined: INTEGER
+    totalSessions: INTEGER
+    lootboxesOpenedToday: INTEGER
+    listingsSoldToday: INTEGER
+    totalTradingVolume: INTEGER
+    miniGamesPlayedToday: INTEGER
+    messagesSentToday: INTEGER
+    totalCoinsInCirculation: INTEGER
+    averagePlayerNetWorth: INTEGER
+    createdAt: TIMESTAMP
+}
+
+table(StoveTypeStatistics) {
+    primary_key(statId): INTEGER
+    foreign_key(stoveTypeId): INTEGER «UNIQUE»
+    totalMinted: INTEGER
+    currentlyOwned: INTEGER
+    currentlyListed: INTEGER
+    currentLowestPrice: INTEGER
+    currentHighestPrice: INTEGER
+    averageSalePrice: INTEGER
+    totalSales: INTEGER
+    viewsCount: INTEGER
+    rarityRank: INTEGER
+    priceTrend7d: REAL
+    demandTrend: TEXT «increasing|stable|decreasing»
+    updatedAt: TIMESTAMP
+}
+
 ' Relationships
 Player "1" -- "0..*" Lootbox : opens
 Player "1" -- "0..*" Listing : sells
@@ -132,5 +185,9 @@ StoveType "1" -- "0..*" Stove : instantiated
 StoveType "1" -- "0..*" PriceHistory : tracked
 
 Listing "1" -- "0..1" Trade : results in
+
+Player "1" -- "0..1" PlayerStatistics : has
+Player "1" -- "0..*" DailyStatistics : contributes to
+StoveType "1" -- "0..1" StoveTypeStatistics : has
 
 @enduml
