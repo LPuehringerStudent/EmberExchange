@@ -152,3 +152,126 @@ export interface ChatMessage {
 export interface ChatMessageRow extends ChatMessage {
     messageId: number;
 }
+
+// PlayerStatistics
+export interface PlayerStatistics {
+    playerId: number;
+    totalLogins: number;
+    lastLoginAt: Date | null;
+    totalSessionMinutes: number;
+    longestSessionMinutes: number;
+    totalLootboxesOpened: number;
+    totalLootboxesPurchased: number;
+    totalLootboxesFree: number;
+    totalCoinsSpentOnLootboxes: number;
+    bestDropRarity: Rarity | null;
+    totalStovesFromLootboxes: number;
+    totalListingsCreated: number;
+    totalListingsSold: number;
+    totalListingsCancelled: number;
+    totalListingsExpired: number;
+    totalPurchases: number;
+    totalSalesRevenue: number;
+    totalPurchaseSpending: number;
+    averageListingPrice: number;
+    averageSalePrice: number;
+    fastestSaleMinutes: number | null;
+    totalTradesCompleted: number;
+    totalMiniGamesPlayed: number;
+    totalMiniGameWins: number;
+    totalMiniGameLosses: number;
+    totalCoinsFromMiniGames: number;
+    totalCoinsLostInMiniGames: number;
+    favoriteGameType: string | null;
+    luckiestWin: number;
+    totalMessagesSent: number;
+    totalMessagesReceived: number;
+    totalGlobalMessages: number;
+    totalPrivateMessages: number;
+    currentStoveCount: number;
+    totalStovesAcquired: number;
+    totalStovesSold: number;
+    totalStovesTraded: number;
+    rarestStoveOwned: Rarity | null;
+    highestCoinBalance: number;
+    lowestCoinBalance: number;
+    totalCoinsEarned: number;
+    totalCoinsSpent: number;
+    netWorthEstimate: number;
+    marketActivityScore: number;
+    updatedAt: Date;
+}
+
+export interface PlayerStatisticsRow extends PlayerStatistics {
+    statId: number;
+}
+
+// DailyStatistics
+export interface DailyStatistics {
+    date: string;
+    uniquePlayersLoggedIn: number;
+    newPlayersJoined: number;
+    totalSessions: number;
+    averageSessionMinutes: number;
+    lootboxesOpenedToday: number;
+    lootboxesPurchasedToday: number;
+    coinsSpentOnLootboxesToday: number;
+    newListingsToday: number;
+    listingsSoldToday: number;
+    listingsCancelledToday: number;
+    averageListingPriceToday: number;
+    averageSalePriceToday: number;
+    totalTradingVolume: number;
+    priceChangePercent: number;
+    miniGamesPlayedToday: number;
+    totalCoinPayoutsToday: number;
+    houseProfit: number;
+    messagesSentToday: number;
+    uniqueChattersToday: number;
+    totalCoinsInCirculation: number;
+    totalStovesInExistence: number;
+    averagePlayerNetWorth: number;
+    medianPlayerNetWorth: number;
+    wealthGapRatio: number;
+    averageTimeToSellHours: number;
+    sellThroughRate: number;
+    createdAt: Date;
+}
+
+export interface DailyStatisticsRow extends DailyStatistics {
+    statId: number;
+}
+
+// StoveTypeStatistics
+export interface StoveTypeStatistics {
+    stoveTypeId: number;
+    totalMinted: number;
+    currentlyOwned: number;
+    currentlyListed: number;
+    listedPercent: number;
+    currentLowestPrice: number | null;
+    currentHighestPrice: number | null;
+    averageListingPrice: number;
+    lastSalePrice: number | null;
+    averageSalePrice: number;
+    priceHistory7d: string;
+    priceHistory30d: string;
+    allTimeHighPrice: number | null;
+    allTimeLowPrice: number | null;
+    totalSales: number;
+    salesLast7Days: number;
+    salesLast30Days: number;
+    viewsCount: number;
+    totalDroppedFromLootboxes: number;
+    actualDropRate: number;
+    percentOfTotalSupply: number;
+    rarityRank: number;
+    priceTrend7d: number;
+    priceTrend30d: number;
+    demandTrend: "increasing" | "stable" | "decreasing";
+    updatedAt: Date;
+}
+
+export interface StoveTypeStatisticsRow extends StoveTypeStatistics {
+    statId: number;
+}
