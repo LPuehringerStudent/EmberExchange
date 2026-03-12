@@ -1,0 +1,92 @@
+// MiniGameSession Endpoints
+
+### Get All Mini-Game Sessions
+GET http://localhost:3000/api/mini-game-sessions
+
+### Get Mini-Game Session by ID
+GET http://localhost:3000/api/mini-game-sessions/1
+
+### Get Mini-Game Session by ID (not found)
+GET http://localhost:3000/api/mini-game-sessions/99999
+
+### Get Mini-Game Session by ID (invalid ID)
+GET http://localhost:3000/api/mini-game-sessions/invalid
+
+### Get Player's Mini-Game Sessions
+GET http://localhost:3000/api/players/1/mini-game-sessions
+
+### Get Player's Mini-Game Sessions (invalid ID)
+GET http://localhost:3000/api/players/invalid/mini-game-sessions
+
+### Get Mini-Game Sessions by Type (Coin Flip)
+GET http://localhost:3000/api/mini-game-sessions/type/Coin%20Flip
+
+### Get Mini-Game Sessions by Type (Dice Roll)
+GET http://localhost:3000/api/mini-game-sessions/type/Dice%20Roll
+
+### Get Mini-Game Sessions by Type (Slots)
+GET http://localhost:3000/api/mini-game-sessions/type/Slots
+
+### Create Mini-Game Session (win)
+POST http://localhost:3000/api/mini-game-sessions
+Content-Type: application/json
+
+{
+    "playerId": 1,
+    "gameType": "Coin Flip",
+    "result": "win",
+    "coinPayout": 100
+}
+
+### Create Mini-Game Session (loss)
+POST http://localhost:3000/api/mini-game-sessions
+Content-Type: application/json
+
+{
+    "playerId": 1,
+    "gameType": "Coin Flip",
+    "result": "loss",
+    "coinPayout": 0
+}
+
+### Create Mini-Game Session (jackpot)
+POST http://localhost:3000/api/mini-game-sessions
+Content-Type: application/json
+
+{
+    "playerId": 2,
+    "gameType": "Slots",
+    "result": "jackpot",
+    "coinPayout": 5000
+}
+
+### Create Mini-Game Session (missing fields)
+POST http://localhost:3000/api/mini-game-sessions
+Content-Type: application/json
+
+{
+    "playerId": 1
+}
+
+### Create Mini-Game Session (negative payout)
+POST http://localhost:3000/api/mini-game-sessions
+Content-Type: application/json
+
+{
+    "playerId": 1,
+    "gameType": "Coin Flip",
+    "result": "win",
+    "coinPayout": -100
+}
+
+### Delete Mini-Game Session
+DELETE http://localhost:3000/api/mini-game-sessions/1
+
+### Delete Mini-Game Session (not found)
+DELETE http://localhost:3000/api/mini-game-sessions/99999
+
+### Get Player's Mini-Game Stats
+GET http://localhost:3000/api/players/1/mini-game-stats
+
+### Get Player's Mini-Game Stats (invalid ID)
+GET http://localhost:3000/api/players/invalid/mini-game-stats

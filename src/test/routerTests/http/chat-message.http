@@ -1,0 +1,94 @@
+// ChatMessage Endpoints
+
+### Get All Chat Messages
+GET http://localhost:3000/api/chat-messages
+
+### Get Global Chat Messages
+GET http://localhost:3000/api/chat-messages/global
+
+### Get Chat Message by ID
+GET http://localhost:3000/api/chat-messages/1
+
+### Get Chat Message by ID (not found)
+GET http://localhost:3000/api/chat-messages/99999
+
+### Get Chat Message by ID (invalid ID)
+GET http://localhost:3000/api/chat-messages/invalid
+
+### Get Player's Sent Messages
+GET http://localhost:3000/api/players/1/sent-messages
+
+### Get Player's Sent Messages (invalid ID)
+GET http://localhost:3000/api/players/invalid/sent-messages
+
+### Get Player's Received Messages
+GET http://localhost:3000/api/players/1/received-messages
+
+### Get Player's Received Messages (invalid ID)
+GET http://localhost:3000/api/players/invalid/received-messages
+
+### Get Player's Unread Messages
+GET http://localhost:3000/api/players/1/unread-messages
+
+### Get Player's Unread Messages (invalid ID)
+GET http://localhost:3000/api/players/invalid/unread-messages
+
+### Get Conversation Between Two Players
+GET http://localhost:3000/api/chat-messages/conversation/1/2
+
+### Get Conversation (invalid IDs)
+GET http://localhost:3000/api/chat-messages/conversation/invalid/2
+
+### Send Global Message
+POST http://localhost:3000/api/chat-messages
+Content-Type: application/json
+
+{
+    "senderId": 1,
+    "content": "Hello everyone! Good luck trading!"
+}
+
+### Send Private Message
+POST http://localhost:3000/api/chat-messages
+Content-Type: application/json
+
+{
+    "senderId": 1,
+    "receiverId": 2,
+    "content": "Hey, want to trade stoves?"
+}
+
+### Send Message (missing content)
+POST http://localhost:3000/api/chat-messages
+Content-Type: application/json
+
+{
+    "senderId": 1
+}
+
+### Send Message (invalid sender)
+POST http://localhost:3000/api/chat-messages
+Content-Type: application/json
+
+{
+    "senderId": 99999,
+    "content": "Test message"
+}
+
+### Mark Message as Read
+PATCH http://localhost:3000/api/chat-messages/1/read
+
+### Mark Message as Read (not found)
+PATCH http://localhost:3000/api/chat-messages/99999/read
+
+### Delete Chat Message
+DELETE http://localhost:3000/api/chat-messages/1
+
+### Delete Chat Message (not found)
+DELETE http://localhost:3000/api/chat-messages/99999
+
+### Get Player's Unread Count
+GET http://localhost:3000/api/players/1/unread-count
+
+### Get Player's Unread Count (invalid ID)
+GET http://localhost:3000/api/players/invalid/unread-count

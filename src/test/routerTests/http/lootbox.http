@@ -87,14 +87,86 @@ GET http://localhost:3000/api/lootbox-types/1
 ### Get Lootbox Type by ID (not found)
 GET http://localhost:3000/api/lootbox-types/99999
 
+### Create Lootbox Type
+POST http://localhost:3000/api/lootbox-types
+Content-Type: application/json
+
+{
+    "name": "Premium Crate",
+    "description": "High chance for rare items",
+    "costCoins": 500,
+    "costFree": false,
+    "dailyLimit": 3,
+    "isAvailable": true
+}
+
+### Create Lootbox Type (free)
+POST http://localhost:3000/api/lootbox-types
+Content-Type: application/json
+
+{
+    "name": "Daily Free Box",
+    "description": "Free daily lootbox",
+    "costCoins": 0,
+    "costFree": true,
+    "dailyLimit": 1,
+    "isAvailable": true
+}
+
+### Create Lootbox Type (missing fields)
+POST http://localhost:3000/api/lootbox-types
+Content-Type: application/json
+
+{
+    "name": "Incomplete Type"
+}
+
+### Update Lootbox Type
+PATCH http://localhost:3000/api/lootbox-types/1
+Content-Type: application/json
+
+{
+    "name": "Updated Crate",
+    "costCoins": 750
+}
+
+### Update Lootbox Type Availability
+PATCH http://localhost:3000/api/lootbox-types/1/availability
+Content-Type: application/json
+
+{
+    "isAvailable": false
+}
+
+### Delete Lootbox Type
+DELETE http://localhost:3000/api/lootbox-types/1
+
+### Delete Lootbox Type (not found)
+DELETE http://localhost:3000/api/lootbox-types/99999
+
+### Count Lootbox Types
+GET http://localhost:3000/api/lootbox-types/count
+
 
 // LootboxDrop Endpoints
 
-### Get Drops by Lootbox ID
-GET http://localhost:3000/api/lootboxes/1/drops
+### Get All Lootbox Drops
+GET http://localhost:3000/api/lootbox-drops
 
-### Get Drops by Lootbox ID (invalid ID)
-GET http://localhost:3000/api/lootboxes/invalid/drops
+### Get Lootbox Drop by ID
+GET http://localhost:3000/api/lootbox-drops/1
+
+### Get Lootbox Drop by ID (not found)
+GET http://localhost:3000/api/lootbox-drops/99999
+
+### Get Drop by Lootbox ID
+GET http://localhost:3000/api/lootbox-drops/lootbox/1
+
+### Get Drop by Stove ID
+GET http://localhost:3000/api/lootbox-drops/stove/1
+
+### Get Player's Lootbox Drops
+GET http://localhost:3000/api/players/1/lootbox-drops
 
 ### Create Lootbox Drop
 POST http://localhost:3000/api/lootbox-drops
@@ -112,3 +184,12 @@ Content-Type: application/json
 {
     "stoveId": 1
 }
+
+### Delete Lootbox Drop
+DELETE http://localhost:3000/api/lootbox-drops/1
+
+### Delete Lootbox Drop (not found)
+DELETE http://localhost:3000/api/lootbox-drops/99999
+
+### Count Lootbox Drops
+GET http://localhost:3000/api/lootbox-drops/count
