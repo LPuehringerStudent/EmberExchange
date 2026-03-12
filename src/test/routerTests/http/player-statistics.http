@@ -1,0 +1,37 @@
+// Player Statistics Endpoints
+
+### Get All Player Statistics
+GET http://localhost:3000/api/player-statistics
+
+### Get Top Players by Activity
+GET http://localhost:3000/api/player-statistics/leaderboard/activity
+
+### Get Top Players by Activity (limit 5)
+GET http://localhost:3000/api/player-statistics/leaderboard/activity?limit=5
+
+### Get Top Players by Net Worth
+GET http://localhost:3000/api/player-statistics/leaderboard/wealth
+
+### Get Top Players by Net Worth (limit 5)
+GET http://localhost:3000/api/player-statistics/leaderboard/wealth?limit=5
+
+### Get Player Statistics
+GET http://localhost:3000/api/players/2/statistics
+
+### Get Player Statistics (not found)
+GET http://localhost:3000/api/players/99999/statistics
+
+### Get Player Statistics (invalid ID)
+GET http://localhost:3000/api/players/invalid/statistics
+
+### Create Player Statistics
+POST http://localhost:3000/api/players/1/statistics
+
+### Create Player Statistics (invalid ID)
+POST http://localhost:3000/api/players/invalid/statistics
+
+### Delete Player Statistics
+DELETE http://localhost:3000/api/players/2/statistics
+
+### Delete Player Statistics (not found)
+DELETE http://localhost:3000/api/players/99999/statistics

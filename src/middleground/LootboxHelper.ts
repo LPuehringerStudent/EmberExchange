@@ -12,7 +12,7 @@ export class LootBoxHelper {
         { name: 'Common', color: 'rgba(179,229,252,0.45)', weight: 50 },
         { name: 'Rare', color: '#2ecaca', weight: 30 },
         { name: 'Epic', color: '#8e05a6', weight: 15 },
-        { name: 'Legendary', color: '#ff8a80', weight: 5 }
+        { name: 'Legendary', color: '#ffc880', weight: 5 }
     ];
 
     items: LootItem[] = [];
@@ -51,9 +51,7 @@ export class LootBoxHelper {
         if (typeId === 7) return Rarity.LEGENDARY;
         return Rarity.COMMON;
     }
-    // TODO: Implement proper database saving with typeId and currentOwnerId
-    // private saveToDataBase(): void{
-    //     const service: StoveService = new StoveService(new Unit(false));
-    //     service.createStove(typeId, currentOwnerId);
-    // }
+
+
 }
+

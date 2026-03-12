@@ -1,0 +1,69 @@
+// Stove Type Statistics Endpoints
+
+### Get All Stove Type Statistics
+GET http://localhost:3000/api/stove-type-statistics
+
+### Get Market Summary
+GET http://localhost:3000/api/stove-type-statistics/market-summary
+
+### Get Top Stove Types by Sales
+GET http://localhost:3000/api/stove-type-statistics/leaderboard/sales
+
+### Get Top Stove Types by Sales (limit 5)
+GET http://localhost:3000/api/stove-type-statistics/leaderboard/sales?limit=5
+
+### Get Most Viewed Stove Types
+GET http://localhost:3000/api/stove-type-statistics/most-viewed
+
+### Get Most Viewed Stove Types (limit 5)
+GET http://localhost:3000/api/stove-type-statistics/most-viewed?limit=5
+
+### Get Stove Types by Trend (Increasing)
+GET http://localhost:3000/api/stove-type-statistics/trend/increasing
+
+### Get Stove Types by Trend (Stable)
+GET http://localhost:3000/api/stove-type-statistics/trend/stable
+
+### Get Stove Types by Trend (Decreasing)
+GET http://localhost:3000/api/stove-type-statistics/trend/decreasing
+
+### Get Stove Types by Trend (Invalid)
+GET http://localhost:3000/api/stove-type-statistics/trend/invalid
+
+### Get Stove Type Statistics
+GET http://localhost:3000/api/stove-types/1/statistics
+
+### Get Stove Type Statistics (not found)
+GET http://localhost:3000/api/stove-types/99999/statistics
+
+### Get Stove Type Statistics (invalid ID)
+GET http://localhost:3000/api/stove-types/invalid/statistics
+
+### Create Stove Type Statistics
+POST http://localhost:3000/api/stove-types/10/statistics
+Content-Type: application/json
+
+{
+    "expectedDropRate": 0.05,
+    "rarityRank": 3
+}
+
+### Create Stove Type Statistics (missing fields)
+POST http://localhost:3000/api/stove-types/10/statistics
+Content-Type: application/json
+
+{
+    "expectedDropRate": 0.05
+}
+
+### Increment View Count
+POST http://localhost:3000/api/stove-types/1/statistics/increment-views
+
+### Increment View Count (not found)
+POST http://localhost:3000/api/stove-types/99999/statistics/increment-views
+
+### Delete Stove Type Statistics
+DELETE http://localhost:3000/api/stove-types/10/statistics
+
+### Delete Stove Type Statistics (not found)
+DELETE http://localhost:3000/api/stove-types/99999/statistics

@@ -331,6 +331,137 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
         console.log("✅ PriceHistory inserted");
     }
 
+    function insertMiniGameSessions(): void {
+        const sessions = [
+            { playerId: 2, gameType: "Coin Flip", result: "win", coinPayout: 100, finishedAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+            { playerId: 2, gameType: "Coin Flip", result: "loss", coinPayout: 0, finishedAt: new Date(Date.now() - 86400000 * 1).toISOString() },
+            { playerId: 3, gameType: "Dice Roll", result: "win", coinPayout: 250, finishedAt: new Date(Date.now() - 86400000 * 3).toISOString() },
+            { playerId: 4, gameType: "Slots", result: "jackpot", coinPayout: 1000, finishedAt: new Date(Date.now() - 3600000 * 5).toISOString() },
+            { playerId: 5, gameType: "Coin Flip", result: "loss", coinPayout: 0, finishedAt: new Date(Date.now() - 3600000 * 2).toISOString() }
+        ];
+        
+        for (const session of sessions) {
+            const stmt = unit.prepare<
+                unknown,
+                { playerId: number; gameType: string; result: string; coinPayout: number; finishedAt: string }
+            >(
+                `insert into MiniGameSession (playerId, gameType, result, coinPayout, finishedAt) 
+                 values (@playerId, @gameType, @result, @coinPayout, @finishedAt)`,
+                session
+            );
+            stmt.run();
+        }
+        console.log("✅ MiniGameSessions inserted");
+    }
+
+    function insertChatMessages(): void {
+        const messages = [
+            { senderId: 2, receiverId: null as number | null, content: "Hello everyone!", sentAt: new Date(Date.now() - 3600000 * 5).toISOString(), isRead: true },
+            { senderId: 3, receiverId: null, content: "Good luck with your trades!", sentAt: new Date(Date.now() - 3600000 * 4).toISOString(), isRead: true },
+            { senderId: 2, receiverId: 3, content: "Hey, want to trade stoves?", sentAt: new Date(Date.now() - 3600000 * 3).toISOString(), isRead: false },
+            { senderId: 3, receiverId: 2, content: "Sure, what do you have?", sentAt: new Date(Date.now() - 3600000 * 2).toISOString(), isRead: false },
+            { senderId: 4, receiverId: null, content: "Just got a legendary stove!", sentAt: new Date(Date.now() - 3600000 * 1).toISOString(), isRead: false }
+        ];
+        
+        for (const message of messages) {
+            const stmt = unit.prepare<
+                unknown,
+                { senderId: number; receiverId: number | null; content: string; sentAt: string; isRead: number }
+            >(
+                `insert into ChatMessage (senderId, receiverId, content, sentAt, isRead) 
+                 values (@senderId, @receiverId, @content, @sentAt, @isRead)`,
+                { ...message, isRead: message.isRead ? 1 : 0 }
+            );
+            stmt.run();
+        }
+        console.log("✅ ChatMessages inserted");
+    }
+
+    function insertPlayerStatistics(): void {
+        const now = new Date().toISOString();
+        const stats = [
+            { playerId: 2, totalLogins: 15, totalSessionMinutes: 450, totalLootboxesOpened: 3, totalListingsCreated: 2, totalListingsSold: 1, totalPurchases: 0, totalMiniGamesPlayed: 5, luckiestWin: 0, totalMessagesSent: 3, currentStoveCount: 3, highestCoinBalance: 5500, netWorthEstimate: 8000, marketActivityScore: 75, updatedAt: now },
+            { playerId: 3, totalLogins: 10, totalSessionMinutes: 280, totalLootboxesOpened: 1, totalListingsCreated: 1, totalListingsSold: 0, totalPurchases: 1, totalMiniGamesPlayed: 3, luckiestWin: 0, totalMessagesSent: 2, currentStoveCount: 2, highestCoinBalance: 3800, netWorthEstimate: 5500, marketActivityScore: 50, updatedAt: now },
+            { playerId: 4, totalLogins: 20, totalSessionMinutes: 600, totalLootboxesOpened: 5, totalListingsCreated: 3, totalListingsSold: 2, totalPurchases: 0, totalMiniGamesPlayed: 8, luckiestWin: 1000, totalMessagesSent: 1, currentStoveCount: 4, highestCoinBalance: 12000, netWorthEstimate: 15000, marketActivityScore: 95, updatedAt: now },
+            { playerId: 5, totalLogins: 5, totalSessionMinutes: 120, totalLootboxesOpened: 1, totalListingsCreated: 0, totalListingsSold: 0, totalPurchases: 0, totalMiniGamesPlayed: 1, luckiestWin: 0, totalMessagesSent: 0, currentStoveCount: 1, highestCoinBalance: 2600, netWorthEstimate: 4000, marketActivityScore: 25, updatedAt: now }
+        ];
+        
+        for (const stat of stats) {
+            const stmt = unit.prepare(
+                `insert into PlayerStatistics (playerId, totalLogins, totalSessionMinutes, totalLootboxesOpened, 
+                 totalListingsCreated, totalListingsSold, totalPurchases, totalMiniGamesPlayed, luckiestWin,
+                 totalMessagesSent, currentStoveCount, highestCoinBalance, netWorthEstimate, marketActivityScore, updatedAt) 
+                 values (@playerId, @totalLogins, @totalSessionMinutes, @totalLootboxesOpened, @totalListingsCreated,
+                 @totalListingsSold, @totalPurchases, @totalMiniGamesPlayed, @luckiestWin, @totalMessagesSent,
+                 @currentStoveCount, @highestCoinBalance, @netWorthEstimate, @marketActivityScore, @updatedAt)`,
+                stat
+            );
+            stmt.run();
+        }
+        console.log("✅ PlayerStatistics inserted");
+    }
+
+    function insertDailyStatistics(): void {
+        const today = new Date().toISOString().split('T')[0];
+        const stmt = unit.prepare<
+            unknown,
+            { date: string; uniquePlayersLoggedIn: number; newPlayersJoined: number; lootboxesOpenedToday: number; newListingsToday: number; listingsSoldToday: number; averageSalePriceToday: number; totalTradingVolume: number; miniGamesPlayedToday: number; messagesSentToday: number; totalCoinsInCirculation: number; totalStovesInExistence: number; createdAt: string }
+        >(
+            `insert into DailyStatistics (date, uniquePlayersLoggedIn, newPlayersJoined, lootboxesOpenedToday,
+             newListingsToday, listingsSoldToday, averageSalePriceToday, totalTradingVolume, miniGamesPlayedToday,
+             messagesSentToday, totalCoinsInCirculation, totalStovesInExistence, createdAt)
+             values (@date, @uniquePlayersLoggedIn, @newPlayersJoined, @lootboxesOpenedToday, @newListingsToday,
+             @listingsSoldToday, @averageSalePriceToday, @totalTradingVolume, @miniGamesPlayedToday,
+             @messagesSentToday, @totalCoinsInCirculation, @totalStovesInExistence, @createdAt)`,
+            {
+                date: today,
+                uniquePlayersLoggedIn: 4,
+                newPlayersJoined: 0,
+                lootboxesOpenedToday: 5,
+                newListingsToday: 2,
+                listingsSoldToday: 1,
+                averageSalePriceToday: 1500,
+                totalTradingVolume: 1500,
+                miniGamesPlayedToday: 5,
+                messagesSentToday: 5,
+                totalCoinsInCirculation: 21800,
+                totalStovesInExistence: 6,
+                createdAt: new Date().toISOString()
+            }
+        );
+        stmt.run();
+        console.log("✅ DailyStatistics inserted");
+    }
+
+    function insertStoveTypeStatistics(): void {
+        const now = new Date().toISOString();
+        const stats = [
+            { stoveTypeId: 1, totalMinted: 1, currentlyOwned: 1, currentlyListed: 0, averageListingPrice: 500, averageSalePrice: 500, totalSales: 1, salesLast7Days: 1, rarityRank: 9, percentOfTotalSupply: 16.67 },
+            { stoveTypeId: 2, totalMinted: 1, currentlyOwned: 1, currentlyListed: 0, averageListingPrice: 0, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 8, percentOfTotalSupply: 16.67 },
+            { stoveTypeId: 3, totalMinted: 1, currentlyOwned: 0, currentlyListed: 1, currentLowestPrice: 1500, currentHighestPrice: 1500, averageListingPrice: 1500, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 6, percentOfTotalSupply: 16.67 },
+            { stoveTypeId: 4, totalMinted: 1, currentlyOwned: 1, currentlyListed: 1, currentLowestPrice: 2500, currentHighestPrice: 2500, averageListingPrice: 2500, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 5, percentOfTotalSupply: 16.67 },
+            { stoveTypeId: 5, totalMinted: 1, currentlyOwned: 0, currentlyListed: 0, averageListingPrice: 0, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 4, percentOfTotalSupply: 16.67 },
+            { stoveTypeId: 7, totalMinted: 1, currentlyOwned: 1, currentlyListed: 0, averageListingPrice: 0, averageSalePrice: 0, totalSales: 0, salesLast7Days: 0, rarityRank: 2, percentOfTotalSupply: 16.67 }
+        ];
+        
+        for (const stat of stats) {
+            const stmt = unit.prepare<
+                unknown,
+                { stoveTypeId: number; totalMinted: number; currentlyOwned: number; currentlyListed: number; currentLowestPrice?: number; currentHighestPrice?: number; averageListingPrice: number; averageSalePrice: number; totalSales: number; salesLast7Days: number; rarityRank: number; percentOfTotalSupply: number; updatedAt: string }
+            >(
+                `insert into StoveTypeStatistics (stoveTypeId, totalMinted, currentlyOwned, currentlyListed,
+                 currentLowestPrice, currentHighestPrice, averageListingPrice, averageSalePrice, totalSales,
+                 salesLast7Days, rarityRank, percentOfTotalSupply, updatedAt)
+                 values (@stoveTypeId, @totalMinted, @currentlyOwned, @currentlyListed, @currentLowestPrice,
+                 @currentHighestPrice, @averageListingPrice, @averageSalePrice, @totalSales, @salesLast7Days,
+                 @rarityRank, @percentOfTotalSupply, @updatedAt)`,
+                { ...stat, updatedAt: now }
+            );
+            stmt.run();
+        }
+        console.log("✅ StoveTypeStatistics inserted");
+    }
+
     if (!(alreadyPresent())) {
         insertLootboxTypes();
         insertPlayers();
@@ -342,6 +473,11 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
         insertListings();
         insertTrades();
         insertPriceHistory();
+        insertMiniGameSessions();
+        insertChatMessages();
+        insertPlayerStatistics();
+        insertDailyStatistics();
+        insertStoveTypeStatistics();
         return "inserted";
     }
     return "skipped";
@@ -507,6 +643,124 @@ class DB {
             ) strict
         `);
 
+        // Statistics Tables
+        connection.exec(`
+            create table if not exists PlayerStatistics (
+                statId integer primary key autoincrement,
+                playerId integer not null unique references Player(playerId),
+                totalLogins integer not null default 0,
+                lastLoginAt text,
+                totalSessionMinutes integer not null default 0,
+                longestSessionMinutes integer not null default 0,
+                totalLootboxesOpened integer not null default 0,
+                totalLootboxesPurchased integer not null default 0,
+                totalLootboxesFree integer not null default 0,
+                totalCoinsSpentOnLootboxes integer not null default 0,
+                bestDropRarity text check (bestDropRarity in ('common', 'rare', 'epic', 'legendary', 'limited')),
+                totalStovesFromLootboxes integer not null default 0,
+                totalListingsCreated integer not null default 0,
+                totalListingsSold integer not null default 0,
+                totalListingsCancelled integer not null default 0,
+                totalListingsExpired integer not null default 0,
+                totalPurchases integer not null default 0,
+                totalSalesRevenue integer not null default 0,
+                totalPurchaseSpending integer not null default 0,
+                averageListingPrice integer not null default 0,
+                averageSalePrice integer not null default 0,
+                fastestSaleMinutes integer,
+                totalTradesCompleted integer not null default 0,
+                totalMiniGamesPlayed integer not null default 0,
+                totalMiniGameWins integer not null default 0,
+                totalMiniGameLosses integer not null default 0,
+                totalCoinsFromMiniGames integer not null default 0,
+                totalCoinsLostInMiniGames integer not null default 0,
+                favoriteGameType text,
+                luckiestWin integer not null default 0,
+                totalMessagesSent integer not null default 0,
+                totalMessagesReceived integer not null default 0,
+                totalGlobalMessages integer not null default 0,
+                totalPrivateMessages integer not null default 0,
+                currentStoveCount integer not null default 0,
+                totalStovesAcquired integer not null default 0,
+                totalStovesSold integer not null default 0,
+                totalStovesTraded integer not null default 0,
+                rarestStoveOwned text check (rarestStoveOwned in ('common', 'rare', 'epic', 'legendary', 'limited')),
+                highestCoinBalance integer not null default 0,
+                lowestCoinBalance integer not null default 0,
+                totalCoinsEarned integer not null default 0,
+                totalCoinsSpent integer not null default 0,
+                netWorthEstimate integer not null default 0,
+                marketActivityScore integer not null default 0,
+                updatedAt text not null
+            ) strict
+        `);
+
+        connection.exec(`
+            create table if not exists DailyStatistics (
+                statId integer primary key autoincrement,
+                date text not null unique,
+                uniquePlayersLoggedIn integer not null default 0,
+                newPlayersJoined integer not null default 0,
+                totalSessions integer not null default 0,
+                averageSessionMinutes integer not null default 0,
+                lootboxesOpenedToday integer not null default 0,
+                lootboxesPurchasedToday integer not null default 0,
+                coinsSpentOnLootboxesToday integer not null default 0,
+                newListingsToday integer not null default 0,
+                listingsSoldToday integer not null default 0,
+                listingsCancelledToday integer not null default 0,
+                averageListingPriceToday integer not null default 0,
+                averageSalePriceToday integer not null default 0,
+                totalTradingVolume integer not null default 0,
+                priceChangePercent real not null default 0,
+                miniGamesPlayedToday integer not null default 0,
+                totalCoinPayoutsToday integer not null default 0,
+                houseProfit integer not null default 0,
+                messagesSentToday integer not null default 0,
+                uniqueChattersToday integer not null default 0,
+                totalCoinsInCirculation integer not null default 0,
+                totalStovesInExistence integer not null default 0,
+                averagePlayerNetWorth integer not null default 0,
+                medianPlayerNetWorth integer not null default 0,
+                wealthGapRatio real not null default 0,
+                averageTimeToSellHours real not null default 0,
+                sellThroughRate real not null default 0,
+                createdAt text not null
+            ) strict
+        `);
+
+        connection.exec(`
+            create table if not exists StoveTypeStatistics (
+                statId integer primary key autoincrement,
+                stoveTypeId integer not null unique references StoveType(typeId),
+                totalMinted integer not null default 0,
+                currentlyOwned integer not null default 0,
+                currentlyListed integer not null default 0,
+                listedPercent real not null default 0,
+                currentLowestPrice integer,
+                currentHighestPrice integer,
+                averageListingPrice integer not null default 0,
+                lastSalePrice integer,
+                averageSalePrice integer not null default 0,
+                priceHistory7d text not null default '[]',
+                priceHistory30d text not null default '[]',
+                allTimeHighPrice integer,
+                allTimeLowPrice integer,
+                totalSales integer not null default 0,
+                salesLast7Days integer not null default 0,
+                salesLast30Days integer not null default 0,
+                viewsCount integer not null default 0,
+                totalDroppedFromLootboxes integer not null default 0,
+                actualDropRate real not null default 0,
+                percentOfTotalSupply real not null default 0,
+                rarityRank integer not null default 0,
+                priceTrend7d real not null default 0,
+                priceTrend30d real not null default 0,
+                demandTrend text not null default 'stable' check (demandTrend in ('increasing', 'stable', 'decreasing')),
+                updatedAt text not null
+            ) strict
+        `);
+
         // Create indexes for better query performance
         connection.exec(`create index if not exists idx_stove_owner on Stove(currentOwnerId)`);
         connection.exec(`create index if not exists idx_stove_type on Stove(typeId)`);
@@ -522,6 +776,9 @@ class DB {
         connection.exec(`create index if not exists idx_lootbox_player on Lootbox(playerId)`);
         connection.exec(`create index if not exists idx_lootbox_type on Lootbox(lootboxTypeId)`);
         connection.exec(`create index if not exists idx_minigame_player on MiniGameSession(playerId)`);
+        connection.exec(`create index if not exists idx_playerstats_player on PlayerStatistics(playerId)`);
+        connection.exec(`create index if not exists idx_dailystats_date on DailyStatistics(date)`);
+        connection.exec(`create index if not exists idx_stovetypestats_type on StoveTypeStatistics(stoveTypeId)`);
     }
 }
 
