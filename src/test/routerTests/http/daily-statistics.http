@@ -1,0 +1,47 @@
+// Daily Statistics Endpoints
+
+### Get All Daily Statistics
+GET http://localhost:3000/api/daily-statistics
+
+### Get Today's Statistics
+GET http://localhost:3000/api/daily-statistics/today
+
+### Get Summary (Last 7 Days)
+GET http://localhost:3000/api/daily-statistics/summary
+
+### Get Summary (Last 30 Days)
+GET http://localhost:3000/api/daily-statistics/summary?days=30
+
+### Get Statistics by Date
+GET http://localhost:3000/api/daily-statistics/2024-03-12
+
+### Get Statistics by Date (invalid format)
+GET http://localhost:3000/api/daily-statistics/invalid-date
+
+### Get Statistics Range
+GET http://localhost:3000/api/daily-statistics/range?from=2024-03-01&to=2024-03-12
+
+### Get Statistics Range (invalid dates)
+GET http://localhost:3000/api/daily-statistics/range?from=invalid&to=invalid
+
+### Create Daily Statistics
+POST http://localhost:3000/api/daily-statistics
+Content-Type: application/json
+
+{
+    "date": "2024-03-13"
+}
+
+### Create Daily Statistics (invalid date)
+POST http://localhost:3000/api/daily-statistics
+Content-Type: application/json
+
+{
+    "date": "invalid"
+}
+
+### Delete Daily Statistics
+DELETE http://localhost:3000/api/daily-statistics/2024-03-13
+
+### Delete Daily Statistics (not found)
+DELETE http://localhost:3000/api/daily-statistics/2099-01-01
