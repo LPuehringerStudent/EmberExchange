@@ -11,6 +11,10 @@ import { ownershipRouter } from "./routers/ownership-router";
 import { priceHistoryRouter } from "./routers/price-history-router";
 import { listingRouter } from "./routers/listing-router";
 import { tradeRouter } from "./routers/trade-router";
+import { lootboxTypeRouter } from "./routers/lootbox-type-router";
+import { lootboxDropRouter } from "./routers/lootbox-drop-router";
+import { miniGameSessionRouter } from "./routers/mini-game-session-router";
+import { chatMessageRouter } from "./routers/chat-message-router";
 import { swaggerSpec } from "./swagger";
 import Database from "better-sqlite3";
 
@@ -37,6 +41,10 @@ app.use("/api", ownershipRouter);
 app.use("/api", priceHistoryRouter);
 app.use("/api", listingRouter);
 app.use("/api", tradeRouter);
+app.use("/api", lootboxTypeRouter);
+app.use("/api", lootboxDropRouter);
+app.use("/api", miniGameSessionRouter);
+app.use("/api", chatMessageRouter);
 
 // Health check endpoint
 app.get("/api/health", (_req, res) => {

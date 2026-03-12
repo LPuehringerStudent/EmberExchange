@@ -331,6 +331,52 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
         console.log("✅ PriceHistory inserted");
     }
 
+    function insertMiniGameSessions(): void {
+        const sessions = [
+            { playerId: 2, gameType: "Coin Flip", result: "win", coinPayout: 100, finishedAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+            { playerId: 2, gameType: "Coin Flip", result: "loss", coinPayout: 0, finishedAt: new Date(Date.now() - 86400000 * 1).toISOString() },
+            { playerId: 3, gameType: "Dice Roll", result: "win", coinPayout: 250, finishedAt: new Date(Date.now() - 86400000 * 3).toISOString() },
+            { playerId: 4, gameType: "Slots", result: "jackpot", coinPayout: 1000, finishedAt: new Date(Date.now() - 3600000 * 5).toISOString() },
+            { playerId: 5, gameType: "Coin Flip", result: "loss", coinPayout: 0, finishedAt: new Date(Date.now() - 3600000 * 2).toISOString() }
+        ];
+        
+        for (const session of sessions) {
+            const stmt = unit.prepare<
+                unknown,
+                { playerId: number; gameType: string; result: string; coinPayout: number; finishedAt: string }
+            >(
+                `insert into MiniGameSession (playerId, gameType, result, coinPayout, finishedAt) 
+                 values (@playerId, @gameType, @result, @coinPayout, @finishedAt)`,
+                session
+            );
+            stmt.run();
+        }
+        console.log("✅ MiniGameSessions inserted");
+    }
+
+    function insertChatMessages(): void {
+        const messages = [
+            { senderId: 2, receiverId: null as number | null, content: "Hello everyone!", sentAt: new Date(Date.now() - 3600000 * 5).toISOString(), isRead: true },
+            { senderId: 3, receiverId: null, content: "Good luck with your trades!", sentAt: new Date(Date.now() - 3600000 * 4).toISOString(), isRead: true },
+            { senderId: 2, receiverId: 3, content: "Hey, want to trade stoves?", sentAt: new Date(Date.now() - 3600000 * 3).toISOString(), isRead: false },
+            { senderId: 3, receiverId: 2, content: "Sure, what do you have?", sentAt: new Date(Date.now() - 3600000 * 2).toISOString(), isRead: false },
+            { senderId: 4, receiverId: null, content: "Just got a legendary stove!", sentAt: new Date(Date.now() - 3600000 * 1).toISOString(), isRead: false }
+        ];
+        
+        for (const message of messages) {
+            const stmt = unit.prepare<
+                unknown,
+                { senderId: number; receiverId: number | null; content: string; sentAt: string; isRead: number }
+            >(
+                `insert into ChatMessage (senderId, receiverId, content, sentAt, isRead) 
+                 values (@senderId, @receiverId, @content, @sentAt, @isRead)`,
+                { ...message, isRead: message.isRead ? 1 : 0 }
+            );
+            stmt.run();
+        }
+        console.log("✅ ChatMessages inserted");
+    }
+
     if (!(alreadyPresent())) {
         insertLootboxTypes();
         insertPlayers();
@@ -342,6 +388,8 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
         insertListings();
         insertTrades();
         insertPriceHistory();
+        insertMiniGameSessions();
+        insertChatMessages();
         return "inserted";
     }
     return "skipped";
