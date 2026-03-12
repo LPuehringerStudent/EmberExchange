@@ -6,7 +6,7 @@
   --primary-orange: #e85d04;
   --flame-red: #d00000;
   --warm-orange: #f48c06;
-  --light-orange: #ffba08;
+  --light-orange: #ffffff;
   --charcoal: #2d3436;
   --ash-gray: #636e72;
   --warm-white: #faf8f5;
@@ -225,7 +225,7 @@ body {
 
 .account-menu-item:hover {
   background: rgba(232, 93, 4, 0.15);
-  color: var(--light-orange);
+  color: white;
 }
 
 .account-menu-divider {
@@ -279,7 +279,7 @@ body {
   background: rgba(232, 93, 4, 0.15);
   border-left-color: var(--primary-orange);
   padding-left: 36px;
-  color: var(--light-orange);
+  color: white;
 }
 
 /* =====================================
