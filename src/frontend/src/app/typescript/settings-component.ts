@@ -1,40 +1,22 @@
+// settings-component.ts
 import { Component } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import {Router, ActivatedRoute, RouterOutlet} from '@angular/router';
 
 @Component({
   selector: 'app-settings',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
   templateUrl: '../html/settings.html',
+  imports: [
+    RouterOutlet
+  ],
   styleUrls: ['../css/settings.css']
 })
 export class SettingsComponent {
   activeTab = 'account';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private route: ActivatedRoute) {}
 
   setActiveTab(tab: string): void {
     this.activeTab = tab;
-    // Navigate to WIP for non-account tabs
-    if (tab !== 'account') {
-      this.showWIP();
-    }
-  }
-
-  showWIP(): void {
-    alert('🚧 This feature is under development!');
-  }
-
-  navigateToWIP(): void {
-    this.router.navigate(['/support']); // Uses NotFoundComponent
-  }
-
-  saveChanges(): void {
-    this.showWIP();
-  }
-
-  updatePassword(): void {
-    this.showWIP();
+    this.router.navigate([tab], { relativeTo: this.route });
   }
 }

@@ -6,8 +6,7 @@ import { RouterLink } from '@angular/router';
   selector: 'app-main',
   templateUrl: '../app.html',
   imports: [RouterOutlet, RouterLink],
-  styleUrls: ['../app.css'],
-  standalone: true,
+  styleUrls: ['../app.css']
 
 })
 export class MainComponent {

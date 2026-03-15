@@ -1,4 +1,5 @@
-﻿<div class="settings-page">
+﻿<!-- settings-component.html -->
+<div class="settings-page">
 
   <div class="settings-wrapper">
 
@@ -8,44 +9,16 @@
       <ul>
         <li [class.active]="activeTab === 'account'" (click)="setActiveTab('account')">Account</li>
         <li [class.active]="activeTab === 'security'" (click)="setActiveTab('security')">Security</li>
-        <li [class.active]="activeTab === 'appearance'" (click)="navigateToWIP()">Appearance</li>
-        <li [class.active]="activeTab === 'notifications'" (click)="navigateToWIP()">Notifications</li>
+        <li [class.active]="activeTab === 'appearance'" (click)="setActiveTab('appearance')">Appearance</li>
+        <li [class.active]="activeTab === 'language'" (click)="setActiveTab('language')">Language</li>
+        <li [class.active]="activeTab === 'socials'" (click)="setActiveTab('socials')">Socials</li>
       </ul>
     </aside>
 
     <!-- Right Content -->
-    <section class="settings-content">
-
-      <div class="settings-section">
-        <h1>Account Information</h1>
-
-        <div class="form-grid">
-          <div class="input-group">
-            <label>Username</label>
-            <input type="text" placeholder="EmberUser123" readonly>
-          </div>
-
-          <div class="input-group">
-            <label>Email</label>
-            <input type="email" placeholder="you@example.com" readonly>
-          </div>
-        </div>
-
-        <button class="btn-primary" (click)="saveChanges()">Save Changes</button>
-      </div>
-
-      <div class="settings-section">
-        <h1>Password & Security</h1>
-
-        <div class="input-group">
-          <label>New Password</label>
-          <input type="password" placeholder="••••••••" readonly>
-        </div>
-
-        <button class="btn-danger" (click)="updatePassword()">Update Password</button>
-      </div>
-
-    </section>
+    <main class="settings-content">
+      <router-outlet></router-outlet>
+    </main>
 
   </div>
 

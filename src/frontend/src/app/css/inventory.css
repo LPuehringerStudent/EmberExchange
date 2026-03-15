@@ -138,35 +138,6 @@
 .empty-state span {
   font-size: 13px;
   color: #888;
-  margin-bottom: 20px;
-}
-
-/* Action button - Go to Lootboxes / Open a Lootbox */
-.action-btn {
-  margin-top: 24px;
-  padding: 14px 28px;
-  background: linear-gradient(135deg, #e85d04 0%, #f48c06 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(232, 93, 4, 0.3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.action-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(232, 93, 4, 0.4);
-  background: linear-gradient(135deg, #f48c06 0%, #e85d04 100%);
-}
-
-.action-btn:active {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(232, 93, 4, 0.3);
 }
 
 /* =========================
@@ -219,94 +190,289 @@
   border-radius: 10px;
 }
 
-/* =========================
-   Rarity Styles for Items Only
-========================= */
-
-/* Rarity color variables */
-:root {
-  --rarity-common: #9e9e9e;
-  --rarity-uncommon: #4caf50;
-  --rarity-rare: #2196f3;
-  --rarity-epic: #9c27b0;
-  --rarity-legendary: #ff9800;
+/* Grid Layout */
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 20px;
 }
 
-/* Apply rarity styles only to items (not lootboxes) */
-.inventory-slot.rarity-common {
-  border: 2px solid var(--rarity-common);
-  box-shadow: 0 4px 15px rgba(158, 158, 158, 0.2);
-}
-
-.inventory-slot.rarity-uncommon {
-  border: 2px solid var(--rarity-uncommon);
-  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.25);
-}
-
-.inventory-slot.rarity-rare {
-  border: 2px solid var(--rarity-rare);
-  box-shadow: 0 4px 25px rgba(33, 150, 243, 0.3);
-}
-
-.inventory-slot.rarity-epic {
-  border: 2px solid var(--rarity-epic);
-  box-shadow: 0 4px 30px rgba(156, 39, 176, 0.35);
-}
-
-.inventory-slot.rarity-legendary {
-  border: 2px solid var(--rarity-legendary);
-  box-shadow: 0 4px 35px rgba(255, 152, 0, 0.4);
-  animation: legendaryPulse 2s infinite;
-}
-
-@keyframes legendaryPulse {
-  0%, 100% { box-shadow: 0 4px 35px rgba(255, 152, 0, 0.4); }
-  50% { box-shadow: 0 8px 50px rgba(255, 152, 0, 0.6); }
-}
-
-/* Rarity badge styles */
-.rarity-badge {
-  display: inline-block;
-  padding: 4px 12px;
+/* Inventory Slot Base */
+.inventory-slot {
+  background: #2a2a3e;
   border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
+  padding: 16px;
+  position: relative;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.inventory-slot:hover {
+  border-color: #4a9eff;
+  transform: translateY(-2px);
+}
+
+/* Lootbox Slot */
+.lootbox-slot {
+  text-align: center;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.lootbox-slot.locked {
+  opacity: 0.7;
+  background: #1a1a2e;
+}
+
+.slot-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.slot-count {
+  background: #4a9eff;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Item Slot (Stove) */
+.item-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slot-visual {
+  position: relative;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.stove-icon {
+  font-size: 48px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+/* Rarity Colors */
+.rarity-common .stove-icon { filter: grayscale(100%) brightness(1.2); }
+.rarity-uncommon .stove-icon { filter: hue-rotate(120deg) saturate(1.5); }
+.rarity-rare .stove-icon { filter: hue-rotate(200deg) saturate(1.5) brightness(1.2); }
+.rarity-epic .stove-icon { filter: hue-rotate(280deg) saturate(2); }
+.rarity-legendary .stove-icon { filter: hue-rotate(45deg) saturate(2) brightness(1.3); }
+
+.level-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #4caf50;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.slot-info {
+  flex: 1;
+}
+
+.slot-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #fff;
+}
+
+.slot-type {
+  color: #888;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.rarity-badge.common {
-  background: rgba(158, 158, 158, 0.15);
-  color: #616161;
-  border: 1px solid var(--rarity-common);
+/* Stats */
+.slot-stats {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.rarity-badge.uncommon {
-  background: rgba(76, 175, 80, 0.15);
-  color: #2e7d32;
-  border: 1px solid var(--rarity-uncommon);
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.rarity-badge.rare {
-  background: rgba(33, 150, 243, 0.15);
-  color: #1565c0;
-  border: 1px solid var(--rarity-rare);
+.stat-label {
+  font-size: 11px;
+  color: #666;
+  min-width: 60px;
+  text-transform: uppercase;
 }
 
-.rarity-badge.epic {
-  background: rgba(156, 39, 176, 0.15);
-  color: #7b1fa2;
-  border: 1px solid var(--rarity-epic);
+.stat-bar {
+  flex: 1;
+  height: 6px;
+  background: #1a1a2e;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-.rarity-badge.legendary {
-  background: rgba(255, 152, 0, 0.15);
-  color: #e65100;
-  border: 1px solid var(--rarity-legendary);
-  animation: badgePulse 2s infinite;
+.stat-fill {
+  height: 100%;
+  background: #4a9eff;
+  border-radius: 3px;
+  transition: width 0.3s ease;
 }
 
-@keyframes badgePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
-  50% { box-shadow: 0 0 0 4px rgba(255, 152, 0, 0); }
+.stat-bar.heat .stat-fill {
+  background: #ff5722;
+}
+
+/* Footer */
+.slot-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #3a3a4e;
+}
+
+.owner-id {
+  font-size: 11px;
+  color: #666;
+}
+
+.use-btn {
+  background: #4a9eff;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.use-btn:hover {
+  background: #3d8be6;
+}
+
+/* Actions & Dropdown */
+.slot-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.menu-btn {
+  background: rgba(0,0,0,0.3);
+  border: none;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #1e1e2e;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  padding: 8px 0;
+  min-width: 120px;
+  z-index: 100;
+}
+
+.dropdown button {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.dropdown button:hover {
+  background: #2a2a3e;
+}
+
+.dropdown button.danger {
+  color: #ff4757;
+}
+
+.dropdown button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lock-indicator {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 16px;
+}
+
+/* Empty State */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+.empty-state span {
+  display: block;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.action-btn {
+  background: #ff894a;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+
+  display: inline-block;
+}
+
+.action-btn:hover {
+  background: #d87644;
 }
