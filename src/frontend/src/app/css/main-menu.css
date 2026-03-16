@@ -5,7 +5,6 @@
 .main-menu-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -22,6 +21,9 @@
   padding: 28px 32px;
   color: white;
   box-shadow: 0 10px 40px rgba(232, 93, 4, 0.3);
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .welcome-header {
