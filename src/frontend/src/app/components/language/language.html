@@ -1,0 +1,23 @@
+<!-- language.component.html -->
+<div class="settings-section">
+  <h1>Language</h1>
+  <p class="subtitle">Select your preferred language</p>
+
+  <div class="language-list">
+    @for (lang of languages; track lang.id) {
+      <button
+        class="language-card"
+        [class.selected]="selectedLang() === lang.id"
+        (click)="selectLanguage(lang.id)">
+        <span class="flag">{{ lang.flag }}</span>
+        <div class="lang-info">
+          <span class="lang-name">{{ lang.label }}</span>
+          <span class="lang-desc">{{ lang.desc }}</span>
+        </div>
+        @if (selectedLang() === lang.id) {
+          <div class="checkmark">✓</div>
+        }
+      </button>
+    }
+  </div>
+</div>

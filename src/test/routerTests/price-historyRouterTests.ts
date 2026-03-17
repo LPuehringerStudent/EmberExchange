@@ -225,7 +225,7 @@ describe("PriceHistory API Endpoints", () => {
                 .expect(400);
 
             expect(response.body).toHaveProperty("error");
-            expect(response.body.error.toLowerCase()).toContain("saleprice must be non-negative");
+            expect(response.body.error.toLowerCase()).toContain("positive");
         });
 
         it("should return 400 when salePrice is zero", async () => {

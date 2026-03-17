@@ -1,9 +1,9 @@
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
-import { getAllPlayerStatistics, getTopPlayersByActivity, getTopPlayersByNetWorth, PlayerStatistics } from '../fetchers/player-statistics.fetcher';
-import { getTodayStatistics, getDailySummary, DailyStatistics } from '../fetchers/daily-statistics.fetcher';
-import { getAllStoveTypeStatistics, getMarketSummary, StoveTypeStatistics } from '../fetchers/stove-type-statistics.fetcher';
+import { getAllPlayerStatistics, getTopPlayersByActivity, getTopPlayersByNetWorth, PlayerStatistics } from '../../fetchers/player-statistics.fetcher';
+import { getTodayStatistics, getDailySummary, DailyStatistics } from '../../fetchers/daily-statistics.fetcher';
+import { getAllStoveTypeStatistics, getMarketSummary, StoveTypeStatistics } from '../../fetchers/stove-type-statistics.fetcher';
 
 interface StatCard {
   label: string;
@@ -15,8 +15,8 @@ interface StatCard {
   selector: 'app-statistics',
   standalone: true,
   imports: [RouterModule],
-  templateUrl: '../html/statistics.html',
-  styleUrls: ['../css/statistics.css']
+  templateUrl: './statistics.html',
+  styleUrls: ['./statistics.css']
 })
 export class StatisticsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);

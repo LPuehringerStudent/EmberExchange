@@ -1,0 +1,32 @@
+<section class="settings-content">
+
+  <div class="settings-section">
+    <h1>Account Information</h1>
+
+    <div class="form-grid">
+      <div class="input-group">
+        <label>Username</label>
+        <input type="text" placeholder="EmberUser123" readonly>
+      </div>
+
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" placeholder="you@example.com" readonly>
+      </div>
+    </div>
+
+    <button class="btn-primary" (click)="saveChanges()">Save Changes</button>
+  </div>
+
+  <div class="settings-section">
+    <h1>Password & Security</h1>
+
+    <div class="input-group">
+      <label>New Password</label>
+      <input type="password" placeholder="••••••••" readonly>
+    </div>
+
+    <button class="btn-danger" (click)="updatePassword()">Update Password</button>
+  </div>
+
+</section>

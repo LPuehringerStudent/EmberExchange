@@ -4,11 +4,11 @@ import {Router, ActivatedRoute, RouterOutlet} from '@angular/router';
 
 @Component({
   selector: 'app-settings',
-  templateUrl: '../html/settings.html',
+  templateUrl: './settings.html',
   imports: [
     RouterOutlet
   ],
-  styleUrls: ['../css/settings.css']
+  styleUrls: ['./settings.css']
 })
 export class SettingsComponent {
   activeTab = 'account';

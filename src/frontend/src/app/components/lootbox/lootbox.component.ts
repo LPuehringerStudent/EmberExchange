@@ -1,13 +1,13 @@
 import {AfterViewInit, Component, ElementRef, inject, ViewChild, ChangeDetectorRef} from '@angular/core';
-import {LootBoxHelper, LootItem} from "../../../../middleground/LootboxHelper";
-import {StoveApiService} from '../../services/stove';
+import {LootBoxHelper, LootItem} from "../../../../../middleground/LootboxHelper";
+import {StoveApiService} from '../../../services/stove';
 
 @Component({
   selector: 'app-lootbox',
   standalone: true,
-  templateUrl: '../html/lootbox.html',
+  templateUrl: './lootbox.html',
   imports: [],
-  styleUrls: ['../css/lootbox.css']
+  styleUrls: ['./lootbox.css']
 })
 
 export class LootboxComponent implements AfterViewInit {
@@ -34,7 +34,7 @@ export class LootboxComponent implements AfterViewInit {
 
   openBox(): void {
     if (this.isOpening) return;
-    
+
     console.log('Opening lootbox...');
     this.isOpening = true;
     this.showPopup = false;
@@ -46,7 +46,7 @@ export class LootboxComponent implements AfterViewInit {
     setTimeout(() => {
       const itemsEl = this.itemsElement.nativeElement;
       const itemEl = itemsEl.querySelector('.item') as HTMLElement;
-      
+
       if (!itemEl) {
         console.error('No item elements found');
         this.isOpening = false;
@@ -62,7 +62,7 @@ export class LootboxComponent implements AfterViewInit {
       const offset = -(40 * width) + centerOffset;
 
       console.log('Starting animation, offset:', offset);
-      
+
       // Trigger animation
       itemsEl.style.transform = `translateX(${offset}px)`;
 
@@ -77,7 +77,7 @@ export class LootboxComponent implements AfterViewInit {
   private showResult(): void {
     console.log('Final item:', this.lootBoxHelper.finalItem);
     this.finalItem = this.lootBoxHelper.finalItem;
-    
+
     if (this.finalItem) {
       const typeId = this.lootBoxHelper.returnTypeId(this.finalItem);
       console.log('Saving loot with typeId:', typeId);
@@ -86,7 +86,7 @@ export class LootboxComponent implements AfterViewInit {
     } else {
       this.resultText = 'You got: Unknown';
     }
-    
+
     console.log('Showing popup with text:', this.resultText);
     this.showPopup = true;
     this.isOpening = false;

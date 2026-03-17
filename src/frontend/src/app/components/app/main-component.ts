@@ -4,9 +4,9 @@ import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-main',
-  templateUrl: '../app.html',
+  templateUrl: './app.html',
   imports: [RouterOutlet, RouterLink],
-  styleUrls: ['../app.css']
+  styleUrls: ['./app.css']
 
 })
 export class MainComponent {

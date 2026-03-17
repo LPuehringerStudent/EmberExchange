@@ -6,53 +6,53 @@ import { FormsModule } from '@angular/forms';
 import {
   getAllPlayers, getPlayerById, createPlayer, updatePlayerCoins,
   updatePlayerLootboxCount, deletePlayer, Player
-} from '../fetchers/player.fetcher';
+} from '../../fetchers/player.fetcher';
 
 // Lootbox fetcher
 import {
   getAllLootboxes, getLootboxById, getLootboxesByPlayerId, createLootbox,
   deleteLootbox, getAllLootboxTypes, getAvailableLootboxTypes, getLootboxTypeById,
   getDropsByLootboxId, createLootboxDrop, Lootbox
-} from '../fetchers/lootbox.fetcher';
+} from '../../fetchers/lootbox.fetcher';
 
 // Stove Type fetcher
 import {
   getAllStoveTypes, getStoveTypeById, getStoveTypesByRarity, createStoveType,
   updateStoveTypeWeight, updateStoveTypeImage, deleteStoveType, getTotalLootboxWeight,
   Rarity
-} from '../fetchers/stove-type.fetcher';
+} from '../../fetchers/stove-type.fetcher';
 
 // Stove fetcher
 import {
   getAllStoves, getStoveById, getStovesByPlayerId, getStovesByTypeId, createStove,
   transferStoveOwnership, deleteStove, countStovesByPlayer, countStovesByType, Stove
-} from '../fetchers/stove.fetcher';
+} from '../../fetchers/stove.fetcher';
 
 // Ownership fetcher
 import {
   getAllOwnerships, getOwnershipById, getOwnershipHistoryByStoveId, getOwnershipsByPlayerId,
   createOwnership, getCurrentOwner, deleteOwnership, countOwnershipChanges,
   countStovesAcquiredByPlayer, Ownership
-} from '../fetchers/ownership.fetcher';
+} from '../../fetchers/ownership.fetcher';
 
 // Price History fetcher
 import {
   getAllPriceHistory, getPriceHistoryById, getPriceHistoryByTypeId, recordSale,
   getPriceStats, getRecentPrices, deletePriceHistory
-} from '../fetchers/price-history.fetcher';
+} from '../../fetchers/price-history.fetcher';
 
 // Listing fetcher
 import {
   getAllListings, getActiveListings, getListingById, getListingsBySellerId,
   getActiveListingsBySellerId, getActiveListingByStoveId, createListing,
   updateListingPrice, cancelListing, deleteListing, countActiveListingsBySeller, Listing
-} from '../fetchers/listing.fetcher';
+} from '../../fetchers/listing.fetcher';
 
 // Trade fetcher
 import {
   getAllTrades, getTradeById, getTradeByListingId, getTradesByBuyerId, executeTrade,
   getRecentTrades, deleteTrade, countTrades, countTradesByBuyer, Trade
-} from '../fetchers/trade.fetcher';
+} from '../../fetchers/trade.fetcher';
 
 interface TestResult {
   timestamp: string;

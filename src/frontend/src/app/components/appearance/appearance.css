@@ -1,0 +1,79 @@
+/* appearance.component.css */
+.settings-section {
+  background: #ffffff;
+  padding: 35px;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(232, 93, 4, 0.08);
+}
+
+h1 {
+  margin-bottom: 8px;
+  font-size: 22px;
+  color: #333;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 14px;
+  margin-bottom: 25px;
+}
+
+.theme-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.theme-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  padding: 15px 20px;
+  background: #f9faff;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.theme-card:hover {
+  transform: translateX(5px);
+  background: #eef1ff;
+}
+
+.theme-card.selected {
+  border-color: #e85d04;
+  background: #fff5f0;
+}
+
+.theme-preview {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.theme-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  text-align: left;
+}
+
+.checkmark {
+  width: 28px;
+  height: 28px;
+  background: #e85d04;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}
