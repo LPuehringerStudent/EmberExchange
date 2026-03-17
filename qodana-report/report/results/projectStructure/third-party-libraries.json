@@ -1,0 +1,1017 @@
+[
+  {
+    "name": "@angular/common",
+    "version": "21.2.0",
+    "url": "https://www.npmjs.com/package/@angular/common",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@angular/compiler",
+    "version": "21.2.0",
+    "url": "https://www.npmjs.com/package/@angular/compiler",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@angular/core",
+    "version": "21.2.0",
+    "url": "https://www.npmjs.com/package/@angular/core",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@angular/forms",
+    "version": "21.2.0",
+    "url": "https://www.npmjs.com/package/@angular/forms",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@angular/platform-browser",
+    "version": "21.2.0",
+    "url": "https://www.npmjs.com/package/@angular/platform-browser",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@angular/router",
+    "version": "21.2.0",
+    "url": "https://www.npmjs.com/package/@angular/router",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@apidevtools/json-schema-ref-parser",
+    "version": "9.1.2",
+    "url": "https://www.npmjs.com/package/@apidevtools/json-schema-ref-parser",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@apidevtools/openapi-schemas",
+    "version": "2.1.0",
+    "url": "https://www.npmjs.com/package/@apidevtools/openapi-schemas",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@apidevtools/swagger-methods",
+    "version": "3.0.2",
+    "url": "https://www.npmjs.com/package/@apidevtools/swagger-methods",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@apidevtools/swagger-parser",
+    "version": "10.0.3",
+    "url": "https://www.npmjs.com/package/@apidevtools/swagger-parser",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@emnapi/core",
+    "version": "1.8.1",
+    "url": "https://www.npmjs.com/package/@emnapi/core",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@emnapi/runtime",
+    "version": "1.8.1",
+    "url": "https://www.npmjs.com/package/@emnapi/runtime",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@emnapi/wasi-threads",
+    "version": "1.1.0",
+    "url": "https://www.npmjs.com/package/@emnapi/wasi-threads",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@jsdevtools/ono",
+    "version": "7.1.3",
+    "url": "https://www.npmjs.com/package/@jsdevtools/ono",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@scarf/scarf",
+    "version": "1.4.0",
+    "url": "https://www.npmjs.com/package/@scarf/scarf",
+    "license": "Apache-2.0",
+    "licenseUrl": "http://www.apache.org/licenses/"
+  },
+  {
+    "name": "@standard-schema/spec",
+    "version": "1.1.0",
+    "url": "https://www.npmjs.com/package/@standard-schema/spec",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@tybys/wasm-util",
+    "version": "0.10.1",
+    "url": "https://www.npmjs.com/package/@tybys/wasm-util",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "@types/json-schema",
+    "version": "7.0.15",
+    "url": "https://www.npmjs.com/package/@types/json-schema",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "accepts",
+    "version": "2.0.0",
+    "url": "https://www.npmjs.com/package/accepts",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "ansi-styles",
+    "version": "4.3.0",
+    "url": "https://www.npmjs.com/package/ansi-styles",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "argparse",
+    "version": "2.0.1",
+    "url": "https://www.npmjs.com/package/argparse",
+    "license": "Python-2.0",
+    "licenseUrl": "http://docs.python.org/license.html"
+  },
+  {
+    "name": "balanced-match",
+    "version": "1.0.2",
+    "url": "https://www.npmjs.com/package/balanced-match",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "base64-js",
+    "version": "1.5.1",
+    "url": "https://www.npmjs.com/package/base64-js",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "better-sqlite3",
+    "version": "12.6.2",
+    "url": "https://www.npmjs.com/package/better-sqlite3",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "bindings",
+    "version": "1.5.0",
+    "url": "https://www.npmjs.com/package/bindings",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "bl",
+    "version": "4.1.0",
+    "url": "https://www.npmjs.com/package/bl",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "body-parser",
+    "version": "2.2.2",
+    "url": "https://www.npmjs.com/package/body-parser",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "brace-expansion",
+    "version": "1.1.12",
+    "url": "https://www.npmjs.com/package/brace-expansion",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "buffer",
+    "version": "5.7.1",
+    "url": "https://www.npmjs.com/package/buffer",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "bytes",
+    "version": "3.1.2",
+    "url": "https://www.npmjs.com/package/bytes",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "call-me-maybe",
+    "version": "1.0.2",
+    "url": "https://www.npmjs.com/package/call-me-maybe",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "chalk",
+    "version": "4.1.2",
+    "url": "https://www.npmjs.com/package/chalk",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "chownr",
+    "version": "1.1.4",
+    "url": "https://www.npmjs.com/package/chownr",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "cliui",
+    "version": "8.0.1",
+    "url": "https://www.npmjs.com/package/cliui",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "color-convert",
+    "version": "2.0.1",
+    "url": "https://www.npmjs.com/package/color-convert",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "color-name",
+    "version": "1.1.4",
+    "url": "https://www.npmjs.com/package/color-name",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "commander",
+    "version": "6.2.0",
+    "url": "https://www.npmjs.com/package/commander",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "commander",
+    "version": "9.5.0",
+    "url": "https://www.npmjs.com/package/commander",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "concat-map",
+    "version": "0.0.1",
+    "url": "https://www.npmjs.com/package/concat-map",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "concurrently",
+    "version": "9.2.1",
+    "url": "https://www.npmjs.com/package/concurrently",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "content-disposition",
+    "version": "1.0.1",
+    "url": "https://www.npmjs.com/package/content-disposition",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "content-type",
+    "version": "1.0.5",
+    "url": "https://www.npmjs.com/package/content-type",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "cookie-signature",
+    "version": "1.2.2",
+    "url": "https://www.npmjs.com/package/cookie-signature",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "cookie",
+    "version": "0.7.2",
+    "url": "https://www.npmjs.com/package/cookie",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "cors",
+    "version": "2.8.6",
+    "url": "https://www.npmjs.com/package/cors",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "debug",
+    "version": "4.4.3",
+    "url": "https://www.npmjs.com/package/debug",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "decompress-response",
+    "version": "6.0.0",
+    "url": "https://www.npmjs.com/package/decompress-response",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "deep-extend",
+    "version": "0.6.0",
+    "url": "https://www.npmjs.com/package/deep-extend",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "depd",
+    "version": "2.0.0",
+    "url": "https://www.npmjs.com/package/depd",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "detect-libc",
+    "version": "2.1.2",
+    "url": "https://www.npmjs.com/package/detect-libc",
+    "license": "Apache-2.0",
+    "licenseUrl": "http://www.apache.org/licenses/"
+  },
+  {
+    "name": "doctrine",
+    "version": "3.0.0",
+    "url": "https://www.npmjs.com/package/doctrine",
+    "license": "Apache-2.0",
+    "licenseUrl": "http://www.apache.org/licenses/"
+  },
+  {
+    "name": "emoji-regex",
+    "version": "8.0.0",
+    "url": "https://www.npmjs.com/package/emoji-regex",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "encodeurl",
+    "version": "2.0.0",
+    "url": "https://www.npmjs.com/package/encodeurl",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "end-of-stream",
+    "version": "1.4.5",
+    "url": "https://www.npmjs.com/package/end-of-stream",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "escalade",
+    "version": "3.2.0",
+    "url": "https://www.npmjs.com/package/escalade",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "escape-html",
+    "version": "1.0.3",
+    "url": "https://www.npmjs.com/package/escape-html",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "esutils",
+    "version": "2.0.3",
+    "url": "https://www.npmjs.com/package/esutils",
+    "license": "BSD-2-Clause",
+    "licenseUrl": "http://www.opensource.org/licenses/BSD-2-Clause"
+  },
+  {
+    "name": "etag",
+    "version": "1.8.1",
+    "url": "https://www.npmjs.com/package/etag",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "expand-template",
+    "version": "2.0.3",
+    "url": "https://www.npmjs.com/package/expand-template",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "express",
+    "version": "5.2.1",
+    "url": "https://www.npmjs.com/package/express",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "file-uri-to-path",
+    "version": "1.0.0",
+    "url": "https://www.npmjs.com/package/file-uri-to-path",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "finalhandler",
+    "version": "2.1.1",
+    "url": "https://www.npmjs.com/package/finalhandler",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "forwarded",
+    "version": "0.2.0",
+    "url": "https://www.npmjs.com/package/forwarded",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "fresh",
+    "version": "2.0.0",
+    "url": "https://www.npmjs.com/package/fresh",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "fs-constants",
+    "version": "1.0.0",
+    "url": "https://www.npmjs.com/package/fs-constants",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "fs.realpath",
+    "version": "1.0.0",
+    "url": "https://www.npmjs.com/package/fs.realpath",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "get-caller-file",
+    "version": "2.0.5",
+    "url": "https://www.npmjs.com/package/get-caller-file",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "github-from-package",
+    "version": "0.0.0",
+    "url": "https://www.npmjs.com/package/github-from-package",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "glob",
+    "version": "7.1.6",
+    "url": "https://www.npmjs.com/package/glob",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "has-flag",
+    "version": "4.0.0",
+    "url": "https://www.npmjs.com/package/has-flag",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "http-errors",
+    "version": "2.0.1",
+    "url": "https://www.npmjs.com/package/http-errors",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "iconv-lite",
+    "version": "0.7.2",
+    "url": "https://www.npmjs.com/package/iconv-lite",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "ieee754",
+    "version": "1.2.1",
+    "url": "https://www.npmjs.com/package/ieee754",
+    "license": "BSD-3-Clause",
+    "licenseUrl": "http://www.opensource.org/licenses/BSD-3-Clause"
+  },
+  {
+    "name": "inflight",
+    "version": "1.0.6",
+    "url": "https://www.npmjs.com/package/inflight",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "inherits",
+    "version": "2.0.4",
+    "url": "https://www.npmjs.com/package/inherits",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "ini",
+    "version": "1.3.8",
+    "url": "https://www.npmjs.com/package/ini",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "ipaddr.js",
+    "version": "1.9.1",
+    "url": "https://www.npmjs.com/package/ipaddr.js",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "is-fullwidth-code-point",
+    "version": "3.0.0",
+    "url": "https://www.npmjs.com/package/is-fullwidth-code-point",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "is-promise",
+    "version": "4.0.0",
+    "url": "https://www.npmjs.com/package/is-promise",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "js-yaml",
+    "version": "4.1.1",
+    "url": "https://www.npmjs.com/package/js-yaml",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "lodash.get",
+    "version": "4.4.2",
+    "url": "https://www.npmjs.com/package/lodash.get",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "lodash.isequal",
+    "version": "4.5.0",
+    "url": "https://www.npmjs.com/package/lodash.isequal",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "lodash.mergewith",
+    "version": "4.6.2",
+    "url": "https://www.npmjs.com/package/lodash.mergewith",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "merge-descriptors",
+    "version": "2.0.0",
+    "url": "https://www.npmjs.com/package/merge-descriptors",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "mime-types",
+    "version": "3.0.2",
+    "url": "https://www.npmjs.com/package/mime-types",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "mimic-response",
+    "version": "3.1.0",
+    "url": "https://www.npmjs.com/package/mimic-response",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "minimatch",
+    "version": "3.1.5",
+    "url": "https://www.npmjs.com/package/minimatch",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "minimist",
+    "version": "1.2.8",
+    "url": "https://www.npmjs.com/package/minimist",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "mkdirp-classic",
+    "version": "0.5.3",
+    "url": "https://www.npmjs.com/package/mkdirp-classic",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "ms",
+    "version": "2.1.3",
+    "url": "https://www.npmjs.com/package/ms",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "napi-build-utils",
+    "version": "2.0.0",
+    "url": "https://www.npmjs.com/package/napi-build-utils",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "negotiator",
+    "version": "1.0.0",
+    "url": "https://www.npmjs.com/package/negotiator",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "node-abi",
+    "version": "3.87.0",
+    "url": "https://www.npmjs.com/package/node-abi",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "object-assign",
+    "version": "4.1.1",
+    "url": "https://www.npmjs.com/package/object-assign",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "on-finished",
+    "version": "2.4.1",
+    "url": "https://www.npmjs.com/package/on-finished",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "once",
+    "version": "1.4.0",
+    "url": "https://www.npmjs.com/package/once",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "openapi-types",
+    "version": "12.1.3",
+    "url": "https://www.npmjs.com/package/openapi-types",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "parseurl",
+    "version": "1.3.3",
+    "url": "https://www.npmjs.com/package/parseurl",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "path-is-absolute",
+    "version": "1.0.1",
+    "url": "https://www.npmjs.com/package/path-is-absolute",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "path-to-regexp",
+    "version": "8.3.0",
+    "url": "https://www.npmjs.com/package/path-to-regexp",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "prebuild-install",
+    "version": "7.1.3",
+    "url": "https://www.npmjs.com/package/prebuild-install",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "proxy-addr",
+    "version": "2.0.7",
+    "url": "https://www.npmjs.com/package/proxy-addr",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "pump",
+    "version": "3.0.3",
+    "url": "https://www.npmjs.com/package/pump",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "qs",
+    "version": "6.15.0",
+    "url": "https://www.npmjs.com/package/qs",
+    "license": "BSD-3-Clause",
+    "licenseUrl": "http://www.opensource.org/licenses/BSD-3-Clause"
+  },
+  {
+    "name": "range-parser",
+    "version": "1.2.1",
+    "url": "https://www.npmjs.com/package/range-parser",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "raw-body",
+    "version": "3.0.2",
+    "url": "https://www.npmjs.com/package/raw-body",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "rc",
+    "version": "1.2.8",
+    "url": "https://www.npmjs.com/package/rc",
+    "license": "BSD-2-Clause",
+    "licenseUrl": "http://www.opensource.org/licenses/BSD-2-Clause"
+  },
+  {
+    "name": "readable-stream",
+    "version": "3.6.2",
+    "url": "https://www.npmjs.com/package/readable-stream",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "require-directory",
+    "version": "2.1.1",
+    "url": "https://www.npmjs.com/package/require-directory",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "router",
+    "version": "2.2.0",
+    "url": "https://www.npmjs.com/package/router",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "rxjs",
+    "version": "7.8.2",
+    "url": "https://www.npmjs.com/package/rxjs",
+    "license": "Apache-2.0",
+    "licenseUrl": "http://www.apache.org/licenses/"
+  },
+  {
+    "name": "safe-buffer",
+    "version": "5.2.1",
+    "url": "https://www.npmjs.com/package/safe-buffer",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "safer-buffer",
+    "version": "2.1.2",
+    "url": "https://www.npmjs.com/package/safer-buffer",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "semver",
+    "version": "7.7.3",
+    "url": "https://www.npmjs.com/package/semver",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "send",
+    "version": "1.2.1",
+    "url": "https://www.npmjs.com/package/send",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "serve-static",
+    "version": "2.2.1",
+    "url": "https://www.npmjs.com/package/serve-static",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "shell-quote",
+    "version": "1.8.3",
+    "url": "https://www.npmjs.com/package/shell-quote",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "simple-concat",
+    "version": "1.0.1",
+    "url": "https://www.npmjs.com/package/simple-concat",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "simple-get",
+    "version": "4.0.1",
+    "url": "https://www.npmjs.com/package/simple-get",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "statuses",
+    "version": "2.0.2",
+    "url": "https://www.npmjs.com/package/statuses",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "string-width",
+    "version": "4.2.3",
+    "url": "https://www.npmjs.com/package/string-width",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "strip-ansi",
+    "version": "6.0.1",
+    "url": "https://www.npmjs.com/package/strip-ansi",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "strip-json-comments",
+    "version": "2.0.1",
+    "url": "https://www.npmjs.com/package/strip-json-comments",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "supports-color",
+    "version": "7.2.0",
+    "url": "https://www.npmjs.com/package/supports-color",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "supports-color",
+    "version": "8.1.1",
+    "url": "https://www.npmjs.com/package/supports-color",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "swagger-jsdoc",
+    "version": "6.2.8",
+    "url": "https://www.npmjs.com/package/swagger-jsdoc",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "swagger-parser",
+    "version": "10.0.3",
+    "url": "https://www.npmjs.com/package/swagger-parser",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "swagger-ui-dist",
+    "version": "5.31.0",
+    "url": "https://www.npmjs.com/package/swagger-ui-dist",
+    "license": "Apache-2.0",
+    "licenseUrl": "http://www.apache.org/licenses/"
+  },
+  {
+    "name": "swagger-ui-express",
+    "version": "5.0.1",
+    "url": "https://www.npmjs.com/package/swagger-ui-express",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "tar-fs",
+    "version": "2.1.4",
+    "url": "https://www.npmjs.com/package/tar-fs",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "tar-stream",
+    "version": "2.2.0",
+    "url": "https://www.npmjs.com/package/tar-stream",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "tree-kill",
+    "version": "1.2.2",
+    "url": "https://www.npmjs.com/package/tree-kill",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "tslib",
+    "version": "2.8.1",
+    "url": "https://www.npmjs.com/package/tslib",
+    "license": "0BSD",
+    "licenseUrl": "http://landley.net/toybox/license.html"
+  },
+  {
+    "name": "tunnel-agent",
+    "version": "0.6.0",
+    "url": "https://www.npmjs.com/package/tunnel-agent",
+    "license": "Apache-2.0",
+    "licenseUrl": "http://www.apache.org/licenses/"
+  },
+  {
+    "name": "type-is",
+    "version": "2.0.1",
+    "url": "https://www.npmjs.com/package/type-is",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "unpipe",
+    "version": "1.0.0",
+    "url": "https://www.npmjs.com/package/unpipe",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "validator",
+    "version": "13.15.26",
+    "url": "https://www.npmjs.com/package/validator",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "vary",
+    "version": "1.1.2",
+    "url": "https://www.npmjs.com/package/vary",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "wrap-ansi",
+    "version": "7.0.0",
+    "url": "https://www.npmjs.com/package/wrap-ansi",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "wrappy",
+    "version": "1.0.2",
+    "url": "https://www.npmjs.com/package/wrappy",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "y18n",
+    "version": "5.0.8",
+    "url": "https://www.npmjs.com/package/y18n",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "yaml",
+    "version": "2.0.0-1",
+    "url": "https://www.npmjs.com/package/yaml",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "yargs-parser",
+    "version": "21.1.1",
+    "url": "https://www.npmjs.com/package/yargs-parser",
+    "license": "ISC",
+    "licenseUrl": "https://www.isc.org/licenses/"
+  },
+  {
+    "name": "yargs",
+    "version": "17.7.2",
+    "url": "https://www.npmjs.com/package/yargs",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  },
+  {
+    "name": "z-schema",
+    "version": "5.0.5",
+    "url": "https://www.npmjs.com/package/z-schema",
+    "license": "MIT",
+    "licenseUrl": "http://opensource.org/licenses/mit-license.php"
+  }
+]

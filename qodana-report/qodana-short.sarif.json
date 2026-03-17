@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/schemastore/schemastore/master/src/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "QDJS",
+          "fullName": "Qodana for JS",
+          "version": "243.25516",
+          "rules": [],
+          "taxa": [],
+          "language": "en-US",
+          "contents": [
+            "localizedData",
+            "nonLocalizedData"
+          ],
+          "isComprehensive": false
+        },
+        "extensions": []
+      },
+      "invocations": [
+        {
+          "startTimeUtc": "2026-03-16T08:37:57.970590266Z",
+          "exitCode": 0,
+          "executionSuccessful": true
+        }
+      ],
+      "language": "en-US",
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "https://github.com/LPuehringerStudent/EmberExchange.git",
+          "revisionId": "a810bd5a89c8498f8c06ccb5ce8520519991d89a",
+          "branch": "laurenz",
+          "properties": {
+            "repoUrl": "https://github.com/LPuehringerStudent/EmberExchange.git",
+            "lastAuthorName": "LPuehringerStudent",
+            "vcsType": "Git",
+            "lastAuthorEmail": "l.puehringer1@students.htl-leonding.ac.at"
+          }
+        }
+      ],
+      "results": [],
+      "automationDetails": {
+        "id": "project/qodana/2026-03-16",
+        "guid": "d04e6eef-955e-4ba4-90ca-dabec16b310b",
+        "properties": {
+          "jobUrl": "",
+          "analysisKind": "regular"
+        }
+      },
+      "newlineSequences": [
+        "\r\n",
+        "\n"
+      ],
+      "properties": {
+        "configProfile": "starter",
+        "deviceId": "200820300000000-f42c-5bf6-b92f-3c85f7d714cc",
+        "qodanaNewResultSummary": {
+          "high": 52,
+          "critical": 483,
+          "moderate": 38,
+          "total": 573
+        }
+      }
+    }
+  ]
+}
