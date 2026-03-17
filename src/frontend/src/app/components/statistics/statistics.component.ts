@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
-import { getAllPlayerStatistics, getTopPlayersByActivity, getTopPlayersByNetWorth, PlayerStatistics } from '../fetchers/player-statistics.fetcher';
-import { getTodayStatistics, getDailySummary, DailyStatistics } from '../fetchers/daily-statistics.fetcher';
-import { getAllStoveTypeStatistics, getMarketSummary, StoveTypeStatistics } from '../fetchers/stove-type-statistics.fetcher';
+import { getAllPlayerStatistics, getTopPlayersByActivity, getTopPlayersByNetWorth, PlayerStatistics } from '../../fetchers/player-statistics.fetcher';
+import { getTodayStatistics, getDailySummary, DailyStatistics } from '../../fetchers/daily-statistics.fetcher';
+import { getAllStoveTypeStatistics, getMarketSummary, StoveTypeStatistics } from '../../fetchers/stove-type-statistics.fetcher';
 
 interface StatCard {
   label: string;
@@ -15,8 +15,8 @@ interface StatCard {
   selector: 'app-statistics',
   standalone: true,
   imports: [RouterModule],
-  templateUrl: '../html/statistics.html',
-  styleUrls: ['../css/statistics.css']
+  templateUrl: './statistics.html',
+  styleUrls: ['./statistics.css']
 })
 export class StatisticsComponent implements OnInit {
   // Data
@@ -27,11 +27,11 @@ export class StatisticsComponent implements OnInit {
   dailySummary = { totalLootboxes: 0, totalSales: 0, totalVolume: 0, avgPlayers: 0 };
   stoveTypeStats: StoveTypeStatistics[] = [];
   marketSummary = { totalStoves: 0, totalListed: 0, totalSales: 0, avgListedPercent: 0 };
-  
+
   // Loading states
   loading = true;
   error: string | null = null;
-  
+
   // Dashboard stats
   dashboardStats: StatCard[] = [];
 
@@ -44,7 +44,7 @@ export class StatisticsComponent implements OnInit {
     this.error = null;
 
     console.log('Loading statistics data...');
-    
+
     // Track success/failure for each endpoint
     let playerStatsSuccess = false;
     let topActivitySuccess = false;
@@ -132,14 +132,14 @@ export class StatisticsComponent implements OnInit {
     }
 
     // Check if all requests failed (indicates server restart or data reset)
-    const allFailed = !playerStatsSuccess && !topActivitySuccess && !topWealthSuccess && 
+    const allFailed = !playerStatsSuccess && !topActivitySuccess && !topWealthSuccess &&
                       !todayStatsSuccess && !dailySummarySuccess && !stoveTypeStatsSuccess && !marketSummarySuccess;
-    
+
     // Check if critical data is missing (no player stats and no daily stats)
     const criticalDataMissing = !playerStatsSuccess && !todayStatsSuccess;
 
     console.log('Success states:', {
-      playerStatsSuccess, topActivitySuccess, topWealthSuccess, 
+      playerStatsSuccess, topActivitySuccess, topWealthSuccess,
       todayStatsSuccess, dailySummarySuccess, stoveTypeStatsSuccess, marketSummarySuccess,
       allFailed, criticalDataMissing
     });

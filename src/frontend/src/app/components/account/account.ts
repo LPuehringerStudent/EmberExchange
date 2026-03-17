@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-account',
   imports: [],
   templateUrl: './account.html',
-  styleUrl: '../../css/settings.css',
+  styleUrl: '../settings/settings.css',
 })
 export class Account {
   saveChanges(): void {

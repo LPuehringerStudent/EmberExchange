@@ -1,9 +1,9 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 
-import { StoveApiService } from '../../services/stove';
+import { StoveApiService } from '../../../services/stove';
 import {forkJoin, map, of, Subscription, switchMap} from 'rxjs';
-import { ShowedStove, StoveRow } from '../../../../shared/model';
+import { ShowedStove, StoveRow } from '../../../../../shared/model';
 
 interface InventoryLootbox {
   count: number;
@@ -14,11 +14,11 @@ interface InventoryLootbox {
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  templateUrl: '../html/inventory.html',
+  templateUrl: './inventory.html',
   imports: [
     RouterModule
   ],
-  styleUrls: ['../css/inventory.css']
+  styleUrls: ['./inventory.css']
 })
 export class InventoryComponent implements OnInit, OnDestroy {
   activeTab: 'lootboxes' | 'items' = 'lootboxes';
