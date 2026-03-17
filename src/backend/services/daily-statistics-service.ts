@@ -22,106 +22,48 @@ export class DailyStatisticsService extends ServiceBase {
         const todayStart = `${today}T00:00:00.000Z`;
         const todayEnd = `${today}T23:59:59.999Z`;
 
-        // Count lootboxes opened today
-        const lootboxStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*) as count FROM Lootbox 
-             WHERE openedAt >= @todayStart AND openedAt <= @todayEnd`,
-            { todayStart, todayEnd }
-        );
-        const lootboxesOpened = lootboxStmt.get()?.count ?? 0;
+        const sql = `
+            SELECT
+                (SELECT COUNT(*) FROM Lootbox WHERE openedAt >= @todayStart AND openedAt <= @todayEnd) as lootboxesOpened,
+                (SELECT COUNT(*) FROM Listing WHERE listedAt >= @todayStart AND listedAt <= @todayEnd) as newListings,
+                (SELECT COUNT(*) FROM Trade t JOIN Listing l ON t.listingId = l.listingId WHERE t.executedAt >= @todayStart AND t.executedAt <= @todayEnd) as salesToday,
+                (SELECT COALESCE(SUM(l2.price), 0) FROM Trade t2 JOIN Listing l2 ON t2.listingId = l2.listingId WHERE t2.executedAt >= @todayStart AND t2.executedAt <= @todayEnd) as tradingVolume,
+                (SELECT COALESCE(AVG(l3.price), 0) FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE t3.executedAt >= @todayStart AND t3.executedAt <= @todayEnd) as avgSalePrice,
+                (SELECT COUNT(*) FROM MiniGameSession WHERE finishedAt >= @todayStart AND finishedAt <= @todayEnd) as gamesToday,
+                (SELECT COUNT(*) FROM ChatMessage WHERE sentAt >= @todayStart AND sentAt <= @todayEnd) as messagesToday,
+                (SELECT COUNT(*) FROM Player WHERE joinedAt >= @todayStart AND joinedAt <= @todayEnd) as newPlayers,
+                (SELECT COUNT(DISTINCT playerId) FROM Lootbox WHERE openedAt >= @todayStart AND openedAt <= @todayEnd) as activePlayers,
+                (SELECT COALESCE(SUM(coins), 0) FROM Player) as totalCoins,
+                (SELECT COUNT(*) FROM Stove) as totalStoves
+        `;
 
-        // Count new listings today
-        const listingsStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*) as count FROM Listing 
-             WHERE listedAt >= @todayStart AND listedAt <= @todayEnd`,
-            { todayStart, todayEnd }
-        );
-        const newListings = listingsStmt.get()?.count ?? 0;
-
-        // Count sales today and calculate volume
-        const salesStmt = this.unit.prepare<{ count: number, volume: number, avgPrice: number }>(
-            `SELECT 
-                COUNT(*) as count,
-                COALESCE(SUM(l.price), 0) as volume,
-                COALESCE(AVG(l.price), 0) as avgPrice
-             FROM Trade t
-             JOIN Listing l ON t.listingId = l.listingId
-             WHERE t.executedAt >= @todayStart AND t.executedAt <= @todayEnd`,
-            { todayStart, todayEnd }
-        );
-        const salesResult = salesStmt.get();
-        const salesToday = salesResult?.count ?? 0;
-        const tradingVolume = salesResult?.volume ?? 0;
-        const avgSalePrice = salesResult?.avgPrice ?? 0;
-
-        // Count mini games played today
-        const gamesStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*) as count FROM MiniGameSession 
-             WHERE finishedAt >= @todayStart AND finishedAt <= @todayEnd`,
-            { todayStart, todayEnd }
-        );
-        const gamesToday = gamesStmt.get()?.count ?? 0;
-
-        // Count messages sent today
-        const messagesStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*) as count FROM ChatMessage 
-             WHERE sentAt >= @todayStart AND sentAt <= @todayEnd`,
-            { todayStart, todayEnd }
-        );
-        const messagesToday = messagesStmt.get()?.count ?? 0;
-
-        // Count new players today
-        const newPlayersStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*) as count FROM Player 
-             WHERE joinedAt >= @todayStart AND joinedAt <= @todayEnd`,
-            { todayStart, todayEnd }
-        );
-        const newPlayers = newPlayersStmt.get()?.count ?? 0;
-
-        // Count unique players who opened lootboxes today (as proxy for "logged in")
-        const activePlayersStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(DISTINCT playerId) as count FROM Lootbox 
-             WHERE openedAt >= @todayStart AND openedAt <= @todayEnd`,
-            { todayStart, todayEnd }
-        );
-        const activePlayers = activePlayersStmt.get()?.count ?? 0;
-
-        // Total coins in circulation (sum of all player balances)
-        const coinsStmt = this.unit.prepare<{ total: number }>(
-            "SELECT COALESCE(SUM(coins), 0) as total FROM Player"
-        );
-        const totalCoins = coinsStmt.get()?.total ?? 0;
-
-        // Total stoves in existence
-        const stovesStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*) as count FROM Stove"
-        );
-        const totalStoves = stovesStmt.get()?.count ?? 0;
+        const stmt = this.unit.prepare<any>(sql, { todayStart, todayEnd });
+        const r = stmt.get();
 
         return {
             statId: 1, // Dummy ID for calculated stats
             date: today,
-            uniquePlayersLoggedIn: activePlayers,
-            newPlayersJoined: newPlayers,
-            totalSessions: activePlayers, // Approximate
+            uniquePlayersLoggedIn: r?.activePlayers ?? 0,
+            newPlayersJoined: r?.newPlayers ?? 0,
+            totalSessions: r?.activePlayers ?? 0, // Approximate
             averageSessionMinutes: 0,
-            lootboxesOpenedToday: lootboxesOpened,
+            lootboxesOpenedToday: r?.lootboxesOpened ?? 0,
             lootboxesPurchasedToday: 0,
             coinsSpentOnLootboxesToday: 0,
-            newListingsToday: newListings,
-            listingsSoldToday: salesToday,
+            newListingsToday: r?.newListings ?? 0,
+            listingsSoldToday: r?.salesToday ?? 0,
             listingsCancelledToday: 0,
             averageListingPriceToday: 0,
-            averageSalePriceToday: avgSalePrice,
-            totalTradingVolume: tradingVolume,
+            averageSalePriceToday: r?.avgSalePrice ?? 0,
+            totalTradingVolume: r?.tradingVolume ?? 0,
             priceChangePercent: 0,
-            miniGamesPlayedToday: gamesToday,
+            miniGamesPlayedToday: r?.gamesToday ?? 0,
             totalCoinPayoutsToday: 0,
             houseProfit: 0,
-            messagesSentToday: messagesToday,
+            messagesSentToday: r?.messagesToday ?? 0,
             uniqueChattersToday: 0,
-            totalCoinsInCirculation: totalCoins,
-            totalStovesInExistence: totalStoves,
+            totalCoinsInCirculation: r?.totalCoins ?? 0,
+            totalStovesInExistence: r?.totalStoves ?? 0,
             averagePlayerNetWorth: 0,
             medianPlayerNetWorth: 0,
             wealthGapRatio: 0,
