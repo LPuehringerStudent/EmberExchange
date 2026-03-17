@@ -1,5 +1,5 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectorRef, inject } from '@angular/core';
+import { JsonPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // Player fetcher
@@ -12,14 +12,14 @@ import {
 import {
   getAllLootboxes, getLootboxById, getLootboxesByPlayerId, createLootbox,
   deleteLootbox, getAllLootboxTypes, getAvailableLootboxTypes, getLootboxTypeById,
-  getDropsByLootboxId, createLootboxDrop, Lootbox, LootboxType, LootboxDrop
+  getDropsByLootboxId, createLootboxDrop, Lootbox
 } from '../fetchers/lootbox.fetcher';
 
 // Stove Type fetcher
 import {
   getAllStoveTypes, getStoveTypeById, getStoveTypesByRarity, createStoveType,
   updateStoveTypeWeight, updateStoveTypeImage, deleteStoveType, getTotalLootboxWeight,
-  StoveType, Rarity
+  Rarity
 } from '../fetchers/stove-type.fetcher';
 
 // Stove fetcher
@@ -38,7 +38,7 @@ import {
 // Price History fetcher
 import {
   getAllPriceHistory, getPriceHistoryById, getPriceHistoryByTypeId, recordSale,
-  getPriceStats, getRecentPrices, deletePriceHistory, PriceHistory
+  getPriceStats, getRecentPrices, deletePriceHistory
 } from '../fetchers/price-history.fetcher';
 
 // Listing fetcher
@@ -80,7 +80,7 @@ interface ApiEndpoint {
 @Component({
   selector: 'app-test-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, JsonPipe],
   template: `
     <div class="test-page">
       <header class="page-header">
@@ -93,49 +93,57 @@ interface ApiEndpoint {
       <div class="main-layout">
         <aside class="sidebar">
           <div class="search-box">
-            <input 
-              type="text" 
-              [(ngModel)]="searchQuery" 
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
               placeholder="Search endpoints..."
               class="search-input">
           </div>
 
           <div class="category-list">
-            <div 
-              *ngFor="let category of filteredCategories" 
-              class="category-item"
-              [class.expanded]="category.expanded">
-              <button class="category-header" (click)="toggleCategory(category)">
-                <span class="category-icon">{{ category.icon }}</span>
-                <span class="category-name">{{ category.name }}</span>
-                <span class="toggle-icon">
-                  <svg *ngIf="!category.expanded" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <svg *ngIf="category.expanded" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </span>
-              </button>
-              
-              <div class="endpoint-list" *ngIf="category.expanded">
-                <button
-                  *ngFor="let endpoint of category.endpoints"
-                  class="endpoint-btn"
-                  [class.running]="runningEndpoint === endpoint.label"
-                  (click)="runTest(endpoint)"
-                  [title]="endpoint.description">
-                  <span class="btn-text">{{ endpoint.name }}</span>
-                  <span class="spinner" *ngIf="runningEndpoint === endpoint.label">
-                    <svg width="14" height="14" viewBox="0 0 14 14">
-                      <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="20" stroke-dashoffset="10">
-                        <animateTransform attributeName="transform" type="rotate" from="0 7 7" to="360 7 7" dur="1s" repeatCount="indefinite"/>
-                      </circle>
-                    </svg>
+            @for (category of filteredCategories; track category.name) {
+              <div class="category-item" [class.expanded]="category.expanded">
+                <button class="category-header" (click)="toggleCategory(category)">
+                  <span class="category-icon">{{ category.icon }}</span>
+                  <span class="category-name">{{ category.name }}</span>
+                  <span class="toggle-icon">
+                    @if (!category.expanded) {
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    }
+                    @if (category.expanded) {
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    }
                   </span>
                 </button>
+
+                @if (category.expanded) {
+                  <div class="endpoint-list">
+                    @for (endpoint of category.endpoints; track endpoint.label) {
+                      <button
+                        class="endpoint-btn"
+                        [class.running]="runningEndpoint === endpoint.label"
+                        (click)="runTest(endpoint)"
+                        [title]="endpoint.description">
+                        <span class="btn-text">{{ endpoint.name }}</span>
+                        @if (runningEndpoint === endpoint.label) {
+                          <span class="spinner">
+                            <svg width="14" height="14" viewBox="0 0 14 14">
+                              <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="20" stroke-dashoffset="10">
+                                <animateTransform attributeName="transform" type="rotate" from="0 7 7" to="360 7 7" dur="1s" repeatCount="indefinite"/>
+                              </circle>
+                            </svg>
+                          </span>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
               </div>
-            </div>
+            }
           </div>
         </aside>
 
@@ -152,48 +160,58 @@ interface ApiEndpoint {
             </div>
           </div>
 
-          <div class="results-list" *ngIf="results.length > 0">
-            <div 
-              *ngFor="let result of results; let i = index" 
-              class="result-card"
-              [class.success]="result.success"
-              [class.error]="!result.success">
-              <div class="result-header">
-                <span class="badge" [class.success]="result.success" [class.error]="!result.success">
-                  <svg *ngIf="result.success" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6L5 9L10 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <svg *ngIf="!result.success" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                </span>
-                <span class="endpoint-name">{{ result.endpoint }}</span>
-                <span class="timestamp">{{ result.timestamp }}</span>
-                <span class="duration" [class.fast]="result.duration < 100" [class.slow]="result.duration > 500">
-                  {{ result.duration }}ms
-                </span>
-                <button class="delete-btn" (click)="removeResult(i)" title="Remove">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="result-body">
-                <pre *ngIf="result.success">{{ result.data | json }}</pre>
-                <pre *ngIf="!result.success" class="error-text">{{ result.error }}</pre>
-              </div>
+          @if (results.length > 0) {
+            <div class="results-list">
+              @for (result of results; track result.timestamp + result.endpoint; let i = $index) {
+                <div class="result-card" [class.success]="result.success" [class.error]="!result.success">
+                  <div class="result-header">
+                    <span class="badge" [class.success]="result.success" [class.error]="!result.success">
+                      @if (result.success) {
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6L5 9L10 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      }
+                      @if (!result.success) {
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                      }
+                    </span>
+                    <span class="endpoint-name">{{ result.endpoint }}</span>
+                    <span class="timestamp">{{ result.timestamp }}</span>
+                    <span class="duration" [class.fast]="result.duration < 100" [class.slow]="result.duration > 500">
+                      {{ result.duration }}ms
+                    </span>
+                    <button class="delete-btn" (click)="removeResult(i)" title="Remove">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="result-body">
+                    @if (result.success) {
+                      <pre>{{ result.data | json }}</pre>
+                    }
+                    @if (!result.success) {
+                      <pre class="error-text">{{ result.error }}</pre>
+                    }
+                  </div>
+                </div>
+              }
             </div>
-          </div>
+          }
 
-          <div class="empty-state" *ngIf="results.length === 0">
-            <div class="empty-icon">
-              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                <rect x="8" y="16" width="48" height="36" rx="4" stroke="currentColor" stroke-width="2"/>
-                <path d="M8 24L32 38L56 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+          @if (results.length === 0) {
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                  <rect x="8" y="16" width="48" height="36" rx="4" stroke="currentColor" stroke-width="2"/>
+                  <path d="M8 24L32 38L56 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <p>Click any endpoint button to see results here</p>
             </div>
-            <p>Click any endpoint button to see results here</p>
-          </div>
+          }
         </main>
       </div>
     </div>
@@ -201,14 +219,15 @@ interface ApiEndpoint {
   styles: [`
     .test-page {
       min-height: 100vh;
-      background: #f5f7fa;
+      background: #e8e4dc;
       color: #333;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
     }
 
     .page-header {
       background: #e85d04;
-      padding: 24px 32px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 32px 32px;
+      box-shadow: 0 10px 30px rgba(232, 93, 4, 0.2);
     }
 
     .header-content {
@@ -218,9 +237,10 @@ interface ApiEndpoint {
 
     .page-header h1 {
       margin: 0 0 4px 0;
-      font-size: 24px;
-      font-weight: 600;
+      font-size: 28px;
+      font-weight: 700;
       color: #fff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .subtitle {
@@ -231,7 +251,7 @@ interface ApiEndpoint {
 
     .main-layout {
       display: flex;
-      height: calc(100vh - 85px);
+      height: calc(100vh - 110px);
       max-width: 1400px;
       margin: 0 auto;
       padding: 24px;
@@ -239,12 +259,12 @@ interface ApiEndpoint {
     }
 
     .sidebar {
-      width: 280px;
+      width: 300px;
       background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
       overflow-y: auto;
-      padding: 20px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
     }
@@ -255,10 +275,10 @@ interface ApiEndpoint {
 
     .search-input {
       width: 100%;
-      padding: 10px 14px;
-      background: #f8f9fc;
-      border: 1px solid #e0e0e0;
-      border-radius: 10px;
+      padding: 12px 16px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
       font-size: 14px;
       color: #333;
       transition: all 0.2s;
@@ -282,9 +302,9 @@ interface ApiEndpoint {
     }
 
     .category-item {
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
-      border: 1px solid #f0f0f0;
+      border: 1px solid #e2e8f0;
       background: #fff;
       transition: all 0.2s;
     }
@@ -303,13 +323,13 @@ interface ApiEndpoint {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       background: transparent;
       border: none;
       cursor: pointer;
       font-size: 14px;
-      font-weight: 500;
-      color: #555;
+      font-weight: 600;
+      color: #475569;
       transition: all 0.2s;
     }
 
@@ -323,10 +343,10 @@ interface ApiEndpoint {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f8f9fc;
-      border-radius: 8px;
+      background: #f1f5f9;
+      border-radius: 10px;
       font-size: 11px;
-      color: #666;
+      color: #64748b;
       font-weight: 700;
       letter-spacing: 0.5px;
     }
@@ -363,11 +383,11 @@ interface ApiEndpoint {
       justify-content: space-between;
       padding: 10px 12px;
       background: #fff;
-      border: 1px solid transparent;
-      border-radius: 8px;
+      border: 1px solid #f1f5f9;
+      border-radius: 10px;
       cursor: pointer;
       font-size: 13px;
-      color: #666;
+      color: #64748b;
       transition: all 0.15s;
       text-align: left;
     }
@@ -398,9 +418,9 @@ interface ApiEndpoint {
     .results-panel {
       flex: 1;
       background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-      padding: 24px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      padding: 28px;
       overflow-y: auto;
     }
 
@@ -448,14 +468,14 @@ interface ApiEndpoint {
     }
 
     .action-btn.primary {
-      background: #e85d04;
+      background: linear-gradient(135deg, #e85d04 0%, #f48c06 100%);
       color: white;
+      box-shadow: 0 4px 12px rgba(232, 93, 4, 0.2);
     }
 
     .action-btn.primary:hover:not(:disabled) {
-      background: #d35400;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(232, 93, 4, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(232, 93, 4, 0.4);
     }
 
     .action-btn:disabled {
@@ -471,8 +491,8 @@ interface ApiEndpoint {
 
     .result-card {
       background: #fff;
-      border-radius: 12px;
-      border: 1px solid #f0f0f0;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
       overflow: hidden;
       transition: all 0.2s;
     }
@@ -579,15 +599,16 @@ interface ApiEndpoint {
     .result-body pre {
       margin: 0;
       padding: 16px;
-      background: #f8f9fc;
-      border-radius: 8px;
-      font-size: 12px;
+      background: #f1f5f9;
+      border-radius: 12px;
+      font-size: 13px;
       overflow-x: auto;
-      max-height: 400px;
+      max-height: 500px;
       overflow-y: auto;
-      color: #333;
+      color: #334155;
       font-family: 'SF Mono', Monaco, monospace;
-      line-height: 1.5;
+      line-height: 1.6;
+      border: 1px solid #e2e8f0;
     }
 
     .error-text {
@@ -600,17 +621,29 @@ interface ApiEndpoint {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 400px;
-      color: #999;
+      padding: 80px 20px;
+      color: #64748b;
+      text-align: center;
     }
 
     .empty-icon {
-      margin-bottom: 16px;
-      opacity: 0.4;
+      width: 100px;
+      height: 100px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 24px;
+      color: #e85d04;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
     }
 
     .empty-state p {
-      font-size: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #475569;
       margin: 0;
     }
   `]
@@ -620,8 +653,7 @@ export class TestPageComponent {
   runningEndpoint: string | null = null;
   results: TestResult[] = [];
   lastResult: TestResult | null = null;
-
-  constructor(private cdr: ChangeDetectorRef) {}
+  private cdr = inject(ChangeDetectorRef);
 
   categories: ApiCategory[] = [
     {
@@ -772,7 +804,7 @@ export class TestPageComponent {
     const query = this.searchQuery.toLowerCase();
     return this.categories.map(cat => ({
       ...cat,
-      endpoints: cat.endpoints.filter(ep => 
+      endpoints: cat.endpoints.filter(ep =>
         ep.name.toLowerCase().includes(query) ||
         ep.label.toLowerCase().includes(query) ||
         ep.description?.toLowerCase().includes(query)
@@ -786,15 +818,15 @@ export class TestPageComponent {
 
   async runTest(endpoint: ApiEndpoint): Promise<void> {
     if (this.runningEndpoint) return;
-    
+
     this.runningEndpoint = endpoint.label;
     const startTime = performance.now();
-    
+
     try {
 
       const result = await endpoint.method();
       const duration = Math.round(performance.now() - startTime);
-      
+
       const testResult: TestResult = {
         timestamp: new Date().toLocaleTimeString(),
         endpoint: endpoint.label,
@@ -802,14 +834,13 @@ export class TestPageComponent {
         data: result,
         duration
       };
-      
+
       this.results.unshift(testResult);
       this.lastResult = testResult;
-      this.cdr.detectChanges();
 
     } catch (err) {
       const duration = Math.round(performance.now() - startTime);
-      
+
       const testResult: TestResult = {
         timestamp: new Date().toLocaleTimeString(),
         endpoint: endpoint.label,
@@ -817,10 +848,9 @@ export class TestPageComponent {
         error: err instanceof Error ? err.message : String(err),
         duration
       };
-      
+
       this.results.unshift(testResult);
       this.lastResult = testResult;
-      this.cdr.detectChanges();
 
     } finally {
       this.runningEndpoint = null;
@@ -840,9 +870,13 @@ export class TestPageComponent {
     }
   }
 
-  copyLastResult(): void {
+  async copyLastResult(): Promise<void> {
     if (this.lastResult) {
-      navigator.clipboard.writeText(JSON.stringify(this.lastResult, null, 2));
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(this.lastResult, null, 2));
+      } catch (err) {
+        console.error('Failed to copy to clipboard:', err);
+      }
     }
   }
 }

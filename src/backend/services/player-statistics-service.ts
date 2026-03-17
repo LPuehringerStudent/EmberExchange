@@ -2,21 +2,6 @@ import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { PlayerStatisticsRow, PlayerRow } from "../../shared/model";
 
-interface RawPlayerStats {
-    playerId: number;
-    username: string;
-    coins: number;
-    lootboxesOpened: number;
-    listingsCreated: number;
-    listingsSold: number;
-    totalSalesRevenue: number;
-    purchasesMade: number;
-    totalPurchaseSpending: number;
-    miniGamesPlayed: number;
-    stovesOwned: number;
-    netWorthEstimate: number;
-}
-
 export class PlayerStatisticsService extends ServiceBase {
     constructor(unit: Unit) {
         super(unit);

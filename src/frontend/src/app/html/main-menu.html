@@ -1,4 +1,4 @@
-﻿<div class="main-menu-container">
+<div class="main-menu-container">
   <!-- User Welcome Section -->
   <section class="user-welcome">
     <div class="welcome-header">
@@ -30,11 +30,13 @@
     <div class="games-carousel">
       <button class="carousel-arrow left" (click)="scrollGames('left')">‹</button>
       <div class="games-track" #gamesTrack>
-        <div class="game-card" *ngFor="let game of games">
-          <div class="game-icon">{{game.icon}}</div>
-          <h3>{{game.name}}</h3>
-          <!-- <p class="game-reward">+{{game.reward}} Coal/win</p> -->
-        </div>
+        @for (game of games; track game.name) {
+          <div class="game-card">
+            <div class="game-icon">{{game.icon}}</div>
+            <h3>{{game.name}}</h3>
+            <!-- <p class="game-reward">+{{game.reward}} Coal/win</p> -->
+          </div>
+        }
       </div>
       <button class="carousel-arrow right" (click)="scrollGames('right')">›</button>
     </div>
@@ -56,7 +58,7 @@
 
         <div class="card" routerLink="/games">
           <h1>Games</h1>
-          <p>PLay mini games to earn coal.</p>
+          <p>Play mini games to earn coal.</p>
           <div class="card-footer">
             <!-- <span class="play-count">0 games played</span>-->
           </div>
@@ -80,15 +82,17 @@
       </div>
       <div class="feed-scroll-container">
         <div class="feed-content">
-          <div class="feed-item" *ngFor="let pull of recentPulls">
-            <div class="pull-icon">{{pull.stoveIcon}}</div>
-            <div class="pull-info">
-              <span class="pull-user">{{pull.username}}</span>
-              <span class="pull-item">{{pull.itemName}}</span>
-              <span class="pull-rarity" [class]="pull.rarity">{{pull.rarity}}</span>
+          @for (pull of recentPulls; track pull.username + pull.timeAgo) {
+            <div class="feed-item">
+              <div class="pull-icon">{{pull.stoveIcon}}</div>
+              <div class="pull-info">
+                <span class="pull-user">{{pull.username}}</span>
+                <span class="pull-item">{{pull.itemName}}</span>
+                <span class="pull-rarity" [class]="pull.rarity">{{pull.rarity}}</span>
+              </div>
+              <span class="pull-time">{{pull.timeAgo}}</span>
             </div>
-            <span class="pull-time">{{pull.timeAgo}}</span>
-          </div>
+          }
         </div>
         <div class="feed-fade"></div>
       </div>

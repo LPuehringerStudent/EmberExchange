@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-marketplace',
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule],
   template: `
     <div class="marketplace-container">
       <h1>🏪 Marketplace</h1>

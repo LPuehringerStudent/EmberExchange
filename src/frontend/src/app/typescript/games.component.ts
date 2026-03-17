@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-games',
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule],
   template: `
     <div class="games-container">
       <h1>🎮 Games</h1>

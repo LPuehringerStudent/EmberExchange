@@ -1,10 +1,9 @@
-﻿import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-update-log',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: '../html/update_log.html',
   styleUrls: ['../css/update_log.css']
 })

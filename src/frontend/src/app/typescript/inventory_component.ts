@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import {NgForOf, NgIf} from '@angular/common';
+
 import { StoveApiService } from '../../services/stove';
 import {forkJoin, map, of, Subscription, switchMap} from 'rxjs';
-import {Rarity, ShowedStove, StoveRow} from '../../../../shared/model';
+import { ShowedStove, StoveRow } from '../../../../shared/model';
 
 interface InventoryLootbox {
   count: number;
@@ -16,24 +16,19 @@ interface InventoryLootbox {
   standalone: true,
   templateUrl: '../html/inventory.html',
   imports: [
-    NgIf,
-    RouterModule,
-    NgForOf
+    RouterModule
   ],
   styleUrls: ['../css/inventory.css']
 })
-export class InventoryComponent implements OnInit {
+export class InventoryComponent implements OnInit, OnDestroy {
   activeTab: 'lootboxes' | 'items' = 'lootboxes';
 
   // Empty arrays to show empty state
   lootboxes: any[] = [];
   items: ShowedStove[] = [];
-  private _stove: StoveApiService;
+  private _stove = inject(StoveApiService);
   private _subscription = new Subscription();
-
-  constructor(private router: Router, stove: StoveApiService) {
-    this._stove = stove;
-  }
+  private router = inject(Router);
 
 
   ngOnInit(): void {
@@ -55,7 +50,7 @@ export class InventoryComponent implements OnInit {
         if (stoves.length === 0) return of([]);
 
         return forkJoin(
-          stoves.map((stove, index) =>
+          stoves.map((stove) =>
             this._stove.checkRarity(stove.typeId).pipe(
               map(rarity => ({
                 ...stove,
@@ -98,8 +93,8 @@ export class InventoryComponent implements OnInit {
     box.locked = !box.locked;
   }
 
-  openBox() {
-    this.router.navigate(['/lootboxes']);
+  openBox(): void {
+    void this.router.navigate(['/lootboxes']);
   }
 
   deleteBox(box: InventoryLootbox) {

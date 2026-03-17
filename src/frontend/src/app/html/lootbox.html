@@ -11,22 +11,28 @@
   </button>
 </div>
 
-<div id="overlay" *ngIf="showOverlay">
-  <div style="position: relative">
-    <div id="marker"></div>
-    <div id="roller">
-      <div id="items" #itemsContainer>
-        <div *ngFor="let item of items" class="item" [style.background]="item.color">
-          {{ item.name }}
+@if (showOverlay) {
+  <div id="overlay" (click)="resetAll()">
+    <div style="position: relative" (click)="$event.stopPropagation()">
+      <div id="marker"></div>
+      <div id="roller">
+        <div id="items" #itemsContainer>
+          @for (item of items; track item.name) {
+            <div class="item" [style.background]="item.color">
+              {{ item.name }}
+            </div>
+          }
         </div>
       </div>
     </div>
   </div>
-</div>
+}
 
-<div id="popup" *ngIf="showPopup">
-  <div id="popupBox">
-    <h2 id="result">{{ resultText }}</h2>
-    <button id="okBtn" (click)="resetAll()">Okay</button>
+@if (showPopup) {
+  <div id="popup">
+    <div id="popupBox">
+      <h2 id="result">{{ resultText }}</h2>
+      <button id="okBtn" (click)="resetAll()">Okay</button>
+    </div>
   </div>
-</div>
+}

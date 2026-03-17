@@ -1,6 +1,6 @@
-﻿import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 
 interface Game {
   name: string;
@@ -19,7 +19,7 @@ interface RecentPull {
 @Component({
   selector: 'app-main-menu',
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule],
   templateUrl: '../html/main-menu.html',
   styleUrls: ['../css/main-menu.css']
 })
@@ -56,8 +56,6 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy {
     { username: 'PlayerTen', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'epic', timeAgo: '2h' }
   ];
 
-  constructor(private cdr: ChangeDetectorRef) {}
-
   ngAfterViewInit() {
     setTimeout(() => {
       this.updateCardsHeight();
@@ -84,7 +82,6 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy {
       const height = this.cardsGrid.nativeElement.offsetHeight;
       if (height > 0 && height !== this.cardsHeight) {
         this.cardsHeight = height;
-        this.cdr.detectChanges();
       }
     }
   }

@@ -1,5 +1,4 @@
-import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, ViewChild} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {AfterViewInit, Component, ElementRef, inject, ViewChild, ChangeDetectorRef} from '@angular/core';
 import {LootBoxHelper, LootItem} from "../../../../middleground/LootboxHelper";
 import {StoveApiService} from '../../services/stove';
 
@@ -7,7 +6,7 @@ import {StoveApiService} from '../../services/stove';
   selector: 'app-lootbox',
   standalone: true,
   templateUrl: '../html/lootbox.html',
-  imports: [CommonModule],
+  imports: [],
   styleUrls: ['../css/lootbox.css']
 })
 
@@ -26,60 +25,73 @@ export class LootboxComponent implements AfterViewInit {
 
 
   private lootBoxHelper: LootBoxHelper;
+  private stoveApi = inject(StoveApiService);
+  private cdr = inject(ChangeDetectorRef);
 
-  constructor(private cdr: ChangeDetectorRef,private stoveApi: StoveApiService) {
-    this.lootBoxHelper = new LootBoxHelper(cdr);
+  constructor() {
+    this.lootBoxHelper = new LootBoxHelper();
   }
 
   openBox(): void {
     if (this.isOpening) return;
     
+    console.log('Opening lootbox...');
     this.isOpening = true;
+    this.showPopup = false;
     this.lootBoxHelper.buildStrip();
     this.items = this.lootBoxHelper.items;
     this.showOverlay = true;
-    this.cdr.detectChanges();
 
+    // Wait for DOM to render items
     setTimeout(() => {
       const itemsEl = this.itemsElement.nativeElement;
+      const itemEl = itemsEl.querySelector('.item') as HTMLElement;
+      
+      if (!itemEl) {
+        console.error('No item elements found');
+        this.isOpening = false;
+        return;
+      }
 
-      itemsEl.style.transition = 'none';
-      itemsEl.style.transform = 'translateX(0px)';
+      // Calculate dimensions
+      const style = window.getComputedStyle(itemEl);
+      const width = itemEl.offsetWidth + parseInt(style.marginLeft || '0') + parseInt(style.marginRight || '0');
+      const rollerEl = document.getElementById('roller');
+      const rollerWidth = rollerEl?.offsetWidth || 620;
+      const centerOffset = rollerWidth / 2 - width / 2;
+      const offset = -(40 * width) + centerOffset;
 
-      void itemsEl.offsetHeight;
+      console.log('Starting animation, offset:', offset);
+      
+      // Trigger animation
+      itemsEl.style.transform = `translateX(${offset}px)`;
 
-      itemsEl.style.transition = 'transform 4s cubic-bezier(0.1, 0.9, 0.2, 1)';
-
+      // Show result after animation completes (4 seconds)
       setTimeout(() => {
-        const itemEl = itemsEl.querySelector('.item') as HTMLElement;
-        if (itemEl) {
-          const style = window.getComputedStyle(itemEl);
-          const width =
-            itemEl.offsetWidth +
-            parseInt(style.marginLeft) +
-            parseInt(style.marginRight);
-          const rollerEl = document.getElementById('roller');
-          const rollerWidth = rollerEl?.offsetWidth || 0;
-          const centerOffset = rollerWidth / 2 - width / 2;
-          const offset = -(40 * width) + centerOffset;
-
-          itemsEl.style.transform = `translateX(${offset}px)`;
-        }
-
-        setTimeout(() => {
-          this.showResult();
-        }, 4000);
-      }, 50);
-    }, 0);
+        console.log('Animation complete, showing result');
+        this.showResult();
+      }, 4000);
+    }, 100);
   }
 
   private showResult(): void {
+    console.log('Final item:', this.lootBoxHelper.finalItem);
     this.finalItem = this.lootBoxHelper.finalItem;
-    this.saveLoot(this.lootBoxHelper.returnTypeId(this.finalItem!))
-    this.resultText = `You got: ${this.lootBoxHelper.finalItem?.name || 'Unknown'}`;
+    
+    if (this.finalItem) {
+      const typeId = this.lootBoxHelper.returnTypeId(this.finalItem);
+      console.log('Saving loot with typeId:', typeId);
+      this.saveLoot(typeId);
+      this.resultText = `You got: ${this.finalItem.name}`;
+    } else {
+      this.resultText = 'You got: Unknown';
+    }
+    
+    console.log('Showing popup with text:', this.resultText);
     this.showPopup = true;
     this.isOpening = false;
     this.cdr.detectChanges();
+    console.log('showPopup is now:', this.showPopup);
   }
   saveLoot(typeId: number) {
     this.stoveApi.createStove(typeId, 1).subscribe({

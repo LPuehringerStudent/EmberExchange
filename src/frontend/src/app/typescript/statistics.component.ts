@@ -1,5 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { getAllPlayerStatistics, getTopPlayersByActivity, getTopPlayersByNetWorth, PlayerStatistics } from '../fetchers/player-statistics.fetcher';
 import { getTodayStatistics, getDailySummary, DailyStatistics } from '../fetchers/daily-statistics.fetcher';
@@ -14,7 +14,7 @@ interface StatCard {
 @Component({
   selector: 'app-statistics',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: '../html/statistics.html',
   styleUrls: ['../css/statistics.css']
 })
@@ -35,16 +35,13 @@ export class StatisticsComponent implements OnInit {
   // Dashboard stats
   dashboardStats: StatCard[] = [];
 
-  constructor(private cdr: ChangeDetectorRef) {}
-
-  ngOnInit() {
-    this.loadAllData();
+  ngOnInit(): void {
+    void this.loadAllData();
   }
 
   async loadAllData() {
     this.loading = true;
     this.error = null;
-    this.cdr.detectChanges(); // Show loading state immediately
 
     console.log('Loading statistics data...');
     
@@ -160,7 +157,6 @@ export class StatisticsComponent implements OnInit {
 
     this.updateDashboardStats();
     this.loading = false;
-    this.cdr.detectChanges(); // Force view update
     console.log('Loading complete, loading=', this.loading);
   }
 

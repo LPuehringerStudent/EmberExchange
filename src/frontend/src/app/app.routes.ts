@@ -5,19 +5,18 @@ import {MainMenuComponent} from './typescript/main-menu-component';
 import {SettingsComponent} from './typescript/settings-component';
 import {InventoryComponent} from './typescript/inventory_component';
 import {UpdateLogComponent} from './typescript/update_log_component';
-import {Marketplace} from './components/marketplace/marketplace';
+import {MarketplaceComponent} from './typescript/marketplace.component';
 import {GamesComponent} from './typescript/games.component';
-import {NotFoundComponent} from './typescript/not-found.component';
 import {StatisticsComponent} from './typescript/statistics.component';
-import {Appearance} from './components/appearance/appearance';
-import {Account} from './components/account/account';
+import {NotFoundComponent} from './typescript/not-found.component';
+import {NotFoundComponent as AccountComponent} from './typescript/not-found.component';
 
 export const routes: Routes = [
   { path: '', component: MainMenuComponent },
-  { path: 'account', component: Account },
+  { path: 'account', component: AccountComponent },
   { path: 'lootboxes', component: LootboxComponent },
-  { path: 'marketplace', component: Marketplace},
-  {path: 'appearance', component: Appearance},
+  { path: 'marketplace', component: MarketplaceComponent},
+  {path: 'appearance', component: NotFoundComponent},
   { path: 'games', component: GamesComponent },
   { path: 'inventory', component: InventoryComponent },
   {
@@ -25,9 +24,9 @@ export const routes: Routes = [
     component: SettingsComponent,
     children: [
       { path: '', redirectTo: 'account', pathMatch: 'full' },
-      { path: 'account', component: Account },
+      { path: 'account', component: AccountComponent },
       { path: 'security', component: NotFoundComponent },
-      { path: 'appearance', component: Appearance },
+      { path: 'appearance', component: NotFoundComponent },
       { path: 'language', component: NotFoundComponent },
       { path: 'socials', component: NotFoundComponent }
     ]

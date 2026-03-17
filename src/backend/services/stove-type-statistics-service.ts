@@ -148,6 +148,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
             priceHistory30d: "[]",
             allTimeHighPrice: highestSalePrice,
             allTimeLowPrice: lowestSalePrice,
+            totalVolumeTraded: totalVolumeTraded,
             totalSales: totalSales,
             salesLast7Days: salesLast7Days,
             salesLast30Days: salesLast30Days,

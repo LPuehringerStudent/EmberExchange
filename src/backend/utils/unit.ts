@@ -619,6 +619,16 @@ class DB {
         `);
 
         connection.exec(`
+            create table if not exists Session (
+                sessionId text primary key,
+                playerId integer not null references Player(playerId),
+                createdAt text not null,
+                expiresAt text not null,
+                isActive integer not null default 1
+            ) strict
+        `);
+
+        connection.exec(`
             create table if not exists PriceHistory (
                 historyId integer primary key autoincrement,
                 typeId integer not null references StoveType(typeId),

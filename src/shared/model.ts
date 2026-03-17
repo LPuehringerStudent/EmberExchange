@@ -146,6 +146,18 @@ export interface OwnershipRow extends Ownership {
     ownershipId: number;
 }
 
+// Session
+export interface Session {
+    sessionId: string;
+    playerId: number;
+    createdAt: Date;
+    expiresAt: Date;
+    isActive: boolean;
+}
+
+export interface SessionRow extends Session {
+}
+
 // ChatMessage
 export interface ChatMessage {
     senderId: number;
@@ -264,6 +276,7 @@ export interface StoveTypeStatistics {
     priceHistory30d: string;
     allTimeHighPrice: number | null;
     allTimeLowPrice: number | null;
+    totalVolumeTraded: number;
     totalSales: number;
     salesLast7Days: number;
     salesLast30Days: number;

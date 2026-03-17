@@ -1,11 +1,11 @@
-﻿/* =========================
+/* =========================
    Layout
 ========================= */
 
 .inventory-layout {
   display: flex;
   height: calc(100vh - 80px);
-  background: #f6f8fc;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   border-radius: 18px;
   overflow: hidden;
 }
@@ -15,44 +15,44 @@
 ========================= */
 
 .inventory-sidebar {
-  width: 220px;
-  background: linear-gradient(180deg, #ffffff, #f2f5ff);
+  width: 240px;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
   padding: 28px 20px;
-  border-right: 1px solid #e6e9f5;
+  border-right: 1px solid #e2e8f0;
+  box-shadow: 4px 0 15px rgba(0,0,0,0.05);
 }
 
 .inventory-sidebar h2 {
-  font-size: 18px;
-  margin-bottom: 22px;
+  font-size: 22px;
+  margin-bottom: 24px;
   color: #e85d04;
+  font-weight: 700;
 }
 
-/* Sidebar buttons */
 .sidebar-btn {
   width: 100%;
-  padding: 12px 14px;
-  margin-bottom: 10px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
   border: none;
-  border-radius: 10px;
-
+  border-radius: 12px;
   background: transparent;
-  color: #555;
-  font-size: 14px;
+  color: #64748b;
+  font-size: 15px;
   font-weight: 500;
   text-align: left;
-
   cursor: pointer;
-  transition: background 0.25s ease, color 0.25s ease;
+  transition: all 0.25s ease;
 }
 
 .sidebar-btn:hover {
-  background: #eef2ff;
+  background: #f1f5f9;
   color: #e85d04;
 }
 
 .sidebar-btn.active {
-  background: #e85d04;
+  background: linear-gradient(135deg, #e85d04 0%, #f48c06 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(232, 93, 4, 0.3);
 }
 
 /* =========================
@@ -64,21 +64,24 @@
   padding: 30px 40px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 /* Header */
 .inventory-header {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .inventory-header h1 {
-  font-size: 26px;
-  color: #333;
+  font-size: 28px;
+  color: #1e293b;
+  font-weight: 700;
+  margin-bottom: 6px;
 }
 
 .inventory-header .hint {
-  font-size: 13px;
-  color: #777;
+  font-size: 14px;
+  color: #64748b;
 }
 
 /* =========================
@@ -87,15 +90,11 @@
 
 .inventory-grid {
   flex: 1;
-  background: #f9fbff;
-  border-radius: 16px;
-  padding: 30px;
-
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 20px;
-
-  border: 1px solid #e7ebf8;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+  padding: 8px;
+  align-content: start;
 }
 
 /* =========================
@@ -104,375 +103,188 @@
 
 .empty-state {
   grid-column: 1 / -1;
-  height: 100%;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
-  color: #999;
+  padding: 80px 20px;
+  color: #64748b;
   text-align: center;
 }
 
 .empty-icon {
-  width: 90px;
-  height: 90px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #e9eeff, #f5f7ff);
-
+  width: 100px;
+  height: 100px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-
-  font-size: 36px;
-  margin-bottom: 14px;
+  font-size: 48px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
 
 .empty-state p {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
-  color: #555;
+  color: #334155;
+  margin: 0 0 8px 0;
 }
 
 .empty-state span {
-  font-size: 13px;
-  color: #888;
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.action-btn {
+  background: linear-gradient(135deg, #e85d04 0%, #f48c06 100%);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 4px 12px rgba(232, 93, 4, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(232, 93, 4, 0.4);
 }
 
 /* =========================
-   Inventory Slot (future use)
+   Item Card
 ========================= */
 
-.inventory-slot {
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-  aspect-ratio: 1 / 1;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  position: relative;
-  cursor: pointer;
-
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.inventory-slot:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 45px rgba(63,81,181,0.25);
-}
-
-.slot-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #e85d04, #f48c06);
-  border-radius: 14px;
-  color: white;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-}
-
-.slot-amount {
-  position: absolute;
-  bottom: 8px;
-  right: 10px;
-  background: #e85d04;
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 10px;
-}
-
-/* Grid Layout */
-.inventory-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-  padding: 20px;
-}
-
-/* Inventory Slot Base */
-.inventory-slot {
-  background: #2a2a3e;
-  border-radius: 12px;
-  padding: 16px;
-  position: relative;
-  transition: all 0.2s;
-  border: 2px solid transparent;
-}
-
-.inventory-slot:hover {
-  border-color: #4a9eff;
-  transform: translateY(-2px);
-}
-
-/* Lootbox Slot */
-.lootbox-slot {
-  text-align: center;
-  min-height: 150px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.lootbox-slot.locked {
-  opacity: 0.7;
-  background: #1a1a2e;
-}
-
-.slot-icon {
-  font-size: 48px;
-  margin-bottom: 8px;
-}
-
-.slot-count {
-  background: #4a9eff;
-  color: white;
-  padding: 4px 12px;
+.item-card {
+  background: white;
   border-radius: 16px;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-/* Item Slot (Stove) */
-.item-slot {
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border: 2px solid transparent;
+  transition: all 0.25s ease;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
-.slot-visual {
+.item-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+}
+
+/* Rarity Styling */
+.item-card.rarity-common {
+  border-color: #94a3b8;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.item-card.rarity-uncommon {
+  border-color: #22c55e;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.item-card.rarity-rare {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+}
+
+.item-card.rarity-epic {
+  border-color: #a855f7;
+  background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
+}
+
+.item-card.rarity-legendary {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+}
+
+/* Visual Section */
+.item-visual {
   position: relative;
-  height: 100px;
+  height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
-  border-radius: 8px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 12px;
   overflow: hidden;
 }
 
 .stove-icon {
-  font-size: 48px;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  font-size: 64px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
 }
 
-/* Rarity Colors */
-.rarity-common .stove-icon { filter: grayscale(100%) brightness(1.2); }
-.rarity-uncommon .stove-icon { filter: hue-rotate(120deg) saturate(1.5); }
-.rarity-rare .stove-icon { filter: hue-rotate(200deg) saturate(1.5) brightness(1.2); }
-.rarity-epic .stove-icon { filter: hue-rotate(280deg) saturate(2); }
-.rarity-legendary .stove-icon { filter: hue-rotate(45deg) saturate(2) brightness(1.3); }
-
-.level-badge {
+/* Rarity Badge */
+.rarity-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #4caf50;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.slot-info {
-  flex: 1;
-}
-
-.slot-title {
-  margin: 0 0 4px 0;
-  font-size: 16px;
-  color: #fff;
-}
-
-.slot-type {
-  color: #888;
-  font-size: 12px;
+  top: 10px;
+  right: 10px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-/* Stats */
-.slot-stats {
-  margin-top: 12px;
+.rarity-badge.common {
+  background: #94a3b8;
+  color: white;
+}
+
+.rarity-badge.uncommon {
+  background: #22c55e;
+  color: white;
+}
+
+.rarity-badge.rare {
+  background: #3b82f6;
+  color: white;
+}
+
+.rarity-badge.epic {
+  background: #a855f7;
+  color: white;
+}
+
+.rarity-badge.legendary {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  color: #7c2d12;
+}
+
+/* Info Section */
+.item-info {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-.stat-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.stat-label {
-  font-size: 11px;
-  color: #666;
-  min-width: 60px;
-  text-transform: uppercase;
-}
-
-.stat-bar {
-  flex: 1;
-  height: 6px;
-  background: #1a1a2e;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.stat-fill {
-  height: 100%;
-  background: #4a9eff;
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.stat-bar.heat .stat-fill {
-  background: #ff5722;
-}
-
-/* Footer */
-.slot-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #3a3a4e;
-}
-
-.owner-id {
-  font-size: 11px;
-  color: #666;
-}
-
-.use-btn {
-  background: #4a9eff;
-  color: white;
-  border: none;
-  padding: 6px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-
-.use-btn:hover {
-  background: #3d8be6;
-}
-
-/* Actions & Dropdown */
-.slot-actions {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-}
-
-.menu-btn {
-  background: rgba(0,0,0,0.3);
-  border: none;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
+.item-name {
+  margin: 0;
   font-size: 16px;
+  color: #1e293b;
+  font-weight: 700;
 }
 
-.dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
-  background: #1e1e2e;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  padding: 8px 0;
-  min-width: 120px;
-  z-index: 100;
-}
-
-.dropdown button {
-  display: block;
-  width: 100%;
-  padding: 8px 16px;
-  border: none;
-  background: none;
-  color: #fff;
-  text-align: left;
-  cursor: pointer;
+.item-type {
+  margin: 0;
   font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
 }
 
-.dropdown button:hover {
-  background: #2a2a3e;
-}
-
-.dropdown button.danger {
-  color: #ff4757;
-}
-
-.dropdown button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.lock-indicator {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  font-size: 16px;
-}
-
-/* Empty State */
-.empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 60px 20px;
-  color: #888;
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-state p {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  color: #fff;
-}
-
-.empty-state span {
-  display: block;
-  margin-bottom: 20px;
-  font-size: 14px;
-}
-
-.action-btn {
-  background: #ff894a;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-
-  display: inline-block;
-}
-
-.action-btn:hover {
-  background: #d87644;
+.item-owner {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
 }

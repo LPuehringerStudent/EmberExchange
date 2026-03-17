@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {map, Observable, Subject, tap} from 'rxjs';
 import {Rarity} from '../../../shared/model';
@@ -7,11 +7,11 @@ import {Rarity} from '../../../shared/model';
   providedIn: 'root'
 })
 export class StoveApiService {
-private apiUrl = '/api';
+  private apiUrl = '/api';
   private refreshSubject = new Subject<void>();
   refresh$ = this.refreshSubject.asObservable();
 
-constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   createStove(typeId: number, ownerId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/stoves`, {
@@ -31,8 +31,8 @@ constructor(private http: HttpClient) {}
     return this.http.get<{name: string}>(`${this.apiUrl}/stove-types/${typeId}`);
   }
 
-getStoves(ownerId: number): Observable<any> {
-  // This hits: GET http://localhost:3000/api/players/{ownerId}/stoves
-  return this.http.get(`${this.apiUrl}/players/${ownerId}/stoves`);
-}
+  getStoves(ownerId: number): Observable<any> {
+    // This hits: GET http://localhost:3000/api/players/{ownerId}/stoves
+    return this.http.get(`${this.apiUrl}/players/${ownerId}/stoves`);
+  }
 }

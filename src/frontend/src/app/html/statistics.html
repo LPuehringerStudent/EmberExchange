@@ -19,248 +19,277 @@
   </header>
 
   <!-- Loading State -->
-  <div *ngIf="loading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Loading statistics...</p>
-  </div>
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading statistics...</p>
+    </div>
+  }
 
   <!-- Error State -->
-  <div *ngIf="error" class="error-state">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="12" y1="8" x2="12" y2="12"/>
-      <line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
-    <p>{{error}}</p>
-    <button (click)="loadAllData()">Retry</button>
-  </div>
+  @if (error) {
+    <div class="error-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p>{{error}}</p>
+      <button (click)="loadAllData()">Retry</button>
+    </div>
+  }
 
   <!-- Main Content -->
-  <main *ngIf="!loading && !error" class="stats-content">
-    <!-- Dashboard Overview Cards -->
-    <section class="dashboard-cards">
-      <div class="dashboard-card" *ngFor="let stat of dashboardStats">
-        <div class="card-icon" [class]="stat.trend">
-          <svg *ngIf="stat.trend === 'up'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-            <polyline points="17 6 23 6 23 12"/>
-          </svg>
-          <svg *ngIf="stat.trend === 'down'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
-            <polyline points="17 18 23 18 23 12"/>
-          </svg>
-          <svg *ngIf="stat.trend === 'neutral'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-        </div>
-        <div class="card-info">
-          <span class="card-label">{{stat.label}}</span>
-          <span class="card-value">{{stat.value}}</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Two Column Layout -->
-    <div class="stats-grid">
-      <!-- Left Column: Player Leaderboards -->
-      <section class="stats-section">
-        <div class="section-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-          <h2>Player Leaderboards</h2>
-        </div>
-
-        <!-- Top by Activity -->
-        <div class="leaderboard">
-          <h3 class="leaderboard-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-            Most Active Players
-          </h3>
-          <div class="leaderboard-list">
-            <div class="leaderboard-item" *ngFor="let player of topActivityPlayers; let i = index">
-              <span class="rank" [class.top-three]="i < 3">{{i + 1}}</span>
-              <div class="player-info">
-                <span class="player-name">Player #{{player.playerId}}</span>
-                <span class="player-score">{{player.totalMiniGamesPlayed}} games</span>
-              </div>
-              <div class="player-stats">
-                <span class="stat-badge">{{player.totalListingsSold}} sales</span>
-              </div>
+  @if (!loading && !error) {
+    <main class="stats-content">
+      <!-- Dashboard Overview Cards -->
+      <section class="dashboard-cards">
+        @for (stat of dashboardStats; track stat.label) {
+          <div class="dashboard-card">
+            <div class="card-icon" [class]="stat.trend">
+              @if (stat.trend === 'up') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                  <polyline points="17 6 23 6 23 12"/>
+                </svg>
+              }
+              @if (stat.trend === 'down') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+                  <polyline points="17 18 23 18 23 12"/>
+                </svg>
+              }
+              @if (stat.trend === 'neutral') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              }
             </div>
-            <div *ngIf="topActivityPlayers.length === 0" class="empty-state">
-              No player activity data available
+            <div class="card-info">
+              <span class="card-label">{{stat.label}}</span>
+              <span class="card-value">{{stat.value}}</span>
             </div>
           </div>
-        </div>
-
-        <!-- Top by Wealth -->
-        <div class="leaderboard">
-          <h3 class="leaderboard-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            Wealthiest Players
-          </h3>
-          <div class="leaderboard-list">
-            <div class="leaderboard-item" *ngFor="let player of topWealthPlayers; let i = index">
-              <span class="rank" [class.top-three]="i < 3">{{i + 1}}</span>
-              <div class="player-info">
-                <span class="player-name">Player #{{player.playerId}}</span>
-                <span class="player-score">{{formatCurrency(player.netWorthEstimate)}}</span>
-              </div>
-              <div class="player-stats">
-                <span class="stat-badge">{{player.currentStoveCount}} stoves</span>
-              </div>
-            </div>
-            <div *ngIf="topWealthPlayers.length === 0" class="empty-state">
-              No wealth data available
-            </div>
-          </div>
-        </div>
+        }
       </section>
 
-      <!-- Right Column: Market & System Stats -->
-      <section class="stats-section">
-        <div class="section-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
-          <h2>Market Overview</h2>
-        </div>
-
-        <!-- Daily Stats -->
-        <div class="stats-card" *ngIf="todayStats">
-          <h3 class="stats-card-title">
+      <!-- Two Column Layout -->
+      <div class="stats-grid">
+        <!-- Left Column: Player Leaderboards -->
+        <section class="stats-section">
+          <div class="section-header">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            Today's Activity
-          </h3>
-          <div class="stats-grid-mini">
-            <div class="mini-stat">
-              <span class="mini-label">Players Online</span>
-              <span class="mini-value">{{todayStats.uniquePlayersLoggedIn}}</span>
-            </div>
-            <div class="mini-stat">
-              <span class="mini-label">Lootboxes Opened</span>
-              <span class="mini-value">{{todayStats.lootboxesOpenedToday}}</span>
-            </div>
-            <div class="mini-stat">
-              <span class="mini-label">New Listings</span>
-              <span class="mini-value">{{todayStats.newListingsToday}}</span>
-            </div>
-            <div class="mini-stat">
-              <span class="mini-label">Sales Completed</span>
-              <span class="mini-value">{{todayStats.listingsSoldToday}}</span>
-            </div>
-            <div class="mini-stat">
-              <span class="mini-label">Trading Volume</span>
-              <span class="mini-value">{{formatNumber(todayStats.totalTradingVolume)}}</span>
-            </div>
-            <div class="mini-stat">
-              <span class="mini-label">Avg Sale Price</span>
-              <span class="mini-value">{{formatNumber(todayStats.averageSalePriceToday)}}</span>
+            <h2>Player Leaderboards</h2>
+          </div>
+
+          <!-- Top by Activity -->
+          <div class="leaderboard">
+            <h3 class="leaderboard-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              Most Active Players
+            </h3>
+            <div class="leaderboard-list">
+              @for (player of topActivityPlayers; track player.playerId; let i = $index) {
+                <div class="leaderboard-item">
+                  <span class="rank" [class.top-three]="i < 3">{{i + 1}}</span>
+                  <div class="player-info">
+                    <span class="player-name">Player #{{player.playerId}}</span>
+                    <span class="player-score">{{player.totalMiniGamesPlayed}} games</span>
+                  </div>
+                  <div class="player-stats">
+                    <span class="stat-badge">{{player.totalListingsSold}} sales</span>
+                  </div>
+                </div>
+              }
+              @if (topActivityPlayers.length === 0) {
+                <div class="empty-state">
+                  No player activity data available
+                </div>
+              }
             </div>
           </div>
-        </div>
 
-        <!-- Market Summary -->
-        <div class="stats-card">
-          <h3 class="stats-card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="1" x2="12" y2="23"/>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-            Market Summary (7 Days)
-          </h3>
-          <div class="summary-stats">
-            <div class="summary-item">
-              <div class="summary-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                </svg>
-              </div>
-              <div class="summary-info">
-                <span class="summary-value">{{formatNumber(dailySummary.totalLootboxes)}}</span>
-                <span class="summary-label">Lootboxes Opened</span>
-              </div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="9" cy="21" r="1"/>
-                  <circle cx="20" cy="21" r="1"/>
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                </svg>
-              </div>
-              <div class="summary-info">
-                <span class="summary-value">{{dailySummary.totalSales}}</span>
-                <span class="summary-label">Total Sales</span>
-              </div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="1" x2="12" y2="23"/>
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-              </div>
-              <div class="summary-info">
-                <span class="summary-value">{{formatNumber(dailySummary.totalVolume)}}</span>
-                <span class="summary-label">Trading Volume</span>
-              </div>
+          <!-- Top by Wealth -->
+          <div class="leaderboard">
+            <h3 class="leaderboard-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              Wealthiest Players
+            </h3>
+            <div class="leaderboard-list">
+              @for (player of topWealthPlayers; track player.playerId; let i = $index) {
+                <div class="leaderboard-item">
+                  <span class="rank" [class.top-three]="i < 3">{{i + 1}}</span>
+                  <div class="player-info">
+                    <span class="player-name">Player #{{player.playerId}}</span>
+                    <span class="player-score">{{formatCurrency(player.netWorthEstimate)}}</span>
+                  </div>
+                  <div class="player-stats">
+                    <span class="stat-badge">{{player.currentStoveCount}} stoves</span>
+                  </div>
+                </div>
+              }
+              @if (topWealthPlayers.length === 0) {
+                <div class="empty-state">
+                  No wealth data available
+                </div>
+              }
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Stove Type Statistics -->
-        <div class="stats-card">
-          <h3 class="stats-card-title">
+        <!-- Right Column: Market & System Stats -->
+        <section class="stats-section">
+          <div class="section-header">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
-              <rect x="9" y="9" width="6" height="6"/>
-              <line x1="9" y1="1" x2="9" y2="4"/>
-              <line x1="15" y1="1" x2="15" y2="4"/>
-              <line x1="9" y1="20" x2="9" y2="23"/>
-              <line x1="15" y1="20" x2="15" y2="23"/>
-              <line x1="20" y1="9" x2="23" y2="9"/>
-              <line x1="20" y1="14" x2="23" y2="14"/>
-              <line x1="1" y1="9" x2="4" y2="9"/>
-              <line x1="1" y1="14" x2="4" y2="14"/>
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            Stove Type Distribution
-          </h3>
-          <div class="stove-list">
-            <div class="stove-item" *ngFor="let stove of stoveTypeStats.slice(0, 5)">
-              <div class="stove-info">
-                <span class="stove-type">Type #{{stove.stoveTypeId}}</span>
-                <div class="stove-bar-container">
-                  <div class="stove-bar" [style.width.%]="stove.percentOfTotalSupply"></div>
+            <h2>Market Overview</h2>
+          </div>
+
+          <!-- Daily Stats -->
+          @if (todayStats) {
+            <div class="stats-card">
+              <h3 class="stats-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Today's Activity
+              </h3>
+              <div class="stats-grid-mini">
+                <div class="mini-stat">
+                  <span class="mini-label">Players Online</span>
+                  <span class="mini-value">{{todayStats.uniquePlayersLoggedIn}}</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="mini-label">Lootboxes Opened</span>
+                  <span class="mini-value">{{todayStats.lootboxesOpenedToday}}</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="mini-label">New Listings</span>
+                  <span class="mini-value">{{todayStats.newListingsToday}}</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="mini-label">Sales Completed</span>
+                  <span class="mini-value">{{todayStats.listingsSoldToday}}</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="mini-label">Trading Volume</span>
+                  <span class="mini-value">{{formatNumber(todayStats.totalTradingVolume)}}</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="mini-label">Avg Sale Price</span>
+                  <span class="mini-value">{{formatNumber(todayStats.averageSalePriceToday)}}</span>
                 </div>
               </div>
-              <div class="stove-numbers">
-                <span class="stove-total">{{stove.totalMinted}} minted</span>
-                <span class="stove-percent">{{stove.percentOfTotalSupply.toFixed(1)}}%</span>
+            </div>
+          }
+
+          <!-- Market Summary -->
+          <div class="stats-card">
+            <h3 class="stats-card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              Market Summary (7 Days)
+            </h3>
+            <div class="summary-stats">
+              <div class="summary-item">
+                <div class="summary-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                  </svg>
+                </div>
+                <div class="summary-info">
+                  <span class="summary-value">{{formatNumber(dailySummary.totalLootboxes)}}</span>
+                  <span class="summary-label">Lootboxes Opened</span>
+                </div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="21" r="1"/>
+                    <circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                  </svg>
+                </div>
+                <div class="summary-info">
+                  <span class="summary-value">{{dailySummary.totalSales}}</span>
+                  <span class="summary-label">Total Sales</span>
+                </div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"/>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </div>
+                <div class="summary-info">
+                  <span class="summary-value">{{formatNumber(dailySummary.totalVolume)}}</span>
+                  <span class="summary-label">Trading Volume</span>
+                </div>
               </div>
             </div>
-            <div *ngIf="stoveTypeStats.length === 0" class="empty-state">
-              No stove type data available
+          </div>
+
+          <!-- Stove Type Statistics -->
+          <div class="stats-card">
+            <h3 class="stats-card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
+                <rect x="9" y="9" width="6" height="6"/>
+                <line x1="9" y1="1" x2="9" y2="4"/>
+                <line x1="15" y1="1" x2="15" y2="4"/>
+                <line x1="9" y1="20" x2="9" y2="23"/>
+                <line x1="15" y1="20" x2="15" y2="23"/>
+                <line x1="20" y1="9" x2="23" y2="9"/>
+                <line x1="20" y1="14" x2="23" y2="14"/>
+                <line x1="1" y1="9" x2="4" y2="9"/>
+                <line x1="1" y1="14" x2="4" y2="14"/>
+              </svg>
+              Stove Type Distribution
+            </h3>
+            <div class="stove-list">
+              @for (stove of stoveTypeStats.slice(0, 5); track stove.stoveTypeId) {
+                <div class="stove-item">
+                  <div class="stove-info">
+                    <span class="stove-type">Type #{{stove.stoveTypeId}}</span>
+                    <div class="stove-bar-container">
+                      <div class="stove-bar" [style.width.%]="stove.percentOfTotalSupply"></div>
+                    </div>
+                  </div>
+                  <div class="stove-numbers">
+                    <span class="stove-total">{{stove.totalMinted}} minted</span>
+                    <span class="stove-volume">{{formatNumber(stove.totalVolumeTraded)}} traded</span>
+                    <span class="stove-percent">{{stove.percentOfTotalSupply.toFixed(1)}}%</span>
+                  </div>
+                </div>
+              }
+              @if (stoveTypeStats.length === 0) {
+                <div class="empty-state">
+                  No stove type data available
+                </div>
+              }
             </div>
           </div>
-        </div>
-      </section>
-    </div>
-  </main>
+        </section>
+      </div>
+    </main>
+  }
 </div>

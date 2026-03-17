@@ -18,8 +18,9 @@ import { chatMessageRouter } from "./routers/chat-message-router";
 import { playerStatisticsRouter } from "./routers/player-statistics-router";
 import { dailyStatisticsRouter } from "./routers/daily-statistics-router";
 import { stoveTypeStatisticsRouter } from "./routers/stove-type-statistics-router";
+import { authRouter } from "./routers/auth-router";
 import { swaggerSpec } from "./swagger";
-import Database from "better-sqlite3";
+
 
 export const app = express();
 const PORT = process.env.PORT || 3000;
@@ -51,6 +52,7 @@ app.use("/api", chatMessageRouter);
 app.use("/api", playerStatisticsRouter);
 app.use("/api", dailyStatisticsRouter);
 app.use("/api", stoveTypeStatisticsRouter);
+app.use("/api", authRouter);
 
 // Health check endpoint
 app.get("/api/health", (_req, res) => {

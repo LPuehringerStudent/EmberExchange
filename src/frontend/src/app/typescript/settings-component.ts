@@ -1,5 +1,5 @@
 // settings-component.ts
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import {Router, ActivatedRoute, RouterOutlet} from '@angular/router';
 
 @Component({
@@ -13,10 +13,11 @@ import {Router, ActivatedRoute, RouterOutlet} from '@angular/router';
 export class SettingsComponent {
   activeTab = 'account';
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   setActiveTab(tab: string): void {
     this.activeTab = tab;
-    this.router.navigate([tab], { relativeTo: this.route });
+    void this.router.navigate([tab], { relativeTo: this.route });
   }
 }

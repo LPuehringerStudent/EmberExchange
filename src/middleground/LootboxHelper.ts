@@ -1,4 +1,3 @@
-import {ChangeDetectorRef} from "@angular/core";
 import {Rarity} from "../shared/model";
 
 export interface LootItem {
@@ -17,7 +16,6 @@ export class LootBoxHelper {
 
     items: LootItem[] = [];
     finalItem: LootItem | null = null;
-    constructor(private cdr: ChangeDetectorRef) {}
 
     private weightedPick(): LootItem {
         const sum = this.pool.reduce((a, b) => a + b.weight, 0);
@@ -44,14 +42,4 @@ export class LootBoxHelper {
 
         return -1;
     }
-    private returnRarity(typeId: number): Rarity {
-        if (typeId === 1) return Rarity.COMMON;
-        if (typeId === 3) return Rarity.RARE;
-        if (typeId === 5) return Rarity.EPIC;
-        if (typeId === 7) return Rarity.LEGENDARY;
-        return Rarity.COMMON;
-    }
-
-
 }
-

@@ -35,43 +35,43 @@
     <div class="inventory-grid">
 
       <!-- EMPTY: LOOTBOXES -->
-      <div
-        class="empty-state"
-        *ngIf="activeTab === 'lootboxes' && lootboxes.length === 0">
-
-        <div class="empty-icon">♨</div>
-        <p>No lootboxes yet</p>
-        <span>Open or buy lootboxes to see them here</span>
-        <button class="action-btn" routerLink="/lootboxes">Go to Lootboxes</button>
-      </div>
+      @if (activeTab === 'lootboxes' && lootboxes.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">📦</div>
+          <p>No lootboxes yet</p>
+          <span>Open or buy lootboxes to see them here</span>
+          <button class="action-btn" routerLink="/lootboxes">Go to Lootboxes</button>
+        </div>
+      }
 
       <!-- EMPTY: ITEMS -->
-      <div
-        class="empty-state"
-        *ngIf="activeTab === 'items' && items.length === 0">
-
-        <div class="empty-icon">♨</div>
-        <p>No items yet</p>
-        <span>Open lootboxes to collect items</span>
-        <button class="action-btn" routerLink="/lootboxes">Open a Lootbox</button>
-      </div>
+      @if (activeTab === 'items' && items.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">♨️</div>
+          <p>No items yet</p>
+          <span>Open lootboxes to collect items</span>
+          <button class="action-btn" routerLink="/lootboxes">Open a Lootbox</button>
+        </div>
+      }
 
       <!-- ITEMS LIST -->
-      <ng-container *ngIf="activeTab === 'items' && items.length > 0">
-      <div class="inventory-slot" *ngFor="let item of items">
-        <div class="inventory-slot" [class]="'rarity-' + item.rarity.toLowerCase()">
-          <div class="slot-icon"></div>
-          <div class="slot-info">
-            <h4>{{item.stoveName || 'Stove #' + item.stoveId}}</h4>
-            <p>{{item.typeId}}</p>
-            <p>Owner: {{item.currentOwnerId}}</p>
-            <span class="rarity-badge" [class]="item.rarity.toLowerCase()">
-      {{item.rarity}}
-            </span>
+      @if (activeTab === 'items' && items.length > 0) {
+        @for (item of items; track item.stoveId) {
+          <div class="item-card" [class]="'rarity-' + item.rarity.toLowerCase()">
+            <div class="item-visual">
+              <div class="stove-icon">♨️</div>
+              <span class="rarity-badge" [class]="item.rarity.toLowerCase()">
+                {{item.rarity}}
+              </span>
+            </div>
+            <div class="item-info">
+              <h4 class="item-name">{{item.stoveName || 'Stove #' + item.stoveId}}</h4>
+              <p class="item-type">Type #{{item.typeId}}</p>
+              <p class="item-owner">Owner: {{item.currentOwnerId}}</p>
+            </div>
           </div>
-        </div>
-      </div>
-      </ng-container>
+        }
+      }
 
     </div>
 
