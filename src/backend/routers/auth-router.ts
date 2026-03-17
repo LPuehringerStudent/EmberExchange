@@ -48,7 +48,7 @@ export const authRouter = express.Router();
  */
 authRouter.post("/auth/login", (req, res) => {
     const { username, password } = req.body;
-    const unit = new Unit();
+    const unit = new Unit(false);
     const playerService = new PlayerService(unit);
     const sessionService = new SessionService(unit);
 
@@ -106,7 +106,7 @@ authRouter.post("/auth/logout", (req, res) => {
         return;
     }
 
-    const unit = new Unit();
+    const unit = new Unit(false);
     const sessionService = new SessionService(unit);
 
     try {
