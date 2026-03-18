@@ -60,8 +60,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
         const currentHighestPrice = listedResult && listedResult.maxPrice > 0 ? listedResult.maxPrice : null;
 
         // Calculate listed percentage
-        const totalStoves = this.getTotalStoveCount();
-        const listedPercent = totalStoves > 0 ? (currentlyListed / totalStoves) * 100 : 0;
+        const listedPercent = totalMinted > 0 ? (currentlyListed / totalMinted) * 100 : 0;
 
         // Sales statistics
         const salesStmt = this.unit.prepare<{ 
@@ -130,6 +129,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
         const salesLast30Days = sales30dStmt.get()?.count ?? 0;
 
         // Percent of total supply
+        const totalStoves = this.getTotalStoveCount();
         const percentOfTotalSupply = totalStoves > 0 ? (totalMinted / totalStoves) * 100 : 0;
 
         return {
@@ -175,14 +175,106 @@ export class StoveTypeStatisticsService extends ServiceBase {
      * Retrieves all stove type statistics (calculated from real data).
      */
     getAll(): StoveTypeStatisticsRow[] {
-        const stmt = this.unit.prepare<{ typeId: number }>(
-            "SELECT typeId FROM StoveType ORDER BY typeId"
-        );
-        const types = stmt.all();
+        const totalStoveCount = this.getTotalStoveCount();
+        const sql = `
+            SELECT 
+                st.typeId as stoveTypeId,
+                st.name,
+                st.rarity,
+                COALESCE(s_stats.totalMinted, 0) as totalMinted,
+                COALESCE(l_stats.currentlyListed, 0) as currentlyListed,
+                COALESCE(l_stats.averageListingPrice, 0) as averageListingPrice,
+                l_stats.currentLowestPrice,
+                l_stats.currentHighestPrice,
+                COALESCE(t_stats.totalSales, 0) as totalSales,
+                COALESCE(t_stats.totalVolumeTraded, 0) as totalVolumeTraded,
+                COALESCE(t_stats.averageSalePrice, 0) as averageSalePrice,
+                t_stats.highestSalePrice as allTimeHighPrice,
+                t_stats.lowestSalePrice as allTimeLowPrice,
+                (SELECT l_sub.price FROM Trade t_sub 
+                 JOIN Listing l_sub ON t_sub.listingId = l_sub.listingId 
+                 JOIN Stove s_sub ON l_sub.stoveId = s_sub.stoveId 
+                 WHERE s_sub.typeId = st.typeId 
+                 ORDER BY t_sub.executedAt DESC LIMIT 1) as lastSalePrice,
+                COALESCE(t_stats.salesLast7Days, 0) as salesLast7Days,
+                COALESCE(t_stats.salesLast30Days, 0) as salesLast30Days
+            FROM StoveType st
+            LEFT JOIN (
+                SELECT typeId, 
+                       COUNT(*) as totalMinted,
+                       COUNT(currentOwnerId) as currentlyOwned
+                FROM Stove GROUP BY typeId
+            ) s_stats ON st.typeId = s_stats.typeId
+            LEFT JOIN (
+                SELECT 
+                    s.typeId,
+                    COUNT(*) as currentlyListed,
+                    AVG(l.price) as averageListingPrice,
+                    MIN(l.price) as currentLowestPrice,
+                    MAX(l.price) as currentHighestPrice
+                FROM Listing l
+                JOIN Stove s ON l.stoveId = s.stoveId
+                WHERE l.status = 'active'
+                GROUP BY s.typeId
+            ) l_stats ON st.typeId = l_stats.typeId
+            LEFT JOIN (
+                SELECT 
+                    s.typeId,
+                    COUNT(*) as totalSales,
+                    SUM(l.price) as totalVolumeTraded,
+                    AVG(l.price) as averageSalePrice,
+                    MAX(l.price) as highestSalePrice,
+                    MIN(l.price) as lowestSalePrice,
+                    SUM(CASE WHEN t.executedAt >= datetime('now', '-7 days') THEN 1 ELSE 0 END) as salesLast7Days,
+                    SUM(CASE WHEN t.executedAt >= datetime('now', '-30 days') THEN 1 ELSE 0 END) as salesLast30Days
+                FROM Trade t
+                JOIN Listing l ON t.listingId = l.listingId
+                JOIN Stove s ON l.stoveId = s.stoveId
+                GROUP BY s.typeId
+            ) t_stats ON st.typeId = t_stats.typeId
+            ORDER BY st.typeId
+        `;
         
-        return types
-            .map(t => this.calculateStoveTypeStats(t.typeId))
-            .filter((s): s is StoveTypeStatisticsRow => s !== null);
+        const stmt = this.unit.prepare<any>(sql);
+        const results = stmt.all();
+        
+        const totalOverallStoves = totalStoveCount || 1; // Prevent division by zero
+        
+        return results.map(r => {
+            const totalMinted = r.totalMinted || 0;
+            return {
+                statId: r.stoveTypeId,
+                stoveTypeId: r.stoveTypeId,
+                name: r.name,
+                rarity: r.rarity,
+                totalMinted: totalMinted,
+                currentlyOwned: r.currentlyOwned || 0,
+                currentlyListed: r.currentlyListed,
+                listedPercent: totalMinted > 0 ? (r.currentlyListed / totalMinted) * 100 : 0,
+                averageListingPrice: r.averageListingPrice,
+                currentLowestPrice: r.currentLowestPrice,
+                currentHighestPrice: r.currentHighestPrice,
+                lastSalePrice: r.lastSalePrice,
+                averageSalePrice: r.averageSalePrice,
+                priceHistory7d: "[]",
+                priceHistory30d: "[]",
+                allTimeHighPrice: r.allTimeHighPrice,
+                allTimeLowPrice: r.allTimeLowPrice,
+                totalVolumeTraded: r.totalVolumeTraded,
+                totalSales: r.totalSales,
+                salesLast7Days: r.salesLast7Days,
+                salesLast30Days: r.salesLast30Days,
+                viewsCount: 0,
+                totalDroppedFromLootboxes: totalMinted,
+                actualDropRate: 0,
+                percentOfTotalSupply: (totalMinted / totalOverallStoves) * 100,
+                rarityRank: 0,
+                priceTrend7d: 0,
+                priceTrend30d: 0,
+                demandTrend: "stable",
+                updatedAt: new Date()
+            };
+        });
     }
 
     /**

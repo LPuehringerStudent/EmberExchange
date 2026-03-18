@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
 import { getAllPlayerStatistics, getTopPlayersByActivity, getTopPlayersByNetWorth, PlayerStatistics } from '../../fetchers/player-statistics.fetcher';
@@ -19,6 +19,8 @@ interface StatCard {
   styleUrls: ['./statistics.css']
 })
 export class StatisticsComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   // Data
   playerStats: PlayerStatistics[] = [];
   topActivityPlayers: PlayerStatistics[] = [];
@@ -45,104 +47,79 @@ export class StatisticsComponent implements OnInit {
 
     console.log('Loading statistics data...');
 
-    // Track success/failure for each endpoint
-    let playerStatsSuccess = false;
-    let topActivitySuccess = false;
-    let topWealthSuccess = false;
-    let todayStatsSuccess = false;
-    let dailySummarySuccess = false;
-    let stoveTypeStatsSuccess = false;
-    let marketSummarySuccess = false;
+    // Use Promise.allSettled to load all data concurrently and avoid blocking
+    const results = await Promise.allSettled([
+      getAllPlayerStatistics(),
+      getTopPlayersByActivity(5),
+      getTopPlayersByNetWorth(5),
+      getTodayStatistics(),
+      getDailySummary(7),
+      getAllStoveTypeStatistics(),
+      getMarketSummary()
+    ]);
 
-    // Load player statistics
-    try {
-      console.log('Fetching player statistics...');
-      this.playerStats = await getAllPlayerStatistics();
-      playerStatsSuccess = this.playerStats.length > 0;
+    // Handle results
+    if (results[0].status === 'fulfilled') {
+      this.playerStats = results[0].value;
       console.log('Player stats loaded:', this.playerStats.length);
-    } catch (err) {
-      console.error('Failed to load player stats:', err);
+    } else {
+      console.error('Failed to load player stats:', results[0].reason);
       this.playerStats = [];
     }
 
-    // Load top activity players
-    try {
-      console.log('Fetching top activity players...');
-      this.topActivityPlayers = await getTopPlayersByActivity(5);
-      topActivitySuccess = this.topActivityPlayers.length > 0;
+    if (results[1].status === 'fulfilled') {
+      this.topActivityPlayers = results[1].value;
       console.log('Top activity loaded:', this.topActivityPlayers.length);
-    } catch (err) {
-      console.error('Failed to load top activity:', err);
+    } else {
+      console.error('Failed to load top activity:', results[1].reason);
       this.topActivityPlayers = [];
     }
 
-    // Load top wealth players
-    try {
-      console.log('Fetching top wealth players...');
-      this.topWealthPlayers = await getTopPlayersByNetWorth(5);
-      topWealthSuccess = this.topWealthPlayers.length > 0;
+    if (results[2].status === 'fulfilled') {
+      this.topWealthPlayers = results[2].value;
       console.log('Top wealth loaded:', this.topWealthPlayers.length);
-    } catch (err) {
-      console.error('Failed to load top wealth:', err);
+    } else {
+      console.error('Failed to load top wealth:', results[2].reason);
       this.topWealthPlayers = [];
     }
 
-    // Load today's statistics
-    try {
-      console.log('Fetching today statistics...');
-      this.todayStats = await getTodayStatistics();
-      todayStatsSuccess = this.todayStats !== null;
+    if (results[3].status === 'fulfilled') {
+      this.todayStats = results[3].value;
       console.log('Today stats loaded:', this.todayStats);
-    } catch (err) {
-      console.error('Failed to load today stats:', err);
+    } else {
+      console.error('Failed to load today stats:', results[3].reason);
       this.todayStats = null;
     }
 
-    // Load daily summary
-    try {
-      console.log('Fetching daily summary...');
-      this.dailySummary = await getDailySummary(7);
-      dailySummarySuccess = true;
+    if (results[4].status === 'fulfilled') {
+      this.dailySummary = results[4].value;
       console.log('Daily summary loaded:', this.dailySummary);
-    } catch (err) {
-      console.error('Failed to load daily summary:', err);
+    } else {
+      console.error('Failed to load daily summary:', results[4].reason);
       this.dailySummary = { totalLootboxes: 0, totalSales: 0, totalVolume: 0, avgPlayers: 0 };
     }
 
-    // Load stove type statistics
-    try {
-      console.log('Fetching stove type statistics...');
-      this.stoveTypeStats = await getAllStoveTypeStatistics();
-      stoveTypeStatsSuccess = this.stoveTypeStats.length > 0;
+    if (results[5].status === 'fulfilled') {
+      this.stoveTypeStats = results[5].value;
       console.log('Stove type stats loaded:', this.stoveTypeStats.length);
-    } catch (err) {
-      console.error('Failed to load stove type stats:', err);
+    } else {
+      console.error('Failed to load stove type stats:', results[5].reason);
       this.stoveTypeStats = [];
     }
 
-    // Load market summary
-    try {
-      console.log('Fetching market summary...');
-      this.marketSummary = await getMarketSummary();
-      marketSummarySuccess = true;
+    if (results[6].status === 'fulfilled') {
+      this.marketSummary = results[6].value;
       console.log('Market summary loaded:', this.marketSummary);
-    } catch (err) {
-      console.error('Failed to load market summary:', err);
+    } else {
+      console.error('Failed to load market summary:', results[6].reason);
       this.marketSummary = { totalStoves: 0, totalListed: 0, totalSales: 0, avgListedPercent: 0 };
     }
 
-    // Check if all requests failed (indicates server restart or data reset)
-    const allFailed = !playerStatsSuccess && !topActivitySuccess && !topWealthSuccess &&
-                      !todayStatsSuccess && !dailySummarySuccess && !stoveTypeStatsSuccess && !marketSummarySuccess;
-
-    // Check if critical data is missing (no player stats and no daily stats)
+    // Success state assessment
+    const playerStatsSuccess = this.playerStats.length > 0;
+    const todayStatsSuccess = this.todayStats !== null;
+    const allFailed = results.every(r => r.status === 'rejected');
     const criticalDataMissing = !playerStatsSuccess && !todayStatsSuccess;
-
-    console.log('Success states:', {
-      playerStatsSuccess, topActivitySuccess, topWealthSuccess,
-      todayStatsSuccess, dailySummarySuccess, stoveTypeStatsSuccess, marketSummarySuccess,
-      allFailed, criticalDataMissing
-    });
 
     if (allFailed) {
       this.error = 'Unable to load statistics. The server may be restarting or the data has been reset.';
@@ -157,6 +134,7 @@ export class StatisticsComponent implements OnInit {
 
     this.updateDashboardStats();
     this.loading = false;
+    this.cdr.detectChanges();
     console.log('Loading complete, loading=', this.loading);
   }
 

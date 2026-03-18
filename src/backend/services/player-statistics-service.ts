@@ -142,15 +142,80 @@ export class PlayerStatisticsService extends ServiceBase {
      * Retrieves all player statistics (calculated from real data).
      */
     getAll(): PlayerStatisticsRow[] {
-        const stmt = this.unit.prepare<{ playerId: number }>(
-            "SELECT playerId FROM Player WHERE isAdmin = 0 ORDER BY playerId"
-        );
-        const players = stmt.all();
+        const sql = `
+            SELECT 
+                p.playerId,
+                p.coins,
+                p.username,
+                (SELECT COUNT(*) FROM Lootbox l WHERE l.playerId = p.playerId) as lootboxesOpened,
+                (SELECT COUNT(*) FROM Listing lc WHERE lc.sellerId = p.playerId) as listingsCreated,
+                (SELECT COUNT(*) FROM Listing ls JOIN Trade t ON ls.listingId = t.listingId WHERE ls.sellerId = p.playerId AND ls.status = 'sold') as listingsSold,
+                (SELECT COALESCE(SUM(ls2.price), 0) FROM Listing ls2 JOIN Trade t2 ON ls2.listingId = t2.listingId WHERE ls2.sellerId = p.playerId AND ls2.status = 'sold') as salesRevenue,
+                (SELECT COUNT(*) FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE t3.buyerId = p.playerId) as purchasesMade,
+                (SELECT COALESCE(SUM(l4.price), 0) FROM Trade t4 JOIN Listing l4 ON t4.listingId = l4.listingId WHERE t4.buyerId = p.playerId) as purchaseSpending,
+                (SELECT COUNT(*) FROM MiniGameSession mgs WHERE mgs.playerId = p.playerId) as miniGamesPlayed,
+                (SELECT COUNT(*) FROM Stove s WHERE s.currentOwnerId = p.playerId) as stovesOwned,
+                (SELECT COALESCE(SUM(COALESCE(ph.salePrice, 500)), 0) FROM Stove s2 LEFT JOIN PriceHistory ph ON s2.typeId = ph.typeId WHERE s2.currentOwnerId = p.playerId) as stoveValue
+            FROM Player p
+            WHERE p.isAdmin = 0
+        `;
         
-        return players
-            .map(p => this.calculatePlayerStats(p.playerId))
-            .filter((s): s is PlayerStatisticsRow => s !== null)
-            .sort((a, b) => b.marketActivityScore - a.marketActivityScore);
+        const stmt = this.unit.prepare<any>(sql);
+        const results = stmt.all();
+        
+        return results.map(r => {
+            const marketActivityScore = (r.listingsCreated * 10) + (r.listingsSold * 20) + (r.purchasesMade * 15);
+            const netWorth = r.coins + r.stoveValue;
+            
+            return {
+                statId: r.playerId,
+                playerId: r.playerId,
+                totalLogins: 1,
+                lastLoginAt: new Date(),
+                totalSessionMinutes: 0,
+                longestSessionMinutes: 0,
+                totalLootboxesOpened: r.lootboxesOpened,
+                totalLootboxesPurchased: 0,
+                totalLootboxesFree: r.lootboxesOpened,
+                totalCoinsSpentOnLootboxes: 0,
+                bestDropRarity: null,
+                totalStovesFromLootboxes: r.lootboxesOpened,
+                totalListingsCreated: r.listingsCreated,
+                totalListingsSold: r.listingsSold,
+                totalListingsCancelled: 0,
+                totalListingsExpired: 0,
+                totalPurchases: r.purchasesMade,
+                totalSalesRevenue: r.salesRevenue,
+                totalPurchaseSpending: r.purchaseSpending,
+                averageListingPrice: r.listingsCreated > 0 ? r.salesRevenue / r.listingsCreated : 0,
+                averageSalePrice: r.listingsSold > 0 ? r.salesRevenue / r.listingsSold : 0,
+                fastestSaleMinutes: null,
+                totalTradesCompleted: r.listingsSold + r.purchasesMade,
+                totalMiniGamesPlayed: r.miniGamesPlayed,
+                totalMiniGameWins: 0,
+                totalMiniGameLosses: 0,
+                totalCoinsFromMiniGames: 0,
+                totalCoinsLostInMiniGames: 0,
+                favoriteGameType: null,
+                luckiestWin: 0,
+                totalMessagesSent: 0,
+                totalMessagesReceived: 0,
+                totalGlobalMessages: 0,
+                totalPrivateMessages: 0,
+                currentStoveCount: r.stovesOwned,
+                totalStovesAcquired: r.lootboxesOpened + r.purchasesMade,
+                totalStovesSold: r.listingsSold,
+                totalStovesTraded: 0,
+                rarestStoveOwned: null,
+                highestCoinBalance: r.coins,
+                lowestCoinBalance: r.coins,
+                totalCoinsEarned: r.coins,
+                totalCoinsSpent: r.purchaseSpending,
+                netWorthEstimate: netWorth,
+                marketActivityScore: marketActivityScore,
+                updatedAt: new Date()
+            };
+        }).sort((a, b) => b.marketActivityScore - a.marketActivityScore);
     }
 
     /**
