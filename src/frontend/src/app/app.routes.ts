@@ -16,17 +16,21 @@ import { Socials } from './components/socials/socials';
 import {Security} from './components/security/security';
 import {Login } from './components/login/login';
 import {Register} from './components/register/register';
+import {OAuthCallbackComponent} from './components/oauth-callback/oauth-callback';
+import { authGuard } from './guards/auth.guard';
+import { reverseAuthGuard } from './guards/reverse-auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: MainMenuComponent },
-  { path: 'lootboxes', component: LootboxComponent },
-  { path: 'marketplace', component: Marketplace},
-  {path: 'register', component: Register},
-  { path: 'games', component: GamesComponent },
-  { path: 'inventory', component: InventoryComponent },
+  { path: '', component: MainMenuComponent, canActivate: [authGuard] },
+  { path: 'lootboxes', component: LootboxComponent, canActivate: [authGuard] },
+  { path: 'marketplace', component: Marketplace, canActivate: [authGuard] },
+  { path: 'register', component: Register, canActivate: [reverseAuthGuard] },
+  { path: 'games', component: GamesComponent, canActivate: [authGuard] },
+  { path: 'inventory', component: InventoryComponent, canActivate: [authGuard] },
   {
     path: 'settings',
     component: SettingsComponent,
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'account', pathMatch: 'full' },
       { path: 'account', component: Account},
@@ -38,9 +42,10 @@ export const routes: Routes = [
   },
   { path: 'test', component: TestPageComponent },
   { path: 'update-log', component: UpdateLogComponent },
-  { path: 'statistics', component: StatisticsComponent },
+  { path: 'statistics', component: StatisticsComponent, canActivate: [authGuard] },
   { path: 'support', component: NotFoundComponent },
-  { path: 'login', component: Login},
+  { path: 'login', component: Login, canActivate: [reverseAuthGuard] },
+  { path: 'oauth/callback', component: OAuthCallbackComponent },
   { path: 'signup', component: NotFoundComponent },
   { path: '**', component: NotFoundComponent }
 ];

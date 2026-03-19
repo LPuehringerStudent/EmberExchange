@@ -9,12 +9,14 @@ export enum Rarity {
 // Player
 export interface Player {
     username: string;
-    password: string;
+    password: string | null;
     email: string;
     coins: number;
     lootboxCount: number;
     isAdmin: boolean;
     joinedAt: Date;
+    provider: 'google' | 'github' | null;
+    providerId: string | null;
 }
 
 export interface PlayerRow extends Player {

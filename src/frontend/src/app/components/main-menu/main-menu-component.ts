@@ -1,6 +1,7 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnInit, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
+import { AuthService } from '../../../services/auth.service';
+import { getOwnershipsByPlayerId } from '../../fetchers/ownership.fetcher';
 
 interface Game {
   name: string;
@@ -23,13 +24,19 @@ interface RecentPull {
   templateUrl: './main-menu.html',
   styleUrls: ['./main-menu.css']
 })
-export class MainMenuComponent implements AfterViewInit, OnDestroy {
+export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
   @ViewChild('gamesTrack') gamesTrack!: ElementRef;
   @ViewChild('cardsGrid') cardsGrid!: ElementRef;
 
-  cardsHeight: number = 400; // Default fallback height
+  cardsHeight: number = 400;
   private resizeObserver: ResizeObserver | null = null;
   private boundUpdateCardsHeight = this.updateCardsHeight.bind(this);
+
+  // User data signals
+  username = signal<string>('Player');
+  coins = signal<number>(0);
+  stoveCount = signal<number>(0);
+  lootboxCount = signal<number>(0);
 
   games: Game[] = [
     { name: 'Dummy', icon: '⚠', reward: 50 },
@@ -56,6 +63,12 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy {
     { username: 'PlayerTen', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'epic', timeAgo: '2h' }
   ];
 
+  constructor(private authService: AuthService) {}
+
+  ngOnInit(): void {
+    this.loadUserData();
+  }
+
   ngAfterViewInit() {
     setTimeout(() => {
       this.updateCardsHeight();
@@ -75,6 +88,23 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy {
       this.resizeObserver.disconnect();
     }
     window.removeEventListener('resize', this.boundUpdateCardsHeight);
+  }
+
+  private async loadUserData(): Promise<void> {
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.username.set(user.username);
+      this.coins.set(user.coins);
+      this.lootboxCount.set(user.lootboxCount);
+
+      // Load stove count from ownership API
+      try {
+        const ownerships = await getOwnershipsByPlayerId(user.playerId);
+        this.stoveCount.set(ownerships.length);
+      } catch (error) {
+        console.error('Failed to load stove count:', error);
+      }
+    }
   }
 
   private updateCardsHeight() {

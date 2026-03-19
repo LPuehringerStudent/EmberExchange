@@ -256,4 +256,32 @@ export class PlayerStatisticsService extends ServiceBase {
     delete(_playerId: number): boolean {
         return true;
     }
+
+    /**
+     * Creates default player statistics for a new player.
+     * @param playerId - The player's ID
+     * @returns Tuple [success, statId]
+     */
+    createDefaultPlayerStatistics(playerId: number): [boolean, number] {
+        const stmt = this.unit.prepare<PlayerStatisticsRow>(
+            `INSERT INTO PlayerStatistics (
+                playerId, totalLogins, lastLoginAt, totalSessionMinutes, longestSessionMinutes,
+                totalLootboxesOpened, totalLootboxesPurchased, totalLootboxesFree, totalCoinsSpentOnLootboxes,
+                bestDropRarity, totalStovesFromLootboxes, totalListingsCreated, totalListingsSold,
+                totalListingsCancelled, totalListingsExpired, totalPurchases, totalSalesRevenue,
+                totalPurchaseSpending, averageListingPrice, averageSalePrice, fastestSaleMinutes,
+                totalTradesCompleted, totalMiniGamesPlayed, totalMiniGameWins, totalMiniGameLosses,
+                totalCoinsFromMiniGames, totalCoinsLostInMiniGames, favoriteGameType, luckiestWin,
+                totalMessagesSent, totalMessagesReceived, totalGlobalMessages, totalPrivateMessages,
+                currentStoveCount, totalStovesAcquired, totalStovesSold, totalStovesTraded, rarestStoveOwned,
+                highestCoinBalance, lowestCoinBalance, totalCoinsEarned, totalCoinsSpent, netWorthEstimate,
+                marketActivityScore, updatedAt
+            ) VALUES (
+                @playerId, 0, null, 0, 0, 0, 0, 0, 0, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null,
+                0, 0, 0, 0, 0, 0, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, 1000, 1000, 1000, 0, 1000, 0, datetime('now')
+            )`,
+            { playerId }
+        );
+        return this.executeStmt(stmt);
+    }
 }

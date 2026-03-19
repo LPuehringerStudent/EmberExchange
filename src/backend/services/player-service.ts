@@ -83,10 +83,54 @@ export class PlayerService extends ServiceBase {
 
     /**
      * Deletes a player from the database.
+     * Deletes all related records first to avoid foreign key constraint errors.
      * @param id - The player's unique ID.
      * @returns True if exactly one player was deleted, false otherwise.
      */
     deletePlayer(id: number): boolean {
+        // Delete related records in correct order to respect foreign keys
+        
+        // 1. Delete sessions
+        this.unit.prepare("DELETE FROM Session WHERE playerId = @id", { id }).run();
+        
+        // 2. Delete player statistics
+        this.unit.prepare("DELETE FROM PlayerStatistics WHERE playerId = @id", { id }).run();
+        
+        // 3. Delete mini game sessions
+        this.unit.prepare("DELETE FROM MiniGameSession WHERE playerId = @id", { id }).run();
+        
+        // 4. Delete chat messages (sent or received)
+        this.unit.prepare("DELETE FROM ChatMessage WHERE senderId = @id OR receiverId = @id", { id }).run();
+        
+        // 5. Delete ownership records
+        this.unit.prepare("DELETE FROM Ownership WHERE playerId = @id", { id }).run();
+        
+        // 6. Delete trades where player is buyer
+        this.unit.prepare("DELETE FROM Trade WHERE buyerId = @id", { id }).run();
+        
+        // 7. Delete listings (this will cascade delete related trades via foreign key)
+        // First get all listings by this player
+        const listingsStmt = this.unit.prepare<{ listingId: number }>(
+            "SELECT listingId FROM Listing WHERE sellerId = @id",
+            { id }
+        );
+        const listings = listingsStmt.all() ?? [];
+        
+        // Delete trades for these listings first
+        for (const listing of listings) {
+            this.unit.prepare("DELETE FROM Trade WHERE listingId = @listingId", { listingId: listing.listingId }).run();
+        }
+        
+        // Now delete the listings
+        this.unit.prepare("DELETE FROM Listing WHERE sellerId = @id", { id }).run();
+        
+        // 8. Delete stoves owned by this player
+        this.unit.prepare("DELETE FROM Stove WHERE currentOwnerId = @id", { id }).run();
+        
+        // 9. Delete lootboxes opened by this player
+        this.unit.prepare("DELETE FROM Lootbox WHERE playerId = @id", { id }).run();
+        
+        // 10. Finally delete the player
         const stmt = this.unit.prepare(
             "DELETE FROM Player WHERE playerId = @id",
             { id }
@@ -119,5 +163,76 @@ export class PlayerService extends ServiceBase {
             { email }
         );
         return stmt.get() ?? null;
+    }
+
+    /**
+     * Updates a player's email address.
+     * @param id - The player's unique ID.
+     * @param email - The new email address.
+     * @returns True if exactly one player was updated, false otherwise.
+     */
+    updatePlayerEmail(id: number, email: string): boolean {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET email = @email WHERE playerId = @id",
+            { id, email }
+        );
+        const result = stmt.run();
+        return result.changes === 1;
+    }
+
+    /**
+     * Updates a player's password.
+     * @param id - The player's unique ID.
+     * @param password - The new password.
+     * @returns True if exactly one player was updated, false otherwise.
+     */
+    updatePlayerPassword(id: number, password: string): boolean {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET password = @password WHERE playerId = @id",
+            { id, password }
+        );
+        const result = stmt.run();
+        return result.changes === 1;
+    }
+
+    /**
+     * Finds a player by OAuth provider and provider ID.
+     * @param provider - The OAuth provider ('google' or 'github').
+     * @param providerId - The provider's unique user ID.
+     * @returns The PlayerRow object if found, otherwise null.
+     */
+    getPlayerByOAuth(provider: string, providerId: string): PlayerRow | null {
+        const stmt = this.unit.prepare<PlayerRow>(
+            "SELECT * FROM Player WHERE provider = @provider AND providerId = @providerId",
+            { provider, providerId }
+        );
+        return stmt.get() ?? null;
+    }
+
+    /**
+     * Creates a new OAuth player.
+     * @param username - The unique username for the player.
+     * @param email - The unique email address for the player.
+     * @param provider - The OAuth provider ('google' or 'github').
+     * @param providerId - The provider's unique user ID.
+     * @param coins - Initial coin amount (default: 1000).
+     * @param lootboxCount - Initial lootbox count (default: 10).
+     * @returns A tuple where the first element indicates success,
+     *          and the second element is the new player's ID (if successful).
+     */
+    createOAuthPlayer(
+        username: string, 
+        email: string, 
+        provider: string, 
+        providerId: string,
+        coins: number = 1000, 
+        lootboxCount: number = 10
+    ): [boolean, number] {
+        const stmt = this.unit.prepare<PlayerRow>(
+            `INSERT INTO Player (username, password, email, coins, lootboxCount, isAdmin, joinedAt, provider, providerId) 
+             VALUES (@username, NULL, @email, @coins, @lootboxCount, 0, datetime('now'), @provider, @providerId)`,
+            { username, email, coins, lootboxCount, provider, providerId }
+        );
+        return this.executeStmt(stmt);
     }
 }

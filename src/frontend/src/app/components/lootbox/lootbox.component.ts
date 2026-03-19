@@ -1,6 +1,8 @@
-import {AfterViewInit, Component, ElementRef, inject, ViewChild, ChangeDetectorRef} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, inject, ViewChild, ChangeDetectorRef, OnInit, signal} from '@angular/core';
+import { Router } from '@angular/router';
 import {LootBoxHelper, LootItem} from "../../../../../middleground/LootboxHelper";
 import {StoveApiService} from '../../../services/stove';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-lootbox',
@@ -10,7 +12,7 @@ import {StoveApiService} from '../../../services/stove';
   styleUrls: ['./lootbox.css']
 })
 
-export class LootboxComponent implements AfterViewInit {
+export class LootboxComponent implements AfterViewInit, OnInit {
   @ViewChild('itemsContainer') itemsElement!: ElementRef<HTMLElement>;
 
   items: LootItem[] = [];
@@ -19,21 +21,49 @@ export class LootboxComponent implements AfterViewInit {
   showPopup = false;
   resultText = '';
   isOpening = false;
+  
+  // User data
+  lootboxCount = signal<number>(0);
+  playerId: number | null = null;
+  loading = true;
 
   ngAfterViewInit(): void {
   }
 
+  ngOnInit(): void {
+    const user = this._authService.getCurrentUser();
+    if (!user) {
+      // Redirect to login if not authenticated
+      this._router.navigate(['/login']);
+      return;
+    }
+    
+    this.playerId = user.playerId;
+    this.lootboxCount.set(user.lootboxCount);
+    this.loading = false;
+  }
 
   private lootBoxHelper: LootBoxHelper;
   private stoveApi = inject(StoveApiService);
   private cdr = inject(ChangeDetectorRef);
+  private _authService = inject(AuthService);
+  private _router = inject(Router);
 
   constructor() {
     this.lootBoxHelper = new LootBoxHelper();
   }
 
+  canOpen(): boolean {
+    return !this.isOpening && this.lootboxCount() > 0 && this.playerId !== null;
+  }
+
   openBox(): void {
-    if (this.isOpening) return;
+    if (!this.canOpen()) {
+      if (this.lootboxCount() <= 0) {
+        alert('You have no lootboxes available!');
+      }
+      return;
+    }
 
     console.log('Opening lootbox...');
     this.isOpening = true;
@@ -41,6 +71,9 @@ export class LootboxComponent implements AfterViewInit {
     this.lootBoxHelper.buildStrip();
     this.items = this.lootBoxHelper.items;
     this.showOverlay = true;
+
+    // Decrement lootbox count locally (will be updated on server)
+    this.lootboxCount.update(count => Math.max(0, count - 1));
 
     // Wait for DOM to render items
     setTimeout(() => {
@@ -78,7 +111,7 @@ export class LootboxComponent implements AfterViewInit {
     console.log('Final item:', this.lootBoxHelper.finalItem);
     this.finalItem = this.lootBoxHelper.finalItem;
 
-    if (this.finalItem) {
+    if (this.finalItem && this.playerId !== null) {
       const typeId = this.lootBoxHelper.returnTypeId(this.finalItem);
       console.log('Saving loot with typeId:', typeId);
       this.saveLoot(typeId);
@@ -93,8 +126,14 @@ export class LootboxComponent implements AfterViewInit {
     this.cdr.detectChanges();
     console.log('showPopup is now:', this.showPopup);
   }
+  
   saveLoot(typeId: number) {
-    this.stoveApi.createStove(typeId, 1).subscribe({
+    if (this.playerId === null) {
+      console.error('Cannot save loot: no playerId');
+      return;
+    }
+    
+    this.stoveApi.createStove(typeId, this.playerId).subscribe({
       error: (err) => console.error('Failed to save stove:', err)
     });
   }

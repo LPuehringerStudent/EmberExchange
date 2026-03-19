@@ -81,6 +81,7 @@ export function resetDatabase(connection: Database): void {
     connection.exec("DROP TABLE IF EXISTS LootboxDrop");
     connection.exec("DROP TABLE IF EXISTS Lootbox");
     connection.exec("DROP TABLE IF EXISTS LootboxType");
+    connection.exec("DROP TABLE IF EXISTS Session");
     connection.exec("DROP TABLE IF EXISTS Stove");
     connection.exec("DROP TABLE IF EXISTS StoveType");
     connection.exec("DROP TABLE IF EXISTS Player");
@@ -529,12 +530,14 @@ class DB {
             create table if not exists Player (
                 playerId integer primary key autoincrement,
                 username text not null unique,
-                password text not null,
+                password text,
                 email text not null unique,
                 coins integer not null default 0,
                 lootboxCount integer not null default 0,
                 isAdmin integer not null default 0,
-                joinedAt text not null
+                joinedAt text not null,
+                provider text check (provider in ('google', 'github')),
+                providerId text unique
             ) strict
         `);
 

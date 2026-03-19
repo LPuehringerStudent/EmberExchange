@@ -17,7 +17,7 @@
           </div>
           <div class="greeting">
             <span class="welcome-label">Welcome back</span>
-            <h1><span class="username">PlayerOne</span></h1>
+            <h1><span class="username">{{ username() }}</span></h1>
           </div>
         </div>
         <button class="inventory-btn" routerLink="/inventory">
@@ -35,7 +35,7 @@
           <div class="stat-icon"></div>
           <div class="stat-data">
             <span class="stat-label">Total Money</span>
-            <span class="stat-value">0 <small>Coal</small></span>
+            <span class="stat-value">{{ coins() }} <small>Coal</small></span>
           </div>
           <div class="stat-trend">↗</div>
         </div>
@@ -43,14 +43,14 @@
           <div class="stat-icon"></div>
           <div class="stat-data">
             <span class="stat-label">Lootboxes</span>
-            <span class="stat-value">0 <small>Opened</small></span>
+            <span class="stat-value">{{ lootboxCount() }} <small>Available</small></span>
           </div>
         </div>
         <div class="stat-card" data-trend="up">
           <div class="stat-icon"></div>
           <div class="stat-data">
             <span class="stat-label">Stoves</span>
-            <span class="stat-value">0 <small>Owned</small></span>
+            <span class="stat-value">{{ stoveCount() }} <small>Owned</small></span>
           </div>
           <div class="stat-trend">↗</div>
         </div>

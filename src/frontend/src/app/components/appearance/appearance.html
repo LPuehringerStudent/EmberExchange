@@ -7,13 +7,13 @@
     @for (theme of themes; track theme.id) {
       <button
         class="theme-card"
-        [class.selected]="selectedTheme() === theme.id"
+        [class.selected]="selectedTheme === theme.id"
         [style.--bg]="theme.bg"
         [style.--border-color]="theme.border"
         (click)="selectTheme(theme.id)">
         <div class="theme-preview"></div>
         <span class="theme-label">{{ theme.label }}</span>
-        @if (selectedTheme() === theme.id) {
+        @if (selectedTheme === theme.id) {
           <div class="checkmark">✓</div>
         }
       </button>

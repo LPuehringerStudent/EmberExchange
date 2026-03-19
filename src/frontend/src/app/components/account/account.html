@@ -3,30 +3,81 @@
   <div class="settings-section">
     <h1>Account Information</h1>
 
+    <!-- Success/Error Messages -->
+    @if (emailSuccess()) {
+      <div class="alert alert-success">{{ emailSuccess() }}</div>
+    }
+    @if (emailError()) {
+      <div class="alert alert-error">{{ emailError() }}</div>
+    }
+
     <div class="form-grid">
       <div class="input-group">
         <label>Username</label>
-        <input type="text" placeholder="EmberUser123" readonly>
+        <input type="text" [value]="username()" readonly disabled>
+        <small>Username cannot be changed</small>
       </div>
 
       <div class="input-group">
         <label>Email</label>
-        <input type="email" placeholder="you@example.com" readonly>
+        <input 
+          type="email" 
+          [(ngModel)]="email"
+          placeholder="you@example.com">
       </div>
     </div>
 
-    <button class="btn-primary" (click)="saveChanges()">Save Changes</button>
+    <button 
+      class="btn-primary" 
+      (click)="saveChanges()"
+      [disabled]="loading()">
+      {{ loading() ? 'Saving...' : 'Save Changes' }}
+    </button>
   </div>
 
   <div class="settings-section">
     <h1>Password & Security</h1>
 
-    <div class="input-group">
-      <label>New Password</label>
-      <input type="password" placeholder="••••••••" readonly>
+    <!-- Success/Error Messages -->
+    @if (passwordSuccess()) {
+      <div class="alert alert-success">{{ passwordSuccess() }}</div>
+    }
+    @if (passwordError()) {
+      <div class="alert alert-error">{{ passwordError() }}</div>
+    }
+
+    <div class="form-grid">
+      <div class="input-group">
+        <label>Current Password</label>
+        <input 
+          type="password" 
+          [(ngModel)]="currentPassword"
+          placeholder="••••••••">
+      </div>
+
+      <div class="input-group">
+        <label>New Password</label>
+        <input 
+          type="password" 
+          [(ngModel)]="newPassword"
+          placeholder="••••••••">
+      </div>
+
+      <div class="input-group">
+        <label>Confirm New Password</label>
+        <input 
+          type="password" 
+          [(ngModel)]="confirmPassword"
+          placeholder="••••••••">
+      </div>
     </div>
 
-    <button class="btn-danger" (click)="updatePassword()">Update Password</button>
+    <button 
+      class="btn-danger" 
+      (click)="updatePassword()"
+      [disabled]="loading()">
+      {{ loading() ? 'Updating...' : 'Update Password' }}
+    </button>
   </div>
 
 </section>

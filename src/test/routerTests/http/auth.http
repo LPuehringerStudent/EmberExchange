@@ -1,0 +1,104 @@
+### Authentication Endpoints
+
+### Register a new player
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "newplayer",
+  "password": "password123",
+  "email": "newplayer@example.com"
+}
+
+### Login with username
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "newplayer",
+  "password": "password123"
+}
+
+### Login with email
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "newplayer@example.com",
+  "password": "password123"
+}
+
+### Login with sample player (admin)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin",
+  "password": "admin123"
+}
+
+### Login with sample player (player1)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "player1",
+  "password": "pass123"
+}
+
+### Get current user (replace <session-id> with actual session ID)
+GET http://localhost:3000/api/auth/me
+session-id: <session-id>
+
+### Logout (replace <session-id> with actual session ID)
+POST http://localhost:3000/api/auth/logout
+session-id: <session-id>
+
+### Login with invalid credentials (should return 401)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin",
+  "password": "wrongpassword"
+}
+
+### Register with duplicate username (should return 409)
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password123",
+  "email": "unique@example.com"
+}
+
+### Register with duplicate email (should return 409)
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "uniqueuser",
+  "password": "password123",
+  "email": "admin@emberexchange.com"
+}
+
+### Register with short password (should return 400)
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "123",
+  "email": "test@example.com"
+}
+
+### Register with invalid email (should return 400)
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123",
+  "email": "not-an-email"
+}

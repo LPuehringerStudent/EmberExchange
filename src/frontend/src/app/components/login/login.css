@@ -435,10 +435,16 @@
   transition: all 0.2s ease;
 }
 
-.social-btn:hover {
+.social-btn:hover:not(:disabled) {
   border-color: #e85d04;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.social-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8f9fa;
 }
 
 .social-btn svg {

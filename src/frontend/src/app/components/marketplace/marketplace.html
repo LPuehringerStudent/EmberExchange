@@ -1,1 +1,112 @@
-<p>marketplace works!</p>
+<div class="marketplace-layout">
+  <!-- Header -->
+  <div class="marketplace-header">
+    <h1>Marketplace</h1>
+    <p class="subtitle">Buy and sell stoves with other players</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="marketplace-tabs">
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'all'"
+      (click)="activeTab = 'all'">
+      All Listings ({{ allListings().length }})
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'my'"
+      (click)="activeTab = 'my'">
+      My Listings ({{ myListings().length }})
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="loading-icon">⏳</div>
+      <p>Loading marketplace...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <div class="error-state">
+      <div class="error-icon">⚠️</div>
+      <p>{{ error() }}</p>
+      <button class="retry-btn" (click)="loadListings()">Retry</button>
+    </div>
+  }
+
+  <!-- Listings Grid -->
+  @if (!loading() && !error()) {
+    <div class="listings-grid">
+      @if (activeTab === 'all') {
+        @if (allListings().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">🏪</div>
+            <p>No active listings</p>
+            <span>Be the first to list a stove!</span>
+          </div>
+        } @else {
+          @for (listing of allListings(); track listing.listingId) {
+            <div class="listing-card" [class]="'status-' + listing.status">
+              <div class="listing-header">
+                <span class="listing-id">#{{ listing.listingId }}</span>
+                <span class="listing-status" [class]="listing.status">{{ listing.status }}</span>
+              </div>
+              <div class="listing-body">
+                <div class="stove-icon">♨️</div>
+                <div class="listing-info">
+                  <h3>Stove #{{ listing.stoveId }}</h3>
+                  <p class="price">{{ formatPrice(listing.price) }} Coal</p>
+                  <p class="date">Listed: {{ formatDate(listing.listedAt) }}</p>
+                </div>
+              </div>
+              <div class="listing-actions">
+                <button class="btn-buy" [disabled]="listing.status !== 'active'">
+                  {{ listing.status === 'active' ? 'Buy Now' : listing.status }}
+                </button>
+              </div>
+            </div>
+          }
+        }
+      }
+
+      @if (activeTab === 'my') {
+        @if (myListings().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>You have no active listings</p>
+            <span>List your stoves to sell them!</span>
+            <button class="action-btn" routerLink="/inventory">Go to Inventory</button>
+          </div>
+        } @else {
+          @for (listing of myListings(); track listing.listingId) {
+            <div class="listing-card" [class]="'status-' + listing.status">
+              <div class="listing-header">
+                <span class="listing-id">#{{ listing.listingId }}</span>
+                <span class="listing-status" [class]="listing.status">{{ listing.status }}</span>
+              </div>
+              <div class="listing-body">
+                <div class="stove-icon">♨️</div>
+                <div class="listing-info">
+                  <h3>Stove #{{ listing.stoveId }}</h3>
+                  <p class="price">{{ formatPrice(listing.price) }} Coal</p>
+                  <p class="date">Listed: {{ formatDate(listing.listedAt) }}</p>
+                </div>
+              </div>
+              <div class="listing-actions">
+                @if (listing.status === 'active') {
+                  <button class="btn-cancel">Cancel</button>
+                } @else {
+                  <button class="btn-disabled" disabled>{{ listing.status }}</button>
+                }
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
+  }
+</div>

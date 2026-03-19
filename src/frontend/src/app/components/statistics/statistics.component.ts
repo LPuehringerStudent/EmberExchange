@@ -1,9 +1,9 @@
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
-
-import { RouterModule } from '@angular/router';
-import { getAllPlayerStatistics, getTopPlayersByActivity, getTopPlayersByNetWorth, PlayerStatistics } from '../../fetchers/player-statistics.fetcher';
+import { Router, RouterModule } from '@angular/router';
+import { getAllPlayerStatistics, getTopPlayersByActivity, getTopPlayersByNetWorth, getPlayerStatistics, PlayerStatistics } from '../../fetchers/player-statistics.fetcher';
 import { getTodayStatistics, getDailySummary, DailyStatistics } from '../../fetchers/daily-statistics.fetcher';
 import { getAllStoveTypeStatistics, getMarketSummary, StoveTypeStatistics } from '../../fetchers/stove-type-statistics.fetcher';
+import { AuthService } from '../../../services/auth.service';
 
 interface StatCard {
   label: string;
@@ -20,6 +20,8 @@ interface StatCard {
 })
 export class StatisticsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly _authService = inject(AuthService);
+  private readonly _router = inject(Router);
 
   // Data
   playerStats: PlayerStatistics[] = [];
@@ -29,6 +31,11 @@ export class StatisticsComponent implements OnInit {
   dailySummary = { totalLootboxes: 0, totalSales: 0, totalVolume: 0, avgPlayers: 0 };
   stoveTypeStats: StoveTypeStatistics[] = [];
   marketSummary = { totalStoves: 0, totalListed: 0, totalSales: 0, avgListedPercent: 0 };
+  
+  // Current user data
+  myStats: PlayerStatistics | null = null;
+  currentUserId: number | null = null;
+  isLoggedIn = false;
 
   // Loading states
   loading = true;
@@ -38,6 +45,11 @@ export class StatisticsComponent implements OnInit {
   dashboardStats: StatCard[] = [];
 
   ngOnInit(): void {
+    const user = this._authService.getCurrentUser();
+    if (user) {
+      this.isLoggedIn = true;
+      this.currentUserId = user.playerId;
+    }
     void this.loadAllData();
   }
 
@@ -47,8 +59,8 @@ export class StatisticsComponent implements OnInit {
 
     console.log('Loading statistics data...');
 
-    // Use Promise.allSettled to load all data concurrently and avoid blocking
-    const results = await Promise.allSettled([
+    // Build the list of promises to fetch
+    const promises: Promise<any>[] = [
       getAllPlayerStatistics(),
       getTopPlayersByActivity(5),
       getTopPlayersByNetWorth(5),
@@ -56,7 +68,15 @@ export class StatisticsComponent implements OnInit {
       getDailySummary(7),
       getAllStoveTypeStatistics(),
       getMarketSummary()
-    ]);
+    ];
+    
+    // Add current user stats if logged in
+    if (this.currentUserId !== null) {
+      promises.push(getPlayerStatistics(this.currentUserId));
+    }
+
+    // Use Promise.allSettled to load all data concurrently and avoid blocking
+    const results = await Promise.allSettled(promises);
 
     // Handle results
     if (results[0].status === 'fulfilled') {
@@ -113,6 +133,17 @@ export class StatisticsComponent implements OnInit {
     } else {
       console.error('Failed to load market summary:', results[6].reason);
       this.marketSummary = { totalStoves: 0, totalListed: 0, totalSales: 0, avgListedPercent: 0 };
+    }
+
+    // Load current user stats (index 7 if logged in)
+    if (this.currentUserId !== null && results[7]) {
+      if (results[7].status === 'fulfilled') {
+        this.myStats = results[7].value;
+        console.log('My stats loaded:', this.myStats);
+      } else {
+        console.error('Failed to load my stats:', results[7].reason);
+        this.myStats = null;
+      }
     }
 
     // Success state assessment

@@ -20,8 +20,8 @@ describe('PlayerService', () => {
     describe('getAllPlayers', () => {
         it('should return all players from database', () => {
             const mockPlayers: PlayerRow[] = [
-                { playerId: 1, username: 'player1', password: 'pass1', email: 'p1@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01') },
-                { playerId: 2, username: 'player2', password: 'pass2', email: 'p2@test.com', coins: 200, lootboxCount: 10, isAdmin: true, joinedAt: new Date('2024-01-02') }
+                { playerId: 1, username: 'player1', password: 'pass1', email: 'p1@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null },
+                { playerId: 2, username: 'player2', password: 'pass2', email: 'p2@test.com', coins: 200, lootboxCount: 10, isAdmin: true, joinedAt: new Date('2024-01-02'), provider: null, providerId: null }
             ];
             mockStmt.all.mockReturnValue(mockPlayers);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -44,7 +44,7 @@ describe('PlayerService', () => {
 
     describe('getInfoByID', () => {
         it('should return player when found', () => {
-            const mockPlayer: PlayerRow = { playerId: 1, username: 'player1', password: 'pass1', email: 'p1@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01') };
+            const mockPlayer: PlayerRow = { playerId: 1, username: 'player1', password: 'pass1', email: 'p1@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null };
             mockStmt.get.mockReturnValue(mockPlayer);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -171,7 +171,7 @@ describe('PlayerService', () => {
 
     describe('getPlayerByUsername', () => {
         it('should find player by username', () => {
-            const mockPlayer: PlayerRow = { playerId: 1, username: 'testuser', password: 'pass', email: 'test@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01') };
+            const mockPlayer: PlayerRow = { playerId: 1, username: 'testuser', password: 'pass', email: 'test@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null };
             mockStmt.get.mockReturnValue(mockPlayer);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -193,7 +193,7 @@ describe('PlayerService', () => {
 
     describe('getPlayerByEmail', () => {
         it('should find player by email', () => {
-            const mockPlayer: PlayerRow = { playerId: 1, username: 'testuser', password: 'pass', email: 'findme@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01') };
+            const mockPlayer: PlayerRow = { playerId: 1, username: 'testuser', password: 'pass', email: 'findme@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null };
             mockStmt.get.mockReturnValue(mockPlayer);
             mockUnit.prepare.mockReturnValue(mockStmt);
 

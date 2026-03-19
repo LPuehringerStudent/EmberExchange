@@ -21,14 +21,16 @@ const options: swaggerJsdoc.Options = {
                     properties: {
                         playerId: { type: "integer", description: "Unique player ID" },
                         username: { type: "string", description: "Player username" },
-                        password: { type: "string", description: "Player password hash" },
+                        password: { type: "string", nullable: true, description: "Player password hash (null for OAuth users)" },
                         email: { type: "string", format: "email", description: "Player email address" },
                         coins: { type: "integer", description: "Player coin balance" },
                         lootboxCount: { type: "integer", description: "Number of lootboxes owned" },
                         isAdmin: { type: "integer", description: "Admin flag (0 = false, 1 = true)" },
                         joinedAt: { type: "string", format: "date-time", description: "Join timestamp" },
+                        provider: { type: "string", enum: ["google", "github"], nullable: true, description: "OAuth provider" },
+                        providerId: { type: "string", nullable: true, description: "OAuth provider user ID" },
                     },
-                    required: ["playerId", "username", "password", "email", "coins", "lootboxCount", "isAdmin", "joinedAt"],
+                    required: ["playerId", "username", "email", "coins", "lootboxCount", "isAdmin", "joinedAt"],
                 },
                 PlayerCreate: {
                     type: "object",
@@ -415,6 +417,44 @@ const options: swaggerJsdoc.Options = {
                         isActive: { type: "integer", description: "Whether the session is active (0 = false, 1 = true)" },
                     },
                     required: ["sessionId", "playerId", "createdAt", "expiresAt", "isActive"],
+                },
+                LoginRequest: {
+                    type: "object",
+                    properties: {
+                        usernameOrEmail: { type: "string", description: "Username or email address" },
+                        password: { type: "string", description: "Password" }
+                    },
+                    required: ["usernameOrEmail", "password"]
+                },
+                RegisterRequest: {
+                    type: "object",
+                    properties: {
+                        username: { type: "string", description: "Unique username" },
+                        password: { type: "string", description: "Password (min 6 chars)" },
+                        email: { type: "string", format: "email", description: "Email address" }
+                    },
+                    required: ["username", "password", "email"]
+                },
+                AuthResponse: {
+                    type: "object",
+                    properties: {
+                        sessionId: { type: "string", description: "Session ID for authentication" },
+                        playerId: { type: "integer", description: "Player ID" }
+                    },
+                    required: ["sessionId", "playerId"]
+                },
+                CurrentUser: {
+                    type: "object",
+                    properties: {
+                        playerId: { type: "integer", description: "Unique player ID" },
+                        username: { type: "string", description: "Player username" },
+                        email: { type: "string", format: "email", description: "Player email" },
+                        coins: { type: "integer", description: "Player coin balance" },
+                        lootboxCount: { type: "integer", description: "Number of lootboxes" },
+                        isAdmin: { type: "integer", description: "Admin flag (0 = false, 1 = true)" },
+                        joinedAt: { type: "string", format: "date-time", description: "Join timestamp" }
+                    },
+                    required: ["playerId", "username", "email", "coins", "lootboxCount", "isAdmin", "joinedAt"]
                 },
             },
         },

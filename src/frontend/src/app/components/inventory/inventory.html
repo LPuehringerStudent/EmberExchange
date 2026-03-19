@@ -26,12 +26,30 @@
       <h1>{{ activeTab === 'lootboxes' ? 'Lootboxes' : 'Items' }}</h1>
       <span class="hint">
         {{ activeTab === 'lootboxes'
-        ? 'Your stored lootboxes'
-        : 'Your collected items' }}
+        ? 'Your opened lootboxes'
+        : 'Your collected stoves' }}
       </span>
     </div>
 
+    <!-- Loading State -->
+    @if (loading) {
+      <div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <p>Loading your inventory...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error && !loading) {
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <p>{{ error }}</p>
+        <button class="action-btn" routerLink="/">Go Home</button>
+      </div>
+    }
+
     <!-- Grid -->
+    @if (!loading && !error) {
     <div class="inventory-grid">
 
       <!-- EMPTY: LOOTBOXES -->
@@ -44,12 +62,31 @@
         </div>
       }
 
+      <!-- LOOTBOXES LIST -->
+      @if (activeTab === 'lootboxes' && lootboxes.length > 0) {
+        @for (box of lootboxes; track box.id) {
+          <div class="item-card rarity-common">
+            <div class="item-visual">
+              <div class="stove-icon">📦</div>
+              <span class="rarity-badge common">
+                {{ box.acquiredHow }}
+              </span>
+            </div>
+            <div class="item-info">
+              <h4 class="item-name">{{ box.typeName }}</h4>
+              <p class="item-type">Opened: {{ box.openedAt | date:'short' }}</p>
+              <p class="item-owner">Lootbox #{{ box.id }}</p>
+            </div>
+          </div>
+        }
+      }
+
       <!-- EMPTY: ITEMS -->
       @if (activeTab === 'items' && items.length === 0) {
         <div class="empty-state">
           <div class="empty-icon">♨️</div>
           <p>No items yet</p>
-          <span>Open lootboxes to collect items</span>
+          <span>Open lootboxes to collect stoves</span>
           <button class="action-btn" routerLink="/lootboxes">Open a Lootbox</button>
         </div>
       }
@@ -67,13 +104,14 @@
             <div class="item-info">
               <h4 class="item-name">{{item.stoveName || 'Stove #' + item.stoveId}}</h4>
               <p class="item-type">Type #{{item.typeId}}</p>
-              <p class="item-owner">Owner: {{item.currentOwnerId}}</p>
+              <p class="item-owner">Owned by you</p>
             </div>
           </div>
         }
       }
 
     </div>
+    } <!-- End of @if (!loading && !error) -->
 
   </section>
 </div>
