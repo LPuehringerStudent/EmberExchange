@@ -15,11 +15,13 @@ import {Language} from './components/language/language';
 import { Socials } from './components/socials/socials';
 import {Security} from './components/security/security';
 import {Login } from './components/login/login';
+import {Register} from './components/register/register';
 
 export const routes: Routes = [
   { path: '', component: MainMenuComponent },
   { path: 'lootboxes', component: LootboxComponent },
   { path: 'marketplace', component: Marketplace},
+  {path: 'register', component: Register},
   { path: 'games', component: GamesComponent },
   { path: 'inventory', component: InventoryComponent },
   {
