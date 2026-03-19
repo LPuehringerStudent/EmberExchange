@@ -1,0 +1,12 @@
+{
+  "cloud" : {
+    "url" : "https://qodana.cloud/projects/40Ykn/reports/B5rYKq",
+    "reportId" : "B5rYKq",
+    "projectId" : "40Ykn",
+    "projectName" : "EmberExchange",
+    "host" : "https://qodana.cloud"
+  },
+  "vcs" : {
+    "origin" : "https://github.com/LPuehringerStudent/EmberExchange.git"
+  }
+}
