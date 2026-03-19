@@ -14,11 +14,14 @@ import {Account} from './components/account/account';
 import {Language} from './components/language/language';
 import { Socials } from './components/socials/socials';
 import {Security} from './components/security/security';
+import {Login } from './components/login/login';
+import {Register} from './components/register/register';
 
 export const routes: Routes = [
   { path: '', component: MainMenuComponent },
   { path: 'lootboxes', component: LootboxComponent },
   { path: 'marketplace', component: Marketplace},
+  {path: 'register', component: Register},
   { path: 'games', component: GamesComponent },
   { path: 'inventory', component: InventoryComponent },
   {
@@ -37,7 +40,7 @@ export const routes: Routes = [
   { path: 'update-log', component: UpdateLogComponent },
   { path: 'statistics', component: StatisticsComponent },
   { path: 'support', component: NotFoundComponent },
-  { path: 'login', component: NotFoundComponent },
+  { path: 'login', component: Login},
   { path: 'signup', component: NotFoundComponent },
   { path: '**', component: NotFoundComponent }
 ];
