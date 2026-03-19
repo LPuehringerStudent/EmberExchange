@@ -312,7 +312,6 @@ body {
     radial-gradient(circle at 20% 80%, rgba(232, 93, 4, 0.03) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 167, 110, 0.03) 0%, transparent 50%),
     linear-gradient(180deg, #f0ece4 0%, #e8e4dc 100%);
-  padding: 24px;
   box-sizing: border-box;
   width: 100%;
 }
