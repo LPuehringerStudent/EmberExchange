@@ -14,6 +14,7 @@ import {Account} from './components/account/account';
 import {Language} from './components/language/language';
 import { Socials } from './components/socials/socials';
 import {Security} from './components/security/security';
+import {Login } from './components/login/login';
 
 export const routes: Routes = [
   { path: '', component: MainMenuComponent },
@@ -37,7 +38,7 @@ export const routes: Routes = [
   { path: 'update-log', component: UpdateLogComponent },
   { path: 'statistics', component: StatisticsComponent },
   { path: 'support', component: NotFoundComponent },
-  { path: 'login', component: NotFoundComponent },
+  { path: 'login', component: Login},
   { path: 'signup', component: NotFoundComponent },
   { path: '**', component: NotFoundComponent }
 ];
