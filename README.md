@@ -27,31 +27,43 @@ EmberExchange is a full-stack web application where players can:
 
 ## Latest Sprint Updates 🚀
 
-### UI/UX Overhaul - Warm Stove Aesthetic
-- **Cohesive Design System**: Dark charcoal topbar with orange accents matching the stove theme
-- **Main Menu**: Complete redesign with welcome section, player stats, game carousel, and live feed
-- **Inventory**: Styled action buttons with gradient backgrounds, hover effects, and improved layout
-- **Settings**: Connected navigation with WIP indicators for unfinished features
+### v0.2.0 Release - Authentication & Statistics
 
-### Backend Improvements
-- **API Test Page**: Modern UI with collapsible categories, search functionality, and response time tracking
-- **Discord Notifications**: Automated PR event notifications with user mentions
-- **Database**: Auto-reset on startup with fresh sample data for development
+### Authentication & User Management
+- **OAuth Integration**: Google and GitHub login support with Passport.js
+- **Session-Based Auth**: Secure session management with automatic expiration
+- **Login/Register UI**: Modern, animated authentication pages
+- **Protected Routes**: Auth guards for secure page access
 
-### Features Delivered
-- ✅ Player management system
-- ✅ Lootbox opening with rarity-based drops
-- ✅ Inventory management
-- ✅ Marketplace listings and trades
-- ✅ Price history tracking
-- ✅ Responsive UI with warm stove theme
+### Statistics System
+- **Player Statistics**: Track individual player metrics (lootboxes opened, coins spent, trades)
+- **Daily Statistics**: Aggregate daily platform activity
+- **Stove Type Statistics**: Track rarity distribution and collection progress
+- **Real-time Charts**: Interactive statistics dashboard with visualizations
+
+### Social Features
+- **Chat System**: Real-time messaging between players
+- **Social Connections**: Friend system and player interactions
+- **Mini-Games**: Play games to earn coins
+
+### UI/UX Improvements
+- **Component Refactoring**: Reorganized into modular component structure
+- **Theme System**: Dynamic appearance settings with dark/light modes
+- **Settings Pages**: Account, Security, Appearance, Language, and Social settings
+- **Animated Lootbox**: Chest opening animations with transparency
+
+### Backend Enhancements
+- **Expanded API**: New routers for auth, chat, statistics, and mini-games
+- **Database**: Additional tables for sessions, chat, and comprehensive statistics
+- **Swagger Docs**: Updated API documentation with all new endpoints
 
 ## Release Schedule
 
-| Version | Status | Expected Date |
-|:-------:|:------:|:-------------:|
-| `0.1.0` | ✅ Current | — |
-| `0.2.0` | 🚧 In Progress | **20.03.2026** |
+| Version | Status | Release Date |
+|:-------:|:------:|:------------:|
+| `0.1.0` | ✅ Released | — |
+| `0.2.0` | ✅ Current | **20.03.2026** |
+| `0.3.0` | 🚧 Planning | TBD |
 
 ## Project Structure
 
@@ -133,6 +145,13 @@ http://localhost:3000/api-docs
 | `GET /api/listing` | View marketplace listings |
 | `POST /api/listing` | Create a listing |
 | `POST /api/trade` | Execute a trade |
+| `POST /api/auth/login` | Authenticate user |
+| `POST /api/auth/register` | Register new user |
+| `GET /api/auth/oauth/google` | Google OAuth login |
+| `GET /api/auth/oauth/github` | GitHub OAuth login |
+| `GET /api/statistics/player` | Get player statistics |
+| `GET /api/statistics/daily` | Get daily platform stats |
+| `GET /api/chat/messages` | Get chat messages |
 
 ## Rarity System
 
@@ -157,5 +176,5 @@ SYP Project 2026 - HTL Leonding
 
 ---
 
-*Last updated: February 2026*  
+*Last updated: March 2026*  
 *Note: This project is under active development. Some features may be marked as WIP.*
