@@ -1,7 +1,7 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { StoveApiService } from '../../../services/stove';
+import { StoveApiService } from '../../../services/stove.service';
 import { AuthService } from '../../../services/auth.service';
 import { forkJoin, map, of, Subscription, switchMap } from 'rxjs';
 import { ShowedStove, StoveRow, LootboxRow } from '../../../../../shared/model';

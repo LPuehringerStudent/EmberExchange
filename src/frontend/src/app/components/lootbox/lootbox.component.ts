@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, ElementRef, inject, ViewChild, ChangeDetectorRef, OnInit, signal} from '@angular/core';
 import { Router } from '@angular/router';
 import {LootBoxHelper, LootItem} from "../../../../../middleground/LootboxHelper";
-import {StoveApiService} from '../../../services/stove';
+import {StoveApiService} from '../../../services/stove.service';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
@@ -21,7 +21,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   showPopup = false;
   resultText = '';
   isOpening = false;
-  
+
   // User data
   lootboxCount = signal<number>(0);
   playerId: number | null = null;
@@ -37,7 +37,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       this._router.navigate(['/login']);
       return;
     }
-    
+
     this.playerId = user.playerId;
     this.lootboxCount.set(user.lootboxCount);
     this.loading = false;
@@ -126,13 +126,13 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     this.cdr.detectChanges();
     console.log('showPopup is now:', this.showPopup);
   }
-  
+
   saveLoot(typeId: number) {
     if (this.playerId === null) {
       console.error('Cannot save loot: no playerId');
       return;
     }
-    
+
     this.stoveApi.createStove(typeId, this.playerId).subscribe({
       error: (err) => console.error('Failed to save stove:', err)
     });
