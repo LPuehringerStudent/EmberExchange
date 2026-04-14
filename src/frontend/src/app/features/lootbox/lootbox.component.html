@@ -1,0 +1,59 @@
+<div id="app">
+  <!-- Lootbox Counter -->
+  <div class="lootbox-counter">
+    <div class="lootbox-counter-label">Available Lootboxes</div>
+    <div class="lootbox-counter-value">{{ lootboxCount() }}</div>
+  </div>
+
+  <div id="lootbox-container">
+    <img
+      id="chest-image"
+      [ngSrc]="isOpening ? 'assets/animation/chest-opening-transparent.gif' : 'assets/animation/chest-idle-animation.gif'"
+      alt="Lootbox"
+      fill
+      (click)="!isOpening && openBox()"
+      [style.opacity]="lootboxCount() > 0 ? '1' : '0.5'">
+  </div>
+
+  <button id="openBtn" (click)="openBox()" [disabled]="!canOpen()">
+    @if (isOpening) {
+      Opening...
+    } @else if (lootboxCount() <= 0) {
+      No Lootboxes
+    } @else {
+      Open ({{ lootboxCount() }} left)
+    }
+  </button>
+
+  @if (lootboxCount() <= 0 && !isOpening) {
+    <p class="no-lootboxes-msg">
+      You have no lootboxes. Visit the marketplace to buy more!
+    </p>
+  }
+</div>
+
+@if (showOverlay) {
+  <div id="overlay" (click)="resetAll()">
+    <div class="overlay-content" (click)="$event.stopPropagation()">
+      <div id="marker"></div>
+      <div id="roller">
+        <div id="items" #itemsContainer>
+          @for (item of items; track item.name) {
+            <div class="item" [style.background]="item.color">
+              {{ item.name }}
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showPopup) {
+  <div id="popup">
+    <div id="popupBox">
+      <h2 id="result">{{ resultText }}</h2>
+      <button id="okBtn" (click)="resetAll()">Okay</button>
+    </div>
+  </div>
+}

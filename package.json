@@ -7,6 +7,7 @@
     "build": "tsc",
     "start": "node dist/backend/app.js",
     "dev": "nodemon",
+    "dev:full": "concurrently \"npm run dev\" \"npm run frontend:watch\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

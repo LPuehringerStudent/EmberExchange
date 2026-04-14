@@ -1,0 +1,78 @@
+<!-- security.component.html -->
+<div class="settings-section">
+  <h1>Security</h1>
+  <p class="subtitle">Manage your account security settings</p>
+
+  <div class="security-list">
+    <div class="security-card" (click)="toggleTwoFactor()">
+      <div class="icon"></div>
+      <div class="security-info">
+        <span class="security-title">Two-Factor Authentication</span>
+        <span class="security-desc">Add an extra layer of security</span>
+      </div>
+      <div class="toggle" [class.active]="twoFactorEnabled()">
+        <div class="toggle-circle"></div>
+      </div>
+    </div>
+
+    <div class="security-card" (click)="toggleLoginAlerts()">
+      <div class="icon"></div>
+      <div class="security-info">
+        <span class="security-title">Login Alerts</span>
+        <span class="security-desc">Get notified of new sign-ins</span>
+      </div>
+      <div class="toggle" [class.active]="loginAlerts()">
+        <div class="toggle-circle"></div>
+      </div>
+    </div>
+
+    <div class="security-card" (click)="toggleTrustedDevices()">
+      <div class="icon"></div>
+      <div class="security-info">
+        <span class="security-title">Trusted Devices</span>
+        <span class="security-desc">Skip 2FA on known devices</span>
+      </div>
+      <div class="toggle" [class.active]="trustedDevices()">
+        <div class="toggle-circle"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="danger-zone">
+    <h3>Danger Zone</h3>
+    <p>Once you delete your account, there is no going back. Please be certain.</p>
+    <button class="btn-danger" (click)="openDeleteModal()">Delete Account</button>
+  </div>
+</div>
+
+<!-- Delete Account Modal -->
+@if (showDeleteModal()) {
+  <div class="modal-overlay" (click)="closeDeleteModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h2>Delete Account</h2>
+      <p>This action cannot be undone. This will permanently delete your account and remove all your data.</p>
+
+      <div class="confirm-input">
+        <label>Please type <strong>DELETE</strong> to confirm:</label>
+        <input
+          type="text"
+          [formControl]="deleteConfirmText"
+          placeholder="Type DELETE here">
+      </div>
+
+      @if (deleteError()) {
+        <div class="alert alert-error">{{ deleteError() }}</div>
+      }
+
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+        <button
+          class="btn-danger"
+          (click)="confirmDeleteAccount()"
+          [disabled]="deleteLoading()">
+          {{ deleteLoading() ? 'Deleting...' : 'Delete Account' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,344 @@
+/* =====================================
+   EmberExchange Theme - Cohesive Design
+===================================== */
+
+:root {
+  --primary-orange: #e85d04;
+  --flame-red: #d00000;
+  --warm-orange: #f48c06;
+  --light-orange: #ffffff;
+  --charcoal: #2d3436;
+  --ash-gray: #636e72;
+  --warm-white: #faf8f5;
+  --cream: #f5f0e8;
+}
+
+/* =====================================
+   Global Reset
+===================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+html, body {
+  min-height: 100vh;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #e8e4dc;
+  color: var(--charcoal);
+  overflow-x: hidden;
+}
+
+/* =====================================
+   Topbar - Dark charcoal with orange accent
+===================================== */
+
+.topbar {
+  height: 64px;
+  width: 100%;
+  background: linear-gradient(135deg, #2d3436 0%, #696c70 120%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  border-bottom: 3px solid var(--primary-orange);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1001;
+}
+
+.menu-btn {
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #ffffff;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.menu-btn:hover {
+  background: rgba(232, 93, 4, 0.2);
+  color: var(--light-orange);
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  position: relative;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1001;
+}
+
+.topbar-right > span {
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #ffffff;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.topbar-right > span:hover {
+  background: rgba(232, 93, 4, 0.15);
+  color: var(--light-orange);
+}
+
+/* =====================================
+   Account Popup - Integrated with theme
+===================================== */
+
+.account-popup {
+  position: relative;
+  display: inline-block;
+  outline: none;
+}
+
+.account-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #ffffff;
+}
+
+.account-button:hover {
+  background: rgba(232, 93, 4, 0.15);
+}
+
+.account-button:focus {
+  background: rgba(232, 93, 4, 0.25);
+}
+
+.account-username {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding-left: 4px;
+}
+
+.account-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.account-avatar svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 180px;
+  background: #2d3436;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(232, 93, 4, 0.3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 2000;
+}
+
+.account-popup:focus-within .account-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.account-menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-menu-item {
+  display: block;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  text-align: left;
+  width: 100%;
+}
+
+.account-menu-item:hover {
+  background: rgba(232, 93, 4, 0.15);
+  color: white;
+}
+
+.account-menu-divider {
+  margin: 8px 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.account-menu-item.logout {
+  color: #ff6b6b;
+}
+
+.account-menu-item.logout:hover {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff8585;
+}
+
+/* =====================================
+   Sidebar - Matches topbar
+===================================== */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 100%;
+  background: linear-gradient(180deg, #2d3436 0%, #696c70 120%);;
+  padding-top: 90px;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 1100;
+  border-right: 3px solid var(--primary-orange);
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar a {
+  display: block;
+  padding: 14px 28px;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-left: 4px solid transparent;
+}
+
+.sidebar a:hover {
+  background: rgba(232, 93, 4, 0.15);
+  border-left-color: var(--primary-orange);
+  padding-left: 36px;
+  color: white;
+}
+
+/* =====================================
+   Overlay
+===================================== */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(45, 52, 54, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1050;
+}
+
+.overlay.show {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* =====================================
+   Main Content - Warm subtle background
+===================================== */
+
+.content {
+  margin-top: 64px;
+  min-height: calc(100vh - 64px);
+  background:
+    radial-gradient(circle at 20% 80%, rgba(232, 93, 4, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 167, 110, 0.03) 0%, transparent 50%),
+    linear-gradient(180deg, #f0ece4 0%, #e8e4dc 100%);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Ensure router outlet and its content fill full height */
+.content router-outlet {
+  display: none;
+}
+
+.content > * {
+  min-height: calc(100vh - 64px);
+  display: block;
+}
+
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+
+.btn-login {
+  background: linear-gradient(135deg, #ff8c42, #ff6b35);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
