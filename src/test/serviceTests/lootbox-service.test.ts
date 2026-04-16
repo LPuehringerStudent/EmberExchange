@@ -73,13 +73,13 @@ describe('LootboxService', () => {
     });
 
     describe('createLootbox', () => {
-        it('should create lootbox with free acquisition', () => {
+        it('should create lootbox with free acquisition and increment player count', () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
             const [success, id] = service.createLootbox(1, 5, 'free');
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
+            expect(mockUnit.prepare).toHaveBeenCalledTimes(2); // INSERT Lootbox + UPDATE Player
             const [sql, params] = mockUnit.prepare.mock.calls[0];
             expect(sql).toContain('INSERT');
             expect(sql).toContain('INTO Lootbox');
@@ -88,12 +88,13 @@ describe('LootboxService', () => {
             expect(id).toBe(10);
         });
 
-        it('should create lootbox with purchase acquisition', () => {
+        it('should create lootbox with purchase acquisition and increment player count', () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 11 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
             const [success, id] = service.createLootbox(2, 5, 'purchase');
 
+            expect(mockUnit.prepare).toHaveBeenCalledTimes(2);
             expect(success).toBe(true);
             expect(id).toBe(11);
         });

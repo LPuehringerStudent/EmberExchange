@@ -92,7 +92,14 @@ export class LootboxService extends ServiceBase {
              VALUES (@lootboxTypeId, @playerId, null, @acquiredHow)`,
             { lootboxTypeId, playerId, acquiredHow }
         );
-        return this.executeStmt(stmt);
+        const [success, id] = this.executeStmt(stmt);
+        if (success) {
+            this.unit.prepare(
+                "UPDATE Player SET lootboxCount = lootboxCount + 1 WHERE playerId = @playerId",
+                { playerId }
+            ).run();
+        }
+        return [success, id];
     }
 
     /**
@@ -197,6 +204,12 @@ export class LootboxService extends ServiceBase {
         const dropResult = dropStmt.run();
         const dropId = Number(dropResult.lastInsertRowid);
         if (!dropId) return [false, null];
+
+        // 6. Decrement player lootbox count for original frontend compatibility
+        this.unit.prepare(
+            "UPDATE Player SET lootboxCount = lootboxCount - 1 WHERE playerId = @playerId",
+            { playerId }
+        ).run();
 
         return [true, { stoveId, stoveName: stoveType.name, rarity, lootboxId }];
     }

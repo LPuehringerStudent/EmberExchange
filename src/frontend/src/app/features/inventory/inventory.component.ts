@@ -202,11 +202,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
     return nameMap[typeId] || `Lootbox #${typeId}`;
   }
 
-  openBox(lootboxId?: number): void {
-    if (lootboxId) {
-      void this.router.navigate(['/lootboxes'], { queryParams: { open: lootboxId } });
-    } else {
-      void this.router.navigate(['/lootboxes']);
-    }
+  openBox(): void {
+    void this.router.navigate(['/lootboxes']);
   }
 }

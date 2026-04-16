@@ -42,11 +42,11 @@ export class PlayerService extends ServiceBase {
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new player's ID (if successful).
      */
-    createPlayer(username: string, password: string, email: string, coins: number = 1000, _lootboxCount: number = 10): [boolean, number] {
+    createPlayer(username: string, password: string, email: string, coins: number = 1000, lootboxCount: number = 10): [boolean, number] {
         const stmt = this.unit.prepare<PlayerRow>(
             `INSERT INTO Player (username, password, email, coins, lootboxCount, isAdmin, joinedAt) 
-             VALUES (@username, @password, @email, @coins, 0, 0, datetime('now'))`,
-            { username, password, email, coins }
+             VALUES (@username, @password, @email, @coins, @lootboxCount, 0, datetime('now'))`,
+            { username, password, email, coins, lootboxCount }
         );
         const [success, playerId] = this.executeStmt(stmt);
         if (success && playerId) {
@@ -251,12 +251,12 @@ export class PlayerService extends ServiceBase {
         provider: string, 
         providerId: string,
         coins: number = 1000, 
-        _lootboxCount: number = 10
+        lootboxCount: number = 10
     ): [boolean, number] {
         const stmt = this.unit.prepare<PlayerRow>(
             `INSERT INTO Player (username, password, email, coins, lootboxCount, isAdmin, joinedAt, provider, providerId) 
-             VALUES (@username, NULL, @email, @coins, 0, 0, datetime('now'), @provider, @providerId)`,
-            { username, email, coins, provider, providerId }
+             VALUES (@username, NULL, @email, @coins, @lootboxCount, 0, datetime('now'), @provider, @providerId)`,
+            { username, email, coins, lootboxCount, provider, providerId }
         );
         const [success, playerId] = this.executeStmt(stmt);
         if (success && playerId) {

@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { LootBoxHelper, LootItem } from '../../../../../middleground/LootboxHelper';
 import { LootboxService } from '@core/services/lootbox.service';
 import { AuthService } from '@core/services/auth.service';
-import type { Lootbox } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -14,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
   imports: [NgOptimizedImage],
   styleUrls: ['./lootbox.component.css']
 })
+
 export class LootboxComponent implements AfterViewInit, OnInit {
   itemsElement = viewChild.required<ElementRef<HTMLElement>>('itemsContainer');
 
@@ -25,8 +25,8 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   isOpening = false;
 
   // User data
+  lootboxCount = signal<number>(0);
   playerId: number | null = null;
-  unopenedLootboxes = signal<Lootbox[]>([]);
   loading = true;
 
   ngAfterViewInit(): void {
@@ -35,13 +35,14 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   ngOnInit(): void {
     const user = this._authService.getCurrentUser();
     if (!user) {
+      // Redirect to login if not authenticated
       this._router.navigate(['/login']);
       return;
     }
 
     this.playerId = user.playerId;
+    this.lootboxCount.set(user.lootboxCount);
     this.loading = false;
-    void this.loadLootboxes();
   }
 
   private lootBoxHelper = new LootBoxHelper();
@@ -50,46 +51,50 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   private _authService = inject(AuthService);
   private _router = inject(Router);
 
-  async loadLootboxes(): Promise<void> {
-    if (this.playerId === null) return;
-    try {
-      const lootboxes = await firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId));
-      this.unopenedLootboxes.set(lootboxes);
-    } catch (err) {
-      console.error('Failed to load lootboxes:', err);
-      this.unopenedLootboxes.set([]);
-    } finally {
-      this.cdr.detectChanges();
-    }
-  }
-
   canOpen(): boolean {
-    return !this.isOpening && this.unopenedLootboxes().length > 0 && this.playerId !== null;
+    return !this.isOpening && this.lootboxCount() > 0 && this.playerId !== null;
   }
 
-  async openBox(lootboxId: number): Promise<void> {
+  async openBox(): Promise<void> {
     if (!this.canOpen() || this.playerId === null) {
-      if (this.unopenedLootboxes().length <= 0) {
+      if (this.lootboxCount() <= 0) {
         alert('You have no lootboxes available!');
       }
       return;
     }
 
-    // Call backend first to determine the guaranteed drop
+    // Find first unopened lootbox to consume
+    let lootboxId: number | null = null;
+    try {
+      const lootboxes = await firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId));
+      if (lootboxes.length === 0) {
+        alert('You have no lootboxes available!');
+        this.lootboxCount.set(0);
+        return;
+      }
+      lootboxId = lootboxes[0].lootboxId;
+    } catch (err) {
+      console.error('Failed to fetch lootboxes:', err);
+      alert('Failed to open lootbox. Please try again.');
+      return;
+    }
+
+    // Call backend to open and get guaranteed drop
     try {
       const result = await firstValueFrom(this.lootboxApi.openLootbox(lootboxId, this.playerId));
-      console.log('Backend drop result:', result);
+      console.log('Lootbox opened:', result);
+
+      this.lootboxCount.update(count => Math.max(0, count - 1));
+      void this._authService.refreshUser();
 
       this.isOpening = true;
       this.showPopup = false;
 
-      // Build strip around the guaranteed result
       this.lootBoxHelper.buildStripFor(result.rarity);
       this.items = this.lootBoxHelper.items;
       this.finalItem = this.lootBoxHelper.finalItem;
       this.showOverlay = true;
 
-      // Wait for DOM to render items
       setTimeout(() => {
         const itemsEl = this.itemsElement().nativeElement;
         const itemEl = itemsEl.querySelector('.item') as HTMLElement;
@@ -123,7 +128,6 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     this.resultText = `You got: ${stoveName}`;
     this.showPopup = true;
     this.isOpening = false;
-    void this.loadLootboxes();
     this.cdr.detectChanges();
   }
 

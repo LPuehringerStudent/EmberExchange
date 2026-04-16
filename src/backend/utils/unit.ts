@@ -135,20 +135,20 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
 
     function insertPlayers(): void {
         const players = [
-            { username: "admin", password: "admin123", email: "admin@emberexchange.com", coins: 999999, isAdmin: 1 },
-            { username: "player1", password: "pass123", email: "player1@example.com", coins: 5000, isAdmin: 0 },
-            { username: "player2", password: "pass456", email: "player2@example.com", coins: 3500, isAdmin: 0 },
-            { username: "trader_joe", password: "trade789", email: "trader@example.com", coins: 10000, isAdmin: 0 },
-            { username: "collector", password: "collect000", email: "collector@example.com", coins: 2500, isAdmin: 0 }
+            { username: "admin", password: "admin123", email: "admin@emberexchange.com", coins: 999999, lootboxCount: 100, isAdmin: 1 },
+            { username: "player1", password: "pass123", email: "player1@example.com", coins: 5000, lootboxCount: 10, isAdmin: 0 },
+            { username: "player2", password: "pass456", email: "player2@example.com", coins: 3500, lootboxCount: 10, isAdmin: 0 },
+            { username: "trader_joe", password: "trade789", email: "trader@example.com", coins: 10000, lootboxCount: 10, isAdmin: 0 },
+            { username: "collector", password: "collect000", email: "collector@example.com", coins: 2500, lootboxCount: 10, isAdmin: 0 }
         ];
         
         for (const player of players) {
             const stmt = unit.prepare<
                 unknown,
-                { username: string; password: string; email: string; coins: number; isAdmin: number; joinedAt: string }
+                { username: string; password: string; email: string; coins: number; lootboxCount: number; isAdmin: number; joinedAt: string }
             >(
                 `insert into Player (username, password, email, coins, lootboxCount, isAdmin, joinedAt) 
-                 values (@username, @password, @email, @coins, 0, @isAdmin, @joinedAt)`,
+                 values (@username, @password, @email, @coins, @lootboxCount, @isAdmin, @joinedAt)`,
                 { ...player, joinedAt: new Date().toISOString() }
             );
             stmt.run();

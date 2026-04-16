@@ -2,7 +2,6 @@ import { Component, ElementRef, viewChild, AfterViewInit, OnDestroy, OnInit, sig
 import { RouterModule } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { OwnershipService } from '@core/services/ownership.service';
-import { LootboxService } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 
 interface Game {
@@ -67,7 +66,6 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
 
   private authService = inject(AuthService);
   private ownershipService = inject(OwnershipService);
-  private lootboxService = inject(LootboxService);
 
   ngOnInit(): void {
     this.loadUserData();
@@ -99,16 +97,9 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
     if (user) {
       this.username.set(user.username);
       this.coins.set(user.coins);
+      this.lootboxCount.set(user.lootboxCount);
 
-      // Load unopened lootbox count and stove count
-      try {
-        const lootboxes = await firstValueFrom(this.lootboxService.getLootboxesByPlayerId(user.playerId));
-        this.lootboxCount.set(lootboxes.length);
-      } catch (error) {
-        console.error('Failed to load lootbox count:', error);
-        this.lootboxCount.set(0);
-      }
-
+      // Load stove count from ownership API
       try {
         const ownerships = await firstValueFrom(this.ownershipService.getOwnershipsByPlayerId(user.playerId));
         this.stoveCount.set(ownerships.length);

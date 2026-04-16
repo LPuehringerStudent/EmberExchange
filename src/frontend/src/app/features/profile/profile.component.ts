@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@ang
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, Player } from '@core/services/auth.service';
 import { PlayerStatisticsService, PlayerStatistics } from '@core/services/player-statistics.service';
-import { LootboxService } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -21,9 +20,6 @@ export class ProfileComponent implements OnInit {
   private _authService = inject(AuthService);
   private _router = inject(Router);
   private _statsService = inject(PlayerStatisticsService);
-  private _lootboxService = inject(LootboxService);
-
-  lootboxCount = signal<number>(0);
 
   ngOnInit(): void {
     const currentUser = this._authService.getCurrentUser();
@@ -34,7 +30,6 @@ export class ProfileComponent implements OnInit {
 
     this.user.set(currentUser);
     void this.loadStats(currentUser.playerId);
-    void this.loadLootboxCount(currentUser.playerId);
   }
 
   async loadStats(playerId: number): Promise<void> {
@@ -61,16 +56,6 @@ export class ProfileComponent implements OnInit {
   providerLabel(provider: string | null): string {
     if (!provider) return 'Local Account';
     return provider.charAt(0).toUpperCase() + provider.slice(1);
-  }
-
-  async loadLootboxCount(playerId: number): Promise<void> {
-    try {
-      const lootboxes = await firstValueFrom(this._lootboxService.getLootboxesByPlayerId(playerId));
-      this.lootboxCount.set(lootboxes.length);
-    } catch (err) {
-      console.error('Failed to load lootbox count:', err);
-      this.lootboxCount.set(0);
-    }
   }
 
   formatNumber(num: number | null | undefined): string {
