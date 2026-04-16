@@ -7,14 +7,14 @@
 
   <!-- Tabs -->
   <div class="marketplace-tabs">
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'all'"
       (click)="activeTab = 'all'">
       All Listings ({{ allListings().length }})
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'my'"
       (click)="activeTab = 'my'">
       My Listings ({{ myListings().length }})
@@ -32,7 +32,7 @@
   <!-- Error State -->
   @if (error() && !loading()) {
     <div class="error-state">
-      <div class="error-icon">⚠️</div>
+      <div class="error-icon"></div>
       <p>{{ error() }}</p>
       <button class="retry-btn" (click)="loadListings()">Retry</button>
     </div>
@@ -44,7 +44,7 @@
       @if (activeTab === 'all') {
         @if (allListings().length === 0) {
           <div class="empty-state">
-            <div class="empty-icon">🏪</div>
+            <div class="empty-icon"></div>
             <p>No active listings</p>
             <span>Be the first to list a stove!</span>
           </div>
@@ -76,7 +76,7 @@
       @if (activeTab === 'my') {
         @if (myListings().length === 0) {
           <div class="empty-state">
-            <div class="empty-icon">📭</div>
+            <div class="empty-icon"></div>
             <p>You have no active listings</p>
             <span>List your stoves to sell them!</span>
             <button class="action-btn" routerLink="/inventory">Go to Inventory</button>
