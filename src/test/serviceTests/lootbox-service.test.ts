@@ -55,9 +55,9 @@ describe('LootboxService', () => {
     });
 
     describe('getLootboxesByPlayerId', () => {
-        it('should return lootboxes for specific player', () => {
+        it('should return unopened lootboxes for specific player', () => {
             const mockLootboxes: LootboxRow[] = [
-                { lootboxId: 1, lootboxTypeId: 1, playerId: 5, openedAt: new Date('2024-01-01'), acquiredHow: 'free' }
+                { lootboxId: 1, lootboxTypeId: 1, playerId: 5, openedAt: null, acquiredHow: 'free' }
             ];
             mockStmt.all.mockReturnValue(mockLootboxes);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -65,7 +65,7 @@ describe('LootboxService', () => {
             const result = service.getLootboxesByPlayerId(5);
 
             expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Lootbox WHERE playerId = @playerId',
+                'SELECT * FROM Lootbox WHERE playerId = @playerId AND openedAt IS NULL',
                 { playerId: 5 }
             );
             expect(result).toEqual(mockLootboxes);

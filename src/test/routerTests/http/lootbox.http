@@ -67,32 +67,26 @@ Content-Type: application/json
 }
 
 ### Open Lootbox
-POST http://localhost:3000/api/lootboxes/open
-Content-Type: application/json
-
-{
-    "lootboxTypeId": 1,
-    "playerId": 1,
-    "acquiredHow": "free"
-}
-
-### Open Lootbox (invalid acquiredHow)
-POST http://localhost:3000/api/lootboxes/open
-Content-Type: application/json
-
-{
-    "lootboxTypeId": 1,
-    "playerId": 1,
-    "acquiredHow": "invalid"
-}
-
-### Open Lootbox (missing fields)
-POST http://localhost:3000/api/lootboxes/open
+POST http://localhost:3000/api/lootboxes/1/open
 Content-Type: application/json
 
 {
     "playerId": 1
 }
+
+### Open Lootbox (not owned)
+POST http://localhost:3000/api/lootboxes/999/open
+Content-Type: application/json
+
+{
+    "playerId": 1
+}
+
+### Open Lootbox (missing playerId)
+POST http://localhost:3000/api/lootboxes/1/open
+Content-Type: application/json
+
+{}
 
 ### Delete Lootbox
 DELETE http://localhost:3000/api/lootboxes/1

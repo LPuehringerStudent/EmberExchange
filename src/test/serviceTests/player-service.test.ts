@@ -65,52 +65,50 @@ describe('PlayerService', () => {
     });
 
     describe('createPlayer', () => {
-        it('should create player with default values', () => {
+        it('should create player with default values and seed 10 lootboxes', () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 5 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
             const [success, id] = service.createPlayer('newplayer', 'hashedpass', 'new@test.com');
 
-            // Verify prepare was called
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
+            expect(success).toBe(true);
+            expect(id).toBe(5);
 
-            // Check first argument contains INSERT
-            const firstArg = mockUnit.prepare.mock.calls[0][0];
-            expect(typeof firstArg).toBe('string');
-            expect(firstArg as string).toContain('INSERT');
+            // First prepare = player insert, next 10 = lootbox inserts
+            expect(mockUnit.prepare).toHaveBeenCalledTimes(11);
 
-            // Check second argument has correct params
-            const secondArg = mockUnit.prepare.mock.calls[0][1];
-            expect(secondArg).toMatchObject({
+            // Check player insert params
+            const playerParams = mockUnit.prepare.mock.calls[0][1];
+            expect(playerParams).toMatchObject({
                 username: 'newplayer',
                 password: 'hashedpass',
                 email: 'new@test.com',
-                coins: 1000,
-                lootboxCount: 10
+                coins: 1000
             });
-
-            expect(success).toBe(true);
-            expect(id).toBe(5);
         });
 
-        it('should create player with custom coin and lootbox values', () => {
+        it('should create player with custom coin values and seed 10 lootboxes', () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 6 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
             const [success, id] = service.createPlayer('custom', 'pass', 'custom@test.com', 500, 20);
 
-            const params = mockUnit.prepare.mock.calls[0][1];
-            expect(params).toMatchObject({ coins: 500, lootboxCount: 20 });
             expect(success).toBe(true);
+            expect(id).toBe(6);
+            expect(mockUnit.prepare).toHaveBeenCalledTimes(11);
+
+            const playerParams = mockUnit.prepare.mock.calls[0][1];
+            expect(playerParams).toMatchObject({ coins: 500 });
         });
 
-        it('should return false when insert fails', () => {
+        it('should return false when insert fails and not seed lootboxes', () => {
             mockStmt.run.mockReturnValue({ changes: 0, lastInsertRowid: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
             const [success, id] = service.createPlayer('fail', 'pass', 'fail@test.com');
 
             expect(success).toBe(false);
+            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
         });
     });
 

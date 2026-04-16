@@ -1,34 +1,40 @@
 <div id="app">
-  <!-- Lootbox Counter -->
-  <div class="lootbox-counter">
-    <div class="lootbox-counter-label">Available Lootboxes</div>
-    <div class="lootbox-counter-value">{{ lootboxCount() }}</div>
+  <!-- Header -->
+  <div class="lootbox-header">
+    <h1>Your Lootboxes</h1>
+    <p class="subtitle">Select a lootbox to open</p>
   </div>
 
-  <div id="lootbox-container">
-    <img
-      id="chest-image"
-      [ngSrc]="isOpening ? 'assets/animation/chest-opening-transparent.gif' : 'assets/animation/chest-idle-animation.gif'"
-      alt="Lootbox"
-      fill
-      (click)="!isOpening && openBox()"
-      [style.opacity]="lootboxCount() > 0 ? '1' : '0.5'">
-  </div>
-
-  <button id="openBtn" (click)="openBox()" [disabled]="!canOpen()">
-    @if (isOpening) {
-      Opening...
-    } @else if (lootboxCount() <= 0) {
-      No Lootboxes
-    } @else {
-      Open ({{ lootboxCount() }} left)
-    }
-  </button>
-
-  @if (lootboxCount() <= 0 && !isOpening) {
-    <p class="no-lootboxes-msg">
-      You have no lootboxes. Visit the marketplace to buy more!
-    </p>
+  @if (loading) {
+    <div class="loading-state">Loading...</div>
+  } @else if (unopenedLootboxes().length === 0) {
+    <div class="empty-state">
+      <p>You have no lootboxes available.</p>
+      <p class="hint">Check back later for rewards!</p>
+    </div>
+  } @else {
+    <div class="lootbox-grid">
+      @for (lootbox of unopenedLootboxes(); track lootbox.lootboxId) {
+        <div class="lootbox-card">
+          <div class="lootbox-icon">
+            <img
+              [ngSrc]="'assets/animation/chest-idle-animation.gif'"
+              alt="Lootbox"
+              fill>
+          </div>
+          <div class="lootbox-info">
+            <span class="lootbox-name">Standard Lootbox</span>
+            <span class="lootbox-meta">#{{ lootbox.lootboxId }}</span>
+          </div>
+          <button
+            class="open-btn"
+            (click)="openBox(lootbox.lootboxId)"
+            [disabled]="isOpening">
+            Open
+          </button>
+        </div>
+      }
+    </div>
   }
 </div>
 

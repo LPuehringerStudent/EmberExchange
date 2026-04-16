@@ -27,7 +27,7 @@
         <h1>{{ activeTab === 'lootboxes' ? 'Lootboxes' : 'Items' }}</h1>
         <span class="hint">
           {{ activeTab === 'lootboxes'
-          ? 'Your opened lootboxes'
+          ? 'Your unopened lootboxes'
           : 'Your collected stoves' }}
         </span>
       </div>
@@ -78,7 +78,7 @@
             </svg>
           </div>
           <p>No lootboxes yet</p>
-          <span>Open or buy lootboxes to see them here</span>
+          <span>You don't have any unopened lootboxes</span>
           <button class="action-btn" routerLink="/lootboxes">Go to Lootboxes</button>
         </div>
       }
@@ -101,8 +101,11 @@
             </div>
             <div class="item-info">
               <h4 class="item-name">{{ box.typeName }}</h4>
-              <p class="item-type">Opened: {{ box.openedAt | date:'short' }}</p>
+              <p class="item-type">Unopened</p>
               <p class="item-owner">Lootbox #{{ box.id }}</p>
+            </div>
+            <div class="item-actions">
+              <button class="btn-sell" (click)="openBox(box.id)">Open</button>
             </div>
           </div>
         }

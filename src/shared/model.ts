@@ -70,7 +70,7 @@ export interface LootboxTypeRow extends LootboxType {
 export interface Lootbox {
     lootboxTypeId: number;
     playerId: number;
-    openedAt: Date;
+    openedAt: Date | null;
     acquiredHow: "free" | "purchase" | "reward";
 }
 

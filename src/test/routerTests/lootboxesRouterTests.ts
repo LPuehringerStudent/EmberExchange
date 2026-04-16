@@ -58,7 +58,7 @@ describe('Lootbox API Endpoints', () => {
                 lootboxId INTEGER PRIMARY KEY AUTOINCREMENT,
                 lootboxTypeId INTEGER NOT NULL REFERENCES LootboxType(lootboxTypeId),
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
-                openedAt TEXT NOT NULL,
+                openedAt TEXT,
                 acquiredHow TEXT NOT NULL CHECK (acquiredHow IN ('free', 'purchase', 'reward'))
             ) STRICT
         `);
@@ -118,7 +118,9 @@ describe('Lootbox API Endpoints', () => {
             INSERT INTO Lootbox (lootboxId, lootboxTypeId, playerId, openedAt, acquiredHow) VALUES 
             (1, 1, 1, datetime('now', '-5 days'), 'free'),
             (2, 1, 1, datetime('now', '-3 days'), 'purchase'),
-            (3, 2, 2, datetime('now', '-1 day'), 'reward')
+            (3, 2, 2, datetime('now', '-1 day'), 'reward'),
+            (4, 1, 1, null, 'free'),
+            (5, 1, 1, null, 'free')
         `);
 
         db.exec(`
@@ -188,7 +190,7 @@ describe('Lootbox API Endpoints', () => {
     });
 
     describe('GET /api/players/:playerId/lootboxes', () => {
-        it('should return all lootboxes for a specific player', async () => {
+        it('should return all unopened lootboxes for a specific player', async () => {
             const response = await request(app)
                 .get('/api/players/1/lootboxes')
                 .expect(200);
@@ -197,6 +199,7 @@ describe('Lootbox API Endpoints', () => {
             expect(response.body.length).toBe(2);
             response.body.forEach((lootbox: any) => {
                 expect(lootbox.playerId).toBe(1);
+                expect(lootbox.openedAt).toBeNull();
             });
         });
 

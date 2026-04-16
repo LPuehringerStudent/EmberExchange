@@ -498,11 +498,12 @@ const options: swaggerJsdoc.Options = {
                     type: "object",
                     properties: {
                         stoveId: { type: "integer", description: "Created stove ID" },
-                        lootboxId: { type: "integer", description: "Created lootbox ID" },
-                        dropId: { type: "integer", description: "Created lootbox drop ID" },
+                        stoveName: { type: "string", description: "Name of the dropped stove" },
+                        rarity: { type: "string", description: "Rarity of the dropped stove" },
+                        lootboxId: { type: "integer", description: "Opened lootbox ID" },
                         message: { type: "string", description: "Success message" }
                     },
-                    required: ["stoveId", "lootboxId", "dropId", "message"]
+                    required: ["stoveId", "stoveName", "rarity", "lootboxId", "message"]
                 },
             },
         },

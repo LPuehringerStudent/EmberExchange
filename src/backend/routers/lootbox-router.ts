@@ -261,12 +261,19 @@ lootboxRouter.post("/lootboxes", (req, res) => {
 
 /**
  * @openapi
- * /lootboxes/open:
+ * /lootboxes/{id}/open:
  *   post:
- *     summary: Open a lootbox
- *     description: Atomically creates a stove, records the lootbox opening, links them via a drop, and decrements the player's lootbox count.
+ *     summary: Open a lootbox from inventory
+ *     description: Consumes an unopened lootbox, determines the drop server-side, creates the stove, and records the drop.
  *     tags:
  *       - Lootboxes
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Unopened lootbox ID
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -274,23 +281,12 @@ lootboxRouter.post("/lootboxes", (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - lootboxTypeId
  *               - playerId
- *               - acquiredHow
  *             properties:
- *               lootboxTypeId:
- *                 type: integer
- *                 description: Type of lootbox opened
- *                 example: 1
  *               playerId:
  *                 type: integer
- *                 description: Player who opened the lootbox
- *                 example: 5
- *               acquiredHow:
- *                 type: string
- *                 enum: [free, purchase, reward]
- *                 description: How the lootbox was acquired
- *                 example: "free"
+ *                 description: Player who owns the lootbox
+ *                 example: 2
  *     responses:
  *       201:
  *         description: Lootbox opened successfully
@@ -304,6 +300,12 @@ lootboxRouter.post("/lootboxes", (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Lootbox does not belong to player or is already opened
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Server error
  *         content:
@@ -311,36 +313,37 @@ lootboxRouter.post("/lootboxes", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.post("/lootboxes/open", (req, res) => {
+lootboxRouter.post("/lootboxes/:id/open", (req, res) => {
     const unit = new Unit(false);
     const service = new LootboxService(unit);
+    const id = req.params.id;
     let ok = false;
 
     try {
-        const { lootboxTypeId, playerId, acquiredHow } = req.body;
-
-        if (typeof lootboxTypeId !== "number" || typeof playerId !== "number") {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "lootboxTypeId and playerId are required" });
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Lootbox ID must be a valid number" });
             return;
         }
 
-        if (!["free", "purchase", "reward"].includes(acquiredHow)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "acquiredHow must be 'free', 'purchase', or 'reward'" });
+        const { playerId } = req.body;
+        if (typeof playerId !== "number") {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "playerId is required" });
             return;
         }
 
-        const [success, result] = service.openLootbox(lootboxTypeId, playerId, acquiredHow);
+        const [success, result] = service.openLootbox(Number(id), playerId);
 
         if (success && result) {
             ok = true;
             res.status(StatusCodes.CREATED).json({
                 stoveId: result.stoveId,
+                stoveName: result.stoveName,
+                rarity: result.rarity,
                 lootboxId: result.lootboxId,
-                dropId: result.dropId,
                 message: "Lootbox opened successfully"
             });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to open lootbox" });
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Lootbox not found, already opened, or does not belong to player" });
         }
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

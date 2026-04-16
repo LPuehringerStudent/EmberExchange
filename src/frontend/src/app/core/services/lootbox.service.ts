@@ -21,8 +21,9 @@ export interface CreateLootboxDropResponse {
 
 export interface OpenLootboxResponse {
   stoveId: number;
+  stoveName: string;
+  rarity: string;
   lootboxId: number;
-  dropId: number;
   message: string;
 }
 
@@ -65,11 +66,10 @@ export class LootboxService {
   }
 
   openLootbox(
-    lootboxTypeId: number,
-    playerId: number,
-    acquiredHow: 'free' | 'purchase' | 'reward'
+    lootboxId: number,
+    playerId: number
   ): Observable<OpenLootboxResponse> {
-    return this.api.post<OpenLootboxResponse>('/lootboxes/open', { lootboxTypeId, playerId, acquiredHow });
+    return this.api.post<OpenLootboxResponse>(`/lootboxes/${lootboxId}/open`, { playerId });
   }
 
   deleteLootbox(id: number): Observable<SuccessMessage> {
