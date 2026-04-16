@@ -261,6 +261,96 @@ lootboxRouter.post("/lootboxes", (req, res) => {
 
 /**
  * @openapi
+ * /lootboxes/open:
+ *   post:
+ *     summary: Open a lootbox
+ *     description: Atomically creates a stove, records the lootbox opening, links them via a drop, and decrements the player's lootbox count.
+ *     tags:
+ *       - Lootboxes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - lootboxTypeId
+ *               - playerId
+ *               - acquiredHow
+ *             properties:
+ *               lootboxTypeId:
+ *                 type: integer
+ *                 description: Type of lootbox opened
+ *                 example: 1
+ *               playerId:
+ *                 type: integer
+ *                 description: Player who opened the lootbox
+ *                 example: 5
+ *               acquiredHow:
+ *                 type: string
+ *                 enum: [free, purchase, reward]
+ *                 description: How the lootbox was acquired
+ *                 example: "free"
+ *     responses:
+ *       201:
+ *         description: Lootbox opened successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OpenLootboxResponse'
+ *       400:
+ *         description: Missing required fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+lootboxRouter.post("/lootboxes/open", (req, res) => {
+    const unit = new Unit(false);
+    const service = new LootboxService(unit);
+    let ok = false;
+
+    try {
+        const { lootboxTypeId, playerId, acquiredHow } = req.body;
+
+        if (typeof lootboxTypeId !== "number" || typeof playerId !== "number") {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "lootboxTypeId and playerId are required" });
+            return;
+        }
+
+        if (!["free", "purchase", "reward"].includes(acquiredHow)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "acquiredHow must be 'free', 'purchase', or 'reward'" });
+            return;
+        }
+
+        const [success, result] = service.openLootbox(lootboxTypeId, playerId, acquiredHow);
+
+        if (success && result) {
+            ok = true;
+            res.status(StatusCodes.CREATED).json({
+                stoveId: result.stoveId,
+                lootboxId: result.lootboxId,
+                dropId: result.dropId,
+                message: "Lootbox opened successfully"
+            });
+        } else {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to open lootbox" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        unit.complete(ok);
+    }
+});
+
+/**
+ * @openapi
  * /lootboxes/{id}:
  *   delete:
  *     summary: Delete a lootbox

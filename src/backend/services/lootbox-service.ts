@@ -126,6 +126,59 @@ export class LootboxService extends ServiceBase {
     }
 
     /**
+     * Atomically opens a lootbox: creates a stove, records the lootbox,
+     * links them via a drop, and decrements the player's lootbox count.
+     * @param lootboxTypeId - The type of lootbox being opened.
+     * @param playerId - The player who opened the lootbox.
+     * @param acquiredHow - How the lootbox was acquired ("free", "purchase", "reward").
+     * @returns Tuple [success, { stoveId, lootboxId, dropId }] or [false, null] on failure.
+     */
+    openLootbox(
+        lootboxTypeId: number,
+        playerId: number,
+        acquiredHow: "free" | "purchase" | "reward"
+    ): [boolean, { stoveId: number; lootboxId: number; dropId: number } | null] {
+        // 1. Create stove
+        const stoveStmt = this.unit.prepare<{ stoveId: number }>(
+            `INSERT INTO Stove (typeId, currentOwnerId, mintedAt) 
+             VALUES (@typeId, @playerId, datetime('now'))`,
+            { typeId: lootboxTypeId, playerId }
+        );
+        const stoveResult = stoveStmt.run();
+        const stoveId = Number(stoveResult.lastInsertRowid);
+        if (!stoveId) return [false, null];
+
+        // 2. Create lootbox
+        const lootboxStmt = this.unit.prepare<LootboxRow>(
+            `INSERT INTO Lootbox (lootboxTypeId, playerId, openedAt, acquiredHow) 
+             VALUES (@lootboxTypeId, @playerId, datetime('now'), @acquiredHow)`,
+            { lootboxTypeId, playerId, acquiredHow }
+        );
+        const lootboxResult = lootboxStmt.run();
+        const lootboxId = Number(lootboxResult.lastInsertRowid);
+        if (!lootboxId) return [false, null];
+
+        // 3. Create lootbox drop
+        const dropStmt = this.unit.prepare<LootboxDropRow>(
+            `INSERT INTO LootboxDrop (lootboxId, stoveId) 
+             VALUES (@lootboxId, @stoveId)`,
+            { lootboxId, stoveId }
+        );
+        const dropResult = dropStmt.run();
+        const dropId = Number(dropResult.lastInsertRowid);
+        if (!dropId) return [false, null];
+
+        // 4. Decrement player lootbox count
+        const playerStmt = this.unit.prepare(
+            `UPDATE Player SET lootboxCount = lootboxCount - 1 WHERE playerId = @playerId AND lootboxCount > 0`,
+            { playerId }
+        );
+        playerStmt.run();
+
+        return [true, { stoveId, lootboxId, dropId }];
+    }
+
+    /**
      * Deletes a lootbox and its associated drops from the database.
      * @param id - The lootbox's unique ID.
      * @returns True if exactly one lootbox was deleted, false otherwise.

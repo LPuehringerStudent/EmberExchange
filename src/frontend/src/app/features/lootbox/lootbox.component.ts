@@ -3,6 +3,7 @@ import { NgOptimizedImage } from '@angular/common';
 import { Router } from '@angular/router';
 import { LootBoxHelper, LootItem } from '../../../../../middleground/LootboxHelper';
 import { StoveService } from '@core/services/stove.service';
+import { LootboxService } from '@core/services/lootbox.service';
 import { AuthService } from '@core/services/auth.service';
 
 @Component({
@@ -46,6 +47,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   private lootBoxHelper = new LootBoxHelper();
   private stoveApi = inject(StoveService);
+  private lootboxApi = inject(LootboxService);
   private cdr = inject(ChangeDetectorRef);
   private _authService = inject(AuthService);
   private _router = inject(Router);
@@ -130,8 +132,9 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       return;
     }
 
-    this.stoveApi.createStove(typeId, this.playerId).subscribe({
-      error: (err: unknown) => console.error('Failed to save stove:', err)
+    this.lootboxApi.openLootbox(typeId, this.playerId, 'free').subscribe({
+      next: (res) => console.log('Lootbox opened:', res),
+      error: (err: unknown) => console.error('Failed to open lootbox:', err)
     });
   }
 
