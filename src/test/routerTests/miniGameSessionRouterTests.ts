@@ -47,7 +47,7 @@ describe('Mini-Game Session API Endpoints', () => {
                 gameType TEXT NOT NULL,
                 result TEXT NOT NULL,
                 coinPayout INTEGER NOT NULL,
-                playedAt TEXT NOT NULL DEFAULT (datetime('now'))
+                finishedAt TEXT NOT NULL DEFAULT (datetime('now'))
             ) STRICT
         `);
 
@@ -58,7 +58,7 @@ describe('Mini-Game Session API Endpoints', () => {
         `);
 
         db.exec(`
-            INSERT INTO MiniGameSession (sessionId, playerId, gameType, result, coinPayout, playedAt) VALUES
+            INSERT INTO MiniGameSession (sessionId, playerId, gameType, result, coinPayout, finishedAt) VALUES
             (1, 1, 'Coin Flip', 'win',     100,  datetime('now')),
             (2, 1, 'Coin Flip', 'loss',    0,    datetime('now', '-1 hour')),
             (3, 2, 'Slots',     'jackpot', 5000, datetime('now')),

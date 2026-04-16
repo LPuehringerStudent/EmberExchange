@@ -471,7 +471,8 @@ describe('Lootbox API Endpoints', () => {
                 .expect(201);
 
             expect(response.body).toHaveProperty('dropId');
-            expect(response.body).toHaveProperty('message', 'Drop recorded successfully');
+            expect(response.body).toHaveProperty('lootboxId', 50);
+            expect(response.body).toHaveProperty('stoveId', 50);
         });
 
         it('should return 400 when required fields are missing', async () => {

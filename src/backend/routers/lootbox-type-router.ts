@@ -129,6 +129,20 @@ lootboxTypeRouter.get("/lootbox-types/available", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+lootboxTypeRouter.get("/lootbox-types/count", (_req, res) => {
+    const unit = new Unit(true);
+    const service = new LootboxTypeService(unit);
+
+    try {
+        const count = service.count();
+        res.status(StatusCodes.OK).json({ count });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        unit.complete();
+    }
+});
+
 lootboxTypeRouter.get("/lootbox-types/:id", (req, res) => {
     const unit = new Unit(true);
     const service = new LootboxTypeService(unit);
@@ -545,38 +559,3 @@ lootboxTypeRouter.delete("/lootbox-types/:id", (req, res) => {
     }
 });
 
-/**
- * @openapi
- * /lootbox-types/count:
- *   get:
- *     summary: Count lootbox types
- *     description: Returns total count of lootbox types
- *     tags:
- *       - LootboxTypes
- *     responses:
- *       200:
- *         description: Count retrieved
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CountResponse'
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-lootboxTypeRouter.get("/lootbox-types/count", (_req, res) => {
-    const unit = new Unit(true);
-    const service = new LootboxTypeService(unit);
-
-    try {
-        const count = service.count();
-        res.status(StatusCodes.OK).json({ count });
-    } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
-    } finally {
-        unit.complete();
-    }
-});

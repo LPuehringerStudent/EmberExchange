@@ -91,6 +91,20 @@ lootboxDropRouter.get("/lootbox-drops", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+lootboxDropRouter.get("/lootbox-drops/count", (_req, res) => {
+    const unit = new Unit(true);
+    const service = new LootboxDropService(unit);
+
+    try {
+        const count = service.count();
+        res.status(StatusCodes.OK).json({ count });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        unit.complete();
+    }
+});
+
 lootboxDropRouter.get("/lootbox-drops/:id", (req, res) => {
     const unit = new Unit(true);
     const service = new LootboxDropService(unit);
@@ -458,38 +472,3 @@ lootboxDropRouter.delete("/lootbox-drops/:id", (req, res) => {
     }
 });
 
-/**
- * @openapi
- * /lootbox-drops/count:
- *   get:
- *     summary: Count lootbox drops
- *     description: Returns total count of drops
- *     tags:
- *       - LootboxDrops
- *     responses:
- *       200:
- *         description: Count retrieved
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CountResponse'
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-lootboxDropRouter.get("/lootbox-drops/count", (_req, res) => {
-    const unit = new Unit(true);
-    const service = new LootboxDropService(unit);
-
-    try {
-        const count = service.count();
-        res.status(StatusCodes.OK).json({ count });
-    } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
-    } finally {
-        unit.complete();
-    }
-});

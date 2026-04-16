@@ -42,7 +42,7 @@ describe('Login History API Endpoints', () => {
 
         db.exec(`
             CREATE TABLE IF NOT EXISTS LoginHistory (
-                loginId INTEGER PRIMARY KEY AUTOINCREMENT,
+                loginHistoryId INTEGER PRIMARY KEY AUTOINCREMENT,
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 sessionId TEXT,
                 loggedInAt TEXT NOT NULL DEFAULT (datetime('now'))
@@ -56,7 +56,7 @@ describe('Login History API Endpoints', () => {
         `);
 
         db.exec(`
-            INSERT INTO LoginHistory (loginId, playerId, sessionId, loggedInAt) VALUES
+            INSERT INTO LoginHistory (loginHistoryId, playerId, sessionId, loggedInAt) VALUES
             (1, 1, 'session-aaa', datetime('now')),
             (2, 1, 'session-bbb', datetime('now', '-1 hour')),
             (3, 2, 'session-ccc', datetime('now'))
@@ -87,7 +87,7 @@ describe('Login History API Endpoints', () => {
 
             expect(Array.isArray(response.body)).toBe(true);
             expect(response.body.length).toBeGreaterThanOrEqual(3);
-            expect(response.body[0]).toHaveProperty('loginId');
+            expect(response.body[0]).toHaveProperty('loginHistoryId');
             expect(response.body[0]).toHaveProperty('playerId');
         });
     });
@@ -101,7 +101,7 @@ describe('Login History API Endpoints', () => {
                 .get('/api/login-history/1')
                 .expect(200);
 
-            expect(response.body).toHaveProperty('loginId', 1);
+            expect(response.body).toHaveProperty('loginHistoryId', 1);
             expect(response.body).toHaveProperty('playerId', 1);
             expect(response.body).toHaveProperty('sessionId', 'session-aaa');
         });

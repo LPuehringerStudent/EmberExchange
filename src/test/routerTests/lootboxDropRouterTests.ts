@@ -75,10 +75,10 @@ describe('Lootbox Drop API Endpoints', () => {
         db.exec(`
             CREATE TABLE IF NOT EXISTS Lootbox (
                 lootboxId INTEGER PRIMARY KEY AUTOINCREMENT,
-                playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 lootboxTypeId INTEGER NOT NULL REFERENCES LootboxType(lootboxTypeId),
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 openedAt TEXT,
-                acquiredAt TEXT NOT NULL DEFAULT (datetime('now'))
+                acquiredHow TEXT NOT NULL CHECK (acquiredHow IN ('free', 'purchase', 'reward'))
             ) STRICT
         `);
 
@@ -86,8 +86,7 @@ describe('Lootbox Drop API Endpoints', () => {
             CREATE TABLE IF NOT EXISTS LootboxDrop (
                 dropId INTEGER PRIMARY KEY AUTOINCREMENT,
                 lootboxId INTEGER NOT NULL UNIQUE REFERENCES Lootbox(lootboxId),
-                stoveId INTEGER NOT NULL UNIQUE REFERENCES Stove(stoveId),
-                droppedAt TEXT NOT NULL DEFAULT (datetime('now'))
+                stoveId INTEGER NOT NULL UNIQUE REFERENCES Stove(stoveId)
             ) STRICT
         `);
 
@@ -118,12 +117,12 @@ describe('Lootbox Drop API Endpoints', () => {
         `);
 
         db.exec(`
-            INSERT INTO Lootbox (lootboxId, playerId, lootboxTypeId, openedAt, acquiredAt) VALUES
-            (1, 1, 1, datetime('now'), datetime('now')),
-            (2, 1, 1, datetime('now'), datetime('now')),
-            (3, 2, 1, datetime('now'), datetime('now')),
-            (4, 1, 1, datetime('now'), datetime('now')),
-            (5, 1, 1, datetime('now'), datetime('now'))
+            INSERT INTO Lootbox (lootboxId, lootboxTypeId, playerId, openedAt, acquiredHow) VALUES
+            (1, 1, 1, datetime('now'), 'free'),
+            (2, 1, 1, datetime('now'), 'purchase'),
+            (3, 1, 2, datetime('now'), 'free'),
+            (4, 1, 1, datetime('now'), 'reward'),
+            (5, 1, 1, datetime('now'), 'free')
         `);
 
         db.exec(`
@@ -231,7 +230,7 @@ describe('Lootbox Drop API Endpoints', () => {
                 .expect(404);
 
             expect(response.body).toHaveProperty('error');
-            expect(response.body.error.toLowerCase()).toContain('not found');
+            expect(response.body.error.toLowerCase()).toContain('no drop');
         });
 
         it('should return 400 for an invalid lootbox ID', async () => {
@@ -263,7 +262,7 @@ describe('Lootbox Drop API Endpoints', () => {
                 .expect(404);
 
             expect(response.body).toHaveProperty('error');
-            expect(response.body.error.toLowerCase()).toContain('not found');
+            expect(response.body.error.toLowerCase()).toContain('no drop');
         });
 
         it('should return 400 for an invalid stove ID', async () => {
