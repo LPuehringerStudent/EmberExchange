@@ -36,9 +36,9 @@ export class LootBoxHelper {
     }
     public returnTypeId(item: LootItem): number {
         if (item.name === 'Common') return 1;
-        if (item.name === 'Rare') return 5;
-        if (item.name === 'Epic') return 6;
-        if (item.name === 'Legendary') return 7;
+        if (item.name === 'Rare') return 4;
+        if (item.name === 'Epic') return 5;
+        if (item.name === 'Legendary') return 6;
 
         return -1;
     }
