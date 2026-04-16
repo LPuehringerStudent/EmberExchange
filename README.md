@@ -1,6 +1,6 @@
 # EmberExchange
 
-A virtual marketplace and collection game for trading unique stoves. Built as an SYP (School Year Project) 2026.
+A virtual marketplace and collection game for trading unique stoves. Built in SYP (System Planning) 2026.
 
 ## What is this?
 
