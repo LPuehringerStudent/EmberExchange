@@ -2,11 +2,22 @@
 
 A virtual marketplace and collection game for trading unique stoves. Built as an SYP (School Year Project) 2026.
 
+## What is this?
+
+EmberExchange is a full-stack web app where players can:
+
+- **Collect** unique stoves with different rarities
+- **Open lootboxes** to discover new items
+- **Trade** stoves on a marketplace with a real coin economy
+- **Track** price history, ownership, and personal statistics
+- **Play mini-games** to earn coins
+
 ## Tech Stack
 
 - **Backend:** Express.js + TypeScript
 - **Frontend:** Angular 21
 - **Database:** SQLite (better-sqlite3)
+- **API Docs:** Swagger / OpenAPI 3.0
 - **Testing:** Jest
 
 ## Quick Start
@@ -16,7 +27,7 @@ npm install
 npm run dev:full
 ```
 
-Server runs at `http://localhost:3000`.
+The server starts at `http://localhost:3000`.
 
 ## Tests
 
@@ -24,9 +35,26 @@ Server runs at `http://localhost:3000`.
 npm test
 ```
 
-## API Docs
+All 510 tests run sequentially to avoid SQLite locking.
 
-Swagger UI: `http://localhost:3000/api-docs`
+## API Documentation
+
+Interactive docs are available at:
+
+```
+http://localhost:3000/api-docs
+```
+
+## Project Structure
+
+```
+src/
+├── backend/      # Express API (routers, services, db)
+├── frontend/     # Angular app
+├── middleground/ # Shared utilities
+└── shared/       # TypeScript models
+dist/             # Compiled output
+```
 
 ## Branches
 
