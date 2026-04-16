@@ -15,6 +15,7 @@ export class ShellComponent {
 
   isLoggedIn = computed(() => this.authService.isLoggedIn());
   currentUser = computed(() => this.authService.getCurrentUser());
+  coins = computed(() => this.authService.getCurrentUser()?.coins ?? 0);
 
   private authService = inject(AuthService);
   private router = inject(Router);

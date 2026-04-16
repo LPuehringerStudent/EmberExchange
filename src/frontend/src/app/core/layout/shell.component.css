@@ -332,6 +332,24 @@ body {
 }
 
 
+.coin-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(232, 93, 4, 0.15);
+  border-radius: 20px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.coin-badge svg {
+  width: 16px;
+  height: 16px;
+  color: #ffba08;
+}
+
 .btn-login {
   background: linear-gradient(135deg, #ff8c42, #ff6b35);
   border: none;

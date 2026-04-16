@@ -1,40 +1,53 @@
 <div class="marketplace-layout">
   <!-- Header -->
   <div class="marketplace-header">
-    <h1>Marketplace</h1>
-    <p class="subtitle">Buy and sell stoves with other players</p>
+    <div class="header-text">
+      <h1>Marketplace</h1>
+      <p class="subtitle">Buy and sell stoves with other players</p>
+    </div>
+    <div class="coin-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9 12h6M12 9v6"/>
+      </svg>
+      <span>{{ formatPrice(coins()) }} Coal</span>
+    </div>
   </div>
 
   <!-- Tabs -->
   <div class="marketplace-tabs">
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'all'"
       (click)="activeTab = 'all'">
       All Listings ({{ allListings().length }})
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="activeTab === 'my'"
       (click)="activeTab = 'my'">
       My Listings ({{ myListings().length }})
     </button>
   </div>
 
-  <!-- Loading State -->
-  @if (loading()) {
-    <div class="loading-state">
-      <div class="loading-icon">⏳</div>
-      <p>Loading marketplace...</p>
+  <!-- Inline Error -->
+  @if (error()) {
+    <div class="inline-error">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ error() }}</span>
+      <button class="close-error" (click)="error.set(null)">Dismiss</button>
     </div>
   }
 
-  <!-- Error State -->
-  @if (error() && !loading()) {
-    <div class="error-state">
-      <div class="error-icon">⚠️</div>
-      <p>{{ error() }}</p>
-      <button class="retry-btn" (click)="loadListings()">Retry</button>
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="empty-state">
+      <div class="spinner"></div>
+      <p>Loading marketplace...</p>
     </div>
   }
 
@@ -44,29 +57,52 @@
       @if (activeTab === 'all') {
         @if (allListings().length === 0) {
           <div class="empty-state">
-            <div class="empty-icon">🏪</div>
+            <div class="empty-graphic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 3h18v18H3z"/>
+                <path d="M3 9h18M9 21V9"/>
+              </svg>
+            </div>
             <p>No active listings</p>
             <span>Be the first to list a stove!</span>
+            <button class="action-btn" routerLink="/inventory">Go to Inventory</button>
           </div>
         } @else {
           @for (listing of allListings(); track listing.listingId) {
-            <div class="listing-card" [class]="'status-' + listing.status">
-              <div class="listing-header">
-                <span class="listing-id">#{{ listing.listingId }}</span>
-                <span class="listing-status" [class]="listing.status">{{ listing.status }}</span>
-              </div>
-              <div class="listing-body">
-                <div class="stove-icon">♨️</div>
-                <div class="listing-info">
-                  <h3>Stove #{{ listing.stoveId }}</h3>
-                  <p class="price">{{ formatPrice(listing.price) }} Coal</p>
-                  <p class="date">Listed: {{ formatDate(listing.listedAt) }}</p>
+            <div class="listing-card" [class]="'rarity-' + getRarity(listing.stoveId)">
+              <div class="card-visual">
+                <div class="stove-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                    <circle cx="12" cy="5" r="2"/>
+                  </svg>
                 </div>
+                <span class="rarity-badge" [class]="getRarity(listing.stoveId)">
+                  {{ getRarity(listing.stoveId) }}
+                </span>
               </div>
-              <div class="listing-actions">
-                <button class="btn-buy" [disabled]="listing.status !== 'active'">
-                  {{ listing.status === 'active' ? 'Buy Now' : listing.status }}
-                </button>
+              <div class="card-info">
+                <h4 class="stove-name">{{ getStoveName(listing.stoveId) }}</h4>
+                <p class="stove-meta">Stove #{{ listing.stoveId }}</p>
+                <p class="price">{{ formatPrice(listing.price) }} Coal</p>
+                <p class="date">Listed {{ formatDate(listing.listedAt) }}</p>
+              </div>
+              <div class="card-actions">
+                @if (isOwnListing(listing)) {
+                  <button class="btn-secondary" disabled>Your listing</button>
+                } @else {
+                  <button
+                    class="btn-primary"
+                    [disabled]="listing.status !== 'active' || processingId() === listing.listingId"
+                    (click)="buyListing(listing)">
+                    @if (processingId() === listing.listingId) {
+                      <span class="btn-spinner"></span>
+                      <span>Buying...</span>
+                    } @else {
+                      <span>Buy Now</span>
+                    }
+                  </button>
+                }
               </div>
             </div>
           }
@@ -76,31 +112,54 @@
       @if (activeTab === 'my') {
         @if (myListings().length === 0) {
           <div class="empty-state">
-            <div class="empty-icon">📭</div>
-            <p>You have no active listings</p>
+            <div class="empty-graphic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+                <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+              </svg>
+            </div>
+            <p>You have no listings</p>
             <span>List your stoves to sell them!</span>
             <button class="action-btn" routerLink="/inventory">Go to Inventory</button>
           </div>
         } @else {
           @for (listing of myListings(); track listing.listingId) {
-            <div class="listing-card" [class]="'status-' + listing.status">
-              <div class="listing-header">
-                <span class="listing-id">#{{ listing.listingId }}</span>
-                <span class="listing-status" [class]="listing.status">{{ listing.status }}</span>
-              </div>
-              <div class="listing-body">
-                <div class="stove-icon">♨️</div>
-                <div class="listing-info">
-                  <h3>Stove #{{ listing.stoveId }}</h3>
-                  <p class="price">{{ formatPrice(listing.price) }} Coal</p>
-                  <p class="date">Listed: {{ formatDate(listing.listedAt) }}</p>
+            <div class="listing-card" [class]="'rarity-' + getRarity(listing.stoveId)">
+              <div class="card-visual">
+                <div class="stove-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                    <circle cx="12" cy="5" r="2"/>
+                  </svg>
                 </div>
+                <span class="rarity-badge" [class]="getRarity(listing.stoveId)">
+                  {{ getRarity(listing.stoveId) }}
+                </span>
+                @if (listing.status !== 'active') {
+                  <span class="status-badge" [class]="listing.status">{{ listing.status }}</span>
+                }
               </div>
-              <div class="listing-actions">
+              <div class="card-info">
+                <h4 class="stove-name">{{ getStoveName(listing.stoveId) }}</h4>
+                <p class="stove-meta">Stove #{{ listing.stoveId }}</p>
+                <p class="price">{{ formatPrice(listing.price) }} Coal</p>
+                <p class="date">Listed {{ formatDate(listing.listedAt) }}</p>
+              </div>
+              <div class="card-actions">
                 @if (listing.status === 'active') {
-                  <button class="btn-cancel">Cancel</button>
+                  <button
+                    class="btn-danger"
+                    [disabled]="processingId() === listing.listingId"
+                    (click)="cancelListing(listing)">
+                    @if (processingId() === listing.listingId) {
+                      <span class="btn-spinner"></span>
+                      <span>Canceling...</span>
+                    } @else {
+                      <span>Cancel</span>
+                    }
+                  </button>
                 } @else {
-                  <button class="btn-disabled" disabled>{{ listing.status }}</button>
+                  <button class="btn-secondary" disabled>{{ listing.status }}</button>
                 }
               </div>
             </div>

@@ -1,8 +1,10 @@
 import { Component, inject, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { StoveService } from '@core/services/stove.service';
 import { AuthService } from '@core/services/auth.service';
+import { ListingService } from '@core/services/listing.service';
 import { forkJoin, map, of, Subscription, switchMap } from 'rxjs';
 import { ShowedStove, StoveRow } from '../../../../../shared/model';
 import { LootboxService } from '@core/services/lootbox.service';
@@ -22,6 +24,7 @@ interface InventoryLootbox {
   templateUrl: './inventory.component.html',
   imports: [
     CommonModule,
+    FormsModule,
     RouterModule
   ],
   styleUrls: ['./inventory.component.css']
@@ -34,21 +37,32 @@ export class InventoryComponent implements OnInit, OnDestroy {
   items: ShowedStove[] = [];
   loading = true;
   error: string | null = null;
+  coins = 0;
+  playerId: number | null = null;
+
+  // Sell modal
+  showSellModal = false;
+  selectedItem: ShowedStove | null = null;
+  sellPrice = '';
+  sellError: string | null = null;
+  sellLoading = false;
 
   private _stove = inject(StoveService);
   private _authService = inject(AuthService);
   private _subscription = new Subscription();
   private router = inject(Router);
   private _lootboxService = inject(LootboxService);
+  private _listingService = inject(ListingService);
 
   ngOnInit(): void {
     const user = this._authService.getCurrentUser();
     if (!user) {
-      // Redirect to login if not authenticated
       this.router.navigate(['/login']);
       return;
     }
 
+    this.playerId = user.playerId;
+    this.coins = user.coins;
     this.loadItems(user.playerId);
     this.loadLootboxes(user.playerId);
 
@@ -103,7 +117,6 @@ export class InventoryComponent implements OnInit, OnDestroy {
   async loadLootboxes(playerId: number): Promise<void> {
     try {
       const lootboxData = await firstValueFrom(this._lootboxService.getLootboxesByPlayerId(playerId));
-      // Transform lootbox data to inventory format
       this.lootboxes = lootboxData.map(lb => ({
         id: lb.lootboxId,
         typeName: this.getLootboxTypeName(lb.lootboxTypeId),
@@ -112,8 +125,49 @@ export class InventoryComponent implements OnInit, OnDestroy {
       }));
     } catch (err) {
       console.error('Failed to load lootboxes:', err);
-      // Don't set error here - just show empty lootboxes
       this.lootboxes = [];
+    }
+  }
+
+  openSellModal(item: ShowedStove): void {
+    this.selectedItem = item;
+    this.sellPrice = '';
+    this.sellError = null;
+    this.showSellModal = true;
+  }
+
+  closeSellModal(): void {
+    this.showSellModal = false;
+    this.selectedItem = null;
+    this.sellPrice = '';
+    this.sellError = null;
+  }
+
+  async confirmSell(): Promise<void> {
+    if (!this.selectedItem || this.playerId === null) return;
+
+    const price = Number(this.sellPrice);
+    if (!this.sellPrice || isNaN(price) || price < 1) {
+      this.sellError = 'Please enter a valid price (minimum 1 Coal).';
+      return;
+    }
+
+    this.sellLoading = true;
+    this.sellError = null;
+
+    try {
+      await firstValueFrom(this._listingService.createListing(this.playerId, this.selectedItem.stoveId, price));
+      await this._authService.refreshUser();
+      this.coins = this._authService.getCurrentUser()?.coins ?? 0;
+      this.closeSellModal();
+      if (this.playerId !== null) {
+        this.loadItems(this.playerId);
+      }
+    } catch (err: any) {
+      console.error('Failed to create listing:', err);
+      this.sellError = err?.error?.error || 'Failed to list item. Please try again.';
+    } finally {
+      this.sellLoading = false;
     }
   }
 

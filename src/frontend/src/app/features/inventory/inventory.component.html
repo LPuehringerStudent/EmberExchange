@@ -23,18 +23,27 @@
   <section class="inventory-main">
 
     <div class="inventory-header">
-      <h1>{{ activeTab === 'lootboxes' ? 'Lootboxes' : 'Items' }}</h1>
-      <span class="hint">
-        {{ activeTab === 'lootboxes'
-        ? 'Your opened lootboxes'
-        : 'Your collected stoves' }}
-      </span>
+      <div class="header-text">
+        <h1>{{ activeTab === 'lootboxes' ? 'Lootboxes' : 'Items' }}</h1>
+        <span class="hint">
+          {{ activeTab === 'lootboxes'
+          ? 'Your opened lootboxes'
+          : 'Your collected stoves' }}
+        </span>
+      </div>
+      <div class="coin-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9 12h6M12 9v6"/>
+        </svg>
+        <span>{{ coins.toLocaleString() }} Coal</span>
+      </div>
     </div>
 
     <!-- Loading State -->
     @if (loading) {
       <div class="empty-state">
-        <div class="empty-icon">⏳</div>
+        <div class="spinner"></div>
         <p>Loading your inventory...</p>
       </div>
     }
@@ -42,7 +51,13 @@
     <!-- Error State -->
     @if (error && !loading) {
       <div class="empty-state">
-        <div class="empty-icon">⚠️</div>
+        <div class="empty-graphic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
         <p>{{ error }}</p>
         <button class="action-btn" routerLink="/">Go Home</button>
       </div>
@@ -55,7 +70,13 @@
       <!-- EMPTY: LOOTBOXES -->
       @if (activeTab === 'lootboxes' && lootboxes.length === 0) {
         <div class="empty-state">
-          <div class="empty-icon">📦</div>
+          <div class="empty-graphic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="9" y1="21" x2="9" y2="9"/>
+            </svg>
+          </div>
           <p>No lootboxes yet</p>
           <span>Open or buy lootboxes to see them here</span>
           <button class="action-btn" routerLink="/lootboxes">Go to Lootboxes</button>
@@ -67,7 +88,13 @@
         @for (box of lootboxes; track box.id) {
           <div class="item-card rarity-common">
             <div class="item-visual">
-              <div class="stove-icon">📦</div>
+              <div class="stove-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                  <line x1="9" y1="21" x2="9" y2="9"/>
+                </svg>
+              </div>
               <span class="rarity-badge common">
                 {{ box.acquiredHow }}
               </span>
@@ -84,7 +111,12 @@
       <!-- EMPTY: ITEMS -->
       @if (activeTab === 'items' && items.length === 0) {
         <div class="empty-state">
-          <div class="empty-icon">♨️</div>
+          <div class="empty-graphic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+              <circle cx="12" cy="5" r="2"/>
+            </svg>
+          </div>
           <p>No items yet</p>
           <span>Open lootboxes to collect stoves</span>
           <button class="action-btn" routerLink="/lootboxes">Open a Lootbox</button>
@@ -96,7 +128,12 @@
         @for (item of items; track item.stoveId) {
           <div class="item-card" [class]="'rarity-' + item.rarity.toLowerCase()">
             <div class="item-visual">
-              <div class="stove-icon">♨️</div>
+              <div class="stove-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                  <circle cx="12" cy="5" r="2"/>
+                </svg>
+              </div>
               <span class="rarity-badge" [class]="item.rarity.toLowerCase()">
                 {{item.rarity}}
               </span>
@@ -105,6 +142,9 @@
               <h4 class="item-name">{{item.stoveName || 'Stove #' + item.stoveId}}</h4>
               <p class="item-type">Type #{{item.typeId}}</p>
               <p class="item-owner">Owned by you</p>
+            </div>
+            <div class="item-actions">
+              <button class="btn-sell" (click)="openSellModal(item)">Sell</button>
             </div>
           </div>
         }
@@ -115,3 +155,41 @@
 
   </section>
 </div>
+
+<!-- Sell Modal -->
+@if (showSellModal && selectedItem) {
+  <div class="modal-overlay" (click)="closeSellModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Sell {{ selectedItem.stoveName }}</h3>
+      <p class="modal-hint">Set a price in Coal for your stove.</p>
+
+      <div class="form-group">
+        <label for="sellPrice">Price</label>
+        <input
+          id="sellPrice"
+          type="number"
+          [(ngModel)]="sellPrice"
+          placeholder="e.g. 500"
+          min="1"
+          (keydown.enter)="confirmSell()"
+        />
+      </div>
+
+      @if (sellError) {
+        <div class="modal-error">{{ sellError }}</div>
+      }
+
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeSellModal()">Cancel</button>
+        <button class="btn-primary" [disabled]="sellLoading" (click)="confirmSell()">
+          @if (sellLoading) {
+            <span class="btn-spinner"></span>
+            <span>Listing...</span>
+          } @else {
+            <span>List for Sale</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
