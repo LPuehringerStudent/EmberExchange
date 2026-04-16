@@ -1,0 +1,133 @@
+<div class="test-page">
+  <header class="page-header">
+    <div class="header-content">
+      <h1>API Test Console</h1>
+      <p class="subtitle">Test all backend endpoints with live feedback</p>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <aside class="sidebar">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search endpoints..."
+          class="search-input">
+      </div>
+
+      <div class="category-list">
+        @for (category of filteredCategories; track category.name) {
+          <div class="category-item" [class.expanded]="category.expanded">
+            <button class="category-header" (click)="toggleCategory(category)">
+              <span class="category-icon">{{ category.icon }}</span>
+              <span class="category-name">{{ category.name }}</span>
+              <span class="toggle-icon">
+                @if (!category.expanded) {
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                }
+                @if (category.expanded) {
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                }
+              </span>
+            </button>
+
+            @if (category.expanded) {
+              <div class="endpoint-list">
+                @for (endpoint of category.endpoints; track endpoint.label) {
+                  <button
+                    class="endpoint-btn"
+                    [class.running]="runningEndpoint === endpoint.label"
+                    (click)="runTest(endpoint)"
+                    [title]="endpoint.description">
+                    <span class="btn-text">{{ endpoint.name }}</span>
+                    @if (runningEndpoint === endpoint.label) {
+                      <span class="spinner">
+                        <svg width="14" height="14" viewBox="0 0 14 14">
+                          <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="20" stroke-dashoffset="10">
+                            <animateTransform attributeName="transform" type="rotate" from="0 7 7" to="360 7 7" dur="1s" repeatCount="indefinite"/>
+                          </circle>
+                        </svg>
+                      </span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </aside>
+
+    <main class="results-panel">
+      <div class="panel-header">
+        <h2>Response</h2>
+        <div class="actions">
+          <button class="action-btn secondary" (click)="clearResults()" [disabled]="results.length === 0">
+            Clear All
+          </button>
+          <button class="action-btn primary" (click)="copyLastResult()" [disabled]="!lastResult">
+            Copy Last
+          </button>
+        </div>
+      </div>
+
+      @if (results.length > 0) {
+        <div class="results-list">
+          @for (result of results; track result.timestamp + result.endpoint; let i = $index) {
+            <div class="result-card" [class.success]="result.success" [class.error]="!result.success">
+              <div class="result-header">
+                <span class="badge" [class.success]="result.success" [class.error]="!result.success">
+                  @if (result.success) {
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6L5 9L10 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  }
+                  @if (!result.success) {
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  }
+                </span>
+                <span class="endpoint-name">{{ result.endpoint }}</span>
+                <span class="timestamp">{{ result.timestamp }}</span>
+                <span class="duration" [class.fast]="result.duration < 100" [class.slow]="result.duration > 500">
+                  {{ result.duration }}ms
+                </span>
+                <button class="delete-btn" (click)="removeResult(i)" title="Remove">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="result-body">
+                @if (result.success) {
+                  <pre>{{ result.data | json }}</pre>
+                }
+                @if (!result.success) {
+                  <pre class="error-text">{{ result.error }}</pre>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (results.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+              <rect x="8" y="16" width="48" height="36" rx="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 24L32 38L56 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p>Click any endpoint button to see results here</p>
+        </div>
+      }
+    </main>
+  </div>
+</div>

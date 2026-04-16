@@ -456,6 +456,44 @@ const options: swaggerJsdoc.Options = {
                     },
                     required: ["playerId", "username", "email", "coins", "lootboxCount", "isAdmin", "joinedAt"]
                 },
+                LoginHistory: {
+                    type: "object",
+                    properties: {
+                        loginHistoryId: { type: "integer", description: "Unique login history ID" },
+                        playerId: { type: "integer", description: "Player ID" },
+                        loggedInAt: { type: "string", format: "date-time", description: "Login timestamp" },
+                        sessionId: { type: "string", description: "Session ID" }
+                    },
+                    required: ["loginHistoryId", "playerId", "loggedInAt"]
+                },
+                CoinTransaction: {
+                    type: "object",
+                    properties: {
+                        transactionId: { type: "integer", description: "Unique transaction ID" },
+                        playerId: { type: "integer", description: "Player ID" },
+                        amount: { type: "integer", description: "Transaction amount (positive or negative)" },
+                        type: { type: "string", description: "Transaction type (trade_in, trade_out, mini_game, listing_sale, listing_purchase, admin_adjust)" },
+                        description: { type: "string", description: "Optional transaction description" },
+                        createdAt: { type: "string", format: "date-time", description: "Transaction timestamp" }
+                    },
+                    required: ["transactionId", "playerId", "amount", "type", "createdAt"]
+                },
+                CreateLoginHistoryResponse: {
+                    type: "object",
+                    properties: {
+                        loginHistoryId: { type: "integer", description: "Created login history ID" },
+                        message: { type: "string", description: "Success message" }
+                    },
+                    required: ["loginHistoryId", "message"]
+                },
+                CreateCoinTransactionResponse: {
+                    type: "object",
+                    properties: {
+                        transactionId: { type: "integer", description: "Created transaction ID" },
+                        message: { type: "string", description: "Success message" }
+                    },
+                    required: ["transactionId", "message"]
+                },
             },
         },
     },

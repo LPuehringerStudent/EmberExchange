@@ -129,6 +129,22 @@ table(PlayerStatistics) {
     updatedAt: TIMESTAMP
 }
 
+table(LoginHistory) {
+    primary_key(loginHistoryId): INTEGER
+    foreign_key(playerId): INTEGER
+    loggedInAt: TIMESTAMP
+    sessionId: TEXT «NULLABLE»
+}
+
+table(CoinTransaction) {
+    primary_key(transactionId): INTEGER
+    foreign_key(playerId): INTEGER
+    amount: INTEGER
+    type: TEXT «trade_in|trade_out|mini_game|listing_sale|listing_purchase|admin_adjust»
+    description: TEXT «NULLABLE»
+    createdAt: TIMESTAMP
+}
+
 table(DailyStatistics) {
     primary_key(statId): INTEGER
     date: DATE «UNIQUE»
@@ -186,6 +202,8 @@ StoveType "1" -- "0..*" PriceHistory : tracked
 
 Listing "1" -- "0..1" Trade : results in
 
+Player "1" -- "0..*" LoginHistory : has
+Player "1" -- "0..*" CoinTransaction : has
 Player "1" -- "0..1" PlayerStatistics : has
 Player "1" -- "0..*" DailyStatistics : contributes to
 StoveType "1" -- "0..1" StoveTypeStatistics : has

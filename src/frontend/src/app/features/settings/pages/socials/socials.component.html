@@ -1,0 +1,66 @@
+<!-- socials.component.html -->
+<div class="settings-section">
+  <h1>Socials</h1>
+  <p class="subtitle">Manage friends, requests, and marketstand sharing</p>
+
+  <!-- Add Friend Section -->
+  <div class="add-friend-section">
+    <h3>Add Friend</h3>
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Enter username..."
+        [formControl]="searchQuery">
+      <button class="btn-primary" (click)="addFriend()">Add</button>
+    </div>
+  </div>
+
+  <!-- Friend Requests -->
+  @if (requests().length > 0) {
+    <div class="requests-section">
+      <h3>Friend Requests ({{ requests().length }})</h3>
+      <div class="requests-list">
+        @for (request of requests(); track request.id) {
+          <div class="request-card">
+            <div class="avatar">{{ request.avatar }}</div>
+            <span class="request-name">{{ request.name }}</span>
+            <div class="request-actions">
+              <button class="btn-accept" (click)="acceptRequest(request.id)">Accept</button>
+              <button class="btn-decline" (click)="declineRequest(request.id)">Decline</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Friends List -->
+  <div class="friends-section">
+    <h3>Friends ({{ friends().length }})</h3>
+    <div class="friends-list">
+      @for (friend of friends(); track friend.id) {
+        <div class="friend-card">
+          <div class="avatar" [attr.data-status]="friend.status">
+            {{ friend.avatar }}
+          </div>
+
+          <div class="friend-info">
+            <span class="friend-name">{{ friend.name }}</span>
+            <span class="friend-status" [class]="friend.status">{{ friend.status }}</span>
+          </div>
+
+          <div class="friend-actions">
+            @if (friend.offeredMarketstand) {
+              <span class="offered-badge">Offered</span>
+            } @else {
+              <button class="btn-offer" (click)="offerMarketstand(friend.id)">
+                Offer Marketstand
+              </button>
+            }
+            <button class="btn-remove" (click)="removeFriend(friend.id)">Remove</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

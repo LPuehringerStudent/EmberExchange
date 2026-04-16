@@ -5,6 +5,8 @@ import { ListingService } from "../services/listing-service";
 import { OwnershipService } from "../services/ownership-service";
 import { StoveService } from "../services/stove-service";
 import { PriceHistoryService } from "../services/price-history-service";
+import { PlayerService } from "../services/player-service";
+import { CoinTransactionService } from "../services/coin-transaction-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 
@@ -377,6 +379,8 @@ tradeRouter.post("/trades", (req, res) => {
     const stoveService = new StoveService(unit);
     const ownershipService = new OwnershipService(unit);
     const priceHistoryService = new PriceHistoryService(unit);
+    const playerService = new PlayerService(unit);
+    const coinTransactionService = new CoinTransactionService(unit);
     let ok = false;
 
     try {
@@ -402,6 +406,33 @@ tradeRouter.post("/trades", (req, res) => {
         // Prevent buying your own listing
         if (listing.sellerId === buyerId) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Cannot buy your own listing" });
+            return;
+        }
+
+        // Check buyer has enough coins
+        const buyer = playerService.getInfoByID(buyerId);
+        if (buyer === null) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Buyer not found" });
+            return;
+        }
+
+        if (buyer.coins < listing.price) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Insufficient coins" });
+            return;
+        }
+
+        // Fetch seller
+        const seller = playerService.getInfoByID(listing.sellerId);
+        if (seller === null) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Seller not found" });
+            return;
+        }
+
+        // Transfer coins
+        const buyerCoinsUpdated = playerService.updatePlayerCoins(buyerId, buyer.coins - listing.price);
+        const sellerCoinsUpdated = playerService.updatePlayerCoins(listing.sellerId, seller.coins + listing.price);
+        if (!buyerCoinsUpdated || !sellerCoinsUpdated) {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer coins" });
             return;
         }
 
@@ -431,6 +462,10 @@ tradeRouter.post("/trades", (req, res) => {
         if (stove !== null) {
             priceHistoryService.recordSale(stove.typeId, listing.price);
         }
+
+        // Record coin transactions
+        coinTransactionService.create(buyerId, -listing.price, 'listing_purchase', `Purchased stove #${listing.stoveId}`);
+        coinTransactionService.create(listing.sellerId, listing.price, 'listing_sale', `Sold stove #${listing.stoveId}`);
 
         // Create trade record
         const [success, id] = tradeService.createTrade(listingId, buyerId);

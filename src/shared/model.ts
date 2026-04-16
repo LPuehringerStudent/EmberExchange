@@ -88,6 +88,30 @@ export interface LootboxDropRow extends LootboxDrop {
     dropId: number;
 }
 
+// LoginHistory
+export interface LoginHistory {
+    playerId: number;
+    loggedInAt: Date;
+    sessionId: string | null;
+}
+
+export interface LoginHistoryRow extends LoginHistory {
+    loginHistoryId: number;
+}
+
+// CoinTransaction
+export interface CoinTransaction {
+    playerId: number;
+    amount: number;
+    type: 'trade_in' | 'trade_out' | 'mini_game' | 'listing_sale' | 'listing_purchase' | 'admin_adjust';
+    description: string | null;
+    createdAt: Date;
+}
+
+export interface CoinTransactionRow extends CoinTransaction {
+    transactionId: number;
+}
+
 // Listing
 export interface Listing {
     sellerId: number;

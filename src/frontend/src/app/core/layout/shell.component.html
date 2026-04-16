@@ -1,0 +1,90 @@
+<!-- Sidebar -->
+<nav class="sidebar" [class.open]="sidebarOpen()">
+  <a routerLink="/" (click)="sidebarOpen.set(false)">Home</a>
+  <a routerLink="/marketplace" (click)="sidebarOpen.set(false)">Marketplace</a>
+  <a routerLink="/lootboxes" (click)="sidebarOpen.set(false)">Lootboxes</a>
+  <a routerLink="/statistics" (click)="sidebarOpen.set(false)">Statistics</a>
+  <a routerLink="/update-log" (click)="sidebarOpen.set(false)">Update Log</a>
+  <a routerLink="/support" (click)="sidebarOpen.set(false)">Support</a>
+  <a routerLink="/test" (click)="sidebarOpen.set(false)">API Test</a>
+  @if (!isLoggedIn()) {
+    <a routerLink="/" (click)="sidebarOpen.set(false)">Login</a>
+  } @else {
+    <a (click)="logout(); sidebarOpen.set(false)" class="logoutFR">Logout</a>
+  }
+</nav>
+
+<!-- Overlay -->
+<div
+  class="overlay"
+  [class.show]="sidebarOpen()"
+  (click)="toggleSidebar()">
+</div>
+
+<!-- Top bar -->
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="menu-btn" (click)="toggleSidebar()">☰</div>
+    <div class="logo" routerLink="/" class="logo">
+      Ember Exchange
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    @if (isLoggedIn()) {
+      <!-- Show inventory and user dropdown when logged in -->
+      <span title="Inventory" routerLink="/inventory" class="cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-backpack" viewBox="0 0 16 16">
+    <path d="M4.04 7.43a4 4 0 0 1 7.92 0 .5.5 0 1 1-.99.14 3 3 0 0 0-5.94 0 .5.5 0 1 1-.99-.14M4 9.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm1 .5v3h6v-3h-1v.5a.5.5 0 0 1-1 0V10z"/>
+    <path d="M6 2.341V2a2 2 0 1 1 4 0v.341c2.33.824 4 3.047 4 5.659v5.5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 13.5V8a6 6 0 0 1 4-5.659M7 2v.083a6 6 0 0 1 2 0V2a1 1 0 0 0-2 0m1 1a5 5 0 0 0-5 5v5.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V8a5 5 0 0 0-5-5"/></svg></span>
+
+      <div class="coin-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9 12h6M12 9v6"/>
+        </svg>
+        <span>{{ coins().toLocaleString() }} Coal</span>
+      </div>
+
+      <!-- Account Popup -->
+      <div class="account-popup" tabindex="0">
+        <button class="account-button">
+          <span class="account-username">{{ currentUser()?.username || 'Player' }}</span>
+          <div class="account-avatar">
+            <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#FFCE8B" d="M1021.103385 510.551692A510.551692 510.551692 0 1 1 510.551692 0a510.551692 510.551692 0 0 1 510.551693 510.551692"></path>
+              <path fill="#644646" d="M809.99026 493.192935v315.26567H494.979866a317.052601 317.052601 0 0 1-66.626996-7.147724V493.192935z"></path>
+              <path fill="#644646" d="M809.99026 493.192935H428.35287v308.117946A315.010394 315.010394 0 0 1 178.693092 493.192935a310.670705 310.670705 0 0 1 21.953723-115.639958A314.755118 314.755118 0 0 1 494.979866 178.693092a308.373222 308.373222 0 0 1 82.96465 11.232138 313.989291 313.989291 0 0 1 232.045744 304.033532"></path>
+              <path fill="#C7F4F1" d="M758.935091 959.581906a510.551692 510.551692 0 0 1-512.338624-9.18993 268.55019 268.55019 0 0 1 512.338624 9.18993"></path>
+              <path fill="#F7BEA9" d="M581.263102 727.02561v86.793788a68.924478 68.924478 0 0 1-137.593681 0v-91.133477a184.309161 184.309161 0 0 0 74.285271 15.571826 178.693092 178.693092 0 0 0 63.30841-11.232137"></path>
+              <path fill="#FBD1BB" d="M700.987474 390.572045v163.121266a195.796574 195.796574 0 0 1-119.724372 183.798609 172.566472 172.566472 0 0 1-137.593681-4.850241 197.072953 197.072953 0 0 1-108.747511-178.693093v-163.376541a189.92523 189.92523 0 0 1 183.032782-195.796574 176.39561 176.39561 0 0 1 129.424854 57.437065 201.667919 201.667919 0 0 1 53.607928 138.359509"></path>
+              <path fill="#FBD1BB" d="M370.405253 553.182759a43.396894 43.396894 0 1 1-43.396894-41.099411 42.37579 42.37579 0 0 1 43.396894 41.099411"></path>
+              <path fill="#F49F83" d="M605.769583 590.963584v2.042207a70.966685 70.966685 0 1 1-141.93337 0v-2.042207"></path>
+              <path fill="#030303" d="M499.064279 517.699416a18.890413 18.890413 0 1 1-18.890412-18.890412 18.890413 18.890413 0 0 1 18.890412 18.890412M619.043927 517.699416a18.890413 18.890413 0 1 1-18.890412-18.890412 18.890413 18.890413 0 0 1 18.890412 18.890412"></path>
+              <path fill="#644646" d="M796.46064 401.038354a224.387469 224.387469 0 0 1-282.590362-28.590894 224.132193 224.132193 0 0 1-312.202359 5.105517A314.755118 314.755118 0 0 1 494.979866 178.693092a308.373222 308.373222 0 0 1 82.96465 11.232138 316.031498 316.031498 0 0 1 218.516124 211.878952"></path>
+            </svg>
+          </div>
+        </button>
+
+        <div class="account-dropdown">
+          <ul class="account-menu">
+            <li class="account-menu-item" routerLink="/profile">Profile</li>
+            <li class="account-menu-item" routerLink="/inventory">Inventory</li>
+            <li class="account-menu-item" routerLink="/settings">Settings</li>
+            <li class="account-menu-divider"></li>
+            <li class="account-menu-item logout" (click)="logout()" class="logoutFR">Logout</li>
+          </ul>
+        </div>
+      </div>
+    } @else {
+      <!-- Show login/register buttons when not logged in -->
+      <button routerLink="/" class="btn-login">Login</button>
+    }
+  </div>
+</header>
+
+<!-- Main content -->
+<main class="content">
+  <router-outlet></router-outlet>
+</main>
