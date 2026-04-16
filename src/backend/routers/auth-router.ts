@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { PlayerService } from "../services/player-service";
 import { SessionService } from "../services/session-service";
 import { PlayerStatisticsService } from "../services/player-statistics-service";
+import { LoginHistoryService } from "../services/login-history-service";
 import { StatusCodes } from "http-status-codes";
 import crypto from "crypto";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -76,6 +77,7 @@ authRouter.post("/auth/login", (req, res) => {
     const unit = new Unit(false);
     const playerService = new PlayerService(unit);
     const sessionService = new SessionService(unit);
+    const loginHistoryService = new LoginHistoryService(unit);
 
     try {
         // Try to find player by username first, then by email
@@ -96,6 +98,7 @@ authRouter.post("/auth/login", (req, res) => {
 
         const success = sessionService.createSession(sessionId, player.playerId, expiresAt);
         if (success) {
+            loginHistoryService.create(player.playerId, sessionId);
             unit.complete(true);
             res.status(StatusCodes.OK).json({ sessionId, playerId: player.playerId });
         } else {

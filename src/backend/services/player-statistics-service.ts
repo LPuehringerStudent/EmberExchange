@@ -2,9 +2,16 @@ import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { PlayerStatisticsRow, PlayerRow } from "../../shared/model";
 
+const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'limited'];
+
 export class PlayerStatisticsService extends ServiceBase {
     constructor(unit: Unit) {
         super(unit);
+    }
+
+    private rarityRank(rarity: string | null): number {
+        if (!rarity) return -1;
+        return RARITY_ORDER.indexOf(rarity.toLowerCase());
     }
 
     /**
@@ -65,8 +72,50 @@ export class PlayerStatisticsService extends ServiceBase {
         );
         const stovesOwned = stovesStmt.get()?.count ?? 0;
 
+        // Total logins from LoginHistory
+        const loginsStmt = this.unit.prepare<{ count: number }>(
+            "SELECT COUNT(*) as count FROM LoginHistory WHERE playerId = @playerId",
+            { playerId }
+        );
+        const totalLogins = loginsStmt.get()?.count ?? 0;
+
+        // Total coins earned and spent from CoinTransaction
+        const coinsEarnedStmt = this.unit.prepare<{ total: number }>(
+            "SELECT COALESCE(SUM(amount), 0) as total FROM CoinTransaction WHERE playerId = @playerId AND amount > 0",
+            { playerId }
+        );
+        const totalCoinsEarned = coinsEarnedStmt.get()?.total ?? 0;
+
+        const coinsSpentStmt = this.unit.prepare<{ total: number }>(
+            "SELECT COALESCE(SUM(ABS(amount)), 0) as total FROM CoinTransaction WHERE playerId = @playerId AND amount < 0",
+            { playerId }
+        );
+        const totalCoinsSpent = coinsSpentStmt.get()?.total ?? 0;
+
+        // Best drop rarity from actual lootbox drops
+        const bestRarityStmt = this.unit.prepare<{ bestRarity: string }>(
+            `SELECT st.rarity as bestRarity
+             FROM LootboxDrop ld
+             JOIN Lootbox lb ON ld.lootboxId = lb.lootboxId
+             JOIN Stove sv ON ld.stoveId = sv.stoveId
+             JOIN StoveType st ON sv.typeId = st.typeId
+             WHERE lb.playerId = @playerId
+             ORDER BY CASE st.rarity
+               WHEN 'common' THEN 0
+               WHEN 'uncommon' THEN 1
+               WHEN 'rare' THEN 2
+               WHEN 'epic' THEN 3
+               WHEN 'legendary' THEN 4
+               WHEN 'limited' THEN 5
+               ELSE -1
+             END DESC
+             LIMIT 1`,
+            { playerId }
+        );
+        const bestRarityRow = bestRarityStmt.get();
+        const bestDropRarity = bestRarityRow?.bestRarity ?? null;
+
         // Calculate net worth (coins + value of owned stoves)
-        // For simplicity, estimate stove value from average listing price or price history
         const stoveValueStmt = this.unit.prepare<{ value: number }>(
             `SELECT COALESCE(SUM(COALESCE(ph.salePrice, 500)), 0) as value
              FROM Stove s
@@ -81,18 +130,18 @@ export class PlayerStatisticsService extends ServiceBase {
         const marketActivityScore = (listingsCreated * 10) + (listingsSold * 20) + (purchasesMade * 15);
 
         return {
-            statId: playerId, // Use playerId as statId for calculated stats
+            statId: playerId,
             playerId: player.playerId,
-            totalLogins: 1, // Would need login tracking table
+            totalLogins: totalLogins,
             lastLoginAt: new Date(),
-            totalSessionMinutes: 0, // Would need session tracking
+            totalSessionMinutes: 0,
             longestSessionMinutes: 0,
             totalLootboxesOpened: lootboxesOpened,
-            totalLootboxesPurchased: 0, // Would need to track acquisition method better
+            totalLootboxesPurchased: 0,
             totalLootboxesFree: lootboxesOpened,
             totalCoinsSpentOnLootboxes: 0,
-            bestDropRarity: null,
-            totalStovesFromLootboxes: lootboxesOpened, // Assume 1 per lootbox
+            bestDropRarity: bestDropRarity as any,
+            totalStovesFromLootboxes: lootboxesOpened,
             totalListingsCreated: listingsCreated,
             totalListingsSold: listingsSold,
             totalListingsCancelled: 0,
@@ -105,7 +154,7 @@ export class PlayerStatisticsService extends ServiceBase {
             fastestSaleMinutes: null,
             totalTradesCompleted: listingsSold + purchasesMade,
             totalMiniGamesPlayed: miniGamesPlayed,
-            totalMiniGameWins: 0, // Would need to track wins
+            totalMiniGameWins: 0,
             totalMiniGameLosses: 0,
             totalCoinsFromMiniGames: 0,
             totalCoinsLostInMiniGames: 0,
@@ -122,8 +171,8 @@ export class PlayerStatisticsService extends ServiceBase {
             rarestStoveOwned: null,
             highestCoinBalance: player.coins,
             lowestCoinBalance: player.coins,
-            totalCoinsEarned: player.coins,
-            totalCoinsSpent: purchaseSpending,
+            totalCoinsEarned: totalCoinsEarned,
+            totalCoinsSpent: totalCoinsSpent,
             netWorthEstimate: netWorth,
             marketActivityScore: marketActivityScore,
             updatedAt: new Date()
@@ -155,7 +204,11 @@ export class PlayerStatisticsService extends ServiceBase {
                 (SELECT COALESCE(SUM(l4.price), 0) FROM Trade t4 JOIN Listing l4 ON t4.listingId = l4.listingId WHERE t4.buyerId = p.playerId) as purchaseSpending,
                 (SELECT COUNT(*) FROM MiniGameSession mgs WHERE mgs.playerId = p.playerId) as miniGamesPlayed,
                 (SELECT COUNT(*) FROM Stove s WHERE s.currentOwnerId = p.playerId) as stovesOwned,
-                (SELECT COALESCE(SUM(COALESCE(ph.salePrice, 500)), 0) FROM Stove s2 LEFT JOIN PriceHistory ph ON s2.typeId = ph.typeId WHERE s2.currentOwnerId = p.playerId) as stoveValue
+                (SELECT COALESCE(SUM(COALESCE(ph.salePrice, 500)), 0) FROM Stove s2 LEFT JOIN PriceHistory ph ON s2.typeId = ph.typeId WHERE s2.currentOwnerId = p.playerId) as stoveValue,
+                (SELECT COUNT(*) FROM LoginHistory lh WHERE lh.playerId = p.playerId) as totalLogins,
+                (SELECT COALESCE(SUM(amount), 0) FROM CoinTransaction ct WHERE ct.playerId = p.playerId AND ct.amount > 0) as totalCoinsEarned,
+                (SELECT COALESCE(SUM(ABS(amount)), 0) FROM CoinTransaction ct WHERE ct.playerId = p.playerId AND ct.amount < 0) as totalCoinsSpent,
+                (SELECT st.rarity FROM LootboxDrop ld JOIN Lootbox lb ON ld.lootboxId = lb.lootboxId JOIN Stove sv ON ld.stoveId = sv.stoveId JOIN StoveType st ON sv.typeId = st.typeId WHERE lb.playerId = p.playerId ORDER BY CASE st.rarity WHEN 'common' THEN 0 WHEN 'uncommon' THEN 1 WHEN 'rare' THEN 2 WHEN 'epic' THEN 3 WHEN 'legendary' THEN 4 WHEN 'limited' THEN 5 ELSE -1 END DESC LIMIT 1) as bestDropRarity
             FROM Player p
             WHERE p.isAdmin = 0
         `;
@@ -170,7 +223,7 @@ export class PlayerStatisticsService extends ServiceBase {
             return {
                 statId: r.playerId,
                 playerId: r.playerId,
-                totalLogins: 1,
+                totalLogins: r.totalLogins ?? 0,
                 lastLoginAt: new Date(),
                 totalSessionMinutes: 0,
                 longestSessionMinutes: 0,
@@ -178,7 +231,7 @@ export class PlayerStatisticsService extends ServiceBase {
                 totalLootboxesPurchased: 0,
                 totalLootboxesFree: r.lootboxesOpened,
                 totalCoinsSpentOnLootboxes: 0,
-                bestDropRarity: null,
+                bestDropRarity: r.bestDropRarity ?? null,
                 totalStovesFromLootboxes: r.lootboxesOpened,
                 totalListingsCreated: r.listingsCreated,
                 totalListingsSold: r.listingsSold,
@@ -209,8 +262,8 @@ export class PlayerStatisticsService extends ServiceBase {
                 rarestStoveOwned: null,
                 highestCoinBalance: r.coins,
                 lowestCoinBalance: r.coins,
-                totalCoinsEarned: r.coins,
-                totalCoinsSpent: r.purchaseSpending,
+                totalCoinsEarned: r.totalCoinsEarned ?? 0,
+                totalCoinsSpent: r.totalCoinsSpent ?? 0,
                 netWorthEstimate: netWorth,
                 marketActivityScore: marketActivityScore,
                 updatedAt: new Date()

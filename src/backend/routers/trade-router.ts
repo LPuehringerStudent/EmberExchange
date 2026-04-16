@@ -6,6 +6,7 @@ import { OwnershipService } from "../services/ownership-service";
 import { StoveService } from "../services/stove-service";
 import { PriceHistoryService } from "../services/price-history-service";
 import { PlayerService } from "../services/player-service";
+import { CoinTransactionService } from "../services/coin-transaction-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 
@@ -379,6 +380,7 @@ tradeRouter.post("/trades", (req, res) => {
     const ownershipService = new OwnershipService(unit);
     const priceHistoryService = new PriceHistoryService(unit);
     const playerService = new PlayerService(unit);
+    const coinTransactionService = new CoinTransactionService(unit);
     let ok = false;
 
     try {
@@ -460,6 +462,10 @@ tradeRouter.post("/trades", (req, res) => {
         if (stove !== null) {
             priceHistoryService.recordSale(stove.typeId, listing.price);
         }
+
+        // Record coin transactions
+        coinTransactionService.create(buyerId, -listing.price, 'listing_purchase', `Purchased stove #${listing.stoveId}`);
+        coinTransactionService.create(listing.sellerId, listing.price, 'listing_sale', `Sold stove #${listing.stoveId}`);
 
         // Create trade record
         const [success, id] = tradeService.createTrade(listingId, buyerId);

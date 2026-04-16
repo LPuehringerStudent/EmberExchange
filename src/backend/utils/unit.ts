@@ -75,6 +75,8 @@ export function resetDatabase(connection: Database): void {
     connection.exec("DROP TABLE IF EXISTS ChatMessage");
     connection.exec("DROP TABLE IF EXISTS Ownership");
     connection.exec("DROP TABLE IF EXISTS PriceHistory");
+    connection.exec("DROP TABLE IF EXISTS CoinTransaction");
+    connection.exec("DROP TABLE IF EXISTS LoginHistory");
     connection.exec("DROP TABLE IF EXISTS MiniGameSession");
     connection.exec("DROP TABLE IF EXISTS Trade");
     connection.exec("DROP TABLE IF EXISTS Listing");
@@ -468,6 +470,38 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
         console.log("✅ StoveTypeStatistics inserted");
     }
 
+    function insertLoginHistory(): void {
+        const logins = [
+            { playerId: 2, loggedInAt: new Date(Date.now() - 86400000 * 2).toISOString(), sessionId: 'sample-session-1' },
+            { playerId: 2, loggedInAt: new Date(Date.now() - 86400000).toISOString(), sessionId: 'sample-session-2' },
+            { playerId: 3, loggedInAt: new Date(Date.now() - 86400000 * 3).toISOString(), sessionId: 'sample-session-3' }
+        ];
+        for (const login of logins) {
+            const stmt = unit.prepare<unknown, { playerId: number; loggedInAt: string; sessionId: string }>(
+                `insert into LoginHistory (playerId, loggedInAt, sessionId) values (@playerId, @loggedInAt, @sessionId)`,
+                login
+            );
+            stmt.run();
+        }
+        console.log("✅ LoginHistory inserted");
+    }
+
+    function insertCoinTransactions(): void {
+        const transactions = [
+            { playerId: 2, amount: 500, type: 'listing_sale', description: 'Sold Rusty Stove', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+            { playerId: 2, amount: -200, type: 'listing_purchase', description: 'Bought Standard Stove', createdAt: new Date(Date.now() - 86400000).toISOString() },
+            { playerId: 4, amount: 1000, type: 'listing_sale', description: 'Sold Golden Stove', createdAt: new Date(Date.now() - 86400000 * 3).toISOString() }
+        ];
+        for (const tx of transactions) {
+            const stmt = unit.prepare<unknown, { playerId: number; amount: number; type: string; description: string; createdAt: string }>(
+                `insert into CoinTransaction (playerId, amount, type, description, createdAt) values (@playerId, @amount, @type, @description, @createdAt)`,
+                tx
+            );
+            stmt.run();
+        }
+        console.log("✅ CoinTransactions inserted");
+    }
+
     if (!(alreadyPresent())) {
         insertLootboxTypes();
         insertPlayers();
@@ -481,6 +515,8 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
         insertPriceHistory();
         insertMiniGameSessions();
         insertChatMessages();
+        insertLoginHistory();
+        insertCoinTransactions();
         insertPlayerStatistics();
         insertDailyStatistics();
         insertStoveTypeStatistics();
@@ -651,6 +687,26 @@ class DB {
         `);
 
         connection.exec(`
+            create table if not exists LoginHistory (
+                loginHistoryId integer primary key autoincrement,
+                playerId integer not null references Player(playerId),
+                loggedInAt text not null,
+                sessionId text
+            ) strict
+        `);
+
+        connection.exec(`
+            create table if not exists CoinTransaction (
+                transactionId integer primary key autoincrement,
+                playerId integer not null references Player(playerId),
+                amount integer not null,
+                type text not null check (type in ('trade_in', 'trade_out', 'mini_game', 'listing_sale', 'listing_purchase', 'admin_adjust')),
+                description text,
+                createdAt text not null
+            ) strict
+        `);
+
+        connection.exec(`
             create table if not exists ChatMessage (
                 messageId integer primary key autoincrement,
                 senderId integer not null references Player(playerId),
@@ -789,6 +845,8 @@ class DB {
         connection.exec(`create index if not exists idx_ownership_stove on Ownership(stoveId)`);
         connection.exec(`create index if not exists idx_ownership_player on Ownership(playerId)`);
         connection.exec(`create index if not exists idx_pricehistory_type on PriceHistory(typeId)`);
+        connection.exec(`create index if not exists idx_loginhistory_player on LoginHistory(playerId)`);
+        connection.exec(`create index if not exists idx_cointransaction_player on CoinTransaction(playerId)`);
         connection.exec(`create index if not exists idx_chat_sender on ChatMessage(senderId)`);
         connection.exec(`create index if not exists idx_chat_receiver on ChatMessage(receiverId)`);
         connection.exec(`create index if not exists idx_lootbox_player on Lootbox(playerId)`);

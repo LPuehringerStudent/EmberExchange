@@ -22,6 +22,8 @@ import { chatMessageRouter } from "./routers/chat-message-router";
 import { playerStatisticsRouter } from "./routers/player-statistics-router";
 import { dailyStatisticsRouter } from "./routers/daily-statistics-router";
 import { stoveTypeStatisticsRouter } from "./routers/stove-type-statistics-router";
+import { loginHistoryRouter } from "./routers/login-history-router";
+import { coinTransactionRouter } from "./routers/coin-transaction-router";
 import { authRouter } from "./routers/auth-router";
 import { oauthRouter } from "./routers/oauth-router";
 import { swaggerSpec } from "./swagger";
@@ -58,6 +60,8 @@ app.use("/api", chatMessageRouter);
 app.use("/api", playerStatisticsRouter);
 app.use("/api", dailyStatisticsRouter);
 app.use("/api", stoveTypeStatisticsRouter);
+app.use("/api", loginHistoryRouter);
+app.use("/api", coinTransactionRouter);
 app.use("/api", authRouter);
 app.use("/api", oauthRouter);
 

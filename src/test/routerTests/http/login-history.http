@@ -1,0 +1,42 @@
+// Login History Endpoints
+
+### Get All Login History
+GET http://localhost:3000/api/login-history
+
+### Get Login History by ID
+GET http://localhost:3000/api/login-history/1
+
+### Get Login History (not found)
+GET http://localhost:3000/api/login-history/99999
+
+### Get Login History (invalid ID)
+GET http://localhost:3000/api/login-history/invalid
+
+### Get Player Login History
+GET http://localhost:3000/api/players/1/login-history
+
+### Get Player Login History (invalid ID)
+GET http://localhost:3000/api/players/invalid/login-history
+
+### Create Login History
+POST http://localhost:3000/api/login-history
+Content-Type: application/json
+
+{
+  "playerId": 1,
+  "sessionId": "test-session-id"
+}
+
+### Create Login History (missing playerId)
+POST http://localhost:3000/api/login-history
+Content-Type: application/json
+
+{
+  "sessionId": "test-session-id"
+}
+
+### Delete Login History
+DELETE http://localhost:3000/api/login-history/1
+
+### Delete Login History (not found)
+DELETE http://localhost:3000/api/login-history/99999

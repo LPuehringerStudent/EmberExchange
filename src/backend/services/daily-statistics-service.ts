@@ -19,8 +19,8 @@ export class DailyStatisticsService extends ServiceBase {
      */
     private calculateTodayStats(): DailyStatisticsRow {
         const today = new Date().toISOString().split('T')[0];
-        const todayStart = `${today}T00:00:00.000Z`;
-        const todayEnd = `${today}T23:59:59.999Z`;
+        const todayStart = `${today} 00:00:00`;
+        const todayEnd = `${today} 23:59:59`;
 
         const sql = `
             SELECT

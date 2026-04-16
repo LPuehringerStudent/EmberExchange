@@ -1,0 +1,54 @@
+// Coin Transaction Endpoints
+
+### Get All Coin Transactions
+GET http://localhost:3000/api/coin-transactions
+
+### Get Coin Transaction by ID
+GET http://localhost:3000/api/coin-transactions/1
+
+### Get Coin Transaction (not found)
+GET http://localhost:3000/api/coin-transactions/99999
+
+### Get Coin Transaction (invalid ID)
+GET http://localhost:3000/api/coin-transactions/invalid
+
+### Get Player Coin Transactions
+GET http://localhost:3000/api/players/1/coin-transactions
+
+### Get Player Coin Transactions (invalid ID)
+GET http://localhost:3000/api/players/invalid/coin-transactions
+
+### Create Coin Transaction
+POST http://localhost:3000/api/coin-transactions
+Content-Type: application/json
+
+{
+  "playerId": 1,
+  "amount": 500,
+  "type": "listing_sale",
+  "description": "Test sale"
+}
+
+### Create Coin Transaction (invalid type)
+POST http://localhost:3000/api/coin-transactions
+Content-Type: application/json
+
+{
+  "playerId": 1,
+  "amount": 500,
+  "type": "invalid_type"
+}
+
+### Create Coin Transaction (missing fields)
+POST http://localhost:3000/api/coin-transactions
+Content-Type: application/json
+
+{
+  "playerId": 1
+}
+
+### Delete Coin Transaction
+DELETE http://localhost:3000/api/coin-transactions/1
+
+### Delete Coin Transaction (not found)
+DELETE http://localhost:3000/api/coin-transactions/99999
