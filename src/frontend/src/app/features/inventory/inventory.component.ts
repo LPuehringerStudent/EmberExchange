@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -53,6 +53,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private _lootboxService = inject(LootboxService);
   private _listingService = inject(ListingService);
+  private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
     const user = this._authService.getCurrentUser();
@@ -103,12 +104,14 @@ export class InventoryComponent implements OnInit, OnDestroy {
       next: (showedStoves: ShowedStove[]) => {
         this.items = showedStoves;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err: unknown) => {
         console.error('Failed to get stoves:', err);
         this.error = 'Failed to load your items. Please try again.';
         this.items = [];
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
     this._subscription.add(sub);
@@ -126,6 +129,8 @@ export class InventoryComponent implements OnInit, OnDestroy {
     } catch (err) {
       console.error('Failed to load lootboxes:', err);
       this.lootboxes = [];
+    } finally {
+      this.cdr.markForCheck();
     }
   }
 
@@ -166,8 +171,10 @@ export class InventoryComponent implements OnInit, OnDestroy {
     } catch (err: any) {
       console.error('Failed to create listing:', err);
       this.sellError = err?.error?.error || 'Failed to list item. Please try again.';
+      this.cdr.markForCheck();
     } finally {
       this.sellLoading = false;
+      this.cdr.markForCheck();
     }
   }
 
