@@ -1,4 +1,4 @@
-# Sprint 2 Backlog (v0.1.0 to v0.2.0)
+       # Sprint 2 Backlog (v0.1.0 to v0.2.0)
 
 **Sprint Duration:** 3 weeks  
 **Total Estimated Hours:** ~115 hours  
