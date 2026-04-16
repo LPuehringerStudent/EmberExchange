@@ -10,7 +10,7 @@
   @if (!isLoggedIn()) {
     <a routerLink="/" (click)="sidebarOpen.set(false)">Login</a>
   } @else {
-    <a (click)="logout(); sidebarOpen.set(false)" class="cursor-pointer">Logout</a>
+    <a (click)="logout(); sidebarOpen.set(false)" class="logoutFR">Logout</a>
   }
 </nav>
 
@@ -25,14 +25,14 @@
 <header class="topbar">
   <div class="topbar-left">
     <div class="menu-btn" (click)="toggleSidebar()">☰</div>
-    <div class="logo" routerLink="/" class="cursor-pointer">
+    <div class="logo" routerLink="/" class="logo">
       Ember Exchange
     </div>
   </div>
 
   <div class="topbar-right">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     @if (isLoggedIn()) {
       <!-- Show inventory and user dropdown when logged in -->
       <span title="Inventory" routerLink="/inventory" class="cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-backpack" viewBox="0 0 16 16">
@@ -73,7 +73,7 @@
             <li class="account-menu-item" routerLink="/inventory">Inventory</li>
             <li class="account-menu-item" routerLink="/settings">Settings</li>
             <li class="account-menu-divider"></li>
-            <li class="account-menu-item logout" (click)="logout()" class="cursor-pointer">Logout</li>
+            <li class="account-menu-item logout" (click)="logout()" class="logoutFR">Logout</li>
           </ul>
         </div>
       </div>

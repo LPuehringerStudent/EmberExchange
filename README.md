@@ -1,4 +1,4 @@
-# EmberExchange 🔥
+# EmberExchange 
 
 A virtual marketplace and collection game for trading unique stoves. Built as an SYP (School Year Project) 2026.
 
@@ -25,7 +25,7 @@ EmberExchange is a full-stack web application where players can:
 | **API Docs** | Swagger/OpenAPI 3.0 |
 | **Testing** | Jest |
 
-## Latest Sprint Updates 🚀
+## Latest Sprint Updates 
 
 ### v0.2.0 Release - Authentication & Statistics
 
@@ -63,7 +63,7 @@ EmberExchange is a full-stack web application where players can:
 |:-------:|:------:|:------------:|
 | `0.1.0` | ✅ Released | — |
 | `0.2.0` | ✅ Current | **20.03.2026** |
-| `0.3.0` | 🚧 Planning | TBD |
+| `0.3.0` | Planning | 17.04.2026 |
 
 ## Project Structure
 
@@ -95,24 +95,12 @@ EmberExchange/
 # Install dependencies
 npm install
 
-# Build the project
-npm run build
-
-# Start the development server
-npm run dev
+# Start the server + frontend (watchmode)
+npm run dev:full
 ```
 
 The server will start on `http://localhost:3000`
 
-### Frontend Development
-
-```bash
-# Serve Angular frontend
-npm run frontend:serve
-
-# Build for production
-npm run frontend:build
-```
 
 ### Running Tests
 
@@ -155,7 +143,7 @@ http://localhost:3000/api-docs
 
 ## Rarity System
 
-Stoves come in 5 rarity tiers with different drop rates:
+Stoves currently come in 5 rarity tiers with different drop rates:
 
 | Rarity | Color | Description |
 |--------|-------|-------------|
@@ -171,10 +159,10 @@ Stoves come in 5 rarity tiers with different drop rates:
 > **Current Release:** `main` branch
 
 ## Team
-
+Arbeitszeitbetrug
 SYP Project 2026 - HTL Leonding
 
 ---
 
-*Last updated: March 2026*  
+*Last updated: April 2026*  
 *Note: This project is under active development. Some features may be marked as WIP.*
