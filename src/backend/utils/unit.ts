@@ -5,12 +5,15 @@ import path from "path";
 import fs from "fs";
 
 const dbDir = path.join(process.cwd(), "src", "backend", "db");
-// Use TEST_DB_PATH environment variable if set (for testing), otherwise use default
-const dbFileName = process.env['TEST_DB_PATH'] || path.join(dbDir, "EmberExchange.db");
 
 // Ensure the db directory exists
 if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
+}
+
+function getDbFileName(): string {
+    // Use TEST_DB_PATH environment variable if set (for testing), otherwise use default
+    return process.env['TEST_DB_PATH'] || path.join(dbDir, "EmberExchange.db");
 }
 
 export class Unit {
@@ -527,7 +530,7 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
 
 class DB {
     public static createDBConnection(): Database {
-        const db = new BetterSqlite3(dbFileName, {
+        const db = new BetterSqlite3(getDbFileName(), {
             fileMustExist: false,
             verbose: (s: unknown) => DB.logStatement(s)
         });

@@ -28,12 +28,12 @@ describe('ChatMessage API Endpoints', () => {
             );
 
             CREATE TABLE IF NOT EXISTS ChatMessage (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                messageId INTEGER PRIMARY KEY AUTOINCREMENT,
                 senderId INTEGER NOT NULL REFERENCES Player(playerId),
                 receiverId INTEGER REFERENCES Player(playerId),
                 content TEXT NOT NULL,
                 isRead INTEGER DEFAULT 0,
-                createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+                sentAt TEXT DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
@@ -41,7 +41,7 @@ describe('ChatMessage API Endpoints', () => {
         db.exec(`
             INSERT INTO Player (playerId, username) VALUES (1, 'PlayerOne'), (2, 'PlayerTwo');
             
-            INSERT INTO ChatMessage (id, senderId, receiverId, content, isRead) VALUES 
+            INSERT INTO ChatMessage (messageId, senderId, receiverId, content, isRead) VALUES 
             (1, 1, NULL, 'Global Message 1', 0),
             (2, 1, 2, 'Private Hello', 0),
             (3, 2, 1, 'Reply to Hello', 1);
@@ -72,7 +72,7 @@ describe('ChatMessage API Endpoints', () => {
         it('should return message by ID', async () => {
             const res = await request(app).get('/api/chat-messages/1');
             expect(res.status).toBe(StatusCodes.OK);
-            expect(res.body.id).toBe(1);
+            expect(res.body.messageId).toBe(1);
         });
 
         it('should return 404 for missing message', async () => {
