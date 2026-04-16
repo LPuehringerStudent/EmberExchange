@@ -134,15 +134,17 @@ export class LootboxService extends ServiceBase {
      * @returns Tuple [success, { stoveId, lootboxId, dropId }] or [false, null] on failure.
      */
     openLootbox(
-        lootboxTypeId: number,
+        stoveTypeId: number,
         playerId: number,
         acquiredHow: "free" | "purchase" | "reward"
     ): [boolean, { stoveId: number; lootboxId: number; dropId: number } | null] {
+        const lootboxTypeId = 1; // Standard Lootbox
+
         // 1. Create stove
         const stoveStmt = this.unit.prepare<{ stoveId: number }>(
             `INSERT INTO Stove (typeId, currentOwnerId, mintedAt) 
              VALUES (@typeId, @playerId, datetime('now'))`,
-            { typeId: lootboxTypeId, playerId }
+            { typeId: stoveTypeId, playerId }
         );
         const stoveResult = stoveStmt.run();
         const stoveId = Number(stoveResult.lastInsertRowid);

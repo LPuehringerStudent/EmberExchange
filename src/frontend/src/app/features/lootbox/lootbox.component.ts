@@ -133,7 +133,10 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     }
 
     this.lootboxApi.openLootbox(typeId, this.playerId, 'free').subscribe({
-      next: (res) => console.log('Lootbox opened:', res),
+      next: (res) => {
+        console.log('Lootbox opened:', res);
+        void this._authService.refreshUser();
+      },
       error: (err: unknown) => console.error('Failed to open lootbox:', err)
     });
   }
