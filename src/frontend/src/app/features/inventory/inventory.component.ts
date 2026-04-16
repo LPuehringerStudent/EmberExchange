@@ -123,7 +123,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
       this.lootboxes = lootboxData.map(lb => ({
         id: lb.lootboxId,
         typeName: this.getLootboxTypeName(lb.lootboxTypeId),
-        openedAt: new Date(lb.openedAt),
+        openedAt: lb.openedAt ? new Date(lb.openedAt) : new Date(),
         acquiredHow: lb.acquiredHow
       }));
     } catch (err) {

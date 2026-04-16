@@ -34,11 +34,21 @@ export class LootBoxHelper {
         this.finalItem = this.weightedPick();
         this.items[40] = this.finalItem;
     }
+
+    public buildStripFor(rarity: string): void {
+        const target = this.pool.find(p => p.name.toLowerCase() === rarity.toLowerCase()) ?? this.pool[0];
+        this.items = [];
+        for (let i = 0; i < 60; i++) {
+            this.items.push(this.weightedPick());
+        }
+        this.finalItem = target;
+        this.items[40] = this.finalItem;
+    }
     public returnTypeId(item: LootItem): number {
         if (item.name === 'Common') return 1;
-        if (item.name === 'Rare') return 3;
+        if (item.name === 'Rare') return 4;
         if (item.name === 'Epic') return 5;
-        if (item.name === 'Legendary') return 7;
+        if (item.name === 'Legendary') return 6;
 
         return -1;
     }

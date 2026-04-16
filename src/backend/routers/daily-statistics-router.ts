@@ -185,23 +185,20 @@ dailyStatisticsRouter.get("/daily-statistics/summary", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.get("/daily-statistics/:date", (req, res) => {
+dailyStatisticsRouter.get("/daily-statistics/range", (req, res) => {
     const unit = new Unit(true);
     const service = new DailyStatisticsService(unit);
-    const date = req.params.date;
+    const from = req.query.from as string;
+    const to = req.query.to as string;
 
     try {
-        if (isNullOrWhiteSpace(date) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Date must be in YYYY-MM-DD format" });
+        if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Both from and to dates must be in YYYY-MM-DD format" });
             return;
         }
 
-        const response = service.getByDate(date);
-        if (response === null) {
-            res.status(StatusCodes.NOT_FOUND).json({ error: "Statistics not found for date" });
-        } else {
-            res.status(StatusCodes.OK).json(response);
-        }
+        const response = service.getByDateRange(from, to);
+        res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
@@ -254,20 +251,23 @@ dailyStatisticsRouter.get("/daily-statistics/:date", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.get("/daily-statistics/range", (req, res) => {
+dailyStatisticsRouter.get("/daily-statistics/:date", (req, res) => {
     const unit = new Unit(true);
     const service = new DailyStatisticsService(unit);
-    const from = req.query.from as string;
-    const to = req.query.to as string;
+    const date = req.params.date;
 
     try {
-        if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Both from and to dates must be in YYYY-MM-DD format" });
+        if (isNullOrWhiteSpace(date) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Date must be in YYYY-MM-DD format" });
             return;
         }
 
-        const response = service.getByDateRange(from, to);
-        res.status(StatusCodes.OK).json(response);
+        const response = service.getByDate(date);
+        if (response === null) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Statistics not found for date" });
+        } else {
+            res.status(StatusCodes.OK).json(response);
+        }
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {

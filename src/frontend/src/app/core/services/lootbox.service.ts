@@ -19,6 +19,14 @@ export interface CreateLootboxDropResponse {
   message: string;
 }
 
+export interface OpenLootboxResponse {
+  stoveId: number;
+  stoveName: string;
+  rarity: string;
+  lootboxId: number;
+  message: string;
+}
+
 export interface CreateLootboxTypeResponse {
   lootboxTypeId: number;
   name: string;
@@ -55,6 +63,13 @@ export class LootboxService {
     acquiredHow: 'free' | 'purchase' | 'reward'
   ): Observable<CreateLootboxResponse> {
     return this.api.post<CreateLootboxResponse>('/lootboxes', { lootboxTypeId, playerId, acquiredHow });
+  }
+
+  openLootbox(
+    lootboxId: number,
+    playerId: number
+  ): Observable<OpenLootboxResponse> {
+    return this.api.post<OpenLootboxResponse>(`/lootboxes/${lootboxId}/open`, { playerId });
   }
 
   deleteLootbox(id: number): Observable<SuccessMessage> {

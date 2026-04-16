@@ -71,15 +71,12 @@ describe('PlayerService', () => {
 
             const [success, id] = service.createPlayer('newplayer', 'hashedpass', 'new@test.com');
 
-            // Verify prepare was called
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
+            expect(mockUnit.prepare).toHaveBeenCalledTimes(11); // 1 player + 10 lootboxes
 
-            // Check first argument contains INSERT
             const firstArg = mockUnit.prepare.mock.calls[0][0];
             expect(typeof firstArg).toBe('string');
             expect(firstArg as string).toContain('INSERT');
 
-            // Check second argument has correct params
             const secondArg = mockUnit.prepare.mock.calls[0][1];
             expect(secondArg).toMatchObject({
                 username: 'newplayer',
@@ -111,6 +108,7 @@ describe('PlayerService', () => {
             const [success, id] = service.createPlayer('fail', 'pass', 'fail@test.com');
 
             expect(success).toBe(false);
+            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
         });
     });
 

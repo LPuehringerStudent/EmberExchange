@@ -494,6 +494,17 @@ const options: swaggerJsdoc.Options = {
                     },
                     required: ["transactionId", "message"]
                 },
+                OpenLootboxResponse: {
+                    type: "object",
+                    properties: {
+                        stoveId: { type: "integer", description: "Created stove ID" },
+                        stoveName: { type: "string", description: "Name of the dropped stove" },
+                        rarity: { type: "string", description: "Rarity of the dropped stove" },
+                        lootboxId: { type: "integer", description: "Opened lootbox ID" },
+                        message: { type: "string", description: "Success message" }
+                    },
+                    required: ["stoveId", "stoveName", "rarity", "lootboxId", "message"]
+                },
             },
         },
     },

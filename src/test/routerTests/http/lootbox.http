@@ -66,6 +66,28 @@ Content-Type: application/json
     "playerId": 1
 }
 
+### Open Lootbox
+POST http://localhost:3000/api/lootboxes/1/open
+Content-Type: application/json
+
+{
+    "playerId": 1
+}
+
+### Open Lootbox (not owned)
+POST http://localhost:3000/api/lootboxes/999/open
+Content-Type: application/json
+
+{
+    "playerId": 1
+}
+
+### Open Lootbox (missing playerId)
+POST http://localhost:3000/api/lootboxes/1/open
+Content-Type: application/json
+
+{}
+
 ### Delete Lootbox
 DELETE http://localhost:3000/api/lootboxes/1
 

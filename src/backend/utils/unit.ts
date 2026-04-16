@@ -5,12 +5,15 @@ import path from "path";
 import fs from "fs";
 
 const dbDir = path.join(process.cwd(), "src", "backend", "db");
-// Use TEST_DB_PATH environment variable if set (for testing), otherwise use default
-const dbFileName = process.env['TEST_DB_PATH'] || path.join(dbDir, "EmberExchange.db");
 
 // Ensure the db directory exists
 if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
+}
+
+function getDbFileName(): string {
+    // Use TEST_DB_PATH environment variable if set (for testing), otherwise use default
+    return process.env['TEST_DB_PATH'] || path.join(dbDir, "EmberExchange.db");
 }
 
 export class Unit {
@@ -134,9 +137,9 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
         const players = [
             { username: "admin", password: "admin123", email: "admin@emberexchange.com", coins: 999999, lootboxCount: 100, isAdmin: 1 },
             { username: "player1", password: "pass123", email: "player1@example.com", coins: 5000, lootboxCount: 10, isAdmin: 0 },
-            { username: "player2", password: "pass456", email: "player2@example.com", coins: 3500, lootboxCount: 5, isAdmin: 0 },
-            { username: "trader_joe", password: "trade789", email: "trader@example.com", coins: 10000, lootboxCount: 20, isAdmin: 0 },
-            { username: "collector", password: "collect000", email: "collector@example.com", coins: 2500, lootboxCount: 3, isAdmin: 0 }
+            { username: "player2", password: "pass456", email: "player2@example.com", coins: 3500, lootboxCount: 10, isAdmin: 0 },
+            { username: "trader_joe", password: "trade789", email: "trader@example.com", coins: 10000, lootboxCount: 10, isAdmin: 0 },
+            { username: "collector", password: "collect000", email: "collector@example.com", coins: 2500, lootboxCount: 10, isAdmin: 0 }
         ];
         
         for (const player of players) {
@@ -151,6 +154,24 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
             stmt.run();
         }
         console.log("✅ Players inserted");
+    }
+
+    function insertPlayerLootboxes(): void {
+        const playerIds = [2, 3, 4, 5]; // non-admin players
+        for (const playerId of playerIds) {
+            for (let i = 0; i < 10; i++) {
+                const stmt = unit.prepare<
+                    unknown,
+                    { lootboxTypeId: number; playerId: number; acquiredHow: string }
+                >(
+                    `insert into Lootbox (lootboxTypeId, playerId, openedAt, acquiredHow) 
+                     values (@lootboxTypeId, @playerId, null, @acquiredHow)`,
+                    { lootboxTypeId: 1, playerId, acquiredHow: "free" }
+                );
+                stmt.run();
+            }
+        }
+        console.log("✅ Player lootboxes inserted");
     }
 
     function insertStoveTypes(): void {
@@ -206,6 +227,7 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
     }
 
     function insertLootboxes(): void {
+        // Historical opened lootboxes for stats
         const lootboxes = [
             { lootboxTypeId: 1, playerId: 2, openedAt: new Date(Date.now() - 86400000 * 5).toISOString(), acquiredHow: "free" },
             { lootboxTypeId: 1, playerId: 2, openedAt: new Date(Date.now() - 86400000 * 3).toISOString(), acquiredHow: "purchase" },
@@ -225,7 +247,7 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
             );
             stmt.run();
         }
-        console.log("✅ Lootboxes inserted");
+        console.log("✅ Historical lootboxes inserted");
     }
 
     function insertLootboxDrops(): void {
@@ -508,6 +530,7 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
         insertStoveTypes();
         insertStoves();
         insertLootboxes();
+        insertPlayerLootboxes();
         insertLootboxDrops();
         insertOwnerships();
         insertListings();
@@ -527,7 +550,7 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
 
 class DB {
     public static createDBConnection(): Database {
-        const db = new BetterSqlite3(dbFileName, {
+        const db = new BetterSqlite3(getDbFileName(), {
             fileMustExist: false,
             verbose: (s: unknown) => DB.logStatement(s)
         });
@@ -562,6 +585,32 @@ class DB {
     }
 
     public static ensureTablesCreated(connection: Database): void {
+        // Migration: make Lootbox.openedAt nullable if table exists with old schema
+        try {
+            const info = connection.prepare("PRAGMA table_info(Lootbox)").all() as { name: string; notnull: number }[];
+            const openedAtCol = info.find(c => c.name === 'openedAt');
+            if (openedAtCol && openedAtCol.notnull === 1) {
+                connection.exec(`
+                    PRAGMA foreign_keys = OFF;
+                    BEGIN TRANSACTION;
+                    CREATE TABLE Lootbox_new (
+                        lootboxId integer primary key autoincrement,
+                        lootboxTypeId integer not null references LootboxType(lootboxTypeId),
+                        playerId integer not null references Player(playerId),
+                        openedAt text,
+                        acquiredHow text not null check (acquiredHow in ('free', 'purchase', 'reward'))
+                    ) strict;
+                    INSERT INTO Lootbox_new SELECT * FROM Lootbox;
+                    DROP TABLE Lootbox;
+                    ALTER TABLE Lootbox_new RENAME TO Lootbox;
+                    COMMIT;
+                    PRAGMA foreign_keys = ON;
+                `);
+            }
+        } catch {
+            // Table doesn't exist yet, no migration needed
+        }
+
         connection.exec(`
             create table if not exists Player (
                 playerId integer primary key autoincrement,
@@ -613,7 +662,7 @@ class DB {
                 lootboxId integer primary key autoincrement,
                 lootboxTypeId integer not null references LootboxType(lootboxTypeId),
                 playerId integer not null references Player(playerId),
-                openedAt text not null,
+                openedAt text,
                 acquiredHow text not null check (acquiredHow in ('free', 'purchase', 'reward'))
             ) strict
         `);

@@ -16,36 +16,35 @@ export class DailyStatisticsService extends ServiceBase {
 
     /**
      * Calculates today's statistics from actual data tables.
+     * Uses SQLite date() function to handle both ISO and space-formatted timestamps.
      */
     private calculateTodayStats(): DailyStatisticsRow {
-        const today = new Date().toISOString().split('T')[0];
-        const todayStart = `${today} 00:00:00`;
-        const todayEnd = `${today} 23:59:59`;
-
         const sql = `
             SELECT
-                (SELECT COUNT(*) FROM Lootbox WHERE openedAt >= @todayStart AND openedAt <= @todayEnd) as lootboxesOpened,
-                (SELECT COUNT(*) FROM Listing WHERE listedAt >= @todayStart AND listedAt <= @todayEnd) as newListings,
-                (SELECT COUNT(*) FROM Trade t JOIN Listing l ON t.listingId = l.listingId WHERE t.executedAt >= @todayStart AND t.executedAt <= @todayEnd) as salesToday,
-                (SELECT COALESCE(SUM(l2.price), 0) FROM Trade t2 JOIN Listing l2 ON t2.listingId = l2.listingId WHERE t2.executedAt >= @todayStart AND t2.executedAt <= @todayEnd) as tradingVolume,
-                (SELECT COALESCE(AVG(l3.price), 0) FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE t3.executedAt >= @todayStart AND t3.executedAt <= @todayEnd) as avgSalePrice,
-                (SELECT COUNT(*) FROM MiniGameSession WHERE finishedAt >= @todayStart AND finishedAt <= @todayEnd) as gamesToday,
-                (SELECT COUNT(*) FROM ChatMessage WHERE sentAt >= @todayStart AND sentAt <= @todayEnd) as messagesToday,
-                (SELECT COUNT(*) FROM Player WHERE joinedAt >= @todayStart AND joinedAt <= @todayEnd) as newPlayers,
-                (SELECT COUNT(DISTINCT playerId) FROM Lootbox WHERE openedAt >= @todayStart AND openedAt <= @todayEnd) as activePlayers,
+                (SELECT COUNT(*) FROM Lootbox WHERE date(openedAt) = date('now')) as lootboxesOpened,
+                (SELECT COUNT(*) FROM Listing WHERE date(listedAt) = date('now')) as newListings,
+                (SELECT COUNT(*) FROM Trade t JOIN Listing l ON t.listingId = l.listingId WHERE date(t.executedAt) = date('now')) as salesToday,
+                (SELECT COALESCE(SUM(l2.price), 0) FROM Trade t2 JOIN Listing l2 ON t2.listingId = l2.listingId WHERE date(t2.executedAt) = date('now')) as tradingVolume,
+                (SELECT COALESCE(AVG(l3.price), 0) FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE date(t3.executedAt) = date('now')) as avgSalePrice,
+                (SELECT COUNT(*) FROM MiniGameSession WHERE date(finishedAt) = date('now')) as gamesToday,
+                (SELECT COUNT(*) FROM ChatMessage WHERE date(sentAt) = date('now')) as messagesToday,
+                (SELECT COUNT(*) FROM Player WHERE date(joinedAt) = date('now')) as newPlayers,
+                (SELECT COUNT(DISTINCT playerId) FROM LoginHistory WHERE date(loggedInAt) = date('now')) as activePlayers,
+                (SELECT COUNT(*) FROM LoginHistory WHERE date(loggedInAt) = date('now')) as totalSessions,
                 (SELECT COALESCE(SUM(coins), 0) FROM Player) as totalCoins,
                 (SELECT COUNT(*) FROM Stove) as totalStoves
         `;
 
-        const stmt = this.unit.prepare<any>(sql, { todayStart, todayEnd });
+        const stmt = this.unit.prepare<any>(sql);
         const r = stmt.get();
+        const today = new Date().toISOString().split('T')[0];
 
         return {
             statId: 1, // Dummy ID for calculated stats
             date: today,
             uniquePlayersLoggedIn: r?.activePlayers ?? 0,
             newPlayersJoined: r?.newPlayers ?? 0,
-            totalSessions: r?.activePlayers ?? 0, // Approximate
+            totalSessions: r?.totalSessions ?? 0,
             averageSessionMinutes: 0,
             lootboxesOpenedToday: r?.lootboxesOpened ?? 0,
             lootboxesPurchasedToday: 0,

@@ -55,9 +55,9 @@ describe('LootboxService', () => {
     });
 
     describe('getLootboxesByPlayerId', () => {
-        it('should return lootboxes for specific player', () => {
+        it('should return unopened lootboxes for specific player', () => {
             const mockLootboxes: LootboxRow[] = [
-                { lootboxId: 1, lootboxTypeId: 1, playerId: 5, openedAt: new Date('2024-01-01'), acquiredHow: 'free' }
+                { lootboxId: 1, lootboxTypeId: 1, playerId: 5, openedAt: null, acquiredHow: 'free' }
             ];
             mockStmt.all.mockReturnValue(mockLootboxes);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -65,7 +65,7 @@ describe('LootboxService', () => {
             const result = service.getLootboxesByPlayerId(5);
 
             expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Lootbox WHERE playerId = @playerId',
+                'SELECT * FROM Lootbox WHERE playerId = @playerId AND openedAt IS NULL',
                 { playerId: 5 }
             );
             expect(result).toEqual(mockLootboxes);
@@ -73,13 +73,13 @@ describe('LootboxService', () => {
     });
 
     describe('createLootbox', () => {
-        it('should create lootbox with free acquisition', () => {
+        it('should create lootbox with free acquisition and increment player count', () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
             const [success, id] = service.createLootbox(1, 5, 'free');
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
+            expect(mockUnit.prepare).toHaveBeenCalledTimes(2); // INSERT Lootbox + UPDATE Player
             const [sql, params] = mockUnit.prepare.mock.calls[0];
             expect(sql).toContain('INSERT');
             expect(sql).toContain('INTO Lootbox');
@@ -88,12 +88,13 @@ describe('LootboxService', () => {
             expect(id).toBe(10);
         });
 
-        it('should create lootbox with purchase acquisition', () => {
+        it('should create lootbox with purchase acquisition and increment player count', () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 11 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
             const [success, id] = service.createLootbox(2, 5, 'purchase');
 
+            expect(mockUnit.prepare).toHaveBeenCalledTimes(2);
             expect(success).toBe(true);
             expect(id).toBe(11);
         });
