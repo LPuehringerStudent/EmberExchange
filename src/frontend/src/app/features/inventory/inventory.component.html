@@ -129,10 +129,14 @@
           <div class="item-card" [class]="'rarity-' + item.rarity.toLowerCase()">
             <div class="item-visual">
               <div class="stove-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
-                  <circle cx="12" cy="5" r="2"/>
-                </svg>
+                @if (item.imageUrl) {
+                  <img [src]="item.imageUrl" [alt]="item.stoveName" class="stove-sprite" />
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                    <circle cx="12" cy="5" r="2"/>
+                  </svg>
+                }
               </div>
               <span class="rarity-badge" [class]="item.rarity.toLowerCase()">
                 {{item.rarity}}

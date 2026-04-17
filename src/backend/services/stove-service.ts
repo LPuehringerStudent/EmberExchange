@@ -36,9 +36,12 @@ export class StoveService extends ServiceBase {
      * @param playerId - The owner's unique ID.
      * @returns An array of StoveRow objects belonging to the player.
      */
-    getStovesByOwnerId(playerId: number): StoveRow[] {
-        const stmt = this.unit.prepare<StoveRow>(
-            "SELECT * FROM Stove WHERE currentOwnerId = @playerId",
+    getStovesByOwnerId(playerId: number): (StoveRow & { imageUrl: string })[] {
+        const stmt = this.unit.prepare<StoveRow & { imageUrl: string }>(
+            `SELECT Stove.*, StoveType.imageUrl
+             FROM Stove
+             JOIN StoveType ON Stove.typeId = StoveType.typeId
+             WHERE Stove.currentOwnerId = @playerId`,
             { playerId }
         );
         return stmt.all();

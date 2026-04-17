@@ -339,6 +339,7 @@ lootboxRouter.post("/lootboxes/:id/open", (req, res) => {
                 stoveId: result.stoveId,
                 stoveName: result.stoveName,
                 rarity: result.rarity,
+                imageUrl: result.imageUrl,
                 lootboxId: result.lootboxId,
                 message: "Lootbox opened successfully"
             });

@@ -43,9 +43,9 @@ export class LootboxService extends ServiceBase {
         return dropTable[0].rarity;
     }
 
-    private pickStoveTypeByRarity(rarity: string): { typeId: number; name: string } | null {
-        const stmt = this.unit.prepare<{ typeId: number; name: string }>(
-            "SELECT typeId, name FROM StoveType WHERE rarity = @rarity",
+    private pickStoveTypeByRarity(rarity: string): { typeId: number; name: string; imageUrl: string } | null {
+        const stmt = this.unit.prepare<{ typeId: number; name: string; imageUrl: string }>(
+            "SELECT typeId, name, imageUrl FROM StoveType WHERE rarity = @rarity",
             { rarity }
         );
         const rows = stmt.all();
@@ -80,7 +80,29 @@ export class LootboxService extends ServiceBase {
             "SELECT * FROM Lootbox WHERE playerId = @playerId AND openedAt IS NULL",
             { playerId }
         );
-        return stmt.all();
+        let lootboxes = stmt.all();
+
+        // Reconcile: if Player.lootboxCount exceeds actual unopened rows, create missing ones
+        const countStmt = this.unit.prepare<{ lootboxCount: number }>(
+            "SELECT lootboxCount FROM Player WHERE playerId = @playerId",
+            { playerId }
+        );
+        const player = countStmt.get();
+        const expectedCount = player?.lootboxCount ?? 0;
+
+        if (lootboxes.length === 0 && expectedCount > 0) {
+            for (let i = 0; i < expectedCount; i++) {
+                const insertStmt = this.unit.prepare<LootboxRow>(
+                    `INSERT INTO Lootbox (lootboxTypeId, playerId, openedAt, acquiredHow) 
+                     VALUES (@lootboxTypeId, @playerId, null, @acquiredHow)`,
+                    { lootboxTypeId: 1, playerId, acquiredHow: 'reward' }
+                );
+                insertStmt.run();
+            }
+            lootboxes = stmt.all();
+        }
+
+        return lootboxes;
     }
 
     /**
@@ -164,7 +186,7 @@ export class LootboxService extends ServiceBase {
     openLootbox(
         lootboxId: number,
         playerId: number
-    ): [boolean, { stoveId: number; stoveName: string; rarity: string; lootboxId: number } | null] {
+    ): [boolean, { stoveId: number; stoveName: string; rarity: string; imageUrl: string; lootboxId: number } | null] {
         // 1. Verify lootbox exists, is unopened, and belongs to player
         const verifyStmt = this.unit.prepare<LootboxRow>(
             "SELECT * FROM Lootbox WHERE lootboxId = @lootboxId AND playerId = @playerId AND openedAt IS NULL",
@@ -211,7 +233,7 @@ export class LootboxService extends ServiceBase {
             { playerId }
         ).run();
 
-        return [true, { stoveId, stoveName: stoveType.name, rarity, lootboxId }];
+        return [true, { stoveId, stoveName: stoveType.name, rarity, imageUrl: stoveType.imageUrl, lootboxId }];
     }
 
     /**

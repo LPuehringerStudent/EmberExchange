@@ -1,59 +1,148 @@
-<div id="app">
-  <!-- Lootbox Counter -->
-  <div class="lootbox-counter">
-    <div class="lootbox-counter-label">Available Lootboxes</div>
-    <div class="lootbox-counter-value">{{ lootboxCount() }}</div>
+<div class="lootbox-layout">
+
+  <!-- ════ PAGE HEADER ════ -->
+  <div class="lootbox-header">
+    <div class="header-text">
+      <h1>Open your Lootbox!</h1>
+    </div>
+
+    <div class="count-pill" role="status" [attr.aria-label]="lootboxCount() + ' lootboxes available'">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+      </svg>
+      <span class="count-value">{{ lootboxCount() }}</span>
+      <span class="count-label">Available</span>
+    </div>
   </div>
 
-  <div id="lootbox-container">
-    <img
-      id="chest-image"
-      [ngSrc]="isOpening ? 'assets/animation/chest-opening-transparent.gif' : 'assets/animation/chest-idle-animation.gif'"
-      alt="Lootbox"
-      fill
-      (click)="!isOpening && openBox()"
-      [style.opacity]="lootboxCount() > 0 ? '1' : '0.5'">
-  </div>
+  <!-- ════ MAIN CARD ════ -->
+  <div class="main-card">
 
-  <button id="openBtn" (click)="openBox()" [disabled]="!canOpen()">
-    @if (isOpening) {
-      Opening...
-    } @else if (lootboxCount() <= 0) {
-      No Lootboxes
-    } @else {
-      Open ({{ lootboxCount() }} left)
-    }
-  </button>
+    <!-- ── Chest Section ── -->
+    <div class="chest-section">
+      <div class="chest-wrap" [class.chest-wrap--opening]="playingGif()">
+        <img
+          [ngSrc]="playingGif()
+            ? 'assets/animation/chest-opening-transparent.gif'
+            : 'assets/animation/chest-idle-animation.gif'"
+          [alt]="playingGif() ? 'Chest opening' : 'Idle chest'"
+          width="200"
+          height="200"
+          [priority]="true">
 
-  @if (lootboxCount() <= 0 && !isOpening) {
-    <p class="no-lootboxes-msg">
-      You have no lootboxes. Visit the marketplace to buy more!
-    </p>
-  }
-</div>
+        @if (playingGif()) {
+          <div class="chest-burst" aria-hidden="true"></div>
+        }
+      </div>
 
-@if (showOverlay) {
-  <div id="overlay" (click)="resetAll()">
-    <div class="overlay-content" (click)="$event.stopPropagation()">
-      <div id="marker"></div>
+      <div class="chest-info">
+        <span class="chest-tag">Inventory Item</span>
+        <h2 class="chest-name">Standard Lootbox</h2>
+
+        @if (lootboxCount() > 0) {
+          <button
+            class="open-btn"
+            (click)="openBox()"
+            [disabled]="!canOpen()"
+            [attr.aria-label]="isOpening() ? 'Opening, please wait' : 'Open lootbox'">
+            @if (isOpening()) {
+              <span class="btn-spinner" aria-hidden="true"></span>
+              Opening…
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+              </svg>
+              Open Lootbox
+            }
+          </button>
+        } @else {
+          <div class="no-boxes-msg" role="status">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+            No lootboxes remaining. Visit the Marketplace to get more.
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ── Divider ── -->
+    <div class="card-divider" aria-hidden="true"></div>
+
+    <!-- ── Possible Rewards Banner ── -->
+    <div class="rewards-section">
+      <h3 class="rewards-title">Possible Rewards</h3>
+      <div class="rewards-grid" role="list">
+        @for (drop of previewDrops; track drop.label) {
+          <div class="reward-card" role="listitem" [class]="'reward-card--' + drop.rarity">
+            <div class="reward-visual">
+              <img
+                [ngSrc]="drop.src"
+                [alt]="drop.label"
+                width="80"
+                height="80">
+              <span class="rarity-badge" [class]="drop.rarity">{{ drop.rarityLabel }}</span>
+            </div>
+            <p class="reward-label">{{ drop.label }}</p>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div><!-- /main-card -->
+
+</div><!-- /lootbox-layout -->
+
+
+<!-- ══════════════ ROLLER OVERLAY ══════════════ -->
+@if (showOverlay()) {
+  <div
+    id="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Rolling for your reward"
+    (click)="resetAll()">
+
+    <div class="overlay-inner" (click)="$event.stopPropagation()">
+      <p class="roller-eyebrow" aria-live="polite">Rolling your reward…</p>
+
       <div id="roller">
+        <div id="marker" aria-hidden="true"></div>
         <div id="items" #itemsContainer>
           @for (item of items; track item.name) {
-            <div class="item" [style.background]="item.color">
-              {{ item.name }}
-            </div>
+            <div class="item" [style.background]="item.color">{{ item.name }}</div>
           }
         </div>
       </div>
+
     </div>
+
   </div>
 }
 
-@if (showPopup) {
-  <div id="popup">
+
+<!-- ══════════════ RESULT POPUP ══════════════ -->
+@if (showPopup()) {
+  <div
+    id="popup"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="resultHeading">
+
     <div id="popupBox">
-      <h2 id="result">{{ resultText }}</h2>
-      <button id="okBtn" (click)="resetAll()">Okay</button>
+      <div class="popup-icon" aria-hidden="true">
+        @if (resultImageUrl()) {
+          <img [src]="resultImageUrl()" alt="Reward" class="popup-stove" />
+        } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+          </svg>
+        }
+      </div>
+      <h2 id="result">{{ resultText() }}</h2>
+      <p class="popup-sub">The item has been added to your inventory.</p>
+      <button id="okBtn" (click)="resetAll()">Close</button>
     </div>
+
   </div>
 }
