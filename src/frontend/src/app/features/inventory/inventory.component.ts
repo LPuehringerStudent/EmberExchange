@@ -89,13 +89,13 @@ export class InventoryComponent implements OnInit, OnDestroy {
 
         return forkJoin(
           stoves.map((stove) =>
-            this._stove.checkRarity(stove.typeId).pipe(
-              map(rarity => ({
+            this._stove.getStoveTypeById(stove.typeId).pipe(
+              map(type => ({
                 ...stove,
                 stoveId: stove.stoveId,
-                rarity,
-                stoveName: this.getStoveName(stove.typeId),
-                imageUrl: (stove as unknown as { imageUrl: string }).imageUrl ?? ''
+                rarity: type.rarity,
+                stoveName: type.name,
+                imageUrl: type.imageUrl ?? ''
               }))
             )
           )
@@ -179,20 +179,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getStoveName(typeId: number): string {
-    const nameMap: Record<number, string> = {
-      1: 'Rusty Stove',
-      2: 'Standard Stove',
-      3: 'Bronze Stove',
-      4: 'Silver Stove',
-      5: 'Golden Stove',
-      6: 'Crystal Stove',
-      7: 'Dragon Stove',
-      8: 'Phoenix Stove',
-      9: 'One of a Kind',
-    };
-    return nameMap[typeId] || `Stove #${typeId}`;
-  }
+
 
   private getLootboxTypeName(typeId: number): string {
     const nameMap: Record<number, string> = {
