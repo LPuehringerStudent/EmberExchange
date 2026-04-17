@@ -29,9 +29,9 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   playerId: number | null = null;
 
   readonly previewDrops = [
-    { label: 'Stove I',   src: '/assets/stove_sprites/stove-1.png', rarity: 'common',    rarityLabel: 'Common'    },
-    { label: 'Stove II',  src: '/assets/stove_sprites/stove-2.png', rarity: 'rare',      rarityLabel: 'Rare'      },
-    { label: 'Stove III', src: '/assets/stove_sprites/stove-3.png', rarity: 'legendary', rarityLabel: 'Legendary' },
+    { label: 'Stove I',   src: '/assets/stove_sprites/standard.png', rarity: 'common',    rarityLabel: 'Common'    },
+    { label: 'Stove II',  src: '/assets/stove_sprites/steampunk.png', rarity: 'rare',      rarityLabel: 'Rare'      },
+    { label: 'Stove III', src: '/assets/stove_sprites/golden.png', rarity: 'legendary', rarityLabel: 'Legendary' },
   ];
 
   private lootBoxHelper = new LootBoxHelper();

@@ -179,11 +179,11 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
             { name: "Rusty Stove", imageUrl: "/images/stoves/rusty.png", rarity: "common", lootboxWeight: 100 },
             { name: "Standard Stove", imageUrl: "/images/stoves/standard.png", rarity: "common", lootboxWeight: 80 },
             { name: "Bronze Stove", imageUrl: "/images/stoves/bronze.png", rarity: "rare", lootboxWeight: 50 },
-            { name: "Silver Stove", imageUrl: "/images/stoves/silver.png", rarity: "rare", lootboxWeight: 40 },
+            { name: "Steampunk Stove", imageUrl: "/images/stoves/steampunk.png", rarity: "rare", lootboxWeight: 40 },
             { name: "Golden Stove", imageUrl: "/images/stoves/golden.png", rarity: "epic", lootboxWeight: 20 },
             { name: "Crystal Stove", imageUrl: "/images/stoves/crystal.png", rarity: "epic", lootboxWeight: 15 },
             { name: "Dragon Stove", imageUrl: "/images/stoves/dragon.png", rarity: "legendary", lootboxWeight: 5 },
-            { name: "Phoenix Stove", imageUrl: "/images/stoves/phoenix.png", rarity: "legendary", lootboxWeight: 3 },
+            { name: "Forest Stove", imageUrl: "/images/stoves/forest.png", rarity: "legendary", lootboxWeight: 3 },
             { name: "One of a Kind", imageUrl: "/images/stoves/unique.png", rarity: "limited", lootboxWeight: 1 }
         ];
         
