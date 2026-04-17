@@ -94,7 +94,8 @@ export class InventoryComponent implements OnInit, OnDestroy {
                 ...stove,
                 stoveId: stove.stoveId,
                 rarity,
-                stoveName: this.getStoveName(stove.typeId)
+                stoveName: this.getStoveName(stove.typeId),
+                imageUrl: (stove as unknown as { imageUrl: string }).imageUrl ?? ''
               }))
             )
           )

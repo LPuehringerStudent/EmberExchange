@@ -247,6 +247,12 @@
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
 }
 
+.stove-sprite {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
 /* Rarity Badge */
 .rarity-badge {
   position: absolute;

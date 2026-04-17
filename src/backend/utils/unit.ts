@@ -176,15 +176,15 @@ export function ensureSampleDataInserted(unit: Unit): "inserted" | "skipped" {
 
     function insertStoveTypes(): void {
         const stoves = [
-            { name: "Rusty Stove", imageUrl: "/images/stoves/rusty.png", rarity: "common", lootboxWeight: 100 },
-            { name: "Standard Stove", imageUrl: "/images/stoves/standard.png", rarity: "common", lootboxWeight: 80 },
-            { name: "Bronze Stove", imageUrl: "/images/stoves/bronze.png", rarity: "rare", lootboxWeight: 50 },
-            { name: "Forest Stove", imageUrl: "/images/stoves/forest.png", rarity: "rare", lootboxWeight: 40 },
-            { name: "Golden Stove", imageUrl: "/images/stoves/golden.png", rarity: "epic", lootboxWeight: 20 },
-            { name: "Steampunk Stove", imageUrl: "/images/stoves/steampunk.png", rarity: "epic", lootboxWeight: 15 },
-            { name: "Dragon Stove", imageUrl: "/images/stoves/dragon.png", rarity: "legendary", lootboxWeight: 5 },
-            { name: "Crystal Stove", imageUrl: "/images/stoves/crystal.png", rarity: "legendary", lootboxWeight: 3 },
-            { name: "One of a Kind", imageUrl: "/images/stoves/unique.png", rarity: "limited", lootboxWeight: 1 }
+            { name: "Rusty Stove", imageUrl: "/assets/stove_sprites/rusty.png", rarity: "common", lootboxWeight: 100 },
+            { name: "Standard Stove", imageUrl: "/assets/stove_sprites/standard.png", rarity: "common", lootboxWeight: 80 },
+            { name: "Bronze Stove", imageUrl: "/assets/stove_sprites/bronze.png", rarity: "rare", lootboxWeight: 50 },
+            { name: "Forest Stove", imageUrl: "/assets/stove_sprites/forest.png", rarity: "rare", lootboxWeight: 40 },
+            { name: "Golden Stove", imageUrl: "/assets/stove_sprites/golden.png", rarity: "epic", lootboxWeight: 20 },
+            { name: "Steampunk Stove", imageUrl: "/assets/stove_sprites/steampunk.png", rarity: "epic", lootboxWeight: 15 },
+            { name: "Dragon Stove", imageUrl: "/assets/stove_sprites/dragon.png", rarity: "legendary", lootboxWeight: 5 },
+            { name: "Crystal Stove", imageUrl: "/assets/stove_sprites/crystal.png", rarity: "legendary", lootboxWeight: 3 },
+            { name: "One of a Kind", imageUrl: "", rarity: "limited", lootboxWeight: 1 }
         ];
         
         for (const stove of stoves) {

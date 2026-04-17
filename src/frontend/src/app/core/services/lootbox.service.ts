@@ -23,6 +23,7 @@ export interface OpenLootboxResponse {
   stoveId: number;
   stoveName: string;
   rarity: string;
+  imageUrl: string;
   lootboxId: number;
   message: string;
 }

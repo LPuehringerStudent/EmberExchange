@@ -65,7 +65,10 @@ describe('StoveService', () => {
 
             const result = service.getStovesByOwnerId(5);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Stove WHERE currentOwnerId = @playerId', { playerId: 5 });
+            expect(mockUnit.prepare).toHaveBeenCalledWith(`SELECT Stove.*, StoveType.imageUrl
+             FROM Stove
+             JOIN StoveType ON Stove.typeId = StoveType.typeId
+             WHERE Stove.currentOwnerId = @playerId`, { playerId: 5 });
             expect(result).toEqual(mockStoves);
         });
     });

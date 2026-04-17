@@ -23,15 +23,17 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   showOverlay  = signal<boolean>(false);
   showPopup    = signal<boolean>(false);
   resultText   = signal<string>('');
+  resultImageUrl = signal<string>('');
 
   items: LootItem[] = [];
   finalItem: LootItem | null = null;
   playerId: number | null = null;
 
   readonly previewDrops = [
-    { label: 'Stove I',   src: '/assets/stove_sprites/standard.png', rarity: 'common',    rarityLabel: 'Common'    },
-    { label: 'Stove II',  src: '/assets/stove_sprites/steampunk.png', rarity: 'rare',      rarityLabel: 'Rare'      },
-    { label: 'Stove III', src: '/assets/stove_sprites/golden.png', rarity: 'legendary', rarityLabel: 'Legendary' },
+    { label: 'Rusty Stove',    src: '/assets/stove_sprites/rusty.png',    rarity: 'common',    rarityLabel: 'Common'    },
+    { label: 'Bronze Stove',   src: '/assets/stove_sprites/bronze.png',   rarity: 'rare',      rarityLabel: 'Rare'      },
+    { label: 'Golden Stove',   src: '/assets/stove_sprites/golden.png',   rarity: 'epic',      rarityLabel: 'Epic'      },
+    { label: 'Dragon Stove',   src: '/assets/stove_sprites/dragon.png',   rarity: 'legendary', rarityLabel: 'Legendary' },
   ];
 
   private lootBoxHelper = new LootBoxHelper();
@@ -115,7 +117,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
           const offset = -(40 * itemWidth) + rollerWidth / 2 - itemWidth / 2;
 
           itemsEl.style.transform = `translateX(${offset}px)`;
-          setTimeout(() => this.showResult(result.stoveName), 4000);
+          setTimeout(() => this.showResult(result.stoveName, result.imageUrl), 4000);
         }, 100);
       }, 1400);
     } catch (err) {
@@ -126,8 +128,9 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     }
   }
 
-  private showResult(stoveName: string): void {
+  private showResult(stoveName: string, imageUrl: string): void {
     this.resultText.set(`You got: ${stoveName}`);
+    this.resultImageUrl.set(imageUrl);
     this.showOverlay.set(false);
     this.showPopup.set(true);
     this.isOpening.set(false);
