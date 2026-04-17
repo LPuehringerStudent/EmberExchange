@@ -80,7 +80,29 @@ export class LootboxService extends ServiceBase {
             "SELECT * FROM Lootbox WHERE playerId = @playerId AND openedAt IS NULL",
             { playerId }
         );
-        return stmt.all();
+        let lootboxes = stmt.all();
+
+        // Reconcile: if Player.lootboxCount exceeds actual unopened rows, create missing ones
+        const countStmt = this.unit.prepare<{ lootboxCount: number }>(
+            "SELECT lootboxCount FROM Player WHERE playerId = @playerId",
+            { playerId }
+        );
+        const player = countStmt.get();
+        const expectedCount = player?.lootboxCount ?? 0;
+
+        if (lootboxes.length === 0 && expectedCount > 0) {
+            for (let i = 0; i < expectedCount; i++) {
+                const insertStmt = this.unit.prepare<LootboxRow>(
+                    `INSERT INTO Lootbox (lootboxTypeId, playerId, openedAt, acquiredHow) 
+                     VALUES (@lootboxTypeId, @playerId, null, @acquiredHow)`,
+                    { lootboxTypeId: 1, playerId, acquiredHow: 'reward' }
+                );
+                insertStmt.run();
+            }
+            lootboxes = stmt.all();
+        }
+
+        return lootboxes;
     }
 
     /**

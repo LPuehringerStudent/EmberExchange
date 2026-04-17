@@ -59,8 +59,11 @@ describe('LootboxService', () => {
             const mockLootboxes: LootboxRow[] = [
                 { lootboxId: 1, lootboxTypeId: 1, playerId: 5, openedAt: null, acquiredHow: 'free' }
             ];
-            mockStmt.all.mockReturnValue(mockLootboxes);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+            const countStmt = { get: jest.fn().mockReturnValue({ lootboxCount: 1 }) };
+            mockStmt.all.mockReturnValueOnce(mockLootboxes);
+            mockUnit.prepare
+                .mockReturnValueOnce(mockStmt)
+                .mockReturnValueOnce(countStmt);
 
             const result = service.getLootboxesByPlayerId(5);
 
