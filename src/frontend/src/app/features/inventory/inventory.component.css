@@ -231,13 +231,12 @@
 /* Visual Section */
 .item-visual {
   position: relative;
-  height: 120px;
+  height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   border-radius: 12px;
-  overflow: hidden;
 }
 
 .stove-icon svg {
@@ -248,8 +247,8 @@
 }
 
 .stove-sprite {
-  width: 64px;
-  height: 64px;
+  width: 150px;
+  height: 150px;
   object-fit: contain;
 }
 

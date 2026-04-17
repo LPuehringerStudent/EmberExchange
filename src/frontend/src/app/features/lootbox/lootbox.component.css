@@ -473,10 +473,10 @@
 }
 
 .popup-icon {
-  width: 64px;
-  height: 64px;
+  width: 150px;
+  height: 150px;
   background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-  border-radius: 50%;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -491,8 +491,8 @@
 }
 
 .popup-stove {
-  width: 64px;
-  height: 64px;
+  width: 140px;
+  height: 140px;
   object-fit: contain;
   border-radius: 12px;
 }
