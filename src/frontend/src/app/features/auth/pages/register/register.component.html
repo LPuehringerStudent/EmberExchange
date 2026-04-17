@@ -1,4 +1,4 @@
-<div class="login-container">
+<div class="register-container">
   <!-- Animated Fire Background -->
   <div class="fire-bg">
     <div class="flame flame-1"></div>
@@ -8,169 +8,290 @@
     <div class="ember ember-2"></div>
     <div class="ember ember-3"></div>
     <div class="ember ember-4"></div>
+    <div class="ember ember-5"></div>
   </div>
 
-  <!-- Stove/Forge Register Card -->
-  <div class="login-card">
-    <!-- Header with Stove Icon -->
-    <div class="login-header">
-      <div class="stove-icon">
-          <span><img
-            class="pixel-icon"
-            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAAACLz2ctAAAABHNCSVQICAgIfAhkiAAAAL56VFh0UmF3IHByb2ZpbGUgdHlwZSBBUFAxAAAYlX1P0Q7CIAx85yv2CdcWCnwOMZtZYtTs/x8sAeZm1CNQetBez13n+7ytl+m5PZb1NrupggHns89cACQ0CEAMqtHOhh6F7GZFiD3nFjWnCH/4V3BCsB8qStF2K6hHbn38kBW2ZT0KvmmjDnnQ2CXkBx8++P7AKL564M6n4Xu0C5LU2ySkQVVZpTJClpPds+D/6iJNl9/+Altt6tzZN+11BvcCMLVWXKwegSQAAAMTSURBVHic7d3RThNRGIXRQRpLo4VClHhBfP/nMlyQaKTaxrYEg2+g2+SYXWGt65N2Br6ci/lzptMEAAAAAAAAAAAAAADA/+akfQGj3Nx8fGpfw+/c3n56Nn/rkV61L4CXTYBUCZAqAVIlQKoESJUAqRIgVQKkata+gD9JJxxXV6vo82azsbf8+PiYLo3u46VNTOyAVAmQKgFSJUCqBEiVAKkSIFUCpEqAVNWeuqcTjsViHn3e5eVltO70LJuYHLZfonWbzSZal9rtDtG65zIxsQNSJUCqBEiVAKkSIFUCpEqAVAmQKgFSdfRnQtIJx/39fbRuuczOcKRnPZbL5dDPS6WTpGOfmNgBqRIgVQKkSoBUCZAqAVIlQKoESJUAqTr6Scj67mu0Ln3cv5myMxyjz5jM9uts3eC3dx37xMQOSJUAqRIgVQKkSoBUCZAqAVIlQKoESNXwScjot16dLRbRut1uF607OWQ/rJ6eMQkHJrHRZ0eur99F67bbXfSHWa8/D52Y2AGpEiBVAqRKgFQJkCoBUiVAqgRIlQCpqp0JWYQTjjerD9G62Sz8XY/wTEh6ffv9PlqXGj3RSe+3xQ5IlQCpEiBVAqRKgFQJkCoBUiVAqgRIVW0Skj7xn6a7od+bTjjy6xsrnsAcfkTr0onJ9flFtG6apqFnR+yAVAmQKgFSJUCqBEiVAKkSIFUCpEqAVB3974SMnkikk4Fpnr0EKp5crLPJxW7K7vfh8DNa9/o8+xc/fB/7Vq6UHZAqAVIlQKoESJUAqRIgVQKkSoBUCZCq2iQkffI+n59G657CyUUqnZikZzNGf2/r80azA1IlQKoESJUAqRIgVQKkSoBUCZAqAVI1dnzwF1ar99Ej+ov526HfO3qyMnqikzqEZ0JS3w7baJ1fTOdZESBVAqRKgFQJkCoBUiVAqgRIlQCpqk1CUq2JyWjppKFl9IQjZQekSoBUCZAqAVIlQKoESJUAqRIgVQKk6ugnIal0YtLSmjQcOzsgVQKkSoBUCZAqAVIlQKoESJUAqRIgAAAAAAAA/BO/AFEamNLH6FzGAAAAAElFTkSuQmCC"
-            alt="Coal Icon" /></span>
+  <!-- Forge Glow Effect -->
+  <div class="forge-glow"></div>
+
+  <!-- Register Card -->
+  <div class="register-card">
+    <!-- Header with Anvil Icon -->
+    <div class="register-header">
+      <div class="anvil-icon">
+        <div class="forge-sparks">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
-      <h1>Create Account</h1>
-      <p>Join the Ember Exchange</p>
+      <h1>Join Ember Exchange</h1>
+      <p>Start your imperium of stoves!</p>
     </div>
 
-    <!-- Register Form -->
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="login-form">
-      <!-- Error Message -->
-      @if (errorMessage()) {
-        <div class="error-alert">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <span>{{ errorMessage() }}</span>
-        </div>
-      }
-
-      <!-- Username Field -->
-      <div class="form-group">
-        <label for="username">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          Username
-        </label>
-        <input
-          type="text"
-          id="username"
-          formControlName="username"
-          placeholder="blacksmith"
-          [class.error]="errorMessage() && !registerForm.value.username"
-        />
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+      <div class="step" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">
+        <div class="step-number">1</div>
+        <span>Identity</span>
       </div>
-
-      <!-- Email Field -->
-      <div class="form-group">
-        <label for="email">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-            <polyline points="22,6 12,13 2,6"/>
-          </svg>
-          Email
-        </label>
-        <input
-          type="email"
-          id="email"
-          formControlName="email"
-          placeholder="blacksmith@forge.com"
-          [class.error]="errorMessage() && !registerForm.value.email"
-        />
+      <div class="step-connector" [class.active]="currentStep() > 1"></div>
+      <div class="step" [class.active]="currentStep() >= 2" [class.completed]="currentStep() > 2">
+        <div class="step-number">2</div>
+        <span>Security</span>
       </div>
+      <div class="step-connector" [class.active]="currentStep() > 2"></div>
+      <div class="step" [class.active]="currentStep() >= 3">
+        <div class="step-number">3</div>
+        <span>Rules</span>
+      </div>
+    </div>
 
-      <!-- Password Field -->
-      <div class="form-group">
-        <label for="password">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          Password
-        </label>
-        <div class="password-input-wrapper">
+    <!-- Success Message -->
+    @if (successMessage()) {
+      <div class="success-alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span>{{ successMessage() }}</span>
+      </div>
+    }
+
+    <!-- Error Message -->
+    @if (errorMessage()) {
+      <div class="error-alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- Step 1: Identity -->
+    @if (currentStep() === 1) {
+      <form (ngSubmit)="nextStep()" class="register-form">
+        <div class="form-group">
+          <label for="username">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Username
+          </label>
           <input
-            [type]="showPassword() ? 'text' : 'password'"
-            id="password"
-            formControlName="password"
-            placeholder="••••••••"
-            [class.error]="errorMessage() && !registerForm.value.password"
+            type="text"
+            id="username"
+            [ngModel]="username()"
+            (ngModelChange)="username.set($event)"
+            name="username"
+            placeholder="Enter your username"
+            maxlength="30"
           />
-          <button
-            type="button"
-            class="toggle-password"
-            (click)="togglePassword()"
-            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-          >
-            @if (showPassword()) {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
+          <span class="input-hint">This is how you will be seen</span>
+        </div>
+
+        <div class="form-group">
+          <label for="email">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+            name="email"
+            placeholder="gru.dru@minions.com"
+          />
+        </div>
+
+        <button type="submit" class="register-btn primary">
+          <span>Continue to register</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </form>
+    }
+
+    <!-- Step 2: Security -->
+    @if (currentStep() === 2) {
+      <form (ngSubmit)="nextStep()" class="register-form">
+        <div class="form-group">
+          <label for="password">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Create password
+          </label>
+          <div class="password-input-wrapper">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              id="password"
+              [ngModel]="password()"
+              (ngModelChange)="onPasswordChange($event)"
+              name="password"
+              placeholder="Create a strong password"
+              minlength="8"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePassword('password')"
+            >
+              @if (showPassword()) {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              }
+            </button>
+          </div>
+
+          <!-- Password Strength Meter -->
+          <div class="strength-meter">
+            <div class="strength-bars">
+              @for (i of [0, 1, 2, 3, 4]; track i) {
+                <div class="strength-bar" [class.active]="passwordStrength() > i" [style.background-color]="passwordStrength() > i ? strengthColor() : '#e9ecef'"></div>
+              }
+            </div>
+            <span class="strength-label" [style.color]="strengthColor()">
+              {{ strengthLabel() }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+            Confirm Password
+          </label>
+          <div class="password-input-wrapper">
+            <input
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              id="confirmPassword"
+              [ngModel]="confirmPassword()"
+              (ngModelChange)="confirmPassword.set($event)"
+              name="confirmPassword"
+              placeholder="Match the password"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePassword('confirm')"
+            >
+              @if (showConfirmPassword()) {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              }
+            </button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="register-btn secondary" (click)="prevStep()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            <span>Back</span>
+          </button>
+
+          <button type="submit" class="register-btn primary">
+            <span>Continue</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (currentStep() === 3) {
+      <form (ngSubmit)="onSubmit()" class="register-form">
+        <div class="forge-covenant">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Terms and Conditions
+          </h3>
+          <div class="covenant-text">
+            <p>You will follow these rules:</p>
+            <ul>
+              <li>Respect the community</li>
+              <li>Keep playing fair</li>
+              <li>No copying from this website</li>
+            </ul>
+          </div>
+
+          <label class="checkbox-wrapper covenant-checkbox">
+            <input type="checkbox" [ngModel]="acceptedTerms()" (ngModelChange)="acceptedTerms.set($event)" name="acceptedTerms" />
+            <span class="checkmark"></span>
+            <span class="label-text">I accept the terms and conditions!</span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="register-btn secondary" (click)="prevStep()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            <span>Back</span>
+          </button>
+
+          <button type="submit" class="register-btn ignite" [disabled]="isLoading()">
+            @if (isLoading()) {
+              <div class="btn-spinner"></div>
+              <span>Creating Account</span>
             } @else {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
+              <span>Register</span>
             }
           </button>
         </div>
-      </div>
-
-      <!-- Confirm Password Field -->
-      <div class="form-group">
-        <label for="confirmPassword">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          Confirm Password
-        </label>
-        <div class="password-input-wrapper">
-          <input
-            [type]="showConfirmPassword() ? 'text' : 'password'"
-            id="confirmPassword"
-            formControlName="confirmPassword"
-            placeholder="••••••••"
-            [class.error]="errorMessage() && !registerForm.value.confirmPassword"
-          />
-          <button
-            type="button"
-            class="toggle-password"
-            (click)="toggleConfirmPassword()"
-            [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
-          >
-            @if (showConfirmPassword()) {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            } @else {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
-            }
-          </button>
-        </div>
-      </div>
-
-      <!-- Submit Button -->
-      <button type="submit" class="login-btn" [disabled]="isLoading()">
-        @if (isLoading()) {
-          <div class="btn-spinner"></div>
-          <span>Creating account...</span>
-        } @else {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-          <span>Create Account</span>
-        }
-      </button>
-    </form>
+      </form>
+    }
 
     <!-- Divider -->
     <div class="divider">
-      <span>or sign up with</span>
+      <span>or join with</span>
     </div>
 
-    <!-- Social Login -->
-    <div class="social-login">
+    <!-- Social Register -->
+    <div class="social-register">
       <button type="button" class="social-btn google">
         <svg viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -187,19 +308,20 @@
     </div>
 
     <!-- Login Link -->
-    <div class="register-link">
+    <div class="login-link">
       <span>Already have an account?</span>
-      <a routerLink="/login">Sign in</a>
+      <a routerLink="/login"> Lock in now!</a>
     </div>
   </div>
 
-  <!-- Decorative Coal/Forge Elements -->
+  <!-- Decorative Elements -->
   <div class="forge-elements">
-    <div class="coal coal-1"></div>
-    <div class="coal coal-2"></div>
-    <div class="coal coal-3"></div>
-    <div class="spark spark-1"></div>
-    <div class="spark spark-2"></div>
-    <div class="spark spark-3"></div>
+    <div class="tool hammer"></div>
+    <div class="tool tongs"></div>
+    <div class="coal-pile">
+      <div class="coal"></div>
+      <div class="coal"></div>
+      <div class="coal"></div>
+    </div>
   </div>
 </div>

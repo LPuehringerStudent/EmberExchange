@@ -13,46 +13,47 @@ import { firstValueFrom } from 'rxjs';
   imports: [NgOptimizedImage],
   styleUrls: ['./lootbox.component.css']
 })
-
 export class LootboxComponent implements AfterViewInit, OnInit {
-  itemsElement = viewChild.required<ElementRef<HTMLElement>>('itemsContainer');
+  itemsElement = viewChild<ElementRef<HTMLElement>>('itemsContainer');
+
+  // ── State ──────────────────────────────────────────────────
+  lootboxCount = signal<number>(0);
+  isOpening    = signal<boolean>(false);
+  playingGif   = signal<boolean>(false);
+  showOverlay  = signal<boolean>(false);
+  showPopup    = signal<boolean>(false);
+  resultText   = signal<string>('');
 
   items: LootItem[] = [];
   finalItem: LootItem | null = null;
-  showOverlay = false;
-  showPopup = false;
-  resultText = '';
-  isOpening = false;
-
-  // User data
-  lootboxCount = signal<number>(0);
   playerId: number | null = null;
-  loading = true;
 
-  ngAfterViewInit(): void {
-  }
-
-  ngOnInit(): void {
-    const user = this._authService.getCurrentUser();
-    if (!user) {
-      // Redirect to login if not authenticated
-      this._router.navigate(['/login']);
-      return;
-    }
-
-    this.playerId = user.playerId;
-    this.lootboxCount.set(user.lootboxCount);
-    this.loading = false;
-  }
+  readonly previewDrops = [
+    { label: 'Stove I',   src: '/assets/stove_sprites/stove-1.png', rarity: 'common',    rarityLabel: 'Common'    },
+    { label: 'Stove II',  src: '/assets/stove_sprites/stove-2.png', rarity: 'rare',      rarityLabel: 'Rare'      },
+    { label: 'Stove III', src: '/assets/stove_sprites/stove-3.png', rarity: 'legendary', rarityLabel: 'Legendary' },
+  ];
 
   private lootBoxHelper = new LootBoxHelper();
-  private lootboxApi = inject(LootboxService);
-  private cdr = inject(ChangeDetectorRef);
-  private _authService = inject(AuthService);
-  private _router = inject(Router);
+  private lootboxApi    = inject(LootboxService);
+  private cdr           = inject(ChangeDetectorRef);
+  private authService   = inject(AuthService);
+  private router        = inject(Router);
+
+  ngOnInit(): void {
+    const user = this.authService.getCurrentUser();
+    if (!user) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.playerId = user.playerId;
+    this.lootboxCount.set(user.lootboxCount);
+  }
+
+  ngAfterViewInit(): void {}
 
   canOpen(): boolean {
-    return !this.isOpening && this.lootboxCount() > 0 && this.playerId !== null;
+    return !this.isOpening() && this.lootboxCount() > 0 && this.playerId !== null;
   }
 
   async openBox(): Promise<void> {
@@ -63,7 +64,6 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       return;
     }
 
-    // Find first unopened lootbox to consume
     let lootboxId: number | null = null;
     try {
       const lootboxes = await firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId));
@@ -79,64 +79,70 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       return;
     }
 
-    // Call backend to open and get guaranteed drop
     try {
       const result = await firstValueFrom(this.lootboxApi.openLootbox(lootboxId, this.playerId));
       console.log('Lootbox opened:', result);
 
       this.lootboxCount.update(count => Math.max(0, count - 1));
-      void this._authService.refreshUser();
+      void this.authService.refreshUser();
 
-      this.isOpening = true;
-      this.showPopup = false;
-
-      this.lootBoxHelper.buildStripFor(result.rarity);
-      this.items = this.lootBoxHelper.items;
-      this.finalItem = this.lootBoxHelper.finalItem;
-      this.showOverlay = true;
+      this.isOpening.set(true);
+      this.playingGif.set(true);
+      this.showPopup.set(false);
+      this.cdr.detectChanges();
 
       setTimeout(() => {
-        const itemsEl = this.itemsElement().nativeElement;
-        const itemEl = itemsEl.querySelector('.item') as HTMLElement;
-
-        if (!itemEl) {
-          console.error('No item elements found');
-          this.isOpening = false;
-          return;
-        }
-
-        const style = window.getComputedStyle(itemEl);
-        const width = itemEl.offsetWidth + parseInt(style.marginLeft || '0') + parseInt(style.marginRight || '0');
-        const rollerEl = document.getElementById('roller');
-        const rollerWidth = rollerEl?.offsetWidth || 620;
-        const centerOffset = rollerWidth / 2 - width / 2;
-        const offset = -(40 * width) + centerOffset;
-
-        itemsEl.style.transform = `translateX(${offset}px)`;
+        this.playingGif.set(false);
+        this.lootBoxHelper.buildStripFor(result.rarity);
+        this.items = this.lootBoxHelper.items;
+        this.finalItem = this.lootBoxHelper.finalItem;
+        this.showOverlay.set(true);
+        this.cdr.detectChanges();
 
         setTimeout(() => {
-          this.showResult(result.stoveName);
-        }, 4000);
-      }, 100);
+          const itemsEl = this.itemsElement()?.nativeElement;
+          if (!itemsEl) { this.isOpening.set(false); return; }
+
+          const itemEl = itemsEl.querySelector('.item') as HTMLElement;
+          if (!itemEl) { this.isOpening.set(false); return; }
+
+          const style = window.getComputedStyle(itemEl);
+          const itemWidth = itemEl.offsetWidth
+            + parseInt(style.marginLeft || '0')
+            + parseInt(style.marginRight || '0');
+          const rollerEl = document.getElementById('roller');
+          const rollerWidth = rollerEl?.offsetWidth || 620;
+          const offset = -(40 * itemWidth) + rollerWidth / 2 - itemWidth / 2;
+
+          itemsEl.style.transform = `translateX(${offset}px)`;
+          setTimeout(() => this.showResult(result.stoveName), 4000);
+        }, 100);
+      }, 1400);
     } catch (err) {
       console.error('Failed to open lootbox:', err);
       alert('Failed to open lootbox. Please try again.');
+      this.isOpening.set(false);
+      this.playingGif.set(false);
     }
   }
 
   private showResult(stoveName: string): void {
-    this.resultText = `You got: ${stoveName}`;
-    this.showPopup = true;
-    this.isOpening = false;
+    this.resultText.set(`You got: ${stoveName}`);
+    this.showOverlay.set(false);
+    this.showPopup.set(true);
+    this.isOpening.set(false);
     this.cdr.detectChanges();
   }
 
   resetAll(): void {
-    this.showOverlay = false;
-    this.showPopup = false;
-    this.isOpening = false;
-    const itemsEl = this.itemsElement().nativeElement;
+    this.showOverlay.set(false);
+    this.showPopup.set(false);
+    this.isOpening.set(false);
+    this.playingGif.set(false);
+
+    const itemsEl = this.itemsElement()?.nativeElement;
     if (itemsEl) {
+      itemsEl.style.transition = 'none';
       itemsEl.style.transform = 'translateX(0px)';
     }
   }
