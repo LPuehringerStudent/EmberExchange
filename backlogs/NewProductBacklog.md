@@ -1,8 +1,5 @@
 # Product Backlog
 
-> Consolidated from `ProductBacklogTemplate.md` and `ProductBacklog.md`  
-> Updated for the EmberExchange roadmap
-
 | ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 
