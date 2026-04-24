@@ -21,7 +21,7 @@
 | PB-10 | User Story | As a user, I want to be able to browse and manage my inventory through the API | High | 3 | Completed | Sprint 1 | Laurenz Pühringer | Inventory endpoints return correct data. |
 | PB-11 | User Story | As a user, I want to be able to open lootboxes and receive random stove drops | High | 3 | Completed | Sprint 1 | Laurenz Pühringer | Lootbox opening returns weighted random drops. |
 | PB-12 | User Story | As a user, I want to be able to view and open my lootboxes | High | 5 | Completed | Sprint 1 | Laurenz Pühringer | Lootbox endpoints allow viewing and opening lootboxes. |
-| PB-13 | Technical Improvement | Add comprehensive unit and integration tests | High | 5 | Completed | Sprint 1 | Laurenz Pühringer | Tests cover core backend flows and pass successfully. |
+| PB-13 | Technical Improvement | Add comprehensive unit and integration tests | High | 5 | Completed | Sprint 1 | Muhammad Ayan | Tests cover core backend flows and pass successfully. |
 | PB-14 | Technical Improvement | Document all implemented endpoints in Swagger | High | 3 | Completed | Sprint 1 | Laurenz Pühringer | Swagger docs exist for all implemented endpoints. |
 | PB-15 | Technical Improvement | Prepare sprint documentation and handover materials | Medium | 2 | Completed | Sprint 1 | Laurenz Pühringer | Sprint documentation and handover materials are complete. |
 
@@ -60,16 +60,16 @@
 | PB-41 | Technical Improvement | Track login history and coin transactions for accurate stats | High | 3 | Completed | Sprint 3 | Laurenz Pühringer | Tracking tables record user activity accurately. |
 | PB-42 | User Story | As a user, I want to be able to view a profile page with my info and live statistics | High | 4 | Completed | Sprint 3 | Laurenz Pühringer | Profile page displays live user stats. |
 | PB-43 | Technical Improvement | Modernize the frontend data layer and landing page | Medium | 4 | Completed | Sprint 3 | Laurenz Pühringer | Frontend uses modern service patterns and updated landing page. |
-| PB-44 | Bug Fix | Fix package conflicts and Angular build budget issues | Medium | 2 | Completed | Sprint 3 | Laurenz Pühringer | Build completes without package or budget conflicts. |
+| PB-44 | Bug Fix | Fix package conflicts and Angular build budget issues | Medium | 2 | Completed | Sprint 3 | David Frühwirt | Build completes without package or budget conflicts. |
 | PB-45 | User Story | As a user, I want to be able to open lootboxes with animations and reward previews | High | 5 | Completed | Sprint 3 | David Frühwirt | Lootbox UI includes animations and previews. |
 | PB-46 | Technical Improvement | Add stove sprite assets and wire them to the database | High | 4 | Completed | Sprint 3 | Laurenz Pühringer | Stove sprite assets are created and linked to DB records. |
 | PB-47 | User Story | As a user, I want to be able to see actual stove sprites in my inventory | High | 3 | Completed | Sprint 3 | Laurenz Pühringer | Inventory shows actual stove sprites. |
 | PB-48 | User Story | As a user, I want to be able to see stove sprites on marketplace listing cards | High | 3 | Completed | Sprint 3 | Laurenz Pühringer | Listing cards render stove sprites correctly. |
-| PB-49 | Bug Fix | Remove hardcoded stove names and read them from `StoveType` | High | 2 | Completed | Sprint 3 | Laurenz Pühringer | UI reads stove names dynamically from `StoveType`. |
+| PB-49 | Bug Fix | Remove hardcoded stove names and read them from `StoveType` | High | 2 | Completed | Sprint 3 | David Frühwirt | UI reads stove names dynamically from `StoveType`. |
 | PB-50 | Technical Improvement | Add router tests for lootbox, statistics, auth, chat, and coin transactions | High | 10 | Completed | Sprint 3 | Muhammad Ayan | Router tests cover the listed backend areas. |
 | PB-51 | Bug Fix | Fix Express route shadowing issues such as `/count` before `/:id` | High | 2 | Completed | Sprint 3 | Laurenz Pühringer | Routes no longer shadow each other. |
 | PB-52 | Bug Fix | Fix test database schema drift and migration issues | High | 3 | Completed | Sprint 3 | Laurenz Pühringer | Test DB migrations stay in sync with schema. |
-| PB-53 | Technical Improvement | Keep the full test suite passing | High | 1 | Completed | Sprint 3 | Laurenz Pühringer | Test suite passes completely. |
+| PB-53 | Technical Improvement | Keep the full test suite passing | High | 1 | Completed | Sprint 3 | Muhammad Ayan | Test suite passes completely. |
 | PB-54 | User Story | As a user, I want to be able to register through a step-by-step flow with password strength feedback | High | 5 | Completed | Sprint 3 | David Frühwirt | Registration wizard works with password validation. |
 | PB-55 | User Story | As a user, I want to be able to use a polished top bar with account controls | Medium | 3 | Completed | Sprint 3 | David Frühwirt | Topbar account controls are polished. |
 | PB-56 | Technical Improvement | Unify sprint backlog documentation | Medium | 2 | Completed | Sprint 3 | Laurenz Pühringer | Backlog documentation is unified and maintained. |
