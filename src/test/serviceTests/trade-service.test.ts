@@ -18,7 +18,7 @@ describe('TradeService', () => {
     });
 
     describe('getAllTrades', () => {
-        it('should return all trades', () => {
+        it('should return all trades', async () => {
             const mockTrades: TradeRow[] = [
                 { tradeId: 1, listingId: 1, buyerId: 2, executedAt: new Date('2024-01-01') },
                 { tradeId: 2, listingId: 2, buyerId: 3, executedAt: new Date('2024-01-02') }
@@ -34,7 +34,7 @@ describe('TradeService', () => {
     });
 
     describe('getTradeById', () => {
-        it('should return trade when found', () => {
+        it('should return trade when found', async () => {
             const mockTrade: TradeRow = { tradeId: 1, listingId: 1, buyerId: 2, executedAt: new Date('2024-01-01') };
             mockStmt.get.mockReturnValue(mockTrade);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -44,7 +44,7 @@ describe('TradeService', () => {
             expect(result).toEqual(mockTrade);
         });
 
-        it('should return null when not found', () => {
+        it('should return null when not found', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -55,7 +55,7 @@ describe('TradeService', () => {
     });
 
     describe('getTradeByListingId', () => {
-        it('should return trade for listing', () => {
+        it('should return trade for listing', async () => {
             const mockTrade: TradeRow = { tradeId: 1, listingId: 5, buyerId: 2, executedAt: new Date('2024-01-01') };
             mockStmt.get.mockReturnValue(mockTrade);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -69,7 +69,7 @@ describe('TradeService', () => {
             expect(result).toEqual(mockTrade);
         });
 
-        it('should return null when no trade for listing', () => {
+        it('should return null when no trade for listing', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -80,7 +80,7 @@ describe('TradeService', () => {
     });
 
     describe('getTradesByBuyerId', () => {
-        it('should return trades ordered by execution date DESC', () => {
+        it('should return trades ordered by execution date DESC', async () => {
             const mockTrades: TradeRow[] = [
                 { tradeId: 2, listingId: 2, buyerId: 5, executedAt: new Date('2024-02-01') },
                 { tradeId: 1, listingId: 1, buyerId: 5, executedAt: new Date('2024-01-01') }
@@ -99,7 +99,7 @@ describe('TradeService', () => {
     });
 
     describe('createTrade', () => {
-        it('should create trade successfully', () => {
+        it('should create trade successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -118,7 +118,7 @@ describe('TradeService', () => {
     });
 
     describe('getRecentTrades', () => {
-        it('should return recent trades with default limit', () => {
+        it('should return recent trades with default limit', async () => {
             const mockTrades: TradeRow[] = [
                 { tradeId: 1, listingId: 1, buyerId: 2, executedAt: new Date('2024-01-01') }
             ];
@@ -134,7 +134,7 @@ describe('TradeService', () => {
             expect(result).toEqual(mockTrades);
         });
 
-        it('should return recent trades with custom limit', () => {
+        it('should return recent trades with custom limit', async () => {
             const mockTrades: TradeRow[] = [
                 { tradeId: 1, listingId: 1, buyerId: 2, executedAt: new Date('2024-01-01') }
             ];
@@ -152,7 +152,7 @@ describe('TradeService', () => {
     });
 
     describe('deleteTrade', () => {
-        it('should delete trade successfully', () => {
+        it('should delete trade successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -165,7 +165,7 @@ describe('TradeService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when trade not found', () => {
+        it('should return false when trade not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -176,7 +176,7 @@ describe('TradeService', () => {
     });
 
     describe('countTrades', () => {
-        it('should return total count', () => {
+        it('should return total count', async () => {
             mockStmt.get.mockReturnValue({ count: 100 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -186,7 +186,7 @@ describe('TradeService', () => {
             expect(result).toBe(100);
         });
 
-        it('should return 0 when no trades', () => {
+        it('should return 0 when no trades', async () => {
             mockStmt.get.mockReturnValue({ count: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -195,7 +195,7 @@ describe('TradeService', () => {
             expect(result).toBe(0);
         });
 
-        it('should return 0 when undefined', () => {
+        it('should return 0 when undefined', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -206,7 +206,7 @@ describe('TradeService', () => {
     });
 
     describe('countTradesByBuyer', () => {
-        it('should return count for specific buyer', () => {
+        it('should return count for specific buyer', async () => {
             mockStmt.get.mockReturnValue({ count: 5 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -219,7 +219,7 @@ describe('TradeService', () => {
             expect(result).toBe(5);
         });
 
-        it('should return 0 when buyer has no trades', () => {
+        it('should return 0 when buyer has no trades', async () => {
             mockStmt.get.mockReturnValue({ count: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 

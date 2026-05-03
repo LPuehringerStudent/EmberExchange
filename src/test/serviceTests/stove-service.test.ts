@@ -18,7 +18,7 @@ describe('StoveService', () => {
     });
 
     describe('getAllStoves', () => {
-        it('should return all stoves', () => {
+        it('should return all stoves', async () => {
             const mockStoves: StoveRow[] = [
                 { stoveId: 1, typeId: 1, currentOwnerId: 1, mintedAt: new Date('2024-01-01') },
                 { stoveId: 2, typeId: 2, currentOwnerId: 2, mintedAt: new Date('2024-01-02') }
@@ -34,7 +34,7 @@ describe('StoveService', () => {
     });
 
     describe('getStoveById', () => {
-        it('should return stove when found', () => {
+        it('should return stove when found', async () => {
             const mockStove: StoveRow = { stoveId: 1, typeId: 1, currentOwnerId: 1, mintedAt: new Date('2024-01-01') };
             mockStmt.get.mockReturnValue(mockStove);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -44,7 +44,7 @@ describe('StoveService', () => {
             expect(result).toEqual(mockStove);
         });
 
-        it('should return null when stove not found', () => {
+        it('should return null when stove not found', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -55,7 +55,7 @@ describe('StoveService', () => {
     });
 
     describe('getStovesByOwnerId', () => {
-        it('should return stoves for specific owner', () => {
+        it('should return stoves for specific owner', async () => {
             const mockStoves: StoveRow[] = [
                 { stoveId: 1, typeId: 1, currentOwnerId: 5, mintedAt: new Date('2024-01-01') },
                 { stoveId: 2, typeId: 2, currentOwnerId: 5, mintedAt: new Date('2024-01-02') }
@@ -74,7 +74,7 @@ describe('StoveService', () => {
     });
 
     describe('getStovesByTypeId', () => {
-        it('should return stoves of specific type', () => {
+        it('should return stoves of specific type', async () => {
             const mockStoves: StoveRow[] = [{ stoveId: 1, typeId: 3, currentOwnerId: 1, mintedAt: new Date('2024-01-01') }];
             mockStmt.all.mockReturnValue(mockStoves);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -87,7 +87,7 @@ describe('StoveService', () => {
     });
 
     describe('createStove', () => {
-        it('should create stove successfully', () => {
+        it('should create stove successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -104,7 +104,7 @@ describe('StoveService', () => {
     });
 
     describe('updateOwner', () => {
-        it('should update owner successfully', () => {
+        it('should update owner successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -117,7 +117,7 @@ describe('StoveService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when stove not found', () => {
+        it('should return false when stove not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -128,7 +128,7 @@ describe('StoveService', () => {
     });
 
     describe('deleteStove', () => {
-        it('should delete stove successfully', () => {
+        it('should delete stove successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -137,7 +137,7 @@ describe('StoveService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when stove not found', () => {
+        it('should return false when stove not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -148,7 +148,7 @@ describe('StoveService', () => {
     });
 
     describe('countStovesByOwner', () => {
-        it('should return correct count', () => {
+        it('should return correct count', async () => {
             mockStmt.get.mockReturnValue({ count: 5 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -157,7 +157,7 @@ describe('StoveService', () => {
             expect(result).toBe(5);
         });
 
-        it('should return 0 when result is undefined', () => {
+        it('should return 0 when result is undefined', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -166,7 +166,7 @@ describe('StoveService', () => {
             expect(result).toBe(0);
         });
 
-        it('should return 0 when count is undefined', () => {
+        it('should return 0 when count is undefined', async () => {
             mockStmt.get.mockReturnValue({});
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -177,7 +177,7 @@ describe('StoveService', () => {
     });
 
     describe('countStovesByType', () => {
-        it('should return correct count for type', () => {
+        it('should return correct count for type', async () => {
             mockStmt.get.mockReturnValue({ count: 3 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 

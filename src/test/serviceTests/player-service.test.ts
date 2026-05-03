@@ -18,7 +18,7 @@ describe('PlayerService', () => {
     });
 
     describe('getAllPlayers', () => {
-        it('should return all players from database', () => {
+        it('should return all players from database', async () => {
             const mockPlayers: PlayerRow[] = [
                 { playerId: 1, username: 'player1', password: 'pass1', email: 'p1@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null },
                 { playerId: 2, username: 'player2', password: 'pass2', email: 'p2@test.com', coins: 200, lootboxCount: 10, isAdmin: true, joinedAt: new Date('2024-01-02'), provider: null, providerId: null }
@@ -32,7 +32,7 @@ describe('PlayerService', () => {
             expect(result).toEqual(mockPlayers);
         });
 
-        it('should return empty array when no players exist', () => {
+        it('should return empty array when no players exist', async () => {
             mockStmt.all.mockReturnValue([]);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -43,7 +43,7 @@ describe('PlayerService', () => {
     });
 
     describe('getInfoByID', () => {
-        it('should return player when found', () => {
+        it('should return player when found', async () => {
             const mockPlayer: PlayerRow = { playerId: 1, username: 'player1', password: 'pass1', email: 'p1@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null };
             mockStmt.get.mockReturnValue(mockPlayer);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -54,7 +54,7 @@ describe('PlayerService', () => {
             expect(result).toEqual(mockPlayer);
         });
 
-        it('should return null when player not found', () => {
+        it('should return null when player not found', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -65,7 +65,7 @@ describe('PlayerService', () => {
     });
 
     describe('createPlayer', () => {
-        it('should create player with default values', () => {
+        it('should create player with default values', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 5 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -90,7 +90,7 @@ describe('PlayerService', () => {
             expect(id).toBe(5);
         });
 
-        it('should create player with custom coin and lootbox values', () => {
+        it('should create player with custom coin and lootbox values', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 6 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -101,7 +101,7 @@ describe('PlayerService', () => {
             expect(success).toBe(true);
         });
 
-        it('should return false when insert fails', () => {
+        it('should return false when insert fails', async () => {
             mockStmt.run.mockReturnValue({ changes: 0, lastInsertRowid: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -113,7 +113,7 @@ describe('PlayerService', () => {
     });
 
     describe('updatePlayerCoins', () => {
-        it('should return true when update succeeds', () => {
+        it('should return true when update succeeds', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -126,7 +126,7 @@ describe('PlayerService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when no rows updated', () => {
+        it('should return false when no rows updated', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -137,7 +137,7 @@ describe('PlayerService', () => {
     });
 
     describe('updatePlayerLootboxCount', () => {
-        it('should update lootbox count successfully', () => {
+        it('should update lootbox count successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -148,7 +148,7 @@ describe('PlayerService', () => {
     });
 
     describe('deletePlayer', () => {
-        it('should return true when player deleted', () => {
+        it('should return true when player deleted', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -157,7 +157,7 @@ describe('PlayerService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when player not found', () => {
+        it('should return false when player not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -168,7 +168,7 @@ describe('PlayerService', () => {
     });
 
     describe('getPlayerByUsername', () => {
-        it('should find player by username', () => {
+        it('should find player by username', async () => {
             const mockPlayer: PlayerRow = { playerId: 1, username: 'testuser', password: 'pass', email: 'test@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null };
             mockStmt.get.mockReturnValue(mockPlayer);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -179,7 +179,7 @@ describe('PlayerService', () => {
             expect(result).toEqual(mockPlayer);
         });
 
-        it('should return null for non-existent username', () => {
+        it('should return null for non-existent username', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -190,7 +190,7 @@ describe('PlayerService', () => {
     });
 
     describe('getPlayerByEmail', () => {
-        it('should find player by email', () => {
+        it('should find player by email', async () => {
             const mockPlayer: PlayerRow = { playerId: 1, username: 'testuser', password: 'pass', email: 'findme@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null };
             mockStmt.get.mockReturnValue(mockPlayer);
             mockUnit.prepare.mockReturnValue(mockStmt);

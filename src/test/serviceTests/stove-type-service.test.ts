@@ -18,7 +18,7 @@ describe('StoveTypeService', () => {
     });
 
     describe('getAllStoveTypes', () => {
-        it('should return all stove types', () => {
+        it('should return all stove types', async () => {
             const mockTypes: StoveTypeRow[] = [
                 { typeId: 1, name: 'Basic Stove', imageUrl: '/img/basic.png', rarity: Rarity.COMMON, lootboxWeight: 100 },
                 { typeId: 2, name: 'Rare Stove', imageUrl: '/img/rare.png', rarity: Rarity.RARE, lootboxWeight: 50 }
@@ -33,7 +33,7 @@ describe('StoveTypeService', () => {
     });
 
     describe('getStoveTypeById', () => {
-        it('should return stove type when found', () => {
+        it('should return stove type when found', async () => {
             const mockType: StoveTypeRow = { typeId: 1, name: 'Test Stove', imageUrl: '/img/test.png', rarity: Rarity.COMMON, lootboxWeight: 100 };
             mockStmt.get.mockReturnValue(mockType);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -43,7 +43,7 @@ describe('StoveTypeService', () => {
             expect(result).toEqual(mockType);
         });
 
-        it('should return null when not found', () => {
+        it('should return null when not found', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -54,7 +54,7 @@ describe('StoveTypeService', () => {
     });
 
     describe('getStoveTypesByRarity', () => {
-        it('should filter by rarity correctly', () => {
+        it('should filter by rarity correctly', async () => {
             const mockTypes: StoveTypeRow[] = [
                 { typeId: 1, name: 'Legendary Stove', imageUrl: '/img/leg.png', rarity: Rarity.LEGENDARY, lootboxWeight: 5 }
             ];
@@ -70,7 +70,7 @@ describe('StoveTypeService', () => {
             expect(result).toEqual(mockTypes);
         });
 
-        it('should handle all rarity types', () => {
+        it('should handle all rarity types', async () => {
             const rarities = [Rarity.COMMON, Rarity.RARE, Rarity.EPIC, Rarity.LEGENDARY, Rarity.LIMITED];
 
             rarities.forEach(rarity => {
@@ -88,7 +88,7 @@ describe('StoveTypeService', () => {
     });
 
     describe('createStoveType', () => {
-        it('should create stove type successfully', () => {
+        it('should create stove type successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 5 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -110,7 +110,7 @@ describe('StoveTypeService', () => {
     });
 
     describe('updateLootboxWeight', () => {
-        it('should update weight successfully', () => {
+        it('should update weight successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -123,7 +123,7 @@ describe('StoveTypeService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when type not found', () => {
+        it('should return false when type not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -134,7 +134,7 @@ describe('StoveTypeService', () => {
     });
 
     describe('updateImageUrl', () => {
-        it('should update image URL successfully', () => {
+        it('should update image URL successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -149,7 +149,7 @@ describe('StoveTypeService', () => {
     });
 
     describe('deleteStoveType', () => {
-        it('should delete successfully', () => {
+        it('should delete successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -158,7 +158,7 @@ describe('StoveTypeService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when type not found', () => {
+        it('should return false when type not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -169,7 +169,7 @@ describe('StoveTypeService', () => {
     });
 
     describe('getStoveTypeByName', () => {
-        it('should find by name', () => {
+        it('should find by name', async () => {
             const mockType: StoveTypeRow = { typeId: 1, name: 'Unique Stove', imageUrl: '/img/uni.png', rarity: Rarity.LIMITED, lootboxWeight: 1 };
             mockStmt.get.mockReturnValue(mockType);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -183,7 +183,7 @@ describe('StoveTypeService', () => {
             expect(result).toEqual(mockType);
         });
 
-        it('should return null when name not found', () => {
+        it('should return null when name not found', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -194,7 +194,7 @@ describe('StoveTypeService', () => {
     });
 
     describe('getTotalLootboxWeight', () => {
-        it('should return total weight', () => {
+        it('should return total weight', async () => {
             mockStmt.get.mockReturnValue({ total: 1000 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -206,7 +206,7 @@ describe('StoveTypeService', () => {
             expect(result).toBe(1000);
         });
 
-        it('should return 0 when no types exist', () => {
+        it('should return 0 when no types exist', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -215,7 +215,7 @@ describe('StoveTypeService', () => {
             expect(result).toBe(0);
         });
 
-        it('should return 0 when total is null', () => {
+        it('should return 0 when total is null', async () => {
             mockStmt.get.mockReturnValue({ total: null });
             mockUnit.prepare.mockReturnValue(mockStmt);
 

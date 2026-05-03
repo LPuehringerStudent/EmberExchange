@@ -21,7 +21,7 @@ describe('ServiceBase', () => {
     });
 
     describe('executeStmt', () => {
-        it('should return success true and correct ID when changes equals 1', () => {
+        it('should return success true and correct ID when changes equals 1', async () => {
             const mockStmt = {
                 run: jest.fn().mockReturnValue({ changes: 1, lastInsertRowid: 42 })
             };
@@ -32,7 +32,7 @@ describe('ServiceBase', () => {
             expect(id).toBe(42);
         });
 
-        it('should return success false when changes equals 0', () => {
+        it('should return success false when changes equals 0', async () => {
             const mockStmt = {
                 run: jest.fn().mockReturnValue({ changes: 0, lastInsertRowid: 99 })
             };
@@ -43,7 +43,7 @@ describe('ServiceBase', () => {
             expect(id).toBe(99);
         });
 
-        it('should handle bigint lastInsertRowid by converting to number', () => {
+        it('should handle bigint lastInsertRowid by converting to number', async () => {
             const mockStmt = {
                 run: jest.fn().mockReturnValue({ changes: 1, lastInsertRowid: BigInt(123) })
             };
@@ -55,7 +55,7 @@ describe('ServiceBase', () => {
             expect(typeof id).toBe('number');
         });
 
-        it('should handle large bigint values correctly', () => {
+        it('should handle large bigint values correctly', async () => {
             const largeId = BigInt(Number.MAX_SAFE_INTEGER);
             const mockStmt = {
                 run: jest.fn().mockReturnValue({ changes: 1, lastInsertRowid: largeId })
