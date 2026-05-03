@@ -11,11 +11,11 @@ export class LootboxDropService extends ServiceBase {
      * Retrieves all lootbox drops.
      * @returns Array of all LootboxDropRow objects.
      */
-    getAll(): LootboxDropRow[] {
+    async getAll(): Promise<LootboxDropRow[]> {
         const stmt = this.unit.prepare<LootboxDropRow>(
             "SELECT * FROM LootboxDrop ORDER BY dropId"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -23,12 +23,12 @@ export class LootboxDropService extends ServiceBase {
      * @param id - The drop ID.
      * @returns LootboxDropRow or null if not found.
      */
-    getById(id: number): LootboxDropRow | null {
+    async getById(id: number): Promise<LootboxDropRow | null> {
         const stmt = this.unit.prepare<LootboxDropRow>(
             "SELECT * FROM LootboxDrop WHERE dropId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -36,12 +36,12 @@ export class LootboxDropService extends ServiceBase {
      * @param lootboxId - The lootbox ID.
      * @returns LootboxDropRow or null if not found.
      */
-    getByLootboxId(lootboxId: number): LootboxDropRow | null {
+    async getByLootboxId(lootboxId: number): Promise<LootboxDropRow | null> {
         const stmt = this.unit.prepare<LootboxDropRow>(
             "SELECT * FROM LootboxDrop WHERE lootboxId = @lootboxId",
             { lootboxId }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -49,12 +49,12 @@ export class LootboxDropService extends ServiceBase {
      * @param stoveId - The stove ID.
      * @returns LootboxDropRow or null if not found.
      */
-    getByStoveId(stoveId: number): LootboxDropRow | null {
+    async getByStoveId(stoveId: number): Promise<LootboxDropRow | null> {
         const stmt = this.unit.prepare<LootboxDropRow>(
             "SELECT * FROM LootboxDrop WHERE stoveId = @stoveId",
             { stoveId }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -62,7 +62,7 @@ export class LootboxDropService extends ServiceBase {
      * @param playerId - The player ID.
      * @returns Array of LootboxDropRow objects.
      */
-    getByPlayerId(playerId: number): LootboxDropRow[] {
+    async getByPlayerId(playerId: number): Promise<LootboxDropRow[]> {
         const stmt = this.unit.prepare<LootboxDropRow>(
             `SELECT ld.* FROM LootboxDrop ld
              JOIN Lootbox l ON ld.lootboxId = l.lootboxId
@@ -70,7 +70,7 @@ export class LootboxDropService extends ServiceBase {
              ORDER BY l.openedAt DESC`,
             { playerId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -79,13 +79,13 @@ export class LootboxDropService extends ServiceBase {
      * @param stoveId - The stove ID that was dropped.
      * @returns Tuple [success, id].
      */
-    create(lootboxId: number, stoveId: number): [boolean, number] {
+    async create(lootboxId: number, stoveId: number): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<LootboxDropRow>(
             `INSERT INTO LootboxDrop (lootboxId, stoveId) 
              VALUES (@lootboxId, @stoveId)`,
             { lootboxId, stoveId }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -94,12 +94,12 @@ export class LootboxDropService extends ServiceBase {
      * @param stoveId - New stove ID.
      * @returns True if updated.
      */
-    updateStove(id: number, stoveId: number): boolean {
+    async updateStove(id: number, stoveId: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE LootboxDrop SET stoveId = @stoveId WHERE dropId = @id",
             { id, stoveId }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -108,12 +108,12 @@ export class LootboxDropService extends ServiceBase {
      * @param id - Drop ID.
      * @returns True if deleted.
      */
-    delete(id: number): boolean {
+    async delete(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM LootboxDrop WHERE dropId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -121,11 +121,11 @@ export class LootboxDropService extends ServiceBase {
      * Counts total drops.
      * @returns Count.
      */
-    count(): number {
+    async count(): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM LootboxDrop"
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 
@@ -134,14 +134,14 @@ export class LootboxDropService extends ServiceBase {
      * @param lootboxTypeId - The lootbox type ID.
      * @returns Count.
      */
-    countByLootboxType(lootboxTypeId: number): number {
+    async countByLootboxType(lootboxTypeId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             `SELECT COUNT(*) as count FROM LootboxDrop ld
              JOIN Lootbox l ON ld.lootboxId = l.lootboxId
              WHERE l.lootboxTypeId = @lootboxTypeId`,
             { lootboxTypeId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 }

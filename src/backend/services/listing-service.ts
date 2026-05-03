@@ -11,11 +11,11 @@ export class ListingService extends ServiceBase {
      * Retrieves all listings from the database.
      * @returns An array of all ListingRow objects.
      */
-    getAllListings(): ListingRow[] {
+    async getAllListings(): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
             "SELECT * FROM Listing"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -23,23 +23,23 @@ export class ListingService extends ServiceBase {
      * @param id - The unique listing ID.
      * @returns The ListingRow object if found, otherwise null.
      */
-    getListingById(id: number): ListingRow | null {
+    async getListingById(id: number): Promise<ListingRow | null> {
         const stmt = this.unit.prepare<ListingRow>(
             "SELECT * FROM Listing WHERE listingId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
      * Retrieves all active listings.
      * @returns An array of active ListingRow objects.
      */
-    getActiveListings(): ListingRow[] {
+    async getActiveListings(): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
             "SELECT * FROM Listing WHERE status = 'active' ORDER BY listedAt DESC"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -47,12 +47,12 @@ export class ListingService extends ServiceBase {
      * @param sellerId - The seller's unique player ID.
      * @returns An array of ListingRow objects for the seller.
      */
-    getListingsBySellerId(sellerId: number): ListingRow[] {
+    async getListingsBySellerId(sellerId: number): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
             "SELECT * FROM Listing WHERE sellerId = @sellerId ORDER BY listedAt DESC",
             { sellerId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -60,12 +60,12 @@ export class ListingService extends ServiceBase {
      * @param sellerId - The seller's unique player ID.
      * @returns An array of active ListingRow objects for the seller.
      */
-    getActiveListingsBySellerId(sellerId: number): ListingRow[] {
+    async getActiveListingsBySellerId(sellerId: number): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
             "SELECT * FROM Listing WHERE sellerId = @sellerId AND status = 'active' ORDER BY listedAt DESC",
             { sellerId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -73,12 +73,12 @@ export class ListingService extends ServiceBase {
      * @param stoveId - The stove's unique ID.
      * @returns The active ListingRow object if found, otherwise null.
      */
-    getActiveListingByStoveId(stoveId: number): ListingRow | null {
+    async getActiveListingByStoveId(stoveId: number): Promise<ListingRow | null> {
         const stmt = this.unit.prepare<ListingRow>(
             "SELECT * FROM Listing WHERE stoveId = @stoveId AND status = 'active'",
             { stoveId }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -89,13 +89,13 @@ export class ListingService extends ServiceBase {
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new listing's ID (if successful).
      */
-    createListing(sellerId: number, stoveId: number, price: number): [boolean, number] {
+    async createListing(sellerId: number, stoveId: number, price: number): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<ListingRow>(
             `INSERT INTO Listing (sellerId, stoveId, price, listedAt, status) 
-             VALUES (@sellerId, @stoveId, @price, datetime('now'), 'active')`,
+             VALUES (@sellerId, @stoveId, @price, NOW(), 'active')`,
             { sellerId, stoveId, price }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -104,12 +104,12 @@ export class ListingService extends ServiceBase {
      * @param price - The new price.
      * @returns True if exactly one listing was updated, false otherwise.
      */
-    updatePrice(id: number, price: number): boolean {
+    async updatePrice(id: number, price: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Listing SET price = @price WHERE listingId = @id AND status = 'active'",
             { id, price }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -118,12 +118,12 @@ export class ListingService extends ServiceBase {
      * @param id - The listing's unique ID.
      * @returns True if exactly one listing was updated, false otherwise.
      */
-    markAsSold(id: number): boolean {
+    async markAsSold(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Listing SET status = 'sold' WHERE listingId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -132,12 +132,12 @@ export class ListingService extends ServiceBase {
      * @param id - The listing's unique ID.
      * @returns True if exactly one listing was updated, false otherwise.
      */
-    cancelListing(id: number): boolean {
+    async cancelListing(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Listing SET status = 'cancelled' WHERE listingId = @id AND status = 'active'",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -146,12 +146,12 @@ export class ListingService extends ServiceBase {
      * @param id - The listing's unique ID.
      * @returns True if exactly one listing was deleted, false otherwise.
      */
-    deleteListing(id: number): boolean {
+    async deleteListing(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM Listing WHERE listingId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -160,12 +160,12 @@ export class ListingService extends ServiceBase {
      * @param stoveId - The stove's unique ID.
      * @returns True if the stove has an active listing.
      */
-    isStoveListed(stoveId: number): boolean {
+    async isStoveListed(stoveId: number): Promise<boolean> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Listing WHERE stoveId = @stoveId AND status = 'active'",
             { stoveId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return (result?.count ?? 0) > 0;
     }
 
@@ -174,12 +174,12 @@ export class ListingService extends ServiceBase {
      * @param sellerId - The seller's player ID.
      * @returns The count of active listings.
      */
-    countActiveListingsBySeller(sellerId: number): number {
+    async countActiveListingsBySeller(sellerId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Listing WHERE sellerId = @sellerId AND status = 'active'",
             { sellerId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 }

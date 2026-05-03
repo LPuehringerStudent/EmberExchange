@@ -11,11 +11,11 @@ export class PriceHistoryService extends ServiceBase {
      * Retrieves all price history records from the database.
      * @returns An array of all PriceHistoryRow objects.
      */
-    getAllPriceHistory(): PriceHistoryRow[] {
+    async getAllPriceHistory(): Promise<PriceHistoryRow[]> {
         const stmt = this.unit.prepare<PriceHistoryRow>(
             "SELECT * FROM PriceHistory"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -23,12 +23,12 @@ export class PriceHistoryService extends ServiceBase {
      * @param id - The unique price history ID.
      * @returns The PriceHistoryRow object if found, otherwise null.
      */
-    getPriceHistoryById(id: number): PriceHistoryRow | null {
+    async getPriceHistoryById(id: number): Promise<PriceHistoryRow | null> {
         const stmt = this.unit.prepare<PriceHistoryRow>(
             "SELECT * FROM PriceHistory WHERE historyId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -36,12 +36,12 @@ export class PriceHistoryService extends ServiceBase {
      * @param typeId - The stove type ID.
      * @returns An array of PriceHistoryRow objects for the type, ordered by sale date.
      */
-    getPriceHistoryByTypeId(typeId: number): PriceHistoryRow[] {
+    async getPriceHistoryByTypeId(typeId: number): Promise<PriceHistoryRow[]> {
         const stmt = this.unit.prepare<PriceHistoryRow>(
             "SELECT * FROM PriceHistory WHERE typeId = @typeId ORDER BY saleDate DESC",
             { typeId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -51,13 +51,13 @@ export class PriceHistoryService extends ServiceBase {
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new price history record's ID (if successful).
      */
-    recordSale(typeId: number, salePrice: number): [boolean, number] {
+    async recordSale(typeId: number, salePrice: number): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<PriceHistoryRow>(
             `INSERT INTO PriceHistory (typeId, salePrice, saleDate) 
-             VALUES (@typeId, @salePrice, datetime('now'))`,
+             VALUES (@typeId, @salePrice, NOW())`,
             { typeId, salePrice }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -65,12 +65,12 @@ export class PriceHistoryService extends ServiceBase {
      * @param typeId - The stove type ID.
      * @returns The average sale price, or 0 if no sales recorded.
      */
-    getAveragePrice(typeId: number): number {
+    async getAveragePrice(typeId: number): Promise<number> {
         const stmt = this.unit.prepare<{ average: number }>(
             "SELECT AVG(salePrice) as average FROM PriceHistory WHERE typeId = @typeId",
             { typeId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.average ?? 0;
     }
 
@@ -79,12 +79,12 @@ export class PriceHistoryService extends ServiceBase {
      * @param typeId - The stove type ID.
      * @returns The minimum sale price, or 0 if no sales recorded.
      */
-    getMinPrice(typeId: number): number {
+    async getMinPrice(typeId: number): Promise<number> {
         const stmt = this.unit.prepare<{ min: number }>(
             "SELECT MIN(salePrice) as min FROM PriceHistory WHERE typeId = @typeId",
             { typeId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.min ?? 0;
     }
 
@@ -93,12 +93,12 @@ export class PriceHistoryService extends ServiceBase {
      * @param typeId - The stove type ID.
      * @returns The maximum sale price, or 0 if no sales recorded.
      */
-    getMaxPrice(typeId: number): number {
+    async getMaxPrice(typeId: number): Promise<number> {
         const stmt = this.unit.prepare<{ max: number }>(
             "SELECT MAX(salePrice) as max FROM PriceHistory WHERE typeId = @typeId",
             { typeId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.max ?? 0;
     }
 
@@ -108,12 +108,12 @@ export class PriceHistoryService extends ServiceBase {
      * @param limit - Maximum number of records to return (default: 10).
      * @returns An array of recent PriceHistoryRow objects.
      */
-    getRecentPrices(typeId: number, limit: number = 10): PriceHistoryRow[] {
+    async getRecentPrices(typeId: number, limit: number = 10): Promise<PriceHistoryRow[]> {
         const stmt = this.unit.prepare<PriceHistoryRow>(
             "SELECT * FROM PriceHistory WHERE typeId = @typeId ORDER BY saleDate DESC LIMIT @limit",
             { typeId, limit }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -121,12 +121,12 @@ export class PriceHistoryService extends ServiceBase {
      * @param typeId - The stove type ID.
      * @returns The count of price history records for the type.
      */
-    countSales(typeId: number): number {
+    async countSales(typeId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM PriceHistory WHERE typeId = @typeId",
             { typeId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 
@@ -135,12 +135,12 @@ export class PriceHistoryService extends ServiceBase {
      * @param id - The price history record's unique ID.
      * @returns True if exactly one record was deleted, false otherwise.
      */
-    deletePriceHistory(id: number): boolean {
+    async deletePriceHistory(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM PriceHistory WHERE historyId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 }

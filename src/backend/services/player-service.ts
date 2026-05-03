@@ -11,11 +11,11 @@ export class PlayerService extends ServiceBase {
      * Retrieves all players from the database.
      * @returns An array of all PlayerRow objects in the database.
      */
-    getAllPlayers(): PlayerRow[] {
+    async getAllPlayers(): Promise<PlayerRow[]> {
         const stmt = this.unit.prepare<PlayerRow>(
             "SELECT * FROM Player"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -23,12 +23,12 @@ export class PlayerService extends ServiceBase {
      * @param id - The unique player ID.
      * @returns The PlayerRow object if found, otherwise null.
      */
-    getInfoByID(id: number): PlayerRow | null {
+    async getInfoByID(id: number): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
             "SELECT * FROM Player WHERE playerId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -42,18 +42,18 @@ export class PlayerService extends ServiceBase {
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new player's ID (if successful).
      */
-    createPlayer(username: string, password: string, email: string, coins: number = 1000, lootboxCount: number = 10): [boolean, number] {
+    async createPlayer(username: string, password: string, email: string, coins: number = 1000, lootboxCount: number = 10): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<PlayerRow>(
             `INSERT INTO Player (username, password, email, coins, lootboxCount, isAdmin, joinedAt) 
-             VALUES (@username, @password, @email, @coins, @lootboxCount, 0, datetime('now'))`,
+             VALUES (@username, @password, @email, @coins, @lootboxCount, 0, NOW())`,
             { username, password, email, coins, lootboxCount }
         );
-        const [success, playerId] = this.executeStmt(stmt);
+        const [success, playerId] = await this.executeStmt(stmt);
         if (success && playerId) {
             // Seed 10 Standard Lootboxes for new player (best-effort)
             try {
                 for (let i = 0; i < 10; i++) {
-                    this.unit.prepare(
+                    await this.unit.prepare(
                         `INSERT INTO Lootbox (lootboxTypeId, playerId, openedAt, acquiredHow) 
                          VALUES (1, @playerId, null, 'free')`,
                         { playerId }
@@ -72,12 +72,12 @@ export class PlayerService extends ServiceBase {
      * @param coins - The new coin amount to set.
      * @returns True if exactly one player was updated, false otherwise.
      */
-    updatePlayerCoins(id: number, coins: number): boolean {
+    async updatePlayerCoins(id: number, coins: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Player SET coins = @coins WHERE playerId = @id",
             { id, coins }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -87,12 +87,12 @@ export class PlayerService extends ServiceBase {
      * @param lootboxCount - The new lootbox count to set.
      * @returns True if exactly one player was updated, false otherwise.
      */
-    updatePlayerLootboxCount(id: number, lootboxCount: number): boolean {
+    async updatePlayerLootboxCount(id: number, lootboxCount: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Player SET lootboxCount = @lootboxCount WHERE playerId = @id",
             { id, lootboxCount }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -102,26 +102,26 @@ export class PlayerService extends ServiceBase {
      * @param id - The player's unique ID.
      * @returns True if exactly one player was deleted, false otherwise.
      */
-    deletePlayer(id: number): boolean {
+    async deletePlayer(id: number): Promise<boolean> {
         // Delete related records in correct order to respect foreign keys
         
         // 1. Delete sessions
-        this.unit.prepare("DELETE FROM Session WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM Session WHERE playerId = @id", { id }).run();
         
         // 2. Delete player statistics
-        this.unit.prepare("DELETE FROM PlayerStatistics WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM PlayerStatistics WHERE playerId = @id", { id }).run();
         
         // 3. Delete mini game sessions
-        this.unit.prepare("DELETE FROM MiniGameSession WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM MiniGameSession WHERE playerId = @id", { id }).run();
         
         // 4. Delete chat messages (sent or received)
-        this.unit.prepare("DELETE FROM ChatMessage WHERE senderId = @id OR receiverId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM ChatMessage WHERE senderId = @id OR receiverId = @id", { id }).run();
         
         // 5. Delete ownership records
-        this.unit.prepare("DELETE FROM Ownership WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM Ownership WHERE playerId = @id", { id }).run();
         
         // 6. Delete trades where player is buyer
-        this.unit.prepare("DELETE FROM Trade WHERE buyerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM Trade WHERE buyerId = @id", { id }).run();
         
         // 7. Delete listings (this will cascade delete related trades via foreign key)
         // First get all listings by this player
@@ -129,38 +129,38 @@ export class PlayerService extends ServiceBase {
             "SELECT listingId FROM Listing WHERE sellerId = @id",
             { id }
         );
-        const listings = listingsStmt.all() ?? [];
+        const listings = await listingsStmt.all() ?? [];
         
         // Delete trades for these listings first
         for (const listing of listings) {
-            this.unit.prepare("DELETE FROM Trade WHERE listingId = @listingId", { listingId: listing.listingId }).run();
+            await this.unit.prepare("DELETE FROM Trade WHERE listingId = @listingId", { listingId: listing.listingId }).run();
         }
         
         // Now delete the listings
-        this.unit.prepare("DELETE FROM Listing WHERE sellerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM Listing WHERE sellerId = @id", { id }).run();
         
         // 8. Delete stoves owned by this player
-        this.unit.prepare("DELETE FROM Stove WHERE currentOwnerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM Stove WHERE currentOwnerId = @id", { id }).run();
         
         // 9. Delete lootbox drops for this player's lootboxes first (to respect FK constraints)
         const lootboxesStmt = this.unit.prepare<{ lootboxId: number }>(
             "SELECT lootboxId FROM Lootbox WHERE playerId = @id",
             { id }
         );
-        const lootboxes = lootboxesStmt.all() ?? [];
+        const lootboxes = await lootboxesStmt.all() ?? [];
         for (const lb of lootboxes) {
-            this.unit.prepare("DELETE FROM LootboxDrop WHERE lootboxId = @lootboxId", { lootboxId: lb.lootboxId }).run();
+            await this.unit.prepare("DELETE FROM LootboxDrop WHERE lootboxId = @lootboxId", { lootboxId: lb.lootboxId }).run();
         }
         
         // 10. Delete lootboxes owned by this player
-        this.unit.prepare("DELETE FROM Lootbox WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM Lootbox WHERE playerId = @id", { id }).run();
         
         // 10. Finally delete the player
         const stmt = this.unit.prepare(
             "DELETE FROM Player WHERE playerId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -169,12 +169,12 @@ export class PlayerService extends ServiceBase {
      * @param username - The username to search for.
      * @returns The PlayerRow object if found, otherwise null.
      */
-    getPlayerByUsername(username: string): PlayerRow | null {
+    async getPlayerByUsername(username: string): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
             "SELECT * FROM Player WHERE username = @username",
             { username }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -182,12 +182,12 @@ export class PlayerService extends ServiceBase {
      * @param email - The email to search for.
      * @returns The PlayerRow object if found, otherwise null.
      */
-    getPlayerByEmail(email: string): PlayerRow | null {
+    async getPlayerByEmail(email: string): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
             "SELECT * FROM Player WHERE email = @email",
             { email }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -196,12 +196,12 @@ export class PlayerService extends ServiceBase {
      * @param email - The new email address.
      * @returns True if exactly one player was updated, false otherwise.
      */
-    updatePlayerEmail(id: number, email: string): boolean {
+    async updatePlayerEmail(id: number, email: string): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Player SET email = @email WHERE playerId = @id",
             { id, email }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -211,12 +211,12 @@ export class PlayerService extends ServiceBase {
      * @param password - The new password.
      * @returns True if exactly one player was updated, false otherwise.
      */
-    updatePlayerPassword(id: number, password: string): boolean {
+    async updatePlayerPassword(id: number, password: string): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Player SET password = @password WHERE playerId = @id",
             { id, password }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -226,12 +226,12 @@ export class PlayerService extends ServiceBase {
      * @param providerId - The provider's unique user ID.
      * @returns The PlayerRow object if found, otherwise null.
      */
-    getPlayerByOAuth(provider: string, providerId: string): PlayerRow | null {
+    async getPlayerByOAuth(provider: string, providerId: string): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
             "SELECT * FROM Player WHERE provider = @provider AND providerId = @providerId",
             { provider, providerId }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -245,24 +245,24 @@ export class PlayerService extends ServiceBase {
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new player's ID (if successful).
      */
-    createOAuthPlayer(
+    async createOAuthPlayer(
         username: string, 
         email: string, 
         provider: string, 
         providerId: string,
         coins: number = 1000, 
         lootboxCount: number = 10
-    ): [boolean, number] {
+    ): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<PlayerRow>(
             `INSERT INTO Player (username, password, email, coins, lootboxCount, isAdmin, joinedAt, provider, providerId) 
-             VALUES (@username, NULL, @email, @coins, @lootboxCount, 0, datetime('now'), @provider, @providerId)`,
+             VALUES (@username, NULL, @email, @coins, @lootboxCount, 0, NOW(), @provider, @providerId)`,
             { username, email, coins, lootboxCount, provider, providerId }
         );
-        const [success, playerId] = this.executeStmt(stmt);
+        const [success, playerId] = await this.executeStmt(stmt);
         if (success && playerId) {
             try {
                 for (let i = 0; i < 10; i++) {
-                    this.unit.prepare(
+                    await this.unit.prepare(
                         `INSERT INTO Lootbox (lootboxTypeId, playerId, openedAt, acquiredHow) 
                          VALUES (1, @playerId, null, 'free')`,
                         { playerId }

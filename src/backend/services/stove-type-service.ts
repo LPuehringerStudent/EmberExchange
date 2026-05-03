@@ -11,11 +11,11 @@ export class StoveTypeService extends ServiceBase {
      * Retrieves all stove types from the database.
      * @returns An array of all StoveTypeRow objects.
      */
-    getAllStoveTypes(): StoveTypeRow[] {
+    async getAllStoveTypes(): Promise<StoveTypeRow[]> {
         const stmt = this.unit.prepare<StoveTypeRow>(
             "SELECT * FROM StoveType"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -23,12 +23,12 @@ export class StoveTypeService extends ServiceBase {
      * @param id - The unique stove type ID.
      * @returns The StoveTypeRow object if found, otherwise null.
      */
-    getStoveTypeById(id: number): StoveTypeRow | null {
+    async getStoveTypeById(id: number): Promise<StoveTypeRow | null> {
         const stmt = this.unit.prepare<StoveTypeRow>(
             "SELECT * FROM StoveType WHERE typeId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -36,12 +36,12 @@ export class StoveTypeService extends ServiceBase {
      * @param rarity - The rarity level to filter by ("common" | "rare" | "epic" | "legendary" | "limited").
      * @returns An array of StoveTypeRow objects with the specified rarity.
      */
-    getStoveTypesByRarity(rarity: Rarity): StoveTypeRow[] {
+    async getStoveTypesByRarity(rarity: Rarity): Promise<StoveTypeRow[]> {
         const stmt = this.unit.prepare<StoveTypeRow>(
             "SELECT * FROM StoveType WHERE rarity = @rarity",
             { rarity }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -53,18 +53,18 @@ export class StoveTypeService extends ServiceBase {
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new stove type's ID (if successful).
      */
-    createStoveType(
+    async createStoveType(
         name: string,
         imageUrl: string,
         rarity: Rarity,
         lootboxWeight: number
-    ): [boolean, number] {
+    ): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<StoveTypeRow>(
             `INSERT INTO StoveType (name, imageUrl, rarity, lootboxWeight) 
              VALUES (@name, @imageUrl, @rarity, @lootboxWeight)`,
             { name, imageUrl, rarity, lootboxWeight }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -73,12 +73,12 @@ export class StoveTypeService extends ServiceBase {
      * @param lootboxWeight - The new lootbox weight to set.
      * @returns True if exactly one stove type was updated, false otherwise.
      */
-    updateLootboxWeight(id: number, lootboxWeight: number): boolean {
+    async updateLootboxWeight(id: number, lootboxWeight: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE StoveType SET lootboxWeight = @lootboxWeight WHERE typeId = @id",
             { id, lootboxWeight }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -88,12 +88,12 @@ export class StoveTypeService extends ServiceBase {
      * @param imageUrl - The new image URL to set.
      * @returns True if exactly one stove type was updated, false otherwise.
      */
-    updateImageUrl(id: number, imageUrl: string): boolean {
+    async updateImageUrl(id: number, imageUrl: string): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE StoveType SET imageUrl = @imageUrl WHERE typeId = @id",
             { id, imageUrl }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -102,12 +102,12 @@ export class StoveTypeService extends ServiceBase {
      * @param id - The stove type's unique ID.
      * @returns True if exactly one stove type was deleted, false otherwise.
      */
-    deleteStoveType(id: number): boolean {
+    async deleteStoveType(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM StoveType WHERE typeId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -116,12 +116,12 @@ export class StoveTypeService extends ServiceBase {
      * @param name - The name to search for.
      * @returns The StoveTypeRow object if found, otherwise null.
      */
-    getStoveTypeByName(name: string): StoveTypeRow | null {
+    async getStoveTypeByName(name: string): Promise<StoveTypeRow | null> {
         const stmt = this.unit.prepare<StoveTypeRow>(
             "SELECT * FROM StoveType WHERE name = @name",
             { name }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -129,11 +129,11 @@ export class StoveTypeService extends ServiceBase {
      * Used for probability calculations when rolling drops.
      * @returns The sum of all lootbox weights.
      */
-    getTotalLootboxWeight(): number {
+    async getTotalLootboxWeight(): Promise<number> {
         const stmt = this.unit.prepare<{ total: number }>(
             "SELECT SUM(lootboxWeight) as total FROM StoveType"
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.total ?? 0;
     }
 }

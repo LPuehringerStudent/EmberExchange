@@ -7,28 +7,28 @@ export class SessionService extends ServiceBase {
         super(unit);
     }
 
-    createSession(sessionId: string, playerId: number, expiresAt: Date): boolean {
+    async createSession(sessionId: string, playerId: number, expiresAt: Date): Promise<boolean> {
         const stmt = this.unit.prepare(
             `INSERT INTO Session (sessionId, playerId, createdAt, expiresAt, isActive)
-             VALUES (@sessionId, @playerId, datetime('now'), @expiresAt, 1)`,
+             VALUES (@sessionId, @playerId, NOW(), @expiresAt, 1)`,
             { sessionId, playerId, expiresAt: expiresAt.toISOString() }
         );
-        return stmt.run().changes === 1;
+        return (await stmt.run()).changes === 1;
     }
 
-    getSession(sessionId: string): SessionRow | null {
+    async getSession(sessionId: string): Promise<SessionRow | null> {
         const stmt = this.unit.prepare<SessionRow>(
             "SELECT * FROM Session WHERE sessionId = @sessionId AND isActive = 1",
             { sessionId }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
-    invalidateSession(sessionId: string): boolean {
+    async invalidateSession(sessionId: string): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Session SET isActive = 0 WHERE sessionId = @sessionId",
             { sessionId }
         );
-        return stmt.run().changes === 1;
+        return (await stmt.run()).changes === 1;
     }
 }

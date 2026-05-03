@@ -11,11 +11,11 @@ export class StoveService extends ServiceBase {
      * Retrieves all stoves from the database.
      * @returns An array of all StoveRow objects.
      */
-    getAllStoves(): StoveRow[] {
+    async getAllStoves(): Promise<StoveRow[]> {
         const stmt = this.unit.prepare<StoveRow>(
             "SELECT * FROM Stove"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -23,12 +23,12 @@ export class StoveService extends ServiceBase {
      * @param id - The unique stove ID.
      * @returns The StoveRow object if found, otherwise null.
      */
-    getStoveById(id: number): StoveRow | null {
+    async getStoveById(id: number): Promise<StoveRow | null> {
         const stmt = this.unit.prepare<StoveRow>(
             "SELECT * FROM Stove WHERE stoveId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -36,7 +36,7 @@ export class StoveService extends ServiceBase {
      * @param playerId - The owner's unique ID.
      * @returns An array of StoveRow objects belonging to the player.
      */
-    getStovesByOwnerId(playerId: number): (StoveRow & { imageUrl: string })[] {
+    async getStovesByOwnerId(playerId: number): Promise<(StoveRow & { imageUrl: string })[]> {
         const stmt = this.unit.prepare<StoveRow & { imageUrl: string }>(
             `SELECT Stove.*, StoveType.imageUrl
              FROM Stove
@@ -44,7 +44,7 @@ export class StoveService extends ServiceBase {
              WHERE Stove.currentOwnerId = @playerId`,
             { playerId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -52,12 +52,12 @@ export class StoveService extends ServiceBase {
      * @param typeId - The stove type ID.
      * @returns An array of StoveRow objects of the specified type.
      */
-    getStovesByTypeId(typeId: number): StoveRow[] {
+    async getStovesByTypeId(typeId: number): Promise<StoveRow[]> {
         const stmt = this.unit.prepare<StoveRow>(
             "SELECT * FROM Stove WHERE typeId = @typeId",
             { typeId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -67,13 +67,13 @@ export class StoveService extends ServiceBase {
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new stove's ID (if successful).
      */
-    createStove(typeId: number, currentOwnerId: number): [boolean, number] {
+    async createStove(typeId: number, currentOwnerId: number): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<StoveRow>(
             `INSERT INTO Stove (typeId, currentOwnerId, mintedAt) 
-             VALUES (@typeId, @currentOwnerId, datetime('now'))`,
+             VALUES (@typeId, @currentOwnerId, NOW())`,
             { typeId, currentOwnerId }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -82,12 +82,12 @@ export class StoveService extends ServiceBase {
      * @param newOwnerId - The new owner's player ID.
      * @returns True if exactly one stove was updated, false otherwise.
      */
-    updateOwner(id: number, newOwnerId: number): boolean {
+    async updateOwner(id: number, newOwnerId: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Stove SET currentOwnerId = @newOwnerId WHERE stoveId = @id",
             { id, newOwnerId }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -96,12 +96,12 @@ export class StoveService extends ServiceBase {
      * @param id - The stove's unique ID.
      * @returns True if exactly one stove was deleted, false otherwise.
      */
-    deleteStove(id: number): boolean {
+    async deleteStove(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM Stove WHERE stoveId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -110,12 +110,12 @@ export class StoveService extends ServiceBase {
      * @param playerId - The player's unique ID.
      * @returns The count of stoves owned by the player.
      */
-    countStovesByOwner(playerId: number): number {
+    async countStovesByOwner(playerId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Stove WHERE currentOwnerId = @playerId",
             { playerId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 
@@ -124,12 +124,12 @@ export class StoveService extends ServiceBase {
      * @param typeId - The stove type ID.
      * @returns The count of stoves of the specified type.
      */
-    countStovesByType(typeId: number): number {
+    async countStovesByType(typeId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Stove WHERE typeId = @typeId",
             { typeId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 }
