@@ -30,17 +30,17 @@ export const stoveTypeStatisticsRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.get("/stove-type-statistics", (_req, res) => {
-    const unit = new Unit(true);
+stoveTypeStatisticsRouter.get("/stove-type-statistics", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
 
     try {
-        const response = service.getAll();
+        const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -75,17 +75,17 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.get("/stove-type-statistics/market-summary", (_req, res) => {
-    const unit = new Unit(true);
+stoveTypeStatisticsRouter.get("/stove-type-statistics/market-summary", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
 
     try {
-        const response = service.getMarketSummary();
+        const response = await service.getMarketSummary();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -120,18 +120,18 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/market-summary", (_req, re
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.get("/stove-type-statistics/leaderboard/sales", (req, res) => {
-    const unit = new Unit(true);
+stoveTypeStatisticsRouter.get("/stove-type-statistics/leaderboard/sales", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
     const limit = parseInt(req.query.limit as string) || 10;
 
     try {
-        const response = service.getTopBySales(limit);
+        const response = await service.getTopBySales(limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -166,18 +166,18 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/leaderboard/sales", (req, 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.get("/stove-type-statistics/most-viewed", (req, res) => {
-    const unit = new Unit(true);
+stoveTypeStatisticsRouter.get("/stove-type-statistics/most-viewed", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
     const limit = parseInt(req.query.limit as string) || 10;
 
     try {
-        const response = service.getMostViewed(limit);
+        const response = await service.getMostViewed(limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -219,8 +219,8 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/most-viewed", (req, res) =
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.get("/stove-type-statistics/trend/:trend", (req, res) => {
-    const unit = new Unit(true);
+stoveTypeStatisticsRouter.get("/stove-type-statistics/trend/:trend", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
     const trend = req.params.trend;
 
@@ -230,12 +230,12 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/trend/:trend", (req, res) 
             return;
         }
 
-        const response = service.getByDemandTrend(trend as "increasing" | "stable" | "decreasing");
+        const response = await service.getByDemandTrend(trend as "increasing" | "stable" | "decreasing");
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -280,8 +280,8 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/trend/:trend", (req, res) 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.get("/stove-types/:stoveTypeId/statistics", (req, res) => {
-    const unit = new Unit(true);
+stoveTypeStatisticsRouter.get("/stove-types/:stoveTypeId/statistics", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
     const stoveTypeId = req.params.stoveTypeId;
 
@@ -291,7 +291,7 @@ stoveTypeStatisticsRouter.get("/stove-types/:stoveTypeId/statistics", (req, res)
             return;
         }
 
-        const response = service.getByStoveTypeId(Number(stoveTypeId));
+        const response = await service.getByStoveTypeId(Number(stoveTypeId));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Statistics not found" });
         } else {
@@ -300,7 +300,7 @@ stoveTypeStatisticsRouter.get("/stove-types/:stoveTypeId/statistics", (req, res)
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -361,8 +361,8 @@ stoveTypeStatisticsRouter.get("/stove-types/:stoveTypeId/statistics", (req, res)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics", (req, res) => {
-    const unit = new Unit(false);
+stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new StoveTypeStatisticsService(unit);
     const stoveTypeId = req.params.stoveTypeId;
     let ok = false;
@@ -380,7 +380,7 @@ stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics", (req, res
             return;
         }
 
-        const [success, id] = service.create(Number(stoveTypeId), expectedDropRate, rarityRank);
+        const [success, id] = await service.create(Number(stoveTypeId), expectedDropRate, rarityRank);
 
         if (success) {
             ok = true;
@@ -391,7 +391,7 @@ stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics", (req, res
     } catch (err) {
         res.status(StatusCodes.CONFLICT).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -436,8 +436,8 @@ stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics", (req, res
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics/increment-views", (req, res) => {
-    const unit = new Unit(false);
+stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics/increment-views", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new StoveTypeStatisticsService(unit);
     const stoveTypeId = req.params.stoveTypeId;
     let ok = false;
@@ -448,7 +448,7 @@ stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics/increment-v
             return;
         }
 
-        const success = service.incrementViews(Number(stoveTypeId));
+        const success = await service.incrementViews(Number(stoveTypeId));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "View recorded" });
@@ -458,7 +458,7 @@ stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics/increment-v
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -503,8 +503,8 @@ stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics/increment-v
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.delete("/stove-types/:stoveTypeId/statistics", (req, res) => {
-    const unit = new Unit(false);
+stoveTypeStatisticsRouter.delete("/stove-types/:stoveTypeId/statistics", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new StoveTypeStatisticsService(unit);
     const stoveTypeId = req.params.stoveTypeId;
     let ok = false;
@@ -515,7 +515,7 @@ stoveTypeStatisticsRouter.delete("/stove-types/:stoveTypeId/statistics", (req, r
             return;
         }
 
-        const success = service.delete(Number(stoveTypeId));
+        const success = await service.delete(Number(stoveTypeId));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Statistics deleted" });
@@ -525,6 +525,6 @@ stoveTypeStatisticsRouter.delete("/stove-types/:stoveTypeId/statistics", (req, r
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });

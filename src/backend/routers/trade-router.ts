@@ -36,17 +36,17 @@ export const tradeRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades", (_req, res) => {
-    const unit = new Unit(true);
+tradeRouter.get("/trades", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new TradeService(unit);
 
     try {
-        const response = service.getAllTrades();
+        const response = await service.getAllTrades();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -82,18 +82,18 @@ tradeRouter.get("/trades", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades/recent", (req, res) => {
-    const unit = new Unit(true);
+tradeRouter.get("/trades/recent", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const limit = parseInt(req.query.limit as string) || 10;
 
     try {
-        const response = service.getRecentTrades(limit);
+        const response = await service.getRecentTrades(limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -119,17 +119,17 @@ tradeRouter.get("/trades/recent", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades/count", (_req, res) => {
-    const unit = new Unit(true);
+tradeRouter.get("/trades/count", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new TradeService(unit);
 
     try {
-        const count = service.countTrades();
+        const count = await service.countTrades();
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -174,8 +174,8 @@ tradeRouter.get("/trades/count", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades/:id", (req, res) => {
-    const unit = new Unit(true);
+tradeRouter.get("/trades/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const id = req.params.id;
 
@@ -185,7 +185,7 @@ tradeRouter.get("/trades/:id", (req, res) => {
             return;
         }
 
-        const response = service.getTradeById(Number(id));
+        const response = await service.getTradeById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Trade not found" });
         } else {
@@ -194,7 +194,7 @@ tradeRouter.get("/trades/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -239,8 +239,8 @@ tradeRouter.get("/trades/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/listings/:listingId/trade", (req, res) => {
-    const unit = new Unit(true);
+tradeRouter.get("/listings/:listingId/trade", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const listingId = req.params.listingId;
 
@@ -250,7 +250,7 @@ tradeRouter.get("/listings/:listingId/trade", (req, res) => {
             return;
         }
 
-        const response = service.getTradeByListingId(Number(listingId));
+        const response = await service.getTradeByListingId(Number(listingId));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "No trade found for this listing" });
         } else {
@@ -259,7 +259,7 @@ tradeRouter.get("/listings/:listingId/trade", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -300,8 +300,8 @@ tradeRouter.get("/listings/:listingId/trade", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/players/:buyerId/trades", (req, res) => {
-    const unit = new Unit(true);
+tradeRouter.get("/players/:buyerId/trades", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const buyerId = req.params.buyerId;
 
@@ -311,12 +311,12 @@ tradeRouter.get("/players/:buyerId/trades", (req, res) => {
             return;
         }
 
-        const response = service.getTradesByBuyerId(Number(buyerId));
+        const response = await service.getTradesByBuyerId(Number(buyerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -372,8 +372,8 @@ tradeRouter.get("/players/:buyerId/trades", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.post("/trades", (req, res) => {
-    const unit = new Unit(false);
+tradeRouter.post("/trades", async (req, res) => {
+    const unit = await Unit.create(false);
     const tradeService = new TradeService(unit);
     const listingService = new ListingService(unit);
     const stoveService = new StoveService(unit);
@@ -392,7 +392,7 @@ tradeRouter.post("/trades", (req, res) => {
         }
 
         // Verify listing exists and is active
-        const listing = listingService.getListingById(listingId);
+        const listing = await listingService.getListingById(listingId);
         if (listing === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Listing not found" });
             return;
@@ -410,7 +410,7 @@ tradeRouter.post("/trades", (req, res) => {
         }
 
         // Check buyer has enough coins
-        const buyer = playerService.getInfoByID(buyerId);
+        const buyer = await playerService.getInfoByID(buyerId);
         if (buyer === null) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Buyer not found" });
             return;
@@ -422,53 +422,53 @@ tradeRouter.post("/trades", (req, res) => {
         }
 
         // Fetch seller
-        const seller = playerService.getInfoByID(listing.sellerId);
+        const seller = await playerService.getInfoByID(listing.sellerId);
         if (seller === null) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Seller not found" });
             return;
         }
 
         // Transfer coins
-        const buyerCoinsUpdated = playerService.updatePlayerCoins(buyerId, buyer.coins - listing.price);
-        const sellerCoinsUpdated = playerService.updatePlayerCoins(listing.sellerId, seller.coins + listing.price);
+        const buyerCoinsUpdated = await playerService.updatePlayerCoins(buyerId, buyer.coins - listing.price);
+        const sellerCoinsUpdated = await playerService.updatePlayerCoins(listing.sellerId, seller.coins + listing.price);
         if (!buyerCoinsUpdated || !sellerCoinsUpdated) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer coins" });
             return;
         }
 
         // Mark listing as sold
-        const markSuccess = listingService.markAsSold(listingId);
+        const markSuccess = await listingService.markAsSold(listingId);
         if (!markSuccess) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update listing status" });
             return;
         }
 
         // Transfer ownership of the stove
-        const transferSuccess = stoveService.updateOwner(listing.stoveId, buyerId);
+        const transferSuccess = await stoveService.updateOwner(listing.stoveId, buyerId);
         if (!transferSuccess) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer stove ownership" });
             return;
         }
 
         // Record ownership history
-        const [ownershipSuccess] = ownershipService.createOwnership(listing.stoveId, buyerId, "trade");
+        const [ownershipSuccess] = await ownershipService.createOwnership(listing.stoveId, buyerId, "trade");
         if (!ownershipSuccess) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to record ownership" });
             return;
         }
 
         // Record price history
-        const stove = stoveService.getStoveById(listing.stoveId);
+        const stove = await stoveService.getStoveById(listing.stoveId);
         if (stove !== null) {
-            priceHistoryService.recordSale(stove.typeId, listing.price);
+            await priceHistoryService.recordSale(stove.typeId, listing.price);
         }
 
         // Record coin transactions
-        coinTransactionService.create(buyerId, -listing.price, 'listing_purchase', `Purchased stove #${listing.stoveId}`);
-        coinTransactionService.create(listing.sellerId, listing.price, 'listing_sale', `Sold stove #${listing.stoveId}`);
+        await coinTransactionService.create(buyerId, -listing.price, 'listing_purchase', `Purchased stove #${listing.stoveId}`);
+        await coinTransactionService.create(listing.sellerId, listing.price, 'listing_sale', `Sold stove #${listing.stoveId}`);
 
         // Create trade record
-        const [success, id] = tradeService.createTrade(listingId, buyerId);
+        const [success, id] = await tradeService.createTrade(listingId, buyerId);
 
         if (success) {
             ok = true;
@@ -479,7 +479,7 @@ tradeRouter.post("/trades", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -526,8 +526,8 @@ tradeRouter.post("/trades", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.delete("/trades/:id", (req, res) => {
-    const unit = new Unit(false);
+tradeRouter.delete("/trades/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new TradeService(unit);
     const id = req.params.id;
     let ok = false;
@@ -538,7 +538,7 @@ tradeRouter.delete("/trades/:id", (req, res) => {
             return;
         }
 
-        const success = service.deleteTrade(Number(id));
+        const success = await service.deleteTrade(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Trade deleted" });
@@ -548,7 +548,7 @@ tradeRouter.delete("/trades/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -587,8 +587,8 @@ tradeRouter.delete("/trades/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/players/:buyerId/trades/count", (req, res) => {
-    const unit = new Unit(true);
+tradeRouter.get("/players/:buyerId/trades/count", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const buyerId = req.params.buyerId;
 
@@ -598,11 +598,11 @@ tradeRouter.get("/players/:buyerId/trades/count", (req, res) => {
             return;
         }
 
-        const count = service.countTradesByBuyer(Number(buyerId));
+        const count = await service.countTradesByBuyer(Number(buyerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });

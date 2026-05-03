@@ -30,17 +30,17 @@ export const dailyStatisticsRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.get("/daily-statistics", (_req, res) => {
-    const unit = new Unit(true);
+dailyStatisticsRouter.get("/daily-statistics", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
 
     try {
-        const response = service.getAll();
+        const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -72,12 +72,12 @@ dailyStatisticsRouter.get("/daily-statistics", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.get("/daily-statistics/today", (_req, res) => {
-    const unit = new Unit(true);
+dailyStatisticsRouter.get("/daily-statistics/today", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
 
     try {
-        const response = service.getToday();
+        const response = await service.getToday();
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "No statistics for today" });
         } else {
@@ -86,7 +86,7 @@ dailyStatisticsRouter.get("/daily-statistics/today", (_req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -128,18 +128,18 @@ dailyStatisticsRouter.get("/daily-statistics/today", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.get("/daily-statistics/summary", (req, res) => {
-    const unit = new Unit(true);
+dailyStatisticsRouter.get("/daily-statistics/summary", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
     const days = parseInt(req.query.days as string) || 7;
 
     try {
-        const response = service.getSummary(days);
+        const response = await service.getSummary(days);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -185,8 +185,8 @@ dailyStatisticsRouter.get("/daily-statistics/summary", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.get("/daily-statistics/range", (req, res) => {
-    const unit = new Unit(true);
+dailyStatisticsRouter.get("/daily-statistics/range", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
     const from = req.query.from as string;
     const to = req.query.to as string;
@@ -197,12 +197,12 @@ dailyStatisticsRouter.get("/daily-statistics/range", (req, res) => {
             return;
         }
 
-        const response = service.getByDateRange(from, to);
+        const response = await service.getByDateRange(from, to);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -251,8 +251,8 @@ dailyStatisticsRouter.get("/daily-statistics/range", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.get("/daily-statistics/:date", (req, res) => {
-    const unit = new Unit(true);
+dailyStatisticsRouter.get("/daily-statistics/:date", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
     const date = req.params.date;
 
@@ -262,7 +262,7 @@ dailyStatisticsRouter.get("/daily-statistics/:date", (req, res) => {
             return;
         }
 
-        const response = service.getByDate(date);
+        const response = await service.getByDate(date);
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Statistics not found for date" });
         } else {
@@ -271,7 +271,7 @@ dailyStatisticsRouter.get("/daily-statistics/:date", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -322,8 +322,8 @@ dailyStatisticsRouter.get("/daily-statistics/:date", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.post("/daily-statistics", (req, res) => {
-    const unit = new Unit(false);
+dailyStatisticsRouter.post("/daily-statistics", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new DailyStatisticsService(unit);
     let ok = false;
 
@@ -335,7 +335,7 @@ dailyStatisticsRouter.post("/daily-statistics", (req, res) => {
             return;
         }
 
-        const [success, id] = service.create(date);
+        const [success, id] = await service.create(date);
 
         if (success) {
             ok = true;
@@ -346,7 +346,7 @@ dailyStatisticsRouter.post("/daily-statistics", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.CONFLICT).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -392,8 +392,8 @@ dailyStatisticsRouter.post("/daily-statistics", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.delete("/daily-statistics/:date", (req, res) => {
-    const unit = new Unit(false);
+dailyStatisticsRouter.delete("/daily-statistics/:date", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new DailyStatisticsService(unit);
     const date = req.params.date;
     let ok = false;
@@ -404,7 +404,7 @@ dailyStatisticsRouter.delete("/daily-statistics/:date", (req, res) => {
             return;
         }
 
-        const success = service.delete(date);
+        const success = await service.delete(date);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Statistics deleted" });
@@ -414,6 +414,6 @@ dailyStatisticsRouter.delete("/daily-statistics/:date", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });

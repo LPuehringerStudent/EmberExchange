@@ -7,9 +7,9 @@ import { isNullOrWhiteSpace } from "../utils/util";
 export const stoveRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
-    const msg = String(err);
-    return msg.includes("FOREIGN KEY constraint failed") || 
-           msg.includes("UNIQUE constraint failed");
+    const pgErr = err as { code?: string };
+    return pgErr.code === "23503" || 
+           pgErr.code === "23505";
 }
 
 /**
@@ -36,17 +36,17 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/stoves", (_req, res) => {
-    const unit = new Unit(true);
+stoveRouter.get("/stoves", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveService(unit);
 
     try {
-        const response = service.getAllStoves();
+        const response = await service.getAllStoves();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -91,8 +91,8 @@ stoveRouter.get("/stoves", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/stoves/:id", (req, res) => {
-    const unit = new Unit(true);
+stoveRouter.get("/stoves/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveService(unit);
     const id = req.params.id;
 
@@ -102,7 +102,7 @@ stoveRouter.get("/stoves/:id", (req, res) => {
             return;
         }
 
-        const response = service.getStoveById(Number(id));
+        const response = await service.getStoveById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Stove not found" });
         } else {
@@ -111,7 +111,7 @@ stoveRouter.get("/stoves/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -152,8 +152,8 @@ stoveRouter.get("/stoves/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/players/:playerId/stoves", (req, res) => {
-    const unit = new Unit(true);
+stoveRouter.get("/players/:playerId/stoves", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveService(unit);
     const playerId = req.params.playerId;
 
@@ -163,12 +163,12 @@ stoveRouter.get("/players/:playerId/stoves", (req, res) => {
             return;
         }
 
-        const response = service.getStovesByOwnerId(Number(playerId));
+        const response = await service.getStovesByOwnerId(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -209,8 +209,8 @@ stoveRouter.get("/players/:playerId/stoves", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/stove-types/:typeId/stoves", (req, res) => {
-    const unit = new Unit(true);
+stoveRouter.get("/stove-types/:typeId/stoves", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveService(unit);
     const typeId = req.params.typeId;
 
@@ -220,12 +220,12 @@ stoveRouter.get("/stove-types/:typeId/stoves", (req, res) => {
             return;
         }
 
-        const response = service.getStovesByTypeId(Number(typeId));
+        const response = await service.getStovesByTypeId(Number(typeId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -277,8 +277,8 @@ stoveRouter.get("/stove-types/:typeId/stoves", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.post("/stoves", (req, res) => {
-    const unit = new Unit(false);
+stoveRouter.post("/stoves", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new StoveService(unit);
     let ok = false;
 
@@ -290,7 +290,7 @@ stoveRouter.post("/stoves", (req, res) => {
             return;
         }
 
-        const [success, id] = service.createStove(typeId, currentOwnerId);
+        const [success, id] = await service.createStove(typeId, currentOwnerId);
 
         if (success) {
             ok = true;
@@ -301,7 +301,7 @@ stoveRouter.post("/stoves", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -361,8 +361,8 @@ stoveRouter.post("/stoves", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.patch("/stoves/:id/owner", (req, res) => {
-    const unit = new Unit(false);
+stoveRouter.patch("/stoves/:id/owner", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new StoveService(unit);
     const id = req.params.id;
     let ok = false;
@@ -379,7 +379,7 @@ stoveRouter.patch("/stoves/:id/owner", (req, res) => {
             return;
         }
 
-        const success = service.updateOwner(Number(id), newOwnerId);
+        const success = await service.updateOwner(Number(id), newOwnerId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Ownership transferred" });
@@ -389,7 +389,7 @@ stoveRouter.patch("/stoves/:id/owner", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -442,8 +442,8 @@ stoveRouter.patch("/stoves/:id/owner", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.delete("/stoves/:id", (req, res) => {
-    const unit = new Unit(false);
+stoveRouter.delete("/stoves/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new StoveService(unit);
     const id = req.params.id;
     let ok = false;
@@ -454,7 +454,7 @@ stoveRouter.delete("/stoves/:id", (req, res) => {
             return;
         }
 
-        const success = service.deleteStove(Number(id));
+        const success = await service.deleteStove(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Stove deleted" });
@@ -468,7 +468,7 @@ stoveRouter.delete("/stoves/:id", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -507,8 +507,8 @@ stoveRouter.delete("/stoves/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/players/:playerId/stoves/count", (req, res) => {
-    const unit = new Unit(true);
+stoveRouter.get("/players/:playerId/stoves/count", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveService(unit);
     const playerId = req.params.playerId;
 
@@ -518,12 +518,12 @@ stoveRouter.get("/players/:playerId/stoves/count", (req, res) => {
             return;
         }
 
-        const count = service.countStovesByOwner(Number(playerId));
+        const count = await service.countStovesByOwner(Number(playerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -562,8 +562,8 @@ stoveRouter.get("/players/:playerId/stoves/count", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/stove-types/:typeId/stoves/count", (req, res) => {
-    const unit = new Unit(true);
+stoveRouter.get("/stove-types/:typeId/stoves/count", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new StoveService(unit);
     const typeId = req.params.typeId;
 
@@ -573,11 +573,11 @@ stoveRouter.get("/stove-types/:typeId/stoves/count", (req, res) => {
             return;
         }
 
-        const count = service.countStovesByType(Number(typeId));
+        const count = await service.countStovesByType(Number(typeId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });

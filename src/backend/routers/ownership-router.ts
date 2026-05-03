@@ -7,9 +7,9 @@ import { isNullOrWhiteSpace } from "../utils/util";
 export const ownershipRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
-    const msg = String(err);
-    return msg.includes("FOREIGN KEY constraint failed") || 
-           msg.includes("UNIQUE constraint failed");
+    const pgErr = err as { code?: string };
+    return pgErr.code === "23503" || 
+           pgErr.code === "23505";
 }
 
 /**
@@ -36,17 +36,17 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/ownerships", (_req, res) => {
-    const unit = new Unit(true);
+ownershipRouter.get("/ownerships", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
 
     try {
-        const response = service.getAllOwnerships();
+        const response = await service.getAllOwnerships();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -91,8 +91,8 @@ ownershipRouter.get("/ownerships", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/ownerships/:id", (req, res) => {
-    const unit = new Unit(true);
+ownershipRouter.get("/ownerships/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const id = req.params.id;
 
@@ -102,7 +102,7 @@ ownershipRouter.get("/ownerships/:id", (req, res) => {
             return;
         }
 
-        const response = service.getOwnershipById(Number(id));
+        const response = await service.getOwnershipById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Ownership record not found" });
         } else {
@@ -111,7 +111,7 @@ ownershipRouter.get("/ownerships/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -152,8 +152,8 @@ ownershipRouter.get("/ownerships/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/stoves/:stoveId/ownership-history", (req, res) => {
-    const unit = new Unit(true);
+ownershipRouter.get("/stoves/:stoveId/ownership-history", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const stoveId = req.params.stoveId;
 
@@ -163,12 +163,12 @@ ownershipRouter.get("/stoves/:stoveId/ownership-history", (req, res) => {
             return;
         }
 
-        const response = service.getOwnershipHistoryByStoveId(Number(stoveId));
+        const response = await service.getOwnershipHistoryByStoveId(Number(stoveId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -209,8 +209,8 @@ ownershipRouter.get("/stoves/:stoveId/ownership-history", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/players/:playerId/ownerships", (req, res) => {
-    const unit = new Unit(true);
+ownershipRouter.get("/players/:playerId/ownerships", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const playerId = req.params.playerId;
 
@@ -220,12 +220,12 @@ ownershipRouter.get("/players/:playerId/ownerships", (req, res) => {
             return;
         }
 
-        const response = service.getOwnershipsByPlayerId(Number(playerId));
+        const response = await service.getOwnershipsByPlayerId(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -289,8 +289,8 @@ ownershipRouter.get("/players/:playerId/ownerships", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.post("/ownerships", (req, res) => {
-    const unit = new Unit(false);
+ownershipRouter.post("/ownerships", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new OwnershipService(unit);
     let ok = false;
 
@@ -307,7 +307,7 @@ ownershipRouter.post("/ownerships", (req, res) => {
             return;
         }
 
-        const [success, id] = service.createOwnership(stoveId, playerId, acquiredHow);
+        const [success, id] = await service.createOwnership(stoveId, playerId, acquiredHow);
 
         if (success) {
             ok = true;
@@ -322,7 +322,7 @@ ownershipRouter.post("/ownerships", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -367,8 +367,8 @@ ownershipRouter.post("/ownerships", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/stoves/:stoveId/current-owner", (req, res) => {
-    const unit = new Unit(true);
+ownershipRouter.get("/stoves/:stoveId/current-owner", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const stoveId = req.params.stoveId;
 
@@ -378,7 +378,7 @@ ownershipRouter.get("/stoves/:stoveId/current-owner", (req, res) => {
             return;
         }
 
-        const response = service.getCurrentOwnership(Number(stoveId));
+        const response = await service.getCurrentOwnership(Number(stoveId));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "No ownership record found" });
         } else {
@@ -387,7 +387,7 @@ ownershipRouter.get("/stoves/:stoveId/current-owner", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -434,8 +434,8 @@ ownershipRouter.get("/stoves/:stoveId/current-owner", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.delete("/ownerships/:id", (req, res) => {
-    const unit = new Unit(false);
+ownershipRouter.delete("/ownerships/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new OwnershipService(unit);
     const id = req.params.id;
     let ok = false;
@@ -446,7 +446,7 @@ ownershipRouter.delete("/ownerships/:id", (req, res) => {
             return;
         }
 
-        const success = service.deleteOwnership(Number(id));
+        const success = await service.deleteOwnership(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Ownership record deleted" });
@@ -456,7 +456,7 @@ ownershipRouter.delete("/ownerships/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -495,8 +495,8 @@ ownershipRouter.delete("/ownerships/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/stoves/:stoveId/ownership-changes/count", (req, res) => {
-    const unit = new Unit(true);
+ownershipRouter.get("/stoves/:stoveId/ownership-changes/count", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const stoveId = req.params.stoveId;
 
@@ -506,12 +506,12 @@ ownershipRouter.get("/stoves/:stoveId/ownership-changes/count", (req, res) => {
             return;
         }
 
-        const count = service.countOwnershipChanges(Number(stoveId));
+        const count = await service.countOwnershipChanges(Number(stoveId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -550,8 +550,8 @@ ownershipRouter.get("/stoves/:stoveId/ownership-changes/count", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/players/:playerId/acquired-stoves/count", (req, res) => {
-    const unit = new Unit(true);
+ownershipRouter.get("/players/:playerId/acquired-stoves/count", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const playerId = req.params.playerId;
 
@@ -561,11 +561,11 @@ ownershipRouter.get("/players/:playerId/acquired-stoves/count", (req, res) => {
             return;
         }
 
-        const count = service.countStovesAcquiredByPlayer(Number(playerId));
+        const count = await service.countStovesAcquiredByPlayer(Number(playerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });

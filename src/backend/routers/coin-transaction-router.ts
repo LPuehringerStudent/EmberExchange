@@ -32,17 +32,17 @@ const VALID_TYPES = ['trade_in', 'trade_out', 'mini_game', 'listing_sale', 'list
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-coinTransactionRouter.get("/coin-transactions", (_req, res) => {
-    const unit = new Unit(true);
+coinTransactionRouter.get("/coin-transactions", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new CoinTransactionService(unit);
 
     try {
-        const response = service.getAll();
+        const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -87,8 +87,8 @@ coinTransactionRouter.get("/coin-transactions", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-coinTransactionRouter.get("/coin-transactions/:id", (req, res) => {
-    const unit = new Unit(true);
+coinTransactionRouter.get("/coin-transactions/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new CoinTransactionService(unit);
     const id = req.params.id;
 
@@ -98,7 +98,7 @@ coinTransactionRouter.get("/coin-transactions/:id", (req, res) => {
             return;
         }
 
-        const response = service.getById(Number(id));
+        const response = await service.getById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Coin transaction not found" });
         } else {
@@ -107,7 +107,7 @@ coinTransactionRouter.get("/coin-transactions/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -148,8 +148,8 @@ coinTransactionRouter.get("/coin-transactions/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-coinTransactionRouter.get("/players/:playerId/coin-transactions", (req, res) => {
-    const unit = new Unit(true);
+coinTransactionRouter.get("/players/:playerId/coin-transactions", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new CoinTransactionService(unit);
     const playerId = req.params.playerId;
 
@@ -159,12 +159,12 @@ coinTransactionRouter.get("/players/:playerId/coin-transactions", (req, res) => 
             return;
         }
 
-        const response = service.getByPlayerId(Number(playerId));
+        const response = await service.getByPlayerId(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -221,8 +221,8 @@ coinTransactionRouter.get("/players/:playerId/coin-transactions", (req, res) => 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-coinTransactionRouter.post("/coin-transactions", (req, res) => {
-    const unit = new Unit(false);
+coinTransactionRouter.post("/coin-transactions", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new CoinTransactionService(unit);
     let ok = false;
 
@@ -239,7 +239,7 @@ coinTransactionRouter.post("/coin-transactions", (req, res) => {
             return;
         }
 
-        const [success, id] = service.create(playerId, amount, type, description ?? null);
+        const [success, id] = await service.create(playerId, amount, type, description ?? null);
 
         if (success) {
             ok = true;
@@ -250,7 +250,7 @@ coinTransactionRouter.post("/coin-transactions", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -295,8 +295,8 @@ coinTransactionRouter.post("/coin-transactions", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-coinTransactionRouter.delete("/coin-transactions/:id", (req, res) => {
-    const unit = new Unit(false);
+coinTransactionRouter.delete("/coin-transactions/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new CoinTransactionService(unit);
     const id = req.params.id;
     let ok = false;
@@ -307,7 +307,7 @@ coinTransactionRouter.delete("/coin-transactions/:id", (req, res) => {
             return;
         }
 
-        const success = service.delete(Number(id));
+        const success = await service.delete(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Coin transaction deleted" });
@@ -317,6 +317,6 @@ coinTransactionRouter.delete("/coin-transactions/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });

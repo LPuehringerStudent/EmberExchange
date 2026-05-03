@@ -7,9 +7,9 @@ import { isNullOrWhiteSpace } from "../utils/util";
 export const lootboxRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
-    const msg = String(err);
-    return msg.includes("FOREIGN KEY constraint failed") || 
-           msg.includes("UNIQUE constraint failed");
+    const pgErr = err as { code?: string };
+    return pgErr.code === "23503" || 
+           pgErr.code === "23505";
 }
 
 /**
@@ -36,17 +36,17 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.get("/lootboxes", (_req, res) => {
-    const unit = new Unit(true);
+lootboxRouter.get("/lootboxes", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxService(unit);
 
     try {
-        const response = service.getAllLootboxes();
+        const response = await service.getAllLootboxes();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -91,8 +91,8 @@ lootboxRouter.get("/lootboxes", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.get("/lootboxes/:id", (req, res) => {
-    const unit = new Unit(true);
+lootboxRouter.get("/lootboxes/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxService(unit);
     const id = req.params.id;
 
@@ -102,7 +102,7 @@ lootboxRouter.get("/lootboxes/:id", (req, res) => {
             return;
         }
 
-        const response = service.getLootboxById(Number(id));
+        const response = await service.getLootboxById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Lootbox not found" });
         } else {
@@ -111,7 +111,7 @@ lootboxRouter.get("/lootboxes/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -152,8 +152,8 @@ lootboxRouter.get("/lootboxes/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.get("/players/:playerId/lootboxes", (req, res) => {
-    const unit = new Unit(true);
+lootboxRouter.get("/players/:playerId/lootboxes", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxService(unit);
     const playerId = req.params.playerId;
 
@@ -163,12 +163,12 @@ lootboxRouter.get("/players/:playerId/lootboxes", (req, res) => {
             return;
         }
 
-        const response = service.getLootboxesByPlayerId(Number(playerId));
+        const response = await service.getLootboxesByPlayerId(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -226,8 +226,8 @@ lootboxRouter.get("/players/:playerId/lootboxes", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.post("/lootboxes", (req, res) => {
-    const unit = new Unit(false);
+lootboxRouter.post("/lootboxes", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new LootboxService(unit);
     let ok = false;
 
@@ -244,7 +244,7 @@ lootboxRouter.post("/lootboxes", (req, res) => {
             return;
         }
 
-        const [success, id] = service.createLootbox(lootboxTypeId, playerId, acquiredHow);
+        const [success, id] = await service.createLootbox(lootboxTypeId, playerId, acquiredHow);
 
         if (success) {
             ok = true;
@@ -255,7 +255,7 @@ lootboxRouter.post("/lootboxes", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -313,8 +313,8 @@ lootboxRouter.post("/lootboxes", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.post("/lootboxes/:id/open", (req, res) => {
-    const unit = new Unit(false);
+lootboxRouter.post("/lootboxes/:id/open", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new LootboxService(unit);
     const id = req.params.id;
     let ok = false;
@@ -331,7 +331,7 @@ lootboxRouter.post("/lootboxes/:id/open", (req, res) => {
             return;
         }
 
-        const [success, result] = service.openLootbox(Number(id), playerId);
+        const [success, result] = await service.openLootbox(Number(id), playerId);
 
         if (success && result) {
             ok = true;
@@ -349,7 +349,7 @@ lootboxRouter.post("/lootboxes/:id/open", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -402,8 +402,8 @@ lootboxRouter.post("/lootboxes/:id/open", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.delete("/lootboxes/:id", (req, res) => {
-    const unit = new Unit(false);
+lootboxRouter.delete("/lootboxes/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new LootboxService(unit);
     const id = req.params.id;
     let ok = false;
@@ -414,7 +414,7 @@ lootboxRouter.delete("/lootboxes/:id", (req, res) => {
             return;
         }
 
-        const success = service.deleteLootbox(Number(id));
+        const success = await service.deleteLootbox(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Lootbox deleted" });
@@ -428,7 +428,7 @@ lootboxRouter.delete("/lootboxes/:id", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -472,8 +472,8 @@ lootboxRouter.delete("/lootboxes/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.get("/lootboxes/:lootboxId/drops", (req, res) => {
-    const unit = new Unit(true);
+lootboxRouter.get("/lootboxes/:lootboxId/drops", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxService(unit);
     const lootboxId = req.params.lootboxId;
 
@@ -483,12 +483,12 @@ lootboxRouter.get("/lootboxes/:lootboxId/drops", (req, res) => {
             return;
         }
 
-        const response = service.getDropsByLootboxId(Number(lootboxId));
+        const response = await service.getDropsByLootboxId(Number(lootboxId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 

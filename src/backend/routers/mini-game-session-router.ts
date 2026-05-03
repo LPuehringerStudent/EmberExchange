@@ -7,9 +7,9 @@ import { isNullOrWhiteSpace } from "../utils/util";
 export const miniGameSessionRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
-    const msg = String(err);
-    return msg.includes("FOREIGN KEY constraint failed") ||
-        msg.includes("UNIQUE constraint failed");
+    const pgErr = err as { code?: string };
+    return pgErr.code === "23503" ||
+        pgErr.code === "23505";
 }
 
 /**
@@ -36,17 +36,17 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/mini-game-sessions", (_req, res) => {
-    const unit = new Unit(true);
+miniGameSessionRouter.get("/mini-game-sessions", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
 
     try {
-        const response = service.getAll();
+        const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -91,8 +91,8 @@ miniGameSessionRouter.get("/mini-game-sessions", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/mini-game-sessions/:id", (req, res) => {
-    const unit = new Unit(true);
+miniGameSessionRouter.get("/mini-game-sessions/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
     const id = req.params.id;
 
@@ -102,7 +102,7 @@ miniGameSessionRouter.get("/mini-game-sessions/:id", (req, res) => {
             return;
         }
 
-        const response = service.getById(Number(id));
+        const response = await service.getById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Session not found" });
         } else {
@@ -111,7 +111,7 @@ miniGameSessionRouter.get("/mini-game-sessions/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -152,8 +152,8 @@ miniGameSessionRouter.get("/mini-game-sessions/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", (req, res) => {
-    const unit = new Unit(true);
+miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
     const playerId = req.params.playerId;
 
@@ -163,12 +163,12 @@ miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", (req, res) =>
             return;
         }
 
-        const response = service.getByPlayerId(Number(playerId));
+        const response = await service.getByPlayerId(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -203,8 +203,8 @@ miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", (req, res) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/mini-game-sessions/type/:gameType", (req, res) => {
-    const unit = new Unit(true);
+miniGameSessionRouter.get("/mini-game-sessions/type/:gameType", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
     const gameType = req.params.gameType;
 
@@ -214,12 +214,12 @@ miniGameSessionRouter.get("/mini-game-sessions/type/:gameType", (req, res) => {
             return;
         }
 
-        const response = service.getByGameType(gameType);
+        const response = await service.getByGameType(gameType);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -281,8 +281,8 @@ miniGameSessionRouter.get("/mini-game-sessions/type/:gameType", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.post("/mini-game-sessions", (req, res) => {
-    const unit = new Unit(false);
+miniGameSessionRouter.post("/mini-game-sessions", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new MiniGameSessionService(unit);
     let ok = false;
 
@@ -309,7 +309,7 @@ miniGameSessionRouter.post("/mini-game-sessions", (req, res) => {
             return;
         }
 
-        const [success, id] = service.create(playerId, gameType, result, coinPayout);
+        const [success, id] = await service.create(playerId, gameType, result, coinPayout);
 
         if (success) {
             ok = true;
@@ -324,7 +324,7 @@ miniGameSessionRouter.post("/mini-game-sessions", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -369,8 +369,8 @@ miniGameSessionRouter.post("/mini-game-sessions", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.delete("/mini-game-sessions/:id", (req, res) => {
-    const unit = new Unit(false);
+miniGameSessionRouter.delete("/mini-game-sessions/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new MiniGameSessionService(unit);
     const id = req.params.id;
     let ok = false;
@@ -381,7 +381,7 @@ miniGameSessionRouter.delete("/mini-game-sessions/:id", (req, res) => {
             return;
         }
 
-        const success = service.delete(Number(id));
+        const success = await service.delete(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Session deleted" });
@@ -391,7 +391,7 @@ miniGameSessionRouter.delete("/mini-game-sessions/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -435,8 +435,8 @@ miniGameSessionRouter.delete("/mini-game-sessions/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/players/:playerId/mini-game-stats", (req, res) => {
-    const unit = new Unit(true);
+miniGameSessionRouter.get("/players/:playerId/mini-game-stats", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
     const playerId = req.params.playerId;
 
@@ -446,12 +446,12 @@ miniGameSessionRouter.get("/players/:playerId/mini-game-stats", (req, res) => {
             return;
         }
 
-        const totalSessions = service.countByPlayer(Number(playerId));
-        const totalPayout = service.getTotalPayoutByPlayer(Number(playerId));
+        const totalSessions = await service.countByPlayer(Number(playerId));
+        const totalPayout = await service.getTotalPayoutByPlayer(Number(playerId));
         res.status(StatusCodes.OK).json({ totalSessions, totalPayout });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
