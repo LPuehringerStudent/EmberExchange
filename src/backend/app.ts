@@ -6,7 +6,7 @@ import express from "express";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
 import passport, { configurePassport } from "./utils/passport";
-import {Unit, ensureSampleDataInserted, resetDatabase} from "./utils/unit";
+import {Unit, ensureSampleDataInserted, resetDatabase, DB} from "./utils/unit";
 import { playerRouter } from "./routers/player-router";
 import { lootboxRouter } from "./routers/lootbox-router";
 import { stoveTypeRouter } from "./routers/stove-type-router";
@@ -84,17 +84,17 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Test database connection endpoint
-app.get("/api/db-test", (_req, res) => {
+app.get("/api/db-test", async (_req, res) => {
     let unit: Unit | null = null;
     try {
-        unit = new Unit(true);
-        const stmt = unit.prepare<{ count: number }>("select count(*) as count from sqlite_master");
-        const result = stmt.get();
-        unit.complete();
+        unit = await Unit.create(true);
+        const stmt = unit.prepare<{ count: number }>("SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public'");
+        const result = await stmt.get();
+        await unit.complete();
         res.json({ status: "connected", tables: result?.count ?? 0 });
     } catch (error) {
         if (unit) {
-            try { unit.complete(); } catch { /* ignore */ }
+            try { await unit.complete(); } catch { /* ignore */ }
         }
         res.status(500).json({ status: "error", message: String(error) });
     }
@@ -104,28 +104,32 @@ app.get("/api/db-test", (_req, res) => {
 if (require.main === module) {
     app.listen(PORT, () => {
         console.log(`🚀 EmberExchange server running on http://localhost:${PORT}`);
-        initDb();
+        initDb().catch(err => console.error("Database initialization failed:", err));
     });
 }
 
-function initDb(): void {
+async function initDb(): Promise<void> {
     let unit: Unit | null = null;
     try {
-        unit = new Unit(false);
+        unit = await Unit.create(false);
         
-        // Reset database to default state (drop and recreate tables)
-        const connection = unit.getConnection();
-        resetDatabase(connection);
+        // Reset database only when explicitly requested
+        if (process.env.RESET_DB === "true") {
+            const connection = unit.getConnection();
+            await resetDatabase(connection);
+        } else {
+            await DB.ensureTablesCreated(unit.getConnection());
+        }
         
-        // Insert sample data fresh
-        ensureSampleDataInserted(unit);
-        console.log("✅ Database reset and sample data inserted");
+        // Insert sample data if tables are empty
+        await ensureSampleDataInserted(unit);
+        console.log("✅ Database initialized and sample data ready");
         
-        unit.complete(true);
+        await unit.complete(true);
     } catch (error) {
         console.error("Database initialization failed:", error);
         if (unit) {
-            try { unit.complete(false); } catch { /* ignore */ }
+            try { await unit.complete(false); } catch { /* ignore */ }
         }
     }
 }
