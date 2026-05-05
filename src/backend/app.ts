@@ -4,7 +4,6 @@ dotenv.config();
 import cors from "cors";
 import express from "express";
 import path from "path";
-import swaggerUi from "swagger-ui-express";
 import passport, { configurePassport } from "./utils/passport";
 import {Unit, ensureSampleDataInserted, resetDatabase, DB} from "./utils/unit";
 import { playerRouter } from "./routers/player-router";
@@ -26,7 +25,6 @@ import { loginHistoryRouter } from "./routers/login-history-router";
 import { coinTransactionRouter } from "./routers/coin-transaction-router";
 import { authRouter } from "./routers/auth-router";
 import { oauthRouter } from "./routers/oauth-router";
-import { swaggerSpec } from "./swagger";
 
 
 export const app = express();
@@ -40,9 +38,6 @@ app.use(passport.initialize());
 
 // Configure Passport
 configurePassport();
-
-// Swagger API Documentation
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // API Routes - MUST come before static files and catch-all
 app.use("/api", playerRouter);
@@ -71,7 +66,7 @@ app.use(express.static(path.join(process.cwd(), "src/frontend/dist/ember-fronten
 // Serve index.html for all non-API routes (Angular client-side routing)
 app.use((req, res, next) => {
     // Don't interfere with API routes
-    if (req.path.startsWith("/api") || req.path.startsWith("/api-docs")) {
+    if (req.path.startsWith("/api")) {
         next();
         return;
     }
