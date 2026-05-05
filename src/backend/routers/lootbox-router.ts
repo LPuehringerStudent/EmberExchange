@@ -1,6 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { LootboxService } from "../services/lootbox-service";
+import { ListingService } from "../services/listing-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 
@@ -331,7 +332,16 @@ lootboxRouter.post("/lootboxes/:id/open", async (req, res) => {
             return;
         }
 
-        const [success, result] = await service.openLootbox(Number(id), playerId);
+        const lootboxId = Number(id);
+
+        // Check if lootbox is listed before attempting to open
+        const listingService = new ListingService(unit);
+        if (await listingService.isLootboxListed(lootboxId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Lootbox is currently listed on the marketplace and cannot be opened" });
+            return;
+        }
+
+        const [success, result] = await service.openLootbox(lootboxId, playerId);
 
         if (success && result) {
             ok = true;

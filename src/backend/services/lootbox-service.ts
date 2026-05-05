@@ -1,6 +1,7 @@
 import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { LootboxRow, LootboxTypeRow, LootboxDropRow } from "../../shared/model";
+import { ListingService } from "./listing-service";
 
 interface DropTable {
     rarity: string;
@@ -195,6 +196,12 @@ export class LootboxService extends ServiceBase {
         const lootbox = await verifyStmt.get();
         if (!lootbox) return [false, null];
 
+        // 1b. Verify lootbox is not currently listed on the marketplace
+        const listingService = new ListingService(this.unit);
+        if (await listingService.isLootboxListed(lootboxId)) {
+            return [false, null];
+        }
+
         // 2. Determine drop
         const dropTable = DROP_TABLES[lootbox.lootboxTypeId] ?? DROP_TABLES[1];
         const rarity = this.weightedRarity(dropTable);
@@ -234,6 +241,21 @@ export class LootboxService extends ServiceBase {
         ).run();
 
         return [true, { stoveId, stoveName: stoveType.name, rarity, imageUrl: stoveType.imageUrl, lootboxId }];
+    }
+
+    /**
+     * Updates the owner (playerId) of a lootbox.
+     * @param lootboxId - The lootbox's unique ID.
+     * @param playerId - The new owner's player ID.
+     * @returns True if exactly one lootbox was updated, false otherwise.
+     */
+    async updateLootboxOwner(lootboxId: number, playerId: number): Promise<boolean> {
+        const stmt = this.unit.prepare(
+            "UPDATE Lootbox SET playerId = @playerId WHERE lootboxId = @lootboxId",
+            { lootboxId, playerId }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
     }
 
     /**
