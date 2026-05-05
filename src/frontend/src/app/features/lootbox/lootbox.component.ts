@@ -1,51 +1,43 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  ElementRef,
-  OnInit,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, viewChild, ChangeDetectorRef, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
-import { LootBoxHelper, LootItem } from '../../../../../middleground/LootboxHelper';
-import { StoveService } from '@core/services/stove.service';
-import { AuthService } from '@core/services/auth.service';
 import { Router } from '@angular/router';
+import { LootBoxHelper, LootItem } from '../../../../../middleground/LootboxHelper';
+import { LootboxService } from '@core/services/lootbox.service';
+import { AuthService } from '@core/services/auth.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-lootbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './lootbox.component.html',
   imports: [NgOptimizedImage],
-  styleUrls: ['./lootbox.component.css'],
+  styleUrls: ['./lootbox.component.css']
 })
 export class LootboxComponent implements AfterViewInit, OnInit {
   itemsElement = viewChild<ElementRef<HTMLElement>>('itemsContainer');
 
   // ── State ──────────────────────────────────────────────────
-  lootboxCount = signal<number>(10); // hardcoded until wired to backend
+  lootboxCount = signal<number>(0);
   isOpening    = signal<boolean>(false);
   playingGif   = signal<boolean>(false);
   showOverlay  = signal<boolean>(false);
   showPopup    = signal<boolean>(false);
   resultText   = signal<string>('');
+  resultImageUrl = signal<string>('');
 
   items: LootItem[] = [];
   finalItem: LootItem | null = null;
-  playerId: number | null    = null;
+  playerId: number | null = null;
 
-  /** Possible stove drops shown in the "possible rewards" banner */
   readonly previewDrops = [
-    { label: 'Stove I',   src: '/assets/stove_sprites/stove-1.png', rarity: 'common',    rarityLabel: 'Common'    },
-    { label: 'Stove II',  src: '/assets/stove_sprites/stove-2.png', rarity: 'rare',      rarityLabel: 'Rare'      },
-    { label: 'Stove III', src: '/assets/stove_sprites/stove-3.png', rarity: 'legendary', rarityLabel: 'Legendary' },
+    { label: 'Rusty Stove',    src: '/assets/stove_sprites/rusty.png',    rarity: 'common',    rarityLabel: 'Common'    },
+    { label: 'Bronze Stove',   src: '/assets/stove_sprites/bronze.png',   rarity: 'rare',      rarityLabel: 'Rare'      },
+    { label: 'Golden Stove',   src: '/assets/stove_sprites/golden.png',   rarity: 'epic',      rarityLabel: 'Epic'      },
+    { label: 'Dragon Stove',   src: '/assets/stove_sprites/dragon.png',   rarity: 'legendary', rarityLabel: 'Legendary' },
   ];
 
   private lootBoxHelper = new LootBoxHelper();
-  private stoveApi      = inject(StoveService);
+  private lootboxApi    = inject(LootboxService);
   private cdr           = inject(ChangeDetectorRef);
   private authService   = inject(AuthService);
   private router        = inject(Router);
@@ -57,7 +49,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       return;
     }
     this.playerId = user.playerId;
-    // In production: this.lootboxCount.set(user.lootboxCount);
+    this.lootboxCount.set(user.lootboxCount);
   }
 
   ngAfterViewInit(): void {}
@@ -66,66 +58,83 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     return !this.isOpening() && this.lootboxCount() > 0 && this.playerId !== null;
   }
 
-  openBox(): void {
-    if (!this.canOpen()) return;
+  async openBox(): Promise<void> {
+    if (!this.canOpen() || this.playerId === null) {
+      if (this.lootboxCount() <= 0) {
+        alert('You have no lootboxes available!');
+      }
+      return;
+    }
 
-    this.isOpening.set(true);
-    this.playingGif.set(true);
-    this.showPopup.set(false);
-    this.lootboxCount.update(c => Math.max(0, c - 1));
-    this.cdr.detectChanges();
+    let lootboxId: number | null = null;
+    try {
+      const lootboxes = await firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId));
+      if (lootboxes.length === 0) {
+        alert('You have no lootboxes available!');
+        this.lootboxCount.set(0);
+        return;
+      }
+      lootboxId = lootboxes[0].lootboxId;
+    } catch (err) {
+      console.error('Failed to fetch lootboxes:', err);
+      alert('Failed to open lootbox. Please try again.');
+      return;
+    }
 
-    // Let the opening gif play (~1.4 s), then launch the roller
-    setTimeout(() => {
-      this.playingGif.set(false);
-      this.lootBoxHelper.buildStrip();
-      this.items = this.lootBoxHelper.items;
-      this.showOverlay.set(true);
+    try {
+      const result = await firstValueFrom(this.lootboxApi.openLootbox(lootboxId, this.playerId));
+      console.log('Lootbox opened:', result);
+
+      this.lootboxCount.update(count => Math.max(0, count - 1));
+      void this.authService.refreshUser();
+
+      this.isOpening.set(true);
+      this.playingGif.set(true);
+      this.showPopup.set(false);
       this.cdr.detectChanges();
 
       setTimeout(() => {
-        const itemsEl = this.itemsElement()?.nativeElement;
-        if (!itemsEl) { this.isOpening.set(false); return; }
+        this.playingGif.set(false);
+        this.lootBoxHelper.buildStripFor(result.rarity);
+        this.items = this.lootBoxHelper.items;
+        this.finalItem = this.lootBoxHelper.finalItem;
+        this.showOverlay.set(true);
+        this.cdr.detectChanges();
 
-        const itemEl = itemsEl.querySelector('.item') as HTMLElement;
-        if (!itemEl)  { this.isOpening.set(false); return; }
+        setTimeout(() => {
+          const itemsEl = this.itemsElement()?.nativeElement;
+          if (!itemsEl) { this.isOpening.set(false); return; }
 
-        const style     = window.getComputedStyle(itemEl);
-        const itemWidth = itemEl.offsetWidth
-          + parseInt(style.marginLeft  ?? '0')
-          + parseInt(style.marginRight ?? '0');
-        const rollerEl    = document.getElementById('roller');
-        const rollerWidth = rollerEl?.offsetWidth ?? 620;
-        const offset      = -(40 * itemWidth) + rollerWidth / 2 - itemWidth / 2;
+          const itemEl = itemsEl.querySelector('.item') as HTMLElement;
+          if (!itemEl) { this.isOpening.set(false); return; }
 
-        itemsEl.style.transform = `translateX(${offset}px)`;
-        setTimeout(() => this.showResult(), 4000);
-      }, 100);
-    }, 1400);
+          const style = window.getComputedStyle(itemEl);
+          const itemWidth = itemEl.offsetWidth
+            + parseInt(style.marginLeft || '0')
+            + parseInt(style.marginRight || '0');
+          const rollerEl = document.getElementById('roller');
+          const rollerWidth = rollerEl?.offsetWidth || 620;
+          const offset = -(40 * itemWidth) + rollerWidth / 2 - itemWidth / 2;
+
+          itemsEl.style.transform = `translateX(${offset}px)`;
+          setTimeout(() => this.showResult(result.stoveName, result.imageUrl), 4000);
+        }, 100);
+      }, 1400);
+    } catch (err) {
+      console.error('Failed to open lootbox:', err);
+      alert('Failed to open lootbox. Please try again.');
+      this.isOpening.set(false);
+      this.playingGif.set(false);
+    }
   }
 
-  private showResult(): void {
-    this.finalItem = this.lootBoxHelper.finalItem;
-
-    if (this.finalItem && this.playerId !== null) {
-      const typeId = this.lootBoxHelper.returnTypeId(this.finalItem);
-      this.saveLoot(typeId);
-      this.resultText.set(`You received: ${this.finalItem.name}`);
-    } else {
-      this.resultText.set('You received: Unknown item');
-    }
-
+  private showResult(stoveName: string, imageUrl: string): void {
+    this.resultText.set(`You got: ${stoveName}`);
+    this.resultImageUrl.set(imageUrl);
     this.showOverlay.set(false);
     this.showPopup.set(true);
     this.isOpening.set(false);
     this.cdr.detectChanges();
-  }
-
-  saveLoot(typeId: number): void {
-    if (this.playerId === null) return;
-    this.stoveApi.createStove(typeId, this.playerId).subscribe({
-      error: (err: unknown) => console.error('Failed to save stove:', err),
-    });
   }
 
   resetAll(): void {
@@ -137,7 +146,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     const itemsEl = this.itemsElement()?.nativeElement;
     if (itemsEl) {
       itemsEl.style.transition = 'none';
-      itemsEl.style.transform  = 'translateX(0px)';
+      itemsEl.style.transform = 'translateX(0px)';
     }
   }
 }

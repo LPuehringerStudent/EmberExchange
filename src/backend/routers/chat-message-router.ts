@@ -7,9 +7,9 @@ import { isNullOrWhiteSpace } from "../utils/util";
 export const chatMessageRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
-    const msg = String(err);
-    return msg.includes("FOREIGN KEY constraint failed") ||
-        msg.includes("UNIQUE constraint failed");
+    const pgErr = err as { code?: string };
+    return pgErr.code === "23503" ||
+        pgErr.code === "23505";
 }
 
 /**
@@ -36,17 +36,17 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages", (_req, res) => {
-    const unit = new Unit(true);
+chatMessageRouter.get("/chat-messages", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
 
     try {
-        const response = service.getAll();
+        const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -74,17 +74,17 @@ chatMessageRouter.get("/chat-messages", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages/global", (_req, res) => {
-    const unit = new Unit(true);
+chatMessageRouter.get("/chat-messages/global", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
 
     try {
-        const response = service.getGlobalMessages();
+        const response = await service.getGlobalMessages();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -129,8 +129,8 @@ chatMessageRouter.get("/chat-messages/global", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages/:id", (req, res) => {
-    const unit = new Unit(true);
+chatMessageRouter.get("/chat-messages/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const id = req.params.id;
 
@@ -140,7 +140,7 @@ chatMessageRouter.get("/chat-messages/:id", (req, res) => {
             return;
         }
 
-        const response = service.getById(Number(id));
+        const response = await service.getById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Message not found" });
         } else {
@@ -149,7 +149,7 @@ chatMessageRouter.get("/chat-messages/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -190,8 +190,8 @@ chatMessageRouter.get("/chat-messages/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/players/:playerId/sent-messages", (req, res) => {
-    const unit = new Unit(true);
+chatMessageRouter.get("/players/:playerId/sent-messages", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const playerId = req.params.playerId;
 
@@ -201,12 +201,12 @@ chatMessageRouter.get("/players/:playerId/sent-messages", (req, res) => {
             return;
         }
 
-        const response = service.getBySender(Number(playerId));
+        const response = await service.getBySender(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -247,8 +247,8 @@ chatMessageRouter.get("/players/:playerId/sent-messages", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/players/:playerId/received-messages", (req, res) => {
-    const unit = new Unit(true);
+chatMessageRouter.get("/players/:playerId/received-messages", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const playerId = req.params.playerId;
 
@@ -258,12 +258,12 @@ chatMessageRouter.get("/players/:playerId/received-messages", (req, res) => {
             return;
         }
 
-        const response = service.getByReceiver(Number(playerId));
+        const response = await service.getByReceiver(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -304,8 +304,8 @@ chatMessageRouter.get("/players/:playerId/received-messages", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/players/:playerId/unread-messages", (req, res) => {
-    const unit = new Unit(true);
+chatMessageRouter.get("/players/:playerId/unread-messages", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const playerId = req.params.playerId;
 
@@ -315,12 +315,12 @@ chatMessageRouter.get("/players/:playerId/unread-messages", (req, res) => {
             return;
         }
 
-        const response = service.getUnreadByReceiver(Number(playerId));
+        const response = await service.getUnreadByReceiver(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -367,8 +367,8 @@ chatMessageRouter.get("/players/:playerId/unread-messages", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", (req, res) => {
-    const unit = new Unit(true);
+chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const player1Id = req.params.player1Id;
     const player2Id = req.params.player2Id;
@@ -383,12 +383,12 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", (req,
             return;
         }
 
-        const response = service.getConversation(Number(player1Id), Number(player2Id));
+        const response = await service.getConversation(Number(player1Id), Number(player2Id));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -446,8 +446,8 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", (req,
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.post("/chat-messages", (req, res) => {
-    const unit = new Unit(false);
+chatMessageRouter.post("/chat-messages", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new ChatMessageService(unit);
     let ok = false;
 
@@ -464,7 +464,7 @@ chatMessageRouter.post("/chat-messages", (req, res) => {
             return;
         }
 
-        const [success, id] = service.create(senderId, receiverId ?? null, content);
+        const [success, id] = await service.create(senderId, receiverId ?? null, content);
 
         if (success) {
             ok = true;
@@ -479,7 +479,7 @@ chatMessageRouter.post("/chat-messages", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -524,8 +524,8 @@ chatMessageRouter.post("/chat-messages", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.patch("/chat-messages/:id/read", (req, res) => {
-    const unit = new Unit(false);
+chatMessageRouter.patch("/chat-messages/:id/read", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new ChatMessageService(unit);
     const id = req.params.id;
     let ok = false;
@@ -536,7 +536,7 @@ chatMessageRouter.patch("/chat-messages/:id/read", (req, res) => {
             return;
         }
 
-        const success = service.markAsRead(Number(id));
+        const success = await service.markAsRead(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Message marked as read" });
@@ -546,7 +546,7 @@ chatMessageRouter.patch("/chat-messages/:id/read", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -591,8 +591,8 @@ chatMessageRouter.patch("/chat-messages/:id/read", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.delete("/chat-messages/:id", (req, res) => {
-    const unit = new Unit(false);
+chatMessageRouter.delete("/chat-messages/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new ChatMessageService(unit);
     const id = req.params.id;
     let ok = false;
@@ -603,7 +603,7 @@ chatMessageRouter.delete("/chat-messages/:id", (req, res) => {
             return;
         }
 
-        const success = service.delete(Number(id));
+        const success = await service.delete(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Message deleted" });
@@ -613,7 +613,7 @@ chatMessageRouter.delete("/chat-messages/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -652,8 +652,8 @@ chatMessageRouter.delete("/chat-messages/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/players/:playerId/unread-count", (req, res) => {
-    const unit = new Unit(true);
+chatMessageRouter.get("/players/:playerId/unread-count", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const playerId = req.params.playerId;
 
@@ -663,11 +663,11 @@ chatMessageRouter.get("/players/:playerId/unread-count", (req, res) => {
             return;
         }
 
-        const count = service.countUnread(Number(playerId));
+        const count = await service.countUnread(Number(playerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });

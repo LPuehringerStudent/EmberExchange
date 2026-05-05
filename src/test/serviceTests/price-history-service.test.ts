@@ -18,7 +18,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('getAllPriceHistory', () => {
-        it('should return all price history records', () => {
+        it('should return all price history records', async () => {
             const mockHistory: PriceHistoryRow[] = [
                 { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') },
                 { historyId: 2, typeId: 2, salePrice: 200, saleDate: new Date('2024-01-02') }
@@ -34,7 +34,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('getPriceHistoryById', () => {
-        it('should return record when found', () => {
+        it('should return record when found', async () => {
             const mockRecord: PriceHistoryRow = { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') };
             mockStmt.get.mockReturnValue(mockRecord);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -44,7 +44,7 @@ describe('PriceHistoryService', () => {
             expect(result).toEqual(mockRecord);
         });
 
-        it('should return null when not found', () => {
+        it('should return null when not found', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -55,7 +55,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('getPriceHistoryByTypeId', () => {
-        it('should return history ordered by sale date DESC', () => {
+        it('should return history ordered by sale date DESC', async () => {
             const mockHistory: PriceHistoryRow[] = [
                 { historyId: 2, typeId: 1, salePrice: 200, saleDate: new Date('2024-02-01') },
                 { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') }
@@ -74,7 +74,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('recordSale', () => {
-        it('should record sale successfully', () => {
+        it('should record sale successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -96,7 +96,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('getAveragePrice', () => {
-        it('should return average price', () => {
+        it('should return average price', async () => {
             mockStmt.get.mockReturnValue({ average: 150.5 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -109,7 +109,7 @@ describe('PriceHistoryService', () => {
             expect(result).toBe(150.5);
         });
 
-        it('should return 0 when no sales', () => {
+        it('should return 0 when no sales', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -118,7 +118,7 @@ describe('PriceHistoryService', () => {
             expect(result).toBe(0);
         });
 
-        it('should return 0 when average is null', () => {
+        it('should return 0 when average is null', async () => {
             mockStmt.get.mockReturnValue({ average: null });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -129,7 +129,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('getMinPrice', () => {
-        it('should return minimum price', () => {
+        it('should return minimum price', async () => {
             mockStmt.get.mockReturnValue({ min: 50 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -142,7 +142,7 @@ describe('PriceHistoryService', () => {
             expect(result).toBe(50);
         });
 
-        it('should return 0 when no sales', () => {
+        it('should return 0 when no sales', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -153,7 +153,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('getMaxPrice', () => {
-        it('should return maximum price', () => {
+        it('should return maximum price', async () => {
             mockStmt.get.mockReturnValue({ max: 500 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -166,7 +166,7 @@ describe('PriceHistoryService', () => {
             expect(result).toBe(500);
         });
 
-        it('should return 0 when no sales', () => {
+        it('should return 0 when no sales', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -177,7 +177,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('getRecentPrices', () => {
-        it('should return recent prices with default limit', () => {
+        it('should return recent prices with default limit', async () => {
             const mockHistory: PriceHistoryRow[] = [
                 { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') }
             ];
@@ -193,7 +193,7 @@ describe('PriceHistoryService', () => {
             expect(result).toEqual(mockHistory);
         });
 
-        it('should return recent prices with custom limit', () => {
+        it('should return recent prices with custom limit', async () => {
             const mockHistory: PriceHistoryRow[] = [
                 { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') }
             ];
@@ -211,7 +211,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('countSales', () => {
-        it('should return correct count', () => {
+        it('should return correct count', async () => {
             mockStmt.get.mockReturnValue({ count: 15 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -224,7 +224,7 @@ describe('PriceHistoryService', () => {
             expect(result).toBe(15);
         });
 
-        it('should return 0 when undefined', () => {
+        it('should return 0 when undefined', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -235,7 +235,7 @@ describe('PriceHistoryService', () => {
     });
 
     describe('deletePriceHistory', () => {
-        it('should delete record successfully', () => {
+        it('should delete record successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -244,7 +244,7 @@ describe('PriceHistoryService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when record not found', () => {
+        it('should return false when record not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 

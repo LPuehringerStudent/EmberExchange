@@ -11,22 +11,22 @@ export class LootboxTypeService extends ServiceBase {
      * Retrieves all lootbox types.
      * @returns Array of all LootboxTypeRow objects.
      */
-    getAll(): LootboxTypeRow[] {
+    async getAll(): Promise<LootboxTypeRow[]> {
         const stmt = this.unit.prepare<LootboxTypeRow>(
             "SELECT * FROM LootboxType ORDER BY lootboxTypeId"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
      * Retrieves available lootbox types (isAvailable = true).
      * @returns Array of available LootboxTypeRow objects.
      */
-    getAvailable(): LootboxTypeRow[] {
+    async getAvailable(): Promise<LootboxTypeRow[]> {
         const stmt = this.unit.prepare<LootboxTypeRow>(
             "SELECT * FROM LootboxType WHERE isAvailable = 1 ORDER BY costCoins"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -34,12 +34,12 @@ export class LootboxTypeService extends ServiceBase {
      * @param id - The lootbox type ID.
      * @returns LootboxTypeRow or null if not found.
      */
-    getById(id: number): LootboxTypeRow | null {
+    async getById(id: number): Promise<LootboxTypeRow | null> {
         const stmt = this.unit.prepare<LootboxTypeRow>(
             "SELECT * FROM LootboxType WHERE lootboxTypeId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -52,14 +52,14 @@ export class LootboxTypeService extends ServiceBase {
      * @param isAvailable - Availability status.
      * @returns Tuple [success, id].
      */
-    create(
+    async create(
         name: string,
         description: string | null,
         costCoins: number,
         costFree: boolean,
         dailyLimit: number | null,
         isAvailable: boolean
-    ): [boolean, number] {
+    ): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<LootboxTypeRow>(
             `INSERT INTO LootboxType (name, description, costCoins, costFree, dailyLimit, isAvailable) 
              VALUES (@name, @description, @costCoins, @costFree, @dailyLimit, @isAvailable)`,
@@ -72,7 +72,7 @@ export class LootboxTypeService extends ServiceBase {
                 isAvailable: isAvailable ? 1 : 0
             }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -86,7 +86,7 @@ export class LootboxTypeService extends ServiceBase {
      * @param isAvailable - New availability.
      * @returns True if updated.
      */
-    update(
+    async update(
         id: number,
         name: string,
         description: string | null,
@@ -94,7 +94,7 @@ export class LootboxTypeService extends ServiceBase {
         costFree: boolean,
         dailyLimit: number | null,
         isAvailable: boolean
-    ): boolean {
+    ): Promise<boolean> {
         const stmt = this.unit.prepare(
             `UPDATE LootboxType 
              SET name = @name, description = @description, costCoins = @costCoins, 
@@ -110,7 +110,7 @@ export class LootboxTypeService extends ServiceBase {
                 isAvailable: isAvailable ? 1 : 0
             }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -120,12 +120,12 @@ export class LootboxTypeService extends ServiceBase {
      * @param isAvailable - New availability.
      * @returns True if updated.
      */
-    updateAvailability(id: number, isAvailable: boolean): boolean {
+    async updateAvailability(id: number, isAvailable: boolean): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE LootboxType SET isAvailable = @isAvailable WHERE lootboxTypeId = @id",
             { id, isAvailable: isAvailable ? 1 : 0 }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -134,12 +134,12 @@ export class LootboxTypeService extends ServiceBase {
      * @param id - Lootbox type ID.
      * @returns True if deleted.
      */
-    delete(id: number): boolean {
+    async delete(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM LootboxType WHERE lootboxTypeId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -147,11 +147,11 @@ export class LootboxTypeService extends ServiceBase {
      * Counts total lootbox types.
      * @returns Count.
      */
-    count(): number {
+    async count(): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM LootboxType"
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 
@@ -159,11 +159,11 @@ export class LootboxTypeService extends ServiceBase {
      * Counts available lootbox types.
      * @returns Count of available types.
      */
-    countAvailable(): number {
+    async countAvailable(): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM LootboxType WHERE isAvailable = 1"
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 }

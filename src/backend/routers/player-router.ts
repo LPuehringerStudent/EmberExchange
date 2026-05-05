@@ -3,13 +3,14 @@ import { Unit } from "../utils/unit";
 import { PlayerService } from "../services/player-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { hashPassword } from "../utils/password";
 
 export const playerRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
-    const msg = String(err);
-    return msg.includes("FOREIGN KEY constraint failed") || 
-           msg.includes("UNIQUE constraint failed");
+    const pgErr = err as { code?: string };
+    return pgErr.code === "23503" || 
+           pgErr.code === "23505";
 }
 
 /**
@@ -36,17 +37,17 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.get("/players", (_req, res) => {
-    const unit = new Unit(true);
+playerRouter.get("/players", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new PlayerService(unit);
 
     try {
-        const response = service.getAllPlayers();
+        const response = await service.getAllPlayers();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -91,8 +92,8 @@ playerRouter.get("/players", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.get("/players/:id", (req, res) => {
-    const unit = new Unit(true);
+playerRouter.get("/players/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new PlayerService(unit);
     const id = req.params.id;
 
@@ -104,7 +105,7 @@ playerRouter.get("/players/:id", (req, res) => {
             return;
         }
 
-        const response = service.getInfoByID(Number(id));
+        const response = await service.getInfoByID(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         } else {
@@ -113,7 +114,7 @@ playerRouter.get("/players/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -183,8 +184,8 @@ playerRouter.get("/players/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.post("/players", (req, res) => {
-    const unit = new Unit(false);
+playerRouter.post("/players", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     let ok = false;
 
@@ -215,22 +216,23 @@ playerRouter.post("/players", (req, res) => {
         }
 
         // Check if username already exists
-        const existingUsername = service.getPlayerByUsername(username);
+        const existingUsername = await service.getPlayerByUsername(username);
         if (existingUsername !== null) {
             res.status(StatusCodes.CONFLICT).json({ error: "Username already exists" });
             return;
         }
 
         // Check if email already exists
-        const existingEmail = service.getPlayerByEmail(email);
+        const existingEmail = await service.getPlayerByEmail(email);
         if (existingEmail !== null) {
             res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
             return;
         }
 
-        const [success, id] = service.createPlayer(
+        const hashedPassword = await hashPassword(password);
+        const [success, id] = await service.createPlayer(
             username,
-            password,
+            hashedPassword,
             email,
             coins ?? 1000,
             lootboxCount ?? 10
@@ -249,7 +251,7 @@ playerRouter.post("/players", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -316,8 +318,8 @@ playerRouter.post("/players", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.patch("/players/:id/coins", (req, res) => {
-    const unit = new Unit(false);
+playerRouter.patch("/players/:id/coins", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
     let ok = false;
@@ -334,7 +336,7 @@ playerRouter.patch("/players/:id/coins", (req, res) => {
             return;
         }
 
-        const success = service.updatePlayerCoins(Number(id), coins);
+        const success = await service.updatePlayerCoins(Number(id), coins);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Coins updated" });
@@ -348,7 +350,7 @@ playerRouter.patch("/players/:id/coins", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -415,8 +417,8 @@ playerRouter.patch("/players/:id/coins", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.patch("/players/:id/lootboxes", (req, res) => {
-    const unit = new Unit(false);
+playerRouter.patch("/players/:id/lootboxes", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
     let ok = false;
@@ -433,7 +435,7 @@ playerRouter.patch("/players/:id/lootboxes", (req, res) => {
             return;
         }
 
-        const success = service.updatePlayerLootboxCount(Number(id), lootboxCount);
+        const success = await service.updatePlayerLootboxCount(Number(id), lootboxCount);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Lootbox count updated" });
@@ -447,7 +449,7 @@ playerRouter.patch("/players/:id/lootboxes", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -500,8 +502,8 @@ playerRouter.patch("/players/:id/lootboxes", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.delete("/players/:id", (req, res) => {
-    const unit = new Unit(false);
+playerRouter.delete("/players/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
     let ok = false;
@@ -512,7 +514,7 @@ playerRouter.delete("/players/:id", (req, res) => {
             return;
         }
 
-        const success = service.deletePlayer(Number(id));
+        const success = await service.deletePlayer(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Player deleted" });
@@ -526,6 +528,6 @@ playerRouter.delete("/players/:id", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });

@@ -47,10 +47,6 @@ export const routes: Routes = [
     loadChildren: () => import('./features/settings/settings.routes').then(m => m.SETTINGS_ROUTES)
   },
   {
-    path: 'test',
-    loadComponent: () => import('./features/test-page/test-page.component').then(m => m.TestPageComponent)
-  },
-  {
     path: 'update-log',
     loadComponent: () => import('./features/update-log/update-log.component').then(m => m.UpdateLogComponent)
   },

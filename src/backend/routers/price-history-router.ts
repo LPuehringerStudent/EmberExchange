@@ -31,17 +31,17 @@ export const priceHistoryRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.get("/price-history", (_req, res) => {
-    const unit = new Unit(true);
+priceHistoryRouter.get("/price-history", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new PriceHistoryService(unit);
 
     try {
-        const response = service.getAllPriceHistory();
+        const response = await service.getAllPriceHistory();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -86,8 +86,8 @@ priceHistoryRouter.get("/price-history", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.get("/price-history/:id", (req, res) => {
-    const unit = new Unit(true);
+priceHistoryRouter.get("/price-history/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new PriceHistoryService(unit);
     const id = req.params.id;
 
@@ -97,7 +97,7 @@ priceHistoryRouter.get("/price-history/:id", (req, res) => {
             return;
         }
 
-        const response = service.getPriceHistoryById(Number(id));
+        const response = await service.getPriceHistoryById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Price history record not found" });
         } else {
@@ -106,7 +106,7 @@ priceHistoryRouter.get("/price-history/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -147,8 +147,8 @@ priceHistoryRouter.get("/price-history/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.get("/stove-types/:typeId/price-history", (req, res) => {
-    const unit = new Unit(true);
+priceHistoryRouter.get("/stove-types/:typeId/price-history", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new PriceHistoryService(unit);
     const typeId = req.params.typeId;
 
@@ -158,12 +158,12 @@ priceHistoryRouter.get("/stove-types/:typeId/price-history", (req, res) => {
             return;
         }
 
-        const response = service.getPriceHistoryByTypeId(Number(typeId));
+        const response = await service.getPriceHistoryByTypeId(Number(typeId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -216,8 +216,8 @@ priceHistoryRouter.get("/stove-types/:typeId/price-history", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.post("/price-history", (req, res) => {
-    const unit = new Unit(false);
+priceHistoryRouter.post("/price-history", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new PriceHistoryService(unit);
     let ok = false;
 
@@ -236,13 +236,13 @@ priceHistoryRouter.post("/price-history", (req, res) => {
 
         // Validate that typeId exists
         const stoveTypeService = new StoveTypeService(unit);
-        const stoveType = stoveTypeService.getStoveTypeById(typeId);
+        const stoveType = await stoveTypeService.getStoveTypeById(typeId);
         if (!stoveType) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Stove type not found" });
             return;
         }
 
-        const [success, id] = service.recordSale(typeId, salePrice);
+        const [success, id] = await service.recordSale(typeId, salePrice);
 
         if (success) {
             ok = true;
@@ -253,7 +253,7 @@ priceHistoryRouter.post("/price-history", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -292,8 +292,8 @@ priceHistoryRouter.post("/price-history", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.get("/stove-types/:typeId/price-stats", (req, res) => {
-    const unit = new Unit(true);
+priceHistoryRouter.get("/stove-types/:typeId/price-stats", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new PriceHistoryService(unit);
     const typeId = req.params.typeId;
 
@@ -304,10 +304,10 @@ priceHistoryRouter.get("/stove-types/:typeId/price-stats", (req, res) => {
         }
 
         const typeIdNum = Number(typeId);
-        const average = service.getAveragePrice(typeIdNum);
-        const min = service.getMinPrice(typeIdNum);
-        const max = service.getMaxPrice(typeIdNum);
-        const count = service.countSales(typeIdNum);
+        const average = await service.getAveragePrice(typeIdNum);
+        const min = await service.getMinPrice(typeIdNum);
+        const max = await service.getMaxPrice(typeIdNum);
+        const count = await service.countSales(typeIdNum);
 
         // Return 404 if no price history exists for this stove type
         if (count === 0) {
@@ -316,7 +316,7 @@ priceHistoryRouter.get("/stove-types/:typeId/price-stats", (req, res) => {
         }
 
         // Calculate median
-        const prices = service.getPriceHistoryByTypeId(typeIdNum).map(r => r.salePrice).sort((a, b) => a - b);
+        const prices = (await service.getPriceHistoryByTypeId(typeIdNum)).map(r => r.salePrice).sort((a, b) => a - b);
         let median = 0;
         if (prices.length > 0) {
             const mid = Math.floor(prices.length / 2);
@@ -329,7 +329,7 @@ priceHistoryRouter.get("/stove-types/:typeId/price-stats", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -377,8 +377,8 @@ priceHistoryRouter.get("/stove-types/:typeId/price-stats", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.get("/stove-types/:typeId/recent-prices", (req, res) => {
-    const unit = new Unit(true);
+priceHistoryRouter.get("/stove-types/:typeId/recent-prices", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new PriceHistoryService(unit);
     const typeId = req.params.typeId;
     const limitParam = req.query.limit;
@@ -396,12 +396,12 @@ priceHistoryRouter.get("/stove-types/:typeId/recent-prices", (req, res) => {
             return;
         }
 
-        const response = service.getRecentPrices(Number(typeId), limit);
+        const response = await service.getRecentPrices(Number(typeId), limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -448,8 +448,8 @@ priceHistoryRouter.get("/stove-types/:typeId/recent-prices", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.delete("/price-history/:id", (req, res) => {
-    const unit = new Unit(false);
+priceHistoryRouter.delete("/price-history/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new PriceHistoryService(unit);
     const id = req.params.id;
     let ok = false;
@@ -460,7 +460,7 @@ priceHistoryRouter.delete("/price-history/:id", (req, res) => {
             return;
         }
 
-        const success = service.deletePriceHistory(Number(id));
+        const success = await service.deletePriceHistory(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Price history record deleted" });
@@ -470,6 +470,6 @@ priceHistoryRouter.delete("/price-history/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });

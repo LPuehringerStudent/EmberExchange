@@ -231,13 +231,12 @@
 /* Visual Section */
 .item-visual {
   position: relative;
-  height: 120px;
+  height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   border-radius: 12px;
-  overflow: hidden;
 }
 
 .stove-icon svg {
@@ -245,6 +244,12 @@
   height: 64px;
   color: #64748b;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+}
+
+.stove-sprite {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
 }
 
 /* Rarity Badge */

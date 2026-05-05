@@ -11,11 +11,11 @@ export class ChatMessageService extends ServiceBase {
      * Retrieves all chat messages.
      * @returns Array of all ChatMessageRow objects.
      */
-    getAll(): ChatMessageRow[] {
+    async getAll(): Promise<ChatMessageRow[]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
             "SELECT * FROM ChatMessage ORDER BY sentAt DESC"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -23,12 +23,12 @@ export class ChatMessageService extends ServiceBase {
      * @param id - The message ID.
      * @returns ChatMessageRow or null if not found.
      */
-    getById(id: number): ChatMessageRow | null {
+    async getById(id: number): Promise<ChatMessageRow | null> {
         const stmt = this.unit.prepare<ChatMessageRow>(
             "SELECT * FROM ChatMessage WHERE messageId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -36,12 +36,12 @@ export class ChatMessageService extends ServiceBase {
      * @param senderId - The sender's player ID.
      * @returns Array of ChatMessageRow objects.
      */
-    getBySender(senderId: number): ChatMessageRow[] {
+    async getBySender(senderId: number): Promise<ChatMessageRow[]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
             "SELECT * FROM ChatMessage WHERE senderId = @senderId ORDER BY sentAt DESC",
             { senderId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -49,12 +49,12 @@ export class ChatMessageService extends ServiceBase {
      * @param receiverId - The receiver's player ID.
      * @returns Array of ChatMessageRow objects.
      */
-    getByReceiver(receiverId: number): ChatMessageRow[] {
+    async getByReceiver(receiverId: number): Promise<ChatMessageRow[]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
             "SELECT * FROM ChatMessage WHERE receiverId = @receiverId ORDER BY sentAt DESC",
             { receiverId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -63,7 +63,7 @@ export class ChatMessageService extends ServiceBase {
      * @param player2Id - Second player ID.
      * @returns Array of ChatMessageRow objects.
      */
-    getConversation(player1Id: number, player2Id: number): ChatMessageRow[] {
+    async getConversation(player1Id: number, player2Id: number): Promise<ChatMessageRow[]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
             `SELECT * FROM ChatMessage 
              WHERE (senderId = @player1Id AND receiverId = @player2Id) 
@@ -71,18 +71,18 @@ export class ChatMessageService extends ServiceBase {
              ORDER BY sentAt ASC`,
             { player1Id, player2Id }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
      * Retrieves global messages (receiverId is null).
      * @returns Array of ChatMessageRow objects.
      */
-    getGlobalMessages(): ChatMessageRow[] {
+    async getGlobalMessages(): Promise<ChatMessageRow[]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
             "SELECT * FROM ChatMessage WHERE receiverId IS NULL ORDER BY sentAt DESC"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -90,12 +90,12 @@ export class ChatMessageService extends ServiceBase {
      * @param receiverId - The receiver's player ID.
      * @returns Array of ChatMessageRow objects.
      */
-    getUnreadByReceiver(receiverId: number): ChatMessageRow[] {
+    async getUnreadByReceiver(receiverId: number): Promise<ChatMessageRow[]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
             "SELECT * FROM ChatMessage WHERE receiverId = @receiverId AND isRead = 0 ORDER BY sentAt DESC",
             { receiverId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -105,13 +105,13 @@ export class ChatMessageService extends ServiceBase {
      * @param content - The message content.
      * @returns Tuple [success, id].
      */
-    create(senderId: number, receiverId: number | null, content: string): [boolean, number] {
+    async create(senderId: number, receiverId: number | null, content: string): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
             `INSERT INTO ChatMessage (senderId, receiverId, content, sentAt, isRead) 
-             VALUES (@senderId, @receiverId, @content, datetime('now'), 0)`,
+             VALUES (@senderId, @receiverId, @content, NOW(), 0)`,
             { senderId, receiverId, content }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -119,12 +119,12 @@ export class ChatMessageService extends ServiceBase {
      * @param id - Message ID.
      * @returns True if updated.
      */
-    markAsRead(id: number): boolean {
+    async markAsRead(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE ChatMessage SET isRead = 1 WHERE messageId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -134,12 +134,12 @@ export class ChatMessageService extends ServiceBase {
      * @param receiverId - Receiver ID.
      * @returns Number of messages updated.
      */
-    markConversationAsRead(senderId: number, receiverId: number): number {
+    async markConversationAsRead(senderId: number, receiverId: number): Promise<number> {
         const stmt = this.unit.prepare(
             "UPDATE ChatMessage SET isRead = 1 WHERE senderId = @senderId AND receiverId = @receiverId AND isRead = 0",
             { senderId, receiverId }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes;
     }
 
@@ -148,12 +148,12 @@ export class ChatMessageService extends ServiceBase {
      * @param id - Message ID.
      * @returns True if deleted.
      */
-    delete(id: number): boolean {
+    async delete(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM ChatMessage WHERE messageId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -161,11 +161,11 @@ export class ChatMessageService extends ServiceBase {
      * Counts total messages.
      * @returns Count.
      */
-    count(): number {
+    async count(): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM ChatMessage"
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 
@@ -174,12 +174,12 @@ export class ChatMessageService extends ServiceBase {
      * @param receiverId - The receiver's player ID.
      * @returns Count.
      */
-    countUnread(receiverId: number): number {
+    async countUnread(receiverId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM ChatMessage WHERE receiverId = @receiverId AND isRead = 0",
             { receiverId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 }

@@ -131,6 +131,13 @@ export class MarketplaceComponent implements OnInit {
     return type?.rarity?.toLowerCase() || 'common';
   }
 
+  getImageUrl(stoveId: number): string {
+    const stove = this.stoves().get(stoveId);
+    if (!stove) return '';
+    const type = this.stoveTypes().get(stove.typeId);
+    return type?.imageUrl || '';
+  }
+
   isOwnListing(listing: Listing): boolean {
     return this.playerId !== null && listing.sellerId === this.playerId;
   }

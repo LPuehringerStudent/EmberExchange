@@ -6,7 +6,6 @@
   <a routerLink="/statistics" (click)="sidebarOpen.set(false)">Statistics</a>
   <a routerLink="/update-log" (click)="sidebarOpen.set(false)">Update Log</a>
   <a routerLink="/support" (click)="sidebarOpen.set(false)">Support</a>
-  <a routerLink="/test" (click)="sidebarOpen.set(false)">API Test</a>
   @if (!isLoggedIn()) {
     <a routerLink="/" (click)="sidebarOpen.set(false)">Login</a>
   } @else {
@@ -25,7 +24,7 @@
 <header class="topbar">
   <div class="topbar-left">
     <div class="menu-btn" (click)="toggleSidebar()">☰</div>
-    <div class="logo" routerLink="/" class="logo">
+    <div class="logo" routerLink="/">
       Ember Exchange
     </div>
   </div>
@@ -73,7 +72,7 @@
             <li class="account-menu-item" routerLink="/inventory">Inventory</li>
             <li class="account-menu-item" routerLink="/settings">Settings</li>
             <li class="account-menu-divider"></li>
-            <li class="account-menu-item logout" (click)="logout()" class="logoutFR">Logout</li>
+            <li class="account-menu-item logout logoutFR" (click)="logout()">Logout</li>
           </ul>
         </div>
       </div>

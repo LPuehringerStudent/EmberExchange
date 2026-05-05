@@ -50,6 +50,7 @@ export interface StoveRow extends Stove {
 export interface ShowedStove extends StoveRow {
     stoveName: string;
     rarity: Rarity;
+    imageUrl: string;
 }
 
 // LootboxType

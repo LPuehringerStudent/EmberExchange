@@ -11,11 +11,11 @@ export class MiniGameSessionService extends ServiceBase {
      * Retrieves all mini-game sessions.
      * @returns Array of all MiniGameSessionRow objects.
      */
-    getAll(): MiniGameSessionRow[] {
+    async getAll(): Promise<MiniGameSessionRow[]> {
         const stmt = this.unit.prepare<MiniGameSessionRow>(
             "SELECT * FROM MiniGameSession ORDER BY finishedAt DESC"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -23,12 +23,12 @@ export class MiniGameSessionService extends ServiceBase {
      * @param id - The session ID.
      * @returns MiniGameSessionRow or null if not found.
      */
-    getById(id: number): MiniGameSessionRow | null {
+    async getById(id: number): Promise<MiniGameSessionRow | null> {
         const stmt = this.unit.prepare<MiniGameSessionRow>(
             "SELECT * FROM MiniGameSession WHERE sessionId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -36,12 +36,12 @@ export class MiniGameSessionService extends ServiceBase {
      * @param playerId - The player ID.
      * @returns Array of MiniGameSessionRow objects.
      */
-    getByPlayerId(playerId: number): MiniGameSessionRow[] {
+    async getByPlayerId(playerId: number): Promise<MiniGameSessionRow[]> {
         const stmt = this.unit.prepare<MiniGameSessionRow>(
             "SELECT * FROM MiniGameSession WHERE playerId = @playerId ORDER BY finishedAt DESC",
             { playerId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -49,12 +49,12 @@ export class MiniGameSessionService extends ServiceBase {
      * @param gameType - The game type.
      * @returns Array of MiniGameSessionRow objects.
      */
-    getByGameType(gameType: string): MiniGameSessionRow[] {
+    async getByGameType(gameType: string): Promise<MiniGameSessionRow[]> {
         const stmt = this.unit.prepare<MiniGameSessionRow>(
             "SELECT * FROM MiniGameSession WHERE gameType = @gameType ORDER BY finishedAt DESC",
             { gameType }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -65,13 +65,13 @@ export class MiniGameSessionService extends ServiceBase {
      * @param coinPayout - The coin payout.
      * @returns Tuple [success, id].
      */
-    create(playerId: number, gameType: string, result: string, coinPayout: number): [boolean, number] {
+    async create(playerId: number, gameType: string, result: string, coinPayout: number): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<MiniGameSessionRow>(
             `INSERT INTO MiniGameSession (playerId, gameType, result, coinPayout, finishedAt) 
-             VALUES (@playerId, @gameType, @result, @coinPayout, datetime('now'))`,
+             VALUES (@playerId, @gameType, @result, @coinPayout, NOW())`,
             { playerId, gameType, result, coinPayout }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -81,12 +81,12 @@ export class MiniGameSessionService extends ServiceBase {
      * @param coinPayout - New coin payout.
      * @returns True if updated.
      */
-    updateResult(id: number, result: string, coinPayout: number): boolean {
+    async updateResult(id: number, result: string, coinPayout: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE MiniGameSession SET result = @result, coinPayout = @coinPayout WHERE sessionId = @id",
             { id, result, coinPayout }
         );
-        const runResult = stmt.run();
+        const runResult = await stmt.run();
         return runResult.changes === 1;
     }
 
@@ -95,12 +95,12 @@ export class MiniGameSessionService extends ServiceBase {
      * @param id - Session ID.
      * @returns True if deleted.
      */
-    delete(id: number): boolean {
+    async delete(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM MiniGameSession WHERE sessionId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -108,11 +108,11 @@ export class MiniGameSessionService extends ServiceBase {
      * Counts total sessions.
      * @returns Count.
      */
-    count(): number {
+    async count(): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM MiniGameSession"
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 
@@ -121,12 +121,12 @@ export class MiniGameSessionService extends ServiceBase {
      * @param playerId - The player ID.
      * @returns Count.
      */
-    countByPlayer(playerId: number): number {
+    async countByPlayer(playerId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM MiniGameSession WHERE playerId = @playerId",
             { playerId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 
@@ -135,12 +135,12 @@ export class MiniGameSessionService extends ServiceBase {
      * @param playerId - The player ID.
      * @returns Total coins earned.
      */
-    getTotalPayoutByPlayer(playerId: number): number {
+    async getTotalPayoutByPlayer(playerId: number): Promise<number> {
         const stmt = this.unit.prepare<{ total: number }>(
             "SELECT SUM(coinPayout) as total FROM MiniGameSession WHERE playerId = @playerId",
             { playerId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.total ?? 0;
     }
 
@@ -149,11 +149,11 @@ export class MiniGameSessionService extends ServiceBase {
      * @param limit - Number of sessions to return.
      * @returns Array of MiniGameSessionRow objects.
      */
-    getRecent(limit: number): MiniGameSessionRow[] {
+    async getRecent(limit: number): Promise<MiniGameSessionRow[]> {
         const stmt = this.unit.prepare<MiniGameSessionRow>(
             "SELECT * FROM MiniGameSession ORDER BY finishedAt DESC LIMIT @limit",
             { limit }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 }
