@@ -46,8 +46,12 @@ export class ListingService {
     return this.api.get<Listing>(`/stoves/${stoveId}/listing`);
   }
 
-  createListing(sellerId: number, stoveId: number, price: number): Observable<CreateListingResponse> {
-    return this.api.post<CreateListingResponse>('/listings', { sellerId, stoveId, price });
+  getActiveListingByLootboxId(lootboxId: number): Observable<Listing> {
+    return this.api.get<Listing>(`/lootboxes/${lootboxId}/listing`);
+  }
+
+  createListing(sellerId: number, price: number, stoveId?: number, lootboxId?: number): Observable<CreateListingResponse> {
+    return this.api.post<CreateListingResponse>('/listings', { sellerId, price, stoveId, lootboxId });
   }
 
   updateListingPrice(id: number, price: number): Observable<SuccessMessage> {

@@ -103,6 +103,7 @@ const COLUMN_MAP: Record<string, string> = {
     "saleslast7days": "salesLast7Days",
     "sellthroughrate": "sellThroughRate",
     "sellerid": "sellerId",
+    "sellername": "sellerName",
     "senderid": "senderId",
     "sentat": "sentAt",
     "sessionid": "sessionId",
@@ -319,11 +320,28 @@ export class DB {
             CREATE TABLE IF NOT EXISTS Listing (
                 listingId SERIAL PRIMARY KEY,
                 sellerId INTEGER NOT NULL REFERENCES Player(playerId),
-                stoveId INTEGER NOT NULL REFERENCES Stove(stoveId),
+                stoveId INTEGER REFERENCES Stove(stoveId),
+                lootboxId INTEGER REFERENCES Lootbox(lootboxId),
                 price INTEGER NOT NULL CHECK (price >= 1),
                 listedAt TEXT NOT NULL,
-                status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'cancelled', 'sold'))
+                status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'cancelled', 'sold')),
+                CHECK ((stoveId IS NOT NULL) OR (lootboxId IS NOT NULL))
             )
+        `);
+
+        // Migration: add lootboxId column to existing Listing tables
+        await connection.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'listing' AND column_name = 'lootboxid'
+                ) THEN
+                    ALTER TABLE Listing ADD COLUMN lootboxId INTEGER REFERENCES Lootbox(lootboxId);
+                    ALTER TABLE Listing DROP CONSTRAINT IF EXISTS listing_check;
+                    ALTER TABLE Listing ADD CONSTRAINT listing_check CHECK ((stoveId IS NOT NULL) OR (lootboxId IS NOT NULL));
+                END IF;
+            END $$;
         `);
 
         await connection.query(`

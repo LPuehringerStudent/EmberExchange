@@ -116,7 +116,9 @@ export interface CoinTransactionRow extends CoinTransaction {
 // Listing
 export interface Listing {
     sellerId: number;
-    stoveId: number;
+    sellerName?: string;
+    stoveId?: number | null;
+    lootboxId?: number | null;
     price: number;
     listedAt: Date;
     status: "active" | "cancelled" | "sold";

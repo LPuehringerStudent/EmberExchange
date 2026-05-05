@@ -3,6 +3,7 @@ import { NgOptimizedImage } from '@angular/common';
 import { Router } from '@angular/router';
 import { LootBoxHelper, LootItem } from '../../../../../middleground/LootboxHelper';
 import { LootboxService } from '@core/services/lootbox.service';
+import { ListingService } from '@core/services/listing.service';
 import { AuthService } from '@core/services/auth.service';
 import { firstValueFrom } from 'rxjs';
 
@@ -38,6 +39,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   private lootBoxHelper = new LootBoxHelper();
   private lootboxApi    = inject(LootboxService);
+  private listingApi    = inject(ListingService);
   private cdr           = inject(ChangeDetectorRef);
   private authService   = inject(AuthService);
   private router        = inject(Router);
@@ -68,13 +70,24 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
     let lootboxId: number | null = null;
     try {
-      const lootboxes = await firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId));
-      if (lootboxes.length === 0) {
-        alert('You have no lootboxes available!');
-        this.lootboxCount.set(0);
+      const [lootboxes, listings] = await Promise.all([
+        firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId)),
+        firstValueFrom(this.listingApi.getActiveListingsBySellerId(this.playerId))
+      ]);
+
+      const listedLootboxIds = new Set(listings.filter(l => l.lootboxId).map(l => l.lootboxId!));
+      const availableLootboxes = lootboxes.filter(lb => !listedLootboxIds.has(lb.lootboxId));
+
+      if (availableLootboxes.length === 0) {
+        if (lootboxes.length > 0) {
+          alert('All your lootboxes are currently listed on the marketplace. Cancel a listing to open them.');
+        } else {
+          alert('You have no lootboxes available!');
+        }
+        this.lootboxCount.set(availableLootboxes.length);
         return;
       }
-      lootboxId = lootboxes[0].lootboxId;
+      lootboxId = availableLootboxes[0].lootboxId;
     } catch (err) {
       console.error('Failed to fetch lootboxes:', err);
       alert('Failed to open lootbox. Please try again.');
