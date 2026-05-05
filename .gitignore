@@ -66,6 +66,7 @@ coverage/
 .env
 .env.local
 .env.*.local
+.envRender
 
 # Agent/AI working folder (local only)
 Agent/
