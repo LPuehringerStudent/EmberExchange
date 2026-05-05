@@ -4,6 +4,7 @@ import { TradeService } from "../services/trade-service";
 import { ListingService } from "../services/listing-service";
 import { OwnershipService } from "../services/ownership-service";
 import { StoveService } from "../services/stove-service";
+import { LootboxService } from "../services/lootbox-service";
 import { PriceHistoryService } from "../services/price-history-service";
 import { PlayerService } from "../services/player-service";
 import { CoinTransactionService } from "../services/coin-transaction-service";
@@ -443,29 +444,46 @@ tradeRouter.post("/trades", async (req, res) => {
             return;
         }
 
-        // Transfer ownership of the stove
-        const transferSuccess = await stoveService.updateOwner(listing.stoveId, buyerId);
-        if (!transferSuccess) {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer stove ownership" });
-            return;
-        }
+        // Transfer ownership of the item (stove or lootbox)
+        let itemDescription: string;
+        if (listing.stoveId !== undefined && listing.stoveId !== null) {
+            const transferSuccess = await stoveService.updateOwner(listing.stoveId, buyerId);
+            if (!transferSuccess) {
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer stove ownership" });
+                return;
+            }
 
-        // Record ownership history
-        const [ownershipSuccess] = await ownershipService.createOwnership(listing.stoveId, buyerId, "trade");
-        if (!ownershipSuccess) {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to record ownership" });
-            return;
-        }
+            // Record ownership history
+            const [ownershipSuccess] = await ownershipService.createOwnership(listing.stoveId, buyerId, "trade");
+            if (!ownershipSuccess) {
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to record ownership" });
+                return;
+            }
 
-        // Record price history
-        const stove = await stoveService.getStoveById(listing.stoveId);
-        if (stove !== null) {
-            await priceHistoryService.recordSale(stove.typeId, listing.price);
+            // Record price history
+            const stove = await stoveService.getStoveById(listing.stoveId);
+            if (stove !== null) {
+                await priceHistoryService.recordSale(stove.typeId, listing.price);
+            }
+
+            itemDescription = `stove #${listing.stoveId}`;
+        } else if (listing.lootboxId !== undefined && listing.lootboxId !== null) {
+            const lootboxService = new LootboxService(unit);
+            const transferSuccess = await lootboxService.updateLootboxOwner(listing.lootboxId, buyerId);
+            if (!transferSuccess) {
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer lootbox ownership" });
+                return;
+            }
+
+            itemDescription = `lootbox #${listing.lootboxId}`;
+        } else {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Listing has no associated item" });
+            return;
         }
 
         // Record coin transactions
-        await coinTransactionService.create(buyerId, -listing.price, 'listing_purchase', `Purchased stove #${listing.stoveId}`);
-        await coinTransactionService.create(listing.sellerId, listing.price, 'listing_sale', `Sold stove #${listing.stoveId}`);
+        await coinTransactionService.create(buyerId, -listing.price, 'listing_purchase', `Purchased ${itemDescription}`);
+        await coinTransactionService.create(listing.sellerId, listing.price, 'listing_sale', `Sold ${itemDescription}`);
 
         // Create trade record
         const [success, id] = await tradeService.createTrade(listingId, buyerId);

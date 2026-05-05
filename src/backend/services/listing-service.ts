@@ -13,7 +13,10 @@ export class ListingService extends ServiceBase {
      */
     async getAllListings(): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
-            "SELECT * FROM Listing"
+            `SELECT l.*, p.username as sellerName 
+             FROM Listing l
+             JOIN Player p ON l.sellerId = p.playerId
+             ORDER BY l.listedAt DESC`
         );
         return await stmt.all();
     }
@@ -25,7 +28,10 @@ export class ListingService extends ServiceBase {
      */
     async getListingById(id: number): Promise<ListingRow | null> {
         const stmt = this.unit.prepare<ListingRow>(
-            "SELECT * FROM Listing WHERE listingId = @id",
+            `SELECT l.*, p.username as sellerName 
+             FROM Listing l
+             JOIN Player p ON l.sellerId = p.playerId
+             WHERE l.listingId = @id`,
             { id }
         );
         return (await stmt.get()) ?? null;
@@ -37,7 +43,10 @@ export class ListingService extends ServiceBase {
      */
     async getActiveListings(): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
-            "SELECT * FROM Listing WHERE status = 'active' ORDER BY listedAt DESC"
+            `SELECT l.*, p.username as sellerName 
+             FROM Listing l
+             JOIN Player p ON l.sellerId = p.playerId
+             WHERE l.status = 'active' ORDER BY l.listedAt DESC`
         );
         return await stmt.all();
     }
@@ -49,7 +58,10 @@ export class ListingService extends ServiceBase {
      */
     async getListingsBySellerId(sellerId: number): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
-            "SELECT * FROM Listing WHERE sellerId = @sellerId ORDER BY listedAt DESC",
+            `SELECT l.*, p.username as sellerName 
+             FROM Listing l
+             JOIN Player p ON l.sellerId = p.playerId
+             WHERE l.sellerId = @sellerId ORDER BY l.listedAt DESC`,
             { sellerId }
         );
         return await stmt.all();
@@ -62,38 +74,61 @@ export class ListingService extends ServiceBase {
      */
     async getActiveListingsBySellerId(sellerId: number): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
-            "SELECT * FROM Listing WHERE sellerId = @sellerId AND status = 'active' ORDER BY listedAt DESC",
+            `SELECT l.*, p.username as sellerName 
+             FROM Listing l
+             JOIN Player p ON l.sellerId = p.playerId
+             WHERE l.sellerId = @sellerId AND l.status = 'active' ORDER BY l.listedAt DESC`,
             { sellerId }
         );
         return await stmt.all();
     }
 
     /**
-     * Retrieves the listing for a specific stove if active.
+     * Retrieves the active listing for a specific stove if active.
      * @param stoveId - The stove's unique ID.
      * @returns The active ListingRow object if found, otherwise null.
      */
     async getActiveListingByStoveId(stoveId: number): Promise<ListingRow | null> {
         const stmt = this.unit.prepare<ListingRow>(
-            "SELECT * FROM Listing WHERE stoveId = @stoveId AND status = 'active'",
+            `SELECT l.*, p.username as sellerName 
+             FROM Listing l
+             JOIN Player p ON l.sellerId = p.playerId
+             WHERE l.stoveId = @stoveId AND l.status = 'active'`,
             { stoveId }
         );
         return (await stmt.get()) ?? null;
     }
 
     /**
-     * Creates a new listing for a stove.
+     * Retrieves the active listing for a specific lootbox if active.
+     * @param lootboxId - The lootbox's unique ID.
+     * @returns The active ListingRow object if found, otherwise null.
+     */
+    async getActiveListingByLootboxId(lootboxId: number): Promise<ListingRow | null> {
+        const stmt = this.unit.prepare<ListingRow>(
+            `SELECT l.*, p.username as sellerName 
+             FROM Listing l
+             JOIN Player p ON l.sellerId = p.playerId
+             WHERE l.lootboxId = @lootboxId AND l.status = 'active'`,
+            { lootboxId }
+        );
+        return (await stmt.get()) ?? null;
+    }
+
+    /**
+     * Creates a new listing for a stove or lootbox.
      * @param sellerId - The seller's player ID.
-     * @param stoveId - The stove being listed.
      * @param price - The asking price in coins.
+     * @param stoveId - The stove being listed (optional).
+     * @param lootboxId - The lootbox being listed (optional).
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new listing's ID (if successful).
      */
-    async createListing(sellerId: number, stoveId: number, price: number): Promise<[boolean, number]> {
+    async createListing(sellerId: number, price: number, stoveId?: number | null, lootboxId?: number | null): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<ListingRow>(
-            `INSERT INTO Listing (sellerId, stoveId, price, listedAt, status) 
-             VALUES (@sellerId, @stoveId, @price, NOW(), 'active')`,
-            { sellerId, stoveId, price }
+            `INSERT INTO Listing (sellerId, stoveId, lootboxId, price, listedAt, status) 
+             VALUES (@sellerId, @stoveId, @lootboxId, @price, NOW(), 'active')`,
+            { sellerId, stoveId: stoveId ?? null, lootboxId: lootboxId ?? null, price }
         );
         return await this.executeStmt(stmt);
     }
@@ -164,6 +199,20 @@ export class ListingService extends ServiceBase {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Listing WHERE stoveId = @stoveId AND status = 'active'",
             { stoveId }
+        );
+        const result = await stmt.get();
+        return (result?.count ?? 0) > 0;
+    }
+
+    /**
+     * Checks if a lootbox is currently listed as active.
+     * @param lootboxId - The lootbox's unique ID.
+     * @returns True if the lootbox has an active listing.
+     */
+    async isLootboxListed(lootboxId: number): Promise<boolean> {
+        const stmt = this.unit.prepare<{ count: number }>(
+            "SELECT COUNT(*) as count FROM Listing WHERE lootboxId = @lootboxId AND status = 'active'",
+            { lootboxId }
         );
         const result = await stmt.get();
         return (result?.count ?? 0) > 0;

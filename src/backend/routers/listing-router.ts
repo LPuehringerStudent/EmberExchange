@@ -326,12 +326,36 @@ listingRouter.get("/stoves/:stoveId/listing", async (req, res) => {
     }
 });
 
+listingRouter.get("/lootboxes/:lootboxId/listing", async (req, res) => {
+    const unit = await Unit.create(true);
+    const service = new ListingService(unit);
+    const lootboxId = req.params.lootboxId;
+
+    try {
+        if (isNullOrWhiteSpace(lootboxId) || isNaN(Number(lootboxId))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Lootbox ID must be a valid number" });
+            return;
+        }
+
+        const response = await service.getActiveListingByLootboxId(Number(lootboxId));
+        if (response === null) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "No active listing found for this lootbox" });
+        } else {
+            res.status(StatusCodes.OK).json(response);
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
 /**
  * @openapi
  * /listings:
  *   post:
  *     summary: Create a listing
- *     description: Creates a new marketplace listing for a stove
+ *     description: Creates a new marketplace listing for a stove or lootbox
  *     tags:
  *       - Listings
  *     requestBody:
@@ -342,7 +366,6 @@ listingRouter.get("/stoves/:stoveId/listing", async (req, res) => {
  *             type: object
  *             required:
  *               - sellerId
- *               - stoveId
  *               - price
  *             properties:
  *               sellerId:
@@ -351,8 +374,12 @@ listingRouter.get("/stoves/:stoveId/listing", async (req, res) => {
  *                 example: 5
  *               stoveId:
  *                 type: integer
- *                 description: Stove being listed
+ *                 description: Stove being listed (provide stoveId or lootboxId)
  *                 example: 42
+ *               lootboxId:
+ *                 type: integer
+ *                 description: Lootbox being listed (provide stoveId or lootboxId)
+ *                 example: 7
  *               price:
  *                 type: integer
  *                 description: Asking price in coins
@@ -384,10 +411,20 @@ listingRouter.post("/listings", async (req, res) => {
     let ok = false;
 
     try {
-        const { sellerId, stoveId, price } = req.body;
+        const { sellerId, stoveId, lootboxId, price } = req.body;
 
-        if (typeof sellerId !== "number" || typeof stoveId !== "number" || typeof price !== "number") {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "sellerId, stoveId, and price are required" });
+        if (typeof sellerId !== "number" || typeof price !== "number") {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "sellerId and price are required" });
+            return;
+        }
+
+        if ((stoveId === undefined || stoveId === null) && (lootboxId === undefined || lootboxId === null)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Either stoveId or lootboxId is required" });
+            return;
+        }
+
+        if (stoveId !== undefined && stoveId !== null && lootboxId !== undefined && lootboxId !== null) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Provide either stoveId or lootboxId, not both" });
             return;
         }
 
@@ -396,13 +433,21 @@ listingRouter.post("/listings", async (req, res) => {
             return;
         }
 
-        // Check if stove is already listed
-        if (await service.isStoveListed(stoveId)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Stove is already listed" });
-            return;
+        // Check if item is already listed
+        if (stoveId !== undefined && stoveId !== null) {
+            if (await service.isStoveListed(stoveId)) {
+                res.status(StatusCodes.BAD_REQUEST).json({ error: "Stove is already listed" });
+                return;
+            }
+        }
+        if (lootboxId !== undefined && lootboxId !== null) {
+            if (await service.isLootboxListed(lootboxId)) {
+                res.status(StatusCodes.BAD_REQUEST).json({ error: "Lootbox is already listed" });
+                return;
+            }
         }
 
-        const [success, id] = await service.createListing(sellerId, stoveId, price);
+        const [success, id] = await service.createListing(sellerId, price, stoveId, lootboxId);
 
         if (success) {
             ok = true;
