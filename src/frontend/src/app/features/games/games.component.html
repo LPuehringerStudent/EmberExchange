@@ -1,11 +1,246 @@
-﻿<div class="games-container">
-  <h1>🎮 Games</h1>
-  <p class="subtitle">Play mini-games to earn coins and rewards</p>
+﻿<div class="games-container" (click)="closeFilter()">
 
-  <div class="coming-soon">
-    <div class="icon">🕹️</div>
-    <h2>Coming Soon</h2>
-    <p>Mini-games are being developed. Stay tuned for fun ways to earn coins!</p>
-    <button routerLink="/" class="btn-primary">Back to Home</button>
-  </div>
+  <!-- ───── HEADER ───── -->
+  <header class="games-header">
+    <div class="header-left">
+      <div class="filter-wrapper">
+        <button
+          class="options-btn"
+          (click)="toggleFilter(); $event.stopPropagation()"
+          [attr.aria-expanded]="filterOpen()"
+          aria-haspopup="true"
+          aria-label="Filter options"
+        >
+          <!-- Hamburger icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="6" x2="20" y2="6"/>
+            <line x1="4" y1="12" x2="20" y2="12"/>
+            <line x1="4" y1="18" x2="20" y2="18"/>
+          </svg>
+          <span class="filter-label-text">{{ filterLabel() }}</span>
+          <svg class="chevron" [class.open]="filterOpen()"
+               xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        <!-- Filter Popup -->
+        @if (filterOpen()) {
+          <div class="filter-popup" role="menu" (click)="$event.stopPropagation()">
+            <p class="filter-popup-title">Sort &amp; Filter</p>
+            <button class="filter-option" [class.active]="activeFilter() === 'all'"
+                    role="menuitem" (click)="setFilter('all')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+              </svg>
+              All Games
+            </button>
+            <button class="filter-option" [class.active]="activeFilter() === 'most-played'"
+                    role="menuitem" (click)="setFilter('most-played')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              Most Played
+            </button>
+            <button class="filter-option" [class.active]="activeFilter() === 'recently-released'"
+                    role="menuitem" (click)="setFilter('recently-released')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Recently Released
+            </button>
+            <button class="filter-option" [class.active]="activeFilter() === 'favorites'"
+                    role="menuitem" (click)="setFilter('favorites')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              Favorites
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="header-title">
+      <!-- Controller icon -->
+      <h1>Game Hub</h1>
+    </div>
+
+    <div class="header-right">
+      <span class="game-count">{{ filteredGames().length }} games</span>
+    </div>
+  </header>
+
+  <!-- ───── TRENDING STRIP ───── -->
+  @if (activeFilter() === 'all') {
+    <section class="trending-section" aria-label="Trending games">
+      <div class="section-label">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+          <polyline points="17 6 23 6 23 12"/>
+        </svg>
+        Trending Now
+      </div>
+      <div class="trending-strip">
+        @for (game of trendingGames(); track game.id) {
+          <button class="trending-card" (click)="openGame(game)"
+                  [attr.aria-label]="'Go to ' + game.title">
+            <span class="trending-icon" [style.background]="'linear-gradient(135deg, ' + game.accentColor + '22, ' + game.accentColor + '0a)'">
+              <!-- Card SVG icon -->
+              <svg viewBox="0 0 504.694 504.694" xmlns="http://www.w3.org/2000/svg"
+                   [style.fill]="game.accentColor">
+                <path d="M338.357,18.713C335,5.284,320.731-3.11,308.141,1.087L23.603,65.717C10.173,69.074,2.619,83.343,5.977,96.772 l104.079,389.456c1.679,6.715,5.875,11.751,11.751,15.108c4.197,2.518,8.393,3.357,12.59,3.357c2.518,0,4.197,0,6.715-0.839 l5.036-1.679c-5.036-6.715-7.554-15.108-7.554-23.502v-41.967c-3.357,0-6.715-2.518-8.393-5.875 c-9.233-35.253-19.305-70.505-28.538-106.597C91.59,288.982,82.357,252.89,73.124,218.477c-0.839-4.197,1.679-9.233,5.875-10.072 s9.233,1.679,10.072,5.875c9.233,35.252,19.305,70.505,28.538,105.757c6.715,25.18,14.269,51.2,20.984,76.38V155.526 c-3.357,3.357-8.393,2.518-11.751-0.839l-11.751-13.43c0,0-0.839,0-0.839,0.839l-32.734,8.393c-0.839,0-0.839,0-1.679,0 l-3.357,17.626c-0.839,4.197-4.197,6.715-8.393,6.715c-0.839,0-0.839,0-1.679,0c-4.197-0.839-7.554-5.036-6.715-10.072 l15.108-73.023c0.839-3.357,3.357-5.875,5.875-6.715c3.357-0.839,6.715,0,8.393,2.518l49.521,55.397V75.789 c0-23.502,18.466-41.967,41.967-41.967h162.833L338.357,18.713z"/>
+                <path d="M474.331,50.608H180.56c-14.269,0-25.18,10.911-25.18,25.18v402.885c0,14.269,10.911,25.18,25.18,25.18h293.77 c14.269,0,25.18-10.911,25.18-25.18V75.789C499.511,61.52,488.6,50.608,474.331,50.608z M306.462,84.182h151.082 c5.036,0,8.393,3.357,8.393,8.393V343.54c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-242.57H306.462 c-5.036,0-8.393-3.357-8.393-8.393S301.426,84.182,306.462,84.182z M188.954,92.576c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v26.859L232.6,86.7c3.357-3.357,8.393-4.197,11.751-0.839s4.197,8.393,0.839,11.751l-22.662,26.859 l31.056,47.003c2.518,4.197,1.679,9.233-2.518,11.751c0,0.839-1.679,1.679-3.357,1.679c-2.518,0-5.036-1.679-6.715-3.357 l-28.538-42.807l-6.715,7.554v30.216c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393V92.576z M365.216,470.28 l-167.869,0.839c-2.518,0-4.197-0.839-5.875-2.518c-1.679-1.679-2.518-3.357-2.518-5.875V210.923c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v243.41l159.475-0.839c5.036,0,8.393,3.357,8.393,8.393C373.609,466.084,370.252,470.28,365.216,470.28z M361.859,351.094l7.554,18.466c1.679,3.357,1.679,7.554-0.839,10.911c-2.518,3.357-5.875,5.875-10.072,5.875H296.39 c-4.197,0-8.393-2.518-10.072-5.875c-1.679-3.357-2.518-7.554-0.839-10.911l5.875-18.466c-4.197,1.679-7.554,1.679-11.751,1.679 c-15.948,0-31.056-6.715-41.967-18.466c-10.911-10.911-15.948-26.02-15.108-40.289c0.839-16.787,10.911-32.734,27.698-43.646 c8.393-5.036,15.948-8.393,24.341-8.393c-2.518-5.875-3.357-13.43-3.357-20.984c0-16.787,7.554-32.734,20.984-43.646 c13.43-10.911,30.216-15.108,47.003-10.911c21.823,4.197,38.61,21.823,42.807,43.646c2.518,11.751,1.679,22.662-1.679,31.895 c8.393,0.839,15.948,3.357,24.341,9.233c16.787,10.911,26.859,26.02,27.698,43.646c0.839,15.108-4.197,29.377-15.108,40.289 c-10.911,11.751-26.859,18.466-41.967,18.466C370.252,352.772,366.055,351.933,361.859,351.094z M467.616,461.887h-1.679 c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-26.859l-26.859,32.734c-1.679,1.679-4.197,2.518-6.715,2.518 c-1.679,0-4.197-0.839-5.036-1.679c-3.357-3.357-4.197-8.393-0.839-11.751l22.662-26.859l-31.056-47.003 c-2.518-4.197-1.679-9.233,2.518-11.751c4.197-2.518,9.233-1.679,11.751,2.518l28.538,42.807l6.715-7.554v-31.056 c0-5.036,3.357-8.393,8.393-8.393c5.036,0,8.393,3.357,8.393,8.393V461.887z"/>
+              </svg>
+            </span>
+            <div class="trending-info">
+              <span class="trending-title">{{ game.title }}</span>
+              <span class="trending-meta">{{ game.genre }} · {{ formatPlayCount(game.playCount) }} plays</span>
+            </div>
+            <span class="trending-hot">HOT</span>
+          </button>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- ───── GAMES LIST ───── -->
+  <section class="games-list-section" aria-label="Games list">
+    <div class="section-label">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      {{ filterLabel() }} &mdash; {{ filteredGames().length }} Results
+    </div>
+
+    @if (filteredGames().length === 0) {
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <p>No favorites yet — star a game to save it here.</p>
+      </div>
+    }
+
+    <div class="games-list">
+      @for (game of filteredGames(); track game.id; let i = $index) {
+        <article
+          class="game-row"
+          [style.--accent]="game.accentColor"
+          [style.animation-delay]="(i * 70) + 'ms'"
+          (click)="openGame(game)"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="'Open ' + game.title"
+          (keydown.enter)="openGame(game)"
+        >
+          <!-- Left: icon thumbnail -->
+          <div class="row-icon-wrap">
+            <svg viewBox="0 0 504.694 504.694" xmlns="http://www.w3.org/2000/svg"
+                 class="row-card-svg" aria-hidden="true">
+              <path d="M338.357,18.713C335,5.284,320.731-3.11,308.141,1.087L23.603,65.717C10.173,69.074,2.619,83.343,5.977,96.772 l104.079,389.456c1.679,6.715,5.875,11.751,11.751,15.108c4.197,2.518,8.393,3.357,12.59,3.357c2.518,0,4.197,0,6.715-0.839 l5.036-1.679c-5.036-6.715-7.554-15.108-7.554-23.502v-41.967c-3.357,0-6.715-2.518-8.393-5.875 c-9.233-35.253-19.305-70.505-28.538-106.597C91.59,288.982,82.357,252.89,73.124,218.477c-0.839-4.197,1.679-9.233,5.875-10.072 s9.233,1.679,10.072,5.875c9.233,35.252,19.305,70.505,28.538,105.757c6.715,25.18,14.269,51.2,20.984,76.38V155.526 c-3.357,3.357-8.393,2.518-11.751-0.839l-11.751-13.43c0,0-0.839,0-0.839,0.839l-32.734,8.393c-0.839,0-0.839,0-1.679,0 l-3.357,17.626c-0.839,4.197-4.197,6.715-8.393,6.715c-0.839,0-0.839,0-1.679,0c-4.197-0.839-7.554-5.036-6.715-10.072 l15.108-73.023c0.839-3.357,3.357-5.875,5.875-6.715c3.357-0.839,6.715,0,8.393,2.518l49.521,55.397V75.789 c0-23.502,18.466-41.967,41.967-41.967h162.833L338.357,18.713z"/>
+              <path d="M474.331,50.608H180.56c-14.269,0-25.18,10.911-25.18,25.18v402.885c0,14.269,10.911,25.18,25.18,25.18h293.77 c14.269,0,25.18-10.911,25.18-25.18V75.789C499.511,61.52,488.6,50.608,474.331,50.608z M306.462,84.182h151.082 c5.036,0,8.393,3.357,8.393,8.393V343.54c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-242.57H306.462 c-5.036,0-8.393-3.357-8.393-8.393S301.426,84.182,306.462,84.182z M188.954,92.576c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v26.859L232.6,86.7c3.357-3.357,8.393-4.197,11.751-0.839s4.197,8.393,0.839,11.751l-22.662,26.859 l31.056,47.003c2.518,4.197,1.679,9.233-2.518,11.751c0,0.839-1.679,1.679-3.357,1.679c-2.518,0-5.036-1.679-6.715-3.357 l-28.538-42.807l-6.715,7.554v30.216c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393V92.576z M365.216,470.28 l-167.869,0.839c-2.518,0-4.197-0.839-5.875-2.518c-1.679-1.679-2.518-3.357-2.518-5.875V210.923c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v243.41l159.475-0.839c5.036,0,8.393,3.357,8.393,8.393C373.609,466.084,370.252,470.28,365.216,470.28z M361.859,351.094l7.554,18.466c1.679,3.357,1.679,7.554-0.839,10.911c-2.518,3.357-5.875,5.875-10.072,5.875H296.39 c-4.197,0-8.393-2.518-10.072-5.875c-1.679-3.357-2.518-7.554-0.839-10.911l5.875-18.466c-4.197,1.679-7.554,1.679-11.751,1.679 c-15.948,0-31.056-6.715-41.967-18.466c-10.911-10.911-15.948-26.02-15.108-40.289c0.839-16.787,10.911-32.734,27.698-43.646 c8.393-5.036,15.948-8.393,24.341-8.393c-2.518-5.875-3.357-13.43-3.357-20.984c0-16.787,7.554-32.734,20.984-43.646 c13.43-10.911,30.216-15.108,47.003-10.911c21.823,4.197,38.61,21.823,42.807,43.646c2.518,11.751,1.679,22.662-1.679,31.895 c8.393,0.839,15.948,3.357,24.341,9.233c16.787,10.911,26.859,26.02,27.698,43.646c0.839,15.108-4.197,29.377-15.108,40.289 c-10.911,11.751-26.859,18.466-41.967,18.466C370.252,352.772,366.055,351.933,361.859,351.094z M467.616,461.887h-1.679 c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-26.859l-26.859,32.734c-1.679,1.679-4.197,2.518-6.715,2.518 c-1.679,0-4.197-0.839-5.036-1.679c-3.357-3.357-4.197-8.393-0.839-11.751l22.662-26.859l-31.056-47.003 c-2.518-4.197-1.679-9.233,2.518-11.751c4.197-2.518,9.233-1.679,11.751,2.518l28.538,42.807l6.715-7.554v-31.056 c0-5.036,3.357-8.393,8.393-8.393c5.036,0,8.393,3.357,8.393,8.393V461.887z"/>
+            </svg>
+          </div>
+
+          <!-- Center: info -->
+          <div class="row-body">
+            <div class="row-top-line">
+              <h3 class="row-title">{{ game.title }}</h3>
+              @if (game.trending) {
+                <span class="badge-trending">Trending</span>
+              }
+            </div>
+
+            <p class="row-genre">
+              <span class="genre-dot" [style.background]="game.accentColor"></span>
+              {{ game.genre }}
+            </p>
+
+            <p class="row-desc">{{ game.description }}</p>
+
+            <div class="row-meta-line">
+              <div class="row-tags">
+                @for (tag of game.tags; track tag) {
+                  <span class="tag">{{ tag }}</span>
+                }
+              </div>
+
+              <div class="row-stats">
+                <!-- Friends -->
+                @if (game.friendsPlayed.length > 0) {
+                  <div class="friends-played" [attr.aria-label]="game.friendsPlayed.length + ' friends played'">
+                    @for (friend of visibleFriends(game.friendsPlayed); track friend.name) {
+                      <span class="friend-avatar" [attr.title]="friend.name">{{ friend.avatar }}</span>
+                    }
+                    @if (extraFriends(game.friendsPlayed) > 0) {
+                      <span class="friend-avatar extra">+{{ extraFriends(game.friendsPlayed) }}</span>
+                    }
+                    <span class="friends-label">played</span>
+                  </div>
+                }
+
+                <!-- Date -->
+                <span class="meta-chip">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  {{ formatDate(game.releaseDate) }}
+                </span>
+
+                <!-- Play count -->
+                <span class="meta-chip plays">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  {{ formatPlayCount(game.playCount) }} plays
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: actions -->
+          <div class="row-actions">
+            <button
+              class="fav-btn"
+              [class.active]="game.isFavorite"
+              (click)="toggleFavorite(game, $event)"
+              [attr.aria-label]="game.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+              [attr.aria-pressed]="game.isFavorite"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                   [attr.fill]="game.isFavorite ? 'currentColor' : 'none'"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </button>
+
+            <button class="play-arrow-btn" [attr.aria-label]="'Play ' + game.title"
+                    (click)="openGame(game); $event.stopPropagation()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
 </div>
