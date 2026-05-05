@@ -69,7 +69,7 @@ describe('PlayerService', () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 5 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
-            const [success, id] = service.createPlayer('newplayer', 'hashedpass', 'new@test.com');
+            const [success, id] = await service.createPlayer('newplayer', 'hashedpass', 'new@test.com');
 
             expect(mockUnit.prepare).toHaveBeenCalledTimes(11); // 1 player + 10 lootboxes
 
@@ -94,7 +94,7 @@ describe('PlayerService', () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 6 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
-            const [success, id] = service.createPlayer('custom', 'pass', 'custom@test.com', 500, 20);
+            const [success, id] = await service.createPlayer('custom', 'pass', 'custom@test.com', 500, 20);
 
             const params = mockUnit.prepare.mock.calls[0][1];
             expect(params).toMatchObject({ coins: 500, lootboxCount: 20 });
@@ -105,7 +105,7 @@ describe('PlayerService', () => {
             mockStmt.run.mockReturnValue({ changes: 0, lastInsertRowid: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
-            const [success, id] = service.createPlayer('fail', 'pass', 'fail@test.com');
+            const [success, id] = await service.createPlayer('fail', 'pass', 'fail@test.com');
 
             expect(success).toBe(false);
             expect(mockUnit.prepare).toHaveBeenCalledTimes(1);

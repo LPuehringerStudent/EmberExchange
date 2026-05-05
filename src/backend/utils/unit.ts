@@ -1,4 +1,5 @@
 import { Pool, PoolClient, QueryResult } from "pg";
+import { hashPassword } from "./password";
 
 const COLUMN_MAP: Record<string, string> = {
     "acquiredat": "acquiredAt",
@@ -647,15 +648,16 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
             { username: "trader_joe", password: "trade789", email: "trader@example.com", coins: 10000, lootboxCount: 10, isAdmin: 0 },
             { username: "collector", password: "collect000", email: "collector@example.com", coins: 2500, lootboxCount: 10, isAdmin: 0 }
         ];
-        
+
         for (const player of players) {
+            const hashedPassword = await hashPassword(player.password);
             const stmt = unit.prepare<
                 unknown,
                 { username: string; password: string; email: string; coins: number; lootboxCount: number; isAdmin: number; joinedAt: string }
             >(
-                `insert into Player (username, password, email, coins, lootboxCount, isAdmin, joinedAt) 
+                `insert into Player (username, password, email, coins, lootboxCount, isAdmin, joinedAt)
                  values (@username, @password, @email, @coins, @lootboxCount, @isAdmin, @joinedAt)`,
-                { ...player, joinedAt: new Date().toISOString() }
+                { ...player, password: hashedPassword, joinedAt: new Date().toISOString() }
             );
             await stmt.run();
         }

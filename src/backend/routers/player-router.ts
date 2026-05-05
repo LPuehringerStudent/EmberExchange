@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { PlayerService } from "../services/player-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { hashPassword } from "../utils/password";
 
 export const playerRouter = express.Router();
 
@@ -228,9 +229,10 @@ playerRouter.post("/players", async (req, res) => {
             return;
         }
 
+        const hashedPassword = await hashPassword(password);
         const [success, id] = await service.createPlayer(
             username,
-            password,
+            hashedPassword,
             email,
             coins ?? 1000,
             lootboxCount ?? 10
