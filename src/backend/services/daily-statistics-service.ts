@@ -16,27 +16,27 @@ export class DailyStatisticsService extends ServiceBase {
 
     /**
      * Calculates today's statistics from actual data tables.
-     * Uses SQLite date() function to handle both ISO and space-formatted timestamps.
+     * Uses PostgreSQL date casting to handle ISO timestamps.
      */
-    private calculateTodayStats(): DailyStatisticsRow {
+    private async calculateTodayStats(): Promise<DailyStatisticsRow> {
         const sql = `
             SELECT
-                (SELECT COUNT(*) FROM Lootbox WHERE date(openedAt) = date('now')) as lootboxesOpened,
-                (SELECT COUNT(*) FROM Listing WHERE date(listedAt) = date('now')) as newListings,
-                (SELECT COUNT(*) FROM Trade t JOIN Listing l ON t.listingId = l.listingId WHERE date(t.executedAt) = date('now')) as salesToday,
-                (SELECT COALESCE(SUM(l2.price), 0) FROM Trade t2 JOIN Listing l2 ON t2.listingId = l2.listingId WHERE date(t2.executedAt) = date('now')) as tradingVolume,
-                (SELECT COALESCE(AVG(l3.price), 0) FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE date(t3.executedAt) = date('now')) as avgSalePrice,
-                (SELECT COUNT(*) FROM MiniGameSession WHERE date(finishedAt) = date('now')) as gamesToday,
-                (SELECT COUNT(*) FROM ChatMessage WHERE date(sentAt) = date('now')) as messagesToday,
-                (SELECT COUNT(*) FROM Player WHERE date(joinedAt) = date('now')) as newPlayers,
-                (SELECT COUNT(DISTINCT playerId) FROM LoginHistory WHERE date(loggedInAt) = date('now')) as activePlayers,
-                (SELECT COUNT(*) FROM LoginHistory WHERE date(loggedInAt) = date('now')) as totalSessions,
+                (SELECT COUNT(*) FROM Lootbox WHERE openedAt::date = CURRENT_DATE) as lootboxesOpened,
+                (SELECT COUNT(*) FROM Listing WHERE listedAt::date = CURRENT_DATE) as newListings,
+                (SELECT COUNT(*) FROM Trade t JOIN Listing l ON t.listingId = l.listingId WHERE t.executedAt::date = CURRENT_DATE) as salesToday,
+                (SELECT COALESCE(SUM(l2.price), 0) FROM Trade t2 JOIN Listing l2 ON t2.listingId = l2.listingId WHERE t2.executedAt::date = CURRENT_DATE) as tradingVolume,
+                (SELECT COALESCE(AVG(l3.price), 0) FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE t3.executedAt::date = CURRENT_DATE) as avgSalePrice,
+                (SELECT COUNT(*) FROM MiniGameSession WHERE finishedAt::date = CURRENT_DATE) as gamesToday,
+                (SELECT COUNT(*) FROM ChatMessage WHERE sentAt::date = CURRENT_DATE) as messagesToday,
+                (SELECT COUNT(*) FROM Player WHERE joinedAt::date = CURRENT_DATE) as newPlayers,
+                (SELECT COUNT(DISTINCT playerId) FROM LoginHistory WHERE loggedInAt::date = CURRENT_DATE) as activePlayers,
+                (SELECT COUNT(*) FROM LoginHistory WHERE loggedInAt::date = CURRENT_DATE) as totalSessions,
                 (SELECT COALESCE(SUM(coins), 0) FROM Player) as totalCoins,
                 (SELECT COUNT(*) FROM Stove) as totalStoves
         `;
 
         const stmt = this.unit.prepare<any>(sql);
-        const r = stmt.get();
+        const r = await stmt.get();
         const today = new Date().toISOString().split('T')[0];
 
         return {
@@ -76,23 +76,23 @@ export class DailyStatisticsService extends ServiceBase {
      * Retrieves all daily statistics.
      * @deprecated Use calculated statistics instead
      */
-    getAll(): DailyStatisticsRow[] {
+    async getAll(): Promise<DailyStatisticsRow[]> {
         // Return only today's calculated stats
-        return [this.calculateTodayStats()];
+        return [await this.calculateTodayStats()];
     }
 
     /**
      * Retrieves today's statistics (calculated from real data).
      */
-    getToday(): DailyStatisticsRow {
-        return this.calculateTodayStats();
+    async getToday(): Promise<DailyStatisticsRow> {
+        return await this.calculateTodayStats();
     }
 
     /**
      * Gets summary statistics for the last N days.
      */
-    getSummary(_days: number): DailySummary {
-        const today = this.calculateTodayStats();
+    async getSummary(_days: number): Promise<DailySummary> {
+        const today = await this.calculateTodayStats();
         
         // For now, just return today's data as the summary
         // In a real implementation, you'd aggregate multiple days
@@ -108,23 +108,23 @@ export class DailyStatisticsService extends ServiceBase {
      * Retrieves statistics for a specific date.
      * @deprecated Use calculated statistics instead
      */
-    getByDate(_date: string): DailyStatisticsRow | null {
-        return this.getToday();
+    async getByDate(_date: string): Promise<DailyStatisticsRow | null> {
+        return await this.getToday();
     }
 
     /**
      * Retrieves statistics for a date range.
      * @deprecated Use calculated statistics instead
      */
-    getRange(_from: string, _to: string): DailyStatisticsRow[] {
-        return this.getAll();
+    async getRange(_from: string, _to: string): Promise<DailyStatisticsRow[]> {
+        return await this.getAll();
     }
 
     /**
      * Alias for getRange to match router expectation.
      */
-    getByDateRange(from: string, to: string): DailyStatisticsRow[] {
-        return this.getRange(from, to);
+    async getByDateRange(from: string, to: string): Promise<DailyStatisticsRow[]> {
+        return await this.getRange(from, to);
     }
 
     /**

@@ -18,7 +18,7 @@ describe('ListingService', () => {
     });
 
     describe('getAllListings', () => {
-        it('should return all listings', () => {
+        it('should return all listings', async () => {
             const mockListings: ListingRow[] = [
                 { listingId: 1, sellerId: 1, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' },
                 { listingId: 2, sellerId: 2, stoveId: 2, price: 200, listedAt: new Date('2024-01-02'), status: 'sold' }
@@ -34,7 +34,7 @@ describe('ListingService', () => {
     });
 
     describe('getListingById', () => {
-        it('should return listing when found', () => {
+        it('should return listing when found', async () => {
             const mockListing: ListingRow = { listingId: 1, sellerId: 1, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' };
             mockStmt.get.mockReturnValue(mockListing);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -44,7 +44,7 @@ describe('ListingService', () => {
             expect(result).toEqual(mockListing);
         });
 
-        it('should return null when not found', () => {
+        it('should return null when not found', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -55,7 +55,7 @@ describe('ListingService', () => {
     });
 
     describe('getActiveListings', () => {
-        it('should return only active listings ordered by listedAt DESC', () => {
+        it('should return only active listings ordered by listedAt DESC', async () => {
             const mockListings: ListingRow[] = [
                 { listingId: 2, sellerId: 2, stoveId: 2, price: 200, listedAt: new Date('2024-01-02'), status: 'active' },
                 { listingId: 1, sellerId: 1, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' }
@@ -73,7 +73,7 @@ describe('ListingService', () => {
     });
 
     describe('getListingsBySellerId', () => {
-        it('should return seller listings ordered by date', () => {
+        it('should return seller listings ordered by date', async () => {
             const mockListings: ListingRow[] = [
                 { listingId: 1, sellerId: 5, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' }
             ];
@@ -91,7 +91,7 @@ describe('ListingService', () => {
     });
 
     describe('getActiveListingsBySellerId', () => {
-        it('should return only active listings for seller', () => {
+        it('should return only active listings for seller', async () => {
             const mockListings: ListingRow[] = [
                 { listingId: 1, sellerId: 5, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' }
             ];
@@ -109,7 +109,7 @@ describe('ListingService', () => {
     });
 
     describe('getActiveListingByStoveId', () => {
-        it('should return active listing for stove', () => {
+        it('should return active listing for stove', async () => {
             const mockListing: ListingRow = { listingId: 1, sellerId: 1, stoveId: 10, price: 100, listedAt: new Date('2024-01-01'), status: 'active' };
             mockStmt.get.mockReturnValue(mockListing);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -123,7 +123,7 @@ describe('ListingService', () => {
             expect(result).toEqual(mockListing);
         });
 
-        it('should return null when no active listing', () => {
+        it('should return null when no active listing', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -134,7 +134,7 @@ describe('ListingService', () => {
     });
 
     describe('createListing', () => {
-        it('should create listing with active status and current timestamp', () => {
+        it('should create listing with active status and current timestamp', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 5 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -151,7 +151,7 @@ describe('ListingService', () => {
     });
 
     describe('updatePrice', () => {
-        it('should update price for active listing', () => {
+        it('should update price for active listing', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -164,7 +164,7 @@ describe('ListingService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when listing not active or not found', () => {
+        it('should return false when listing not active or not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -175,7 +175,7 @@ describe('ListingService', () => {
     });
 
     describe('markAsSold', () => {
-        it('should mark listing as sold', () => {
+        it('should mark listing as sold', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -188,7 +188,7 @@ describe('ListingService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when listing not found', () => {
+        it('should return false when listing not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -199,7 +199,7 @@ describe('ListingService', () => {
     });
 
     describe('cancelListing', () => {
-        it('should cancel active listing', () => {
+        it('should cancel active listing', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -212,7 +212,7 @@ describe('ListingService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when listing not active', () => {
+        it('should return false when listing not active', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -223,7 +223,7 @@ describe('ListingService', () => {
     });
 
     describe('deleteListing', () => {
-        it('should delete listing', () => {
+        it('should delete listing', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -232,7 +232,7 @@ describe('ListingService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when listing not found', () => {
+        it('should return false when listing not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -243,7 +243,7 @@ describe('ListingService', () => {
     });
 
     describe('isStoveListed', () => {
-        it('should return true when stove has active listing', () => {
+        it('should return true when stove has active listing', async () => {
             mockStmt.get.mockReturnValue({ count: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -256,7 +256,7 @@ describe('ListingService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when stove has no active listing', () => {
+        it('should return false when stove has no active listing', async () => {
             mockStmt.get.mockReturnValue({ count: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -265,7 +265,7 @@ describe('ListingService', () => {
             expect(result).toBe(false);
         });
 
-        it('should return false when result is undefined', () => {
+        it('should return false when result is undefined', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -276,7 +276,7 @@ describe('ListingService', () => {
     });
 
     describe('countActiveListingsBySeller', () => {
-        it('should return correct count', () => {
+        it('should return correct count', async () => {
             mockStmt.get.mockReturnValue({ count: 3 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -285,7 +285,7 @@ describe('ListingService', () => {
             expect(result).toBe(3);
         });
 
-        it('should return 0 when seller has no active listings', () => {
+        it('should return 0 when seller has no active listings', async () => {
             mockStmt.get.mockReturnValue({ count: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -294,7 +294,7 @@ describe('ListingService', () => {
             expect(result).toBe(0);
         });
 
-        it('should return 0 when result is undefined', () => {
+        it('should return 0 when result is undefined', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 

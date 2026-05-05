@@ -30,17 +30,17 @@ export const playerStatisticsRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.get("/player-statistics", (_req, res) => {
-    const unit = new Unit(true);
+playerStatisticsRouter.get("/player-statistics", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new PlayerStatisticsService(unit);
 
     try {
-        const response = service.getAll();
+        const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -75,18 +75,18 @@ playerStatisticsRouter.get("/player-statistics", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.get("/player-statistics/leaderboard/activity", (req, res) => {
-    const unit = new Unit(true);
+playerStatisticsRouter.get("/player-statistics/leaderboard/activity", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new PlayerStatisticsService(unit);
     const limit = parseInt(req.query.limit as string) || 10;
 
     try {
-        const response = service.getTopByActivity(limit);
+        const response = await service.getTopByActivity(limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -121,18 +121,18 @@ playerStatisticsRouter.get("/player-statistics/leaderboard/activity", (req, res)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.get("/player-statistics/leaderboard/wealth", (req, res) => {
-    const unit = new Unit(true);
+playerStatisticsRouter.get("/player-statistics/leaderboard/wealth", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new PlayerStatisticsService(unit);
     const limit = parseInt(req.query.limit as string) || 10;
 
     try {
-        const response = service.getTopByNetWorth(limit);
+        const response = await service.getTopByNetWorth(limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -177,8 +177,8 @@ playerStatisticsRouter.get("/player-statistics/leaderboard/wealth", (req, res) =
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.get("/players/:playerId/statistics", (req, res) => {
-    const unit = new Unit(true);
+playerStatisticsRouter.get("/players/:playerId/statistics", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new PlayerStatisticsService(unit);
     const playerId = req.params.playerId;
 
@@ -188,7 +188,7 @@ playerStatisticsRouter.get("/players/:playerId/statistics", (req, res) => {
             return;
         }
 
-        const response = service.getByPlayerId(Number(playerId));
+        const response = await service.getByPlayerId(Number(playerId));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Statistics not found" });
         } else {
@@ -197,7 +197,7 @@ playerStatisticsRouter.get("/players/:playerId/statistics", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -242,8 +242,8 @@ playerStatisticsRouter.get("/players/:playerId/statistics", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.post("/players/:playerId/statistics", (req, res) => {
-    const unit = new Unit(false);
+playerStatisticsRouter.post("/players/:playerId/statistics", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new PlayerStatisticsService(unit);
     const playerId = req.params.playerId;
     let ok = false;
@@ -254,7 +254,7 @@ playerStatisticsRouter.post("/players/:playerId/statistics", (req, res) => {
             return;
         }
 
-        const [success, id] = service.create(Number(playerId));
+        const [success, id] = await service.create(Number(playerId));
 
         if (success) {
             ok = true;
@@ -265,7 +265,7 @@ playerStatisticsRouter.post("/players/:playerId/statistics", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.CONFLICT).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -310,8 +310,8 @@ playerStatisticsRouter.post("/players/:playerId/statistics", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.delete("/players/:playerId/statistics", (req, res) => {
-    const unit = new Unit(false);
+playerStatisticsRouter.delete("/players/:playerId/statistics", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new PlayerStatisticsService(unit);
     const playerId = req.params.playerId;
     let ok = false;
@@ -322,7 +322,7 @@ playerStatisticsRouter.delete("/players/:playerId/statistics", (req, res) => {
             return;
         }
 
-        const success = service.delete(Number(playerId));
+        const success = await service.delete(Number(playerId));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Statistics deleted" });
@@ -332,6 +332,6 @@ playerStatisticsRouter.delete("/players/:playerId/statistics", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });

@@ -80,7 +80,7 @@ async function handleOAuthLogin(
     provider: "google" | "github",
     profile: any
 ): Promise<{ playerId: number; sessionId: string }> {
-    const unit = new Unit(false);
+    const unit = await Unit.create(false);
     const playerService = new PlayerService(unit);
     const playerStatisticsService = new PlayerStatisticsService(unit);
     const sessionService = new SessionService(unit);
@@ -91,11 +91,11 @@ async function handleOAuthLogin(
         const displayName = profile.displayName || profile.username || `User${providerId}`;
 
         // Check if user already exists with this OAuth provider
-        let player = playerService.getPlayerByOAuth(provider, providerId);
+        let player = await playerService.getPlayerByOAuth(provider, providerId);
 
         if (!player) {
             // Check if email is already used by another account
-            const existingByEmail = playerService.getPlayerByEmail(email);
+            const existingByEmail = await playerService.getPlayerByEmail(email);
             if (existingByEmail) {
                 throw new Error("An account with this email already exists");
             }
@@ -103,13 +103,13 @@ async function handleOAuthLogin(
             // Generate unique username
             let username = displayName.replace(/\s+/g, "").toLowerCase();
             let counter = 1;
-            while (playerService.getPlayerByUsername(username)) {
+            while (await playerService.getPlayerByUsername(username)) {
                 username = `${displayName.replace(/\s+/g, "").toLowerCase()}${counter}`;
                 counter++;
             }
 
             // Create new OAuth player
-            const [success, playerId] = playerService.createOAuthPlayer(
+            const [success, playerId] = await playerService.createOAuthPlayer(
                 username,
                 email,
                 provider,
@@ -123,12 +123,12 @@ async function handleOAuthLogin(
             }
 
             // Create player statistics
-            const [statsSuccess] = playerStatisticsService.createDefaultPlayerStatistics(playerId);
+            const [statsSuccess] = await playerStatisticsService.createDefaultPlayerStatistics(playerId);
             if (!statsSuccess) {
                 throw new Error("Failed to create player statistics");
             }
 
-            player = playerService.getInfoByID(playerId);
+            player = await playerService.getInfoByID(playerId);
         }
 
         if (!player) {
@@ -140,15 +140,15 @@ async function handleOAuthLogin(
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
 
-        const sessionCreated = sessionService.createSession(sessionId, player.playerId, expiresAt);
+        const sessionCreated = await sessionService.createSession(sessionId, player.playerId, expiresAt);
         if (!sessionCreated) {
             throw new Error("Failed to create session");
         }
 
-        unit.complete(true);
+        await unit.complete(true);
         return { playerId: player.playerId, sessionId };
     } catch (err) {
-        unit.complete(false);
+        await unit.complete(false);
         throw err;
     }
 }

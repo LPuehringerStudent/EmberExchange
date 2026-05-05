@@ -7,9 +7,9 @@ import { isNullOrWhiteSpace } from "../utils/util";
 export const lootboxDropRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
-    const msg = String(err);
-    return msg.includes("FOREIGN KEY constraint failed") ||
-        msg.includes("UNIQUE constraint failed");
+    const pgErr = err as { code?: string };
+    return pgErr.code === "23503" ||
+        pgErr.code === "23505";
 }
 
 /**
@@ -36,17 +36,17 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.get("/lootbox-drops", (_req, res) => {
-    const unit = new Unit(true);
+lootboxDropRouter.get("/lootbox-drops", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxDropService(unit);
 
     try {
-        const response = service.getAll();
+        const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -91,22 +91,22 @@ lootboxDropRouter.get("/lootbox-drops", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.get("/lootbox-drops/count", (_req, res) => {
-    const unit = new Unit(true);
+lootboxDropRouter.get("/lootbox-drops/count", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxDropService(unit);
 
     try {
-        const count = service.count();
+        const count = await service.count();
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
-lootboxDropRouter.get("/lootbox-drops/:id", (req, res) => {
-    const unit = new Unit(true);
+lootboxDropRouter.get("/lootbox-drops/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxDropService(unit);
     const id = req.params.id;
 
@@ -116,7 +116,7 @@ lootboxDropRouter.get("/lootbox-drops/:id", (req, res) => {
             return;
         }
 
-        const response = service.getById(Number(id));
+        const response = await service.getById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Lootbox drop not found" });
         } else {
@@ -125,7 +125,7 @@ lootboxDropRouter.get("/lootbox-drops/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -170,8 +170,8 @@ lootboxDropRouter.get("/lootbox-drops/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.get("/lootbox-drops/lootbox/:lootboxId", (req, res) => {
-    const unit = new Unit(true);
+lootboxDropRouter.get("/lootbox-drops/lootbox/:lootboxId", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxDropService(unit);
     const lootboxId = req.params.lootboxId;
 
@@ -181,7 +181,7 @@ lootboxDropRouter.get("/lootbox-drops/lootbox/:lootboxId", (req, res) => {
             return;
         }
 
-        const response = service.getByLootboxId(Number(lootboxId));
+        const response = await service.getByLootboxId(Number(lootboxId));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "No drop found for this lootbox" });
         } else {
@@ -190,7 +190,7 @@ lootboxDropRouter.get("/lootbox-drops/lootbox/:lootboxId", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -235,8 +235,8 @@ lootboxDropRouter.get("/lootbox-drops/lootbox/:lootboxId", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.get("/lootbox-drops/stove/:stoveId", (req, res) => {
-    const unit = new Unit(true);
+lootboxDropRouter.get("/lootbox-drops/stove/:stoveId", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxDropService(unit);
     const stoveId = req.params.stoveId;
 
@@ -246,7 +246,7 @@ lootboxDropRouter.get("/lootbox-drops/stove/:stoveId", (req, res) => {
             return;
         }
 
-        const response = service.getByStoveId(Number(stoveId));
+        const response = await service.getByStoveId(Number(stoveId));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "No drop found for this stove" });
         } else {
@@ -255,7 +255,7 @@ lootboxDropRouter.get("/lootbox-drops/stove/:stoveId", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -296,8 +296,8 @@ lootboxDropRouter.get("/lootbox-drops/stove/:stoveId", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.get("/players/:playerId/lootbox-drops", (req, res) => {
-    const unit = new Unit(true);
+lootboxDropRouter.get("/players/:playerId/lootbox-drops", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new LootboxDropService(unit);
     const playerId = req.params.playerId;
 
@@ -307,12 +307,12 @@ lootboxDropRouter.get("/players/:playerId/lootbox-drops", (req, res) => {
             return;
         }
 
-        const response = service.getByPlayerId(Number(playerId));
+        const response = await service.getByPlayerId(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -373,8 +373,8 @@ lootboxDropRouter.get("/players/:playerId/lootbox-drops", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.post("/lootbox-drops", (req, res) => {
-    const unit = new Unit(false);
+lootboxDropRouter.post("/lootbox-drops", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new LootboxDropService(unit);
     let ok = false;
 
@@ -386,7 +386,7 @@ lootboxDropRouter.post("/lootbox-drops", (req, res) => {
             return;
         }
 
-        const [success, id] = service.create(lootboxId, stoveId);
+        const [success, id] = await service.create(lootboxId, stoveId);
 
         if (success) {
             ok = true;
@@ -401,7 +401,7 @@ lootboxDropRouter.post("/lootbox-drops", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -446,8 +446,8 @@ lootboxDropRouter.post("/lootbox-drops", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.delete("/lootbox-drops/:id", (req, res) => {
-    const unit = new Unit(false);
+lootboxDropRouter.delete("/lootbox-drops/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new LootboxDropService(unit);
     const id = req.params.id;
     let ok = false;
@@ -458,7 +458,7 @@ lootboxDropRouter.delete("/lootbox-drops/:id", (req, res) => {
             return;
         }
 
-        const success = service.delete(Number(id));
+        const success = await service.delete(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Lootbox drop deleted" });
@@ -468,7 +468,7 @@ lootboxDropRouter.delete("/lootbox-drops/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 

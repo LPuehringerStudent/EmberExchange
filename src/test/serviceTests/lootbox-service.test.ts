@@ -18,7 +18,7 @@ describe('LootboxService', () => {
     });
 
     describe('getAllLootboxes', () => {
-        it('should return all lootboxes', () => {
+        it('should return all lootboxes', async () => {
             const mockLootboxes: LootboxRow[] = [
                 { lootboxId: 1, lootboxTypeId: 1, playerId: 1, openedAt: new Date('2024-01-01'), acquiredHow: 'free' },
                 { lootboxId: 2, lootboxTypeId: 2, playerId: 2, openedAt: new Date('2024-01-02'), acquiredHow: 'purchase' }
@@ -34,7 +34,7 @@ describe('LootboxService', () => {
     });
 
     describe('getLootboxById', () => {
-        it('should return lootbox when found', () => {
+        it('should return lootbox when found', async () => {
             const mockLootbox: LootboxRow = { lootboxId: 1, lootboxTypeId: 1, playerId: 1, openedAt: new Date('2024-01-01'), acquiredHow: 'free' };
             mockStmt.get.mockReturnValue(mockLootbox);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -44,7 +44,7 @@ describe('LootboxService', () => {
             expect(result).toEqual(mockLootbox);
         });
 
-        it('should return null when not found', () => {
+        it('should return null when not found', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -55,7 +55,7 @@ describe('LootboxService', () => {
     });
 
     describe('getLootboxesByPlayerId', () => {
-        it('should return unopened lootboxes for specific player', () => {
+        it('should return unopened lootboxes for specific player', async () => {
             const mockLootboxes: LootboxRow[] = [
                 { lootboxId: 1, lootboxTypeId: 1, playerId: 5, openedAt: null, acquiredHow: 'free' }
             ];
@@ -76,7 +76,7 @@ describe('LootboxService', () => {
     });
 
     describe('createLootbox', () => {
-        it('should create lootbox with free acquisition and increment player count', () => {
+        it('should create lootbox with free acquisition and increment player count', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -91,7 +91,7 @@ describe('LootboxService', () => {
             expect(id).toBe(10);
         });
 
-        it('should create lootbox with purchase acquisition and increment player count', () => {
+        it('should create lootbox with purchase acquisition and increment player count', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 11 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -102,7 +102,7 @@ describe('LootboxService', () => {
             expect(id).toBe(11);
         });
 
-        it('should create lootbox with reward acquisition', () => {
+        it('should create lootbox with reward acquisition', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 12 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -114,7 +114,7 @@ describe('LootboxService', () => {
     });
 
     describe('getAllLootboxTypes', () => {
-        it('should return all lootbox types', () => {
+        it('should return all lootbox types', async () => {
             const mockTypes: LootboxTypeRow[] = [
                 { lootboxTypeId: 1, name: 'Standard', description: 'A standard box', costCoins: 0, costFree: true, dailyLimit: null, isAvailable: true },
                 { lootboxTypeId: 2, name: 'Premium', description: 'A premium box', costCoins: 500, costFree: false, dailyLimit: 3, isAvailable: true }
@@ -129,7 +129,7 @@ describe('LootboxService', () => {
     });
 
     describe('getLootboxTypeById', () => {
-        it('should return type when found', () => {
+        it('should return type when found', async () => {
             const mockType: LootboxTypeRow = { lootboxTypeId: 1, name: 'Standard', description: 'A box', costCoins: 0, costFree: true, dailyLimit: null, isAvailable: true };
             mockStmt.get.mockReturnValue(mockType);
             mockUnit.prepare.mockReturnValue(mockStmt);
@@ -139,7 +139,7 @@ describe('LootboxService', () => {
             expect(result).toEqual(mockType);
         });
 
-        it('should return null when not found', () => {
+        it('should return null when not found', async () => {
             mockStmt.get.mockReturnValue(undefined);
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -150,7 +150,7 @@ describe('LootboxService', () => {
     });
 
     describe('getAvailableLootboxTypes', () => {
-        it('should return only available types', () => {
+        it('should return only available types', async () => {
             const mockTypes: LootboxTypeRow[] = [
                 { lootboxTypeId: 1, name: 'Standard', description: 'A box', costCoins: 0, costFree: true, dailyLimit: null, isAvailable: true }
             ];
@@ -165,7 +165,7 @@ describe('LootboxService', () => {
     });
 
     describe('getDropsByLootboxId', () => {
-        it('should return drops for lootbox', () => {
+        it('should return drops for lootbox', async () => {
             const mockDrops: LootboxDropRow[] = [
                 { dropId: 1, lootboxId: 5, stoveId: 10 }
             ];
@@ -183,7 +183,7 @@ describe('LootboxService', () => {
     });
 
     describe('createLootboxDrop', () => {
-        it('should create drop successfully', () => {
+        it('should create drop successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 20 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -200,7 +200,7 @@ describe('LootboxService', () => {
     });
 
     describe('deleteLootbox', () => {
-        it('should delete lootbox successfully', () => {
+        it('should delete lootbox successfully', async () => {
             mockStmt.run.mockReturnValue({ changes: 1 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 
@@ -213,7 +213,7 @@ describe('LootboxService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false when lootbox not found', () => {
+        it('should return false when lootbox not found', async () => {
             mockStmt.run.mockReturnValue({ changes: 0 });
             mockUnit.prepare.mockReturnValue(mockStmt);
 

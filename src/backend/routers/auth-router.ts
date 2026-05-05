@@ -11,9 +11,9 @@ import { isNullOrWhiteSpace } from "../utils/util";
 export const authRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
-    const msg = String(err);
-    return msg.includes("FOREIGN KEY constraint failed") ||
-           msg.includes("UNIQUE constraint failed");
+    const pgErr = err as { code?: string };
+    return pgErr.code === "23503" ||
+           pgErr.code === "23505";
 }
 
 /**
@@ -66,7 +66,7 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post("/auth/login", (req, res) => {
+authRouter.post("/auth/login", async (req, res) => {
     const { usernameOrEmail, password } = req.body;
     
     if (isNullOrWhiteSpace(usernameOrEmail) || isNullOrWhiteSpace(password)) {
@@ -74,21 +74,21 @@ authRouter.post("/auth/login", (req, res) => {
         return;
     }
     
-    const unit = new Unit(false);
+    const unit = await Unit.create(false);
     const playerService = new PlayerService(unit);
     const sessionService = new SessionService(unit);
     const loginHistoryService = new LoginHistoryService(unit);
 
     try {
         // Try to find player by username first, then by email
-        let player = playerService.getPlayerByUsername(usernameOrEmail);
+        let player = await playerService.getPlayerByUsername(usernameOrEmail);
         if (player === null) {
-            player = playerService.getPlayerByEmail(usernameOrEmail);
+            player = await playerService.getPlayerByEmail(usernameOrEmail);
         }
         
         if (player === null || player.password !== password) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
@@ -96,16 +96,16 @@ authRouter.post("/auth/login", (req, res) => {
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24); // 24-hour session
 
-        const success = sessionService.createSession(sessionId, player.playerId, expiresAt);
+        const success = await sessionService.createSession(sessionId, player.playerId, expiresAt);
         if (success) {
-            loginHistoryService.create(player.playerId, sessionId);
-            unit.complete(true);
+            await loginHistoryService.create(player.playerId, sessionId);
+            await unit.complete(true);
             res.status(StatusCodes.OK).json({ sessionId, playerId: player.playerId });
         } else {
             throw new Error("Failed to create session");
         }
     } catch (err) {
-        unit.complete(false);
+        await unit.complete(false);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     }
 });
@@ -166,7 +166,7 @@ authRouter.post("/auth/login", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.patch("/auth/me", (req, res) => {
+authRouter.patch("/auth/me", async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
@@ -187,29 +187,29 @@ authRouter.patch("/auth/me", (req, res) => {
         return;
     }
 
-    const unit = new Unit(false);
+    const unit = await Unit.create(false);
     const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = sessionService.getSession(sessionId);
+        const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
         // Check if email already exists for another user
-        const existingByEmail = playerService.getPlayerByEmail(email);
+        const existingByEmail = await playerService.getPlayerByEmail(email);
         if (existingByEmail && existingByEmail.playerId !== session.playerId) {
             res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
         // Update email
-        const success = playerService.updatePlayerEmail(session.playerId, email);
+        const success = await playerService.updatePlayerEmail(session.playerId, email);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Profile updated successfully" });
@@ -223,7 +223,7 @@ authRouter.patch("/auth/me", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -281,7 +281,7 @@ authRouter.patch("/auth/me", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.patch("/auth/password", (req, res) => {
+authRouter.patch("/auth/password", async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
@@ -300,35 +300,35 @@ authRouter.patch("/auth/password", (req, res) => {
         return;
     }
 
-    const unit = new Unit(false);
+    const unit = await Unit.create(false);
     const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = sessionService.getSession(sessionId);
+        const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
-        const player = playerService.getInfoByID(session.playerId);
+        const player = await playerService.getInfoByID(session.playerId);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
         // Verify current password
         if (player.password !== currentPassword) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Current password is incorrect" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
         // Update password
-        const success = playerService.updatePlayerPassword(session.playerId, newPassword);
+        const success = await playerService.updatePlayerPassword(session.playerId, newPassword);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Password changed successfully" });
@@ -338,7 +338,7 @@ authRouter.patch("/auth/password", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -376,28 +376,28 @@ authRouter.patch("/auth/password", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.delete("/auth/me", (req, res) => {
+authRouter.delete("/auth/me", async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
         return;
     }
 
-    const unit = new Unit(false);
+    const unit = await Unit.create(false);
     const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = sessionService.getSession(sessionId);
+        const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
         // Delete player (cascade will handle related data)
-        const success = playerService.deletePlayer(session.playerId);
+        const success = await playerService.deletePlayer(session.playerId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Account deleted successfully" });
@@ -407,7 +407,7 @@ authRouter.delete("/auth/me", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -451,9 +451,9 @@ authRouter.delete("/auth/me", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post("/auth/register", (req, res) => {
+authRouter.post("/auth/register", async (req, res) => {
     const { username, password, email } = req.body;
-    const unit = new Unit(false);
+    const unit = await Unit.create(false);
     const playerService = new PlayerService(unit);
     const playerStatisticsService = new PlayerStatisticsService(unit);
     const sessionService = new SessionService(unit);
@@ -463,13 +463,13 @@ authRouter.post("/auth/register", (req, res) => {
         // Validation
         if (isNullOrWhiteSpace(username) || isNullOrWhiteSpace(password) || isNullOrWhiteSpace(email)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Username, password, and email are required" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
         if (password.length < 6) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Password must be at least 6 characters" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
@@ -477,39 +477,39 @@ authRouter.post("/auth/register", (req, res) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid email format" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
         // Check if username or email already exists
-        const existingByUsername = playerService.getPlayerByUsername(username);
+        const existingByUsername = await playerService.getPlayerByUsername(username);
         if (existingByUsername) {
             res.status(StatusCodes.CONFLICT).json({ error: "Username already exists" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
-        const existingByEmail = playerService.getPlayerByEmail(email);
+        const existingByEmail = await playerService.getPlayerByEmail(email);
         if (existingByEmail) {
             res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
         // Create player with default values (1000 coins, 10 lootboxes)
-        const [success, playerId] = playerService.createPlayer(username, password, email, 1000, 10);
+        const [success, playerId] = await playerService.createPlayer(username, password, email, 1000, 10);
 
         if (!success) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create player" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
         // Create player statistics record
-        const [statsSuccess] = playerStatisticsService.createDefaultPlayerStatistics(playerId);
+        const [statsSuccess] = await playerStatisticsService.createDefaultPlayerStatistics(playerId);
         if (!statsSuccess) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create player statistics" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
@@ -518,10 +518,10 @@ authRouter.post("/auth/register", (req, res) => {
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
 
-        const sessionCreated = sessionService.createSession(sessionId, playerId, expiresAt);
+        const sessionCreated = await sessionService.createSession(sessionId, playerId, expiresAt);
         if (!sessionCreated) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create session" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
@@ -534,7 +534,7 @@ authRouter.post("/auth/register", (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -572,19 +572,19 @@ authRouter.post("/auth/register", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.get("/auth/me", (req, res) => {
+authRouter.get("/auth/me", async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
         return;
     }
 
-    const unit = new Unit(true);
+    const unit = await Unit.create(true);
     const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
 
     try {
-        const session = sessionService.getSession(sessionId);
+        const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
             return;
@@ -596,7 +596,7 @@ authRouter.get("/auth/me", (req, res) => {
             return;
         }
 
-        const player = playerService.getInfoByID(session.playerId);
+        const player = await playerService.getInfoByID(session.playerId);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             return;
@@ -608,7 +608,7 @@ authRouter.get("/auth/me", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -652,33 +652,33 @@ authRouter.get("/auth/me", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post("/auth/logout", (req, res) => {
+authRouter.post("/auth/logout", async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
         return;
     }
 
-    const unit = new Unit(false);
+    const unit = await Unit.create(false);
     const sessionService = new SessionService(unit);
 
     try {
-        const session = sessionService.getSession(sessionId);
+        const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or inactive session" });
-            unit.complete(false);
+            await unit.complete(false);
             return;
         }
 
-        const success = sessionService.invalidateSession(sessionId);
+        const success = await sessionService.invalidateSession(sessionId);
         if (success) {
-            unit.complete(true);
+            await unit.complete(true);
             res.status(StatusCodes.OK).json({ message: "Logout successful" });
         } else {
             throw new Error("Failed to invalidate session");
         }
     } catch (err) {
-        unit.complete(false);
+        await unit.complete(false);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     }
 });

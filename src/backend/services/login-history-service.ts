@@ -7,53 +7,53 @@ export class LoginHistoryService extends ServiceBase {
         super(unit);
     }
 
-    getAll(): LoginHistoryRow[] {
+    async getAll(): Promise<LoginHistoryRow[]> {
         const stmt = this.unit.prepare<LoginHistoryRow>(
             "SELECT * FROM LoginHistory ORDER BY loggedInAt DESC"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
-    getById(id: number): LoginHistoryRow | null {
+    async getById(id: number): Promise<LoginHistoryRow | null> {
         const stmt = this.unit.prepare<LoginHistoryRow>(
             "SELECT * FROM LoginHistory WHERE loginHistoryId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
-    getByPlayerId(playerId: number): LoginHistoryRow[] {
+    async getByPlayerId(playerId: number): Promise<LoginHistoryRow[]> {
         const stmt = this.unit.prepare<LoginHistoryRow>(
             "SELECT * FROM LoginHistory WHERE playerId = @playerId ORDER BY loggedInAt DESC",
             { playerId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
-    create(playerId: number, sessionId: string | null = null): [boolean, number] {
+    async create(playerId: number, sessionId: string | null = null): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<LoginHistoryRow>(
             `INSERT INTO LoginHistory (playerId, loggedInAt, sessionId) 
-             VALUES (@playerId, datetime('now'), @sessionId)`,
+             VALUES (@playerId, NOW(), @sessionId)`,
             { playerId, sessionId }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
-    delete(id: number): boolean {
+    async delete(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM LoginHistory WHERE loginHistoryId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
-    countByPlayer(playerId: number): number {
+    async countByPlayer(playerId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM LoginHistory WHERE playerId = @playerId",
             { playerId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 }

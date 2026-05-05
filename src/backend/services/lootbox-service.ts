@@ -43,12 +43,12 @@ export class LootboxService extends ServiceBase {
         return dropTable[0].rarity;
     }
 
-    private pickStoveTypeByRarity(rarity: string): { typeId: number; name: string; imageUrl: string } | null {
+    private async pickStoveTypeByRarity(rarity: string): Promise<{ typeId: number; name: string; imageUrl: string } | null> {
         const stmt = this.unit.prepare<{ typeId: number; name: string; imageUrl: string }>(
             "SELECT typeId, name, imageUrl FROM StoveType WHERE rarity = @rarity",
             { rarity }
         );
-        const rows = stmt.all();
+        const rows = await stmt.all();
         if (rows.length === 0) return null;
         return rows[Math.floor(Math.random() * rows.length)];
     }
@@ -56,38 +56,38 @@ export class LootboxService extends ServiceBase {
     /**
      * Retrieves all lootboxes from the database.
      */
-    getAllLootboxes(): LootboxRow[] {
+    async getAllLootboxes(): Promise<LootboxRow[]> {
         const stmt = this.unit.prepare<LootboxRow>("SELECT * FROM Lootbox");
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
      * Retrieves a lootbox by its unique ID.
      */
-    getLootboxById(id: number): LootboxRow | null {
+    async getLootboxById(id: number): Promise<LootboxRow | null> {
         const stmt = this.unit.prepare<LootboxRow>(
             "SELECT * FROM Lootbox WHERE lootboxId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
      * Retrieves all unopened lootboxes belonging to a specific player.
      */
-    getLootboxesByPlayerId(playerId: number): LootboxRow[] {
+    async getLootboxesByPlayerId(playerId: number): Promise<LootboxRow[]> {
         const stmt = this.unit.prepare<LootboxRow>(
             "SELECT * FROM Lootbox WHERE playerId = @playerId AND openedAt IS NULL",
             { playerId }
         );
-        let lootboxes = stmt.all();
+        let lootboxes = await stmt.all();
 
         // Reconcile: if Player.lootboxCount exceeds actual unopened rows, create missing ones
         const countStmt = this.unit.prepare<{ lootboxCount: number }>(
             "SELECT lootboxCount FROM Player WHERE playerId = @playerId",
             { playerId }
         );
-        const player = countStmt.get();
+        const player = await countStmt.get();
         const expectedCount = player?.lootboxCount ?? 0;
 
         if (lootboxes.length === 0 && expectedCount > 0) {
@@ -97,9 +97,9 @@ export class LootboxService extends ServiceBase {
                      VALUES (@lootboxTypeId, @playerId, null, @acquiredHow)`,
                     { lootboxTypeId: 1, playerId, acquiredHow: 'reward' }
                 );
-                insertStmt.run();
+                await insertStmt.run();
             }
-            lootboxes = stmt.all();
+            lootboxes = await stmt.all();
         }
 
         return lootboxes;
@@ -108,15 +108,15 @@ export class LootboxService extends ServiceBase {
     /**
      * Creates a new unopened lootbox for a player.
      */
-    createLootbox(lootboxTypeId: number, playerId: number, acquiredHow: "free" | "purchase" | "reward"): [boolean, number] {
+    async createLootbox(lootboxTypeId: number, playerId: number, acquiredHow: "free" | "purchase" | "reward"): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<LootboxRow>(
             `INSERT INTO Lootbox (lootboxTypeId, playerId, openedAt, acquiredHow) 
              VALUES (@lootboxTypeId, @playerId, null, @acquiredHow)`,
             { lootboxTypeId, playerId, acquiredHow }
         );
-        const [success, id] = this.executeStmt(stmt);
+        const [success, id] = await this.executeStmt(stmt);
         if (success) {
-            this.unit.prepare(
+            await this.unit.prepare(
                 "UPDATE Player SET lootboxCount = lootboxCount + 1 WHERE playerId = @playerId",
                 { playerId }
             ).run();
@@ -127,53 +127,53 @@ export class LootboxService extends ServiceBase {
     /**
      * Retrieves all available lootbox types.
      */
-    getAvailableLootboxTypes(): LootboxTypeRow[] {
+    async getAvailableLootboxTypes(): Promise<LootboxTypeRow[]> {
         const stmt = this.unit.prepare<LootboxTypeRow>(
             "SELECT * FROM LootboxType WHERE isAvailable = 1"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
      * Retrieves a lootbox type by its unique ID.
      */
-    getLootboxTypeById(id: number): LootboxTypeRow | null {
+    async getLootboxTypeById(id: number): Promise<LootboxTypeRow | null> {
         const stmt = this.unit.prepare<LootboxTypeRow>(
             "SELECT * FROM LootboxType WHERE lootboxTypeId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
      * Retrieves all lootbox types.
      */
-    getAllLootboxTypes(): LootboxTypeRow[] {
+    async getAllLootboxTypes(): Promise<LootboxTypeRow[]> {
         const stmt = this.unit.prepare<LootboxTypeRow>("SELECT * FROM LootboxType");
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
      * Retrieves all drops for a specific lootbox.
      */
-    getDropsByLootboxId(lootboxId: number): LootboxDropRow[] {
+    async getDropsByLootboxId(lootboxId: number): Promise<LootboxDropRow[]> {
         const stmt = this.unit.prepare<LootboxDropRow>(
             "SELECT * FROM LootboxDrop WHERE lootboxId = @lootboxId",
             { lootboxId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
      * Creates a new lootbox drop linking a stove to a lootbox.
      */
-    createLootboxDrop(lootboxId: number, stoveId: number): [boolean, number] {
+    async createLootboxDrop(lootboxId: number, stoveId: number): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<LootboxDropRow>(
             `INSERT INTO LootboxDrop (lootboxId, stoveId) 
              VALUES (@lootboxId, @stoveId)`,
             { lootboxId, stoveId }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -183,37 +183,37 @@ export class LootboxService extends ServiceBase {
      * @param playerId - The player who owns the lootbox.
      * @returns Tuple [success, result] where result contains stoveId, stoveName, rarity, etc.
      */
-    openLootbox(
+    async openLootbox(
         lootboxId: number,
         playerId: number
-    ): [boolean, { stoveId: number; stoveName: string; rarity: string; imageUrl: string; lootboxId: number } | null] {
+    ): Promise<[boolean, { stoveId: number; stoveName: string; rarity: string; imageUrl: string; lootboxId: number } | null]> {
         // 1. Verify lootbox exists, is unopened, and belongs to player
         const verifyStmt = this.unit.prepare<LootboxRow>(
             "SELECT * FROM Lootbox WHERE lootboxId = @lootboxId AND playerId = @playerId AND openedAt IS NULL",
             { lootboxId, playerId }
         );
-        const lootbox = verifyStmt.get();
+        const lootbox = await verifyStmt.get();
         if (!lootbox) return [false, null];
 
         // 2. Determine drop
         const dropTable = DROP_TABLES[lootbox.lootboxTypeId] ?? DROP_TABLES[1];
         const rarity = this.weightedRarity(dropTable);
-        const stoveType = this.pickStoveTypeByRarity(rarity);
+        const stoveType = await this.pickStoveTypeByRarity(rarity);
         if (!stoveType) return [false, null];
 
         // 3. Create stove
         const stoveStmt = this.unit.prepare<{ stoveId: number }>(
             `INSERT INTO Stove (typeId, currentOwnerId, mintedAt) 
-             VALUES (@typeId, @playerId, datetime('now'))`,
+             VALUES (@typeId, @playerId, NOW())`,
             { typeId: stoveType.typeId, playerId }
         );
-        const stoveResult = stoveStmt.run();
-        const stoveId = Number(stoveResult.lastInsertRowid);
+        await stoveStmt.run();
+        const stoveId = await this.unit.getLastRowId();
         if (!stoveId) return [false, null];
 
         // 4. Mark lootbox as opened
-        this.unit.prepare(
-            `UPDATE Lootbox SET openedAt = datetime('now') WHERE lootboxId = @lootboxId`,
+        await this.unit.prepare(
+            `UPDATE Lootbox SET openedAt = NOW() WHERE lootboxId = @lootboxId`,
             { lootboxId }
         ).run();
 
@@ -223,12 +223,12 @@ export class LootboxService extends ServiceBase {
              VALUES (@lootboxId, @stoveId)`,
             { lootboxId, stoveId }
         );
-        const dropResult = dropStmt.run();
-        const dropId = Number(dropResult.lastInsertRowid);
+        await dropStmt.run();
+        const dropId = await this.unit.getLastRowId();
         if (!dropId) return [false, null];
 
         // 6. Decrement player lootbox count for original frontend compatibility
-        this.unit.prepare(
+        await this.unit.prepare(
             "UPDATE Player SET lootboxCount = lootboxCount - 1 WHERE playerId = @playerId",
             { playerId }
         ).run();
@@ -239,12 +239,12 @@ export class LootboxService extends ServiceBase {
     /**
      * Deletes a lootbox and its associated drops from the database.
      */
-    deleteLootbox(id: number): boolean {
+    async deleteLootbox(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM Lootbox WHERE lootboxId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 }
