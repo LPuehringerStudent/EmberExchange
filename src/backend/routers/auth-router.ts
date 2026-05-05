@@ -7,6 +7,7 @@ import { LoginHistoryService } from "../services/login-history-service";
 import { StatusCodes } from "http-status-codes";
 import crypto from "crypto";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { hashPassword, comparePassword, isHashed } from "../utils/password";
 
 export const authRouter = express.Router();
 
@@ -86,7 +87,28 @@ authRouter.post("/auth/login", async (req, res) => {
             player = await playerService.getPlayerByEmail(usernameOrEmail);
         }
         
-        if (player === null || player.password !== password) {
+        if (player === null) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+            await unit.complete(false);
+            return;
+        }
+
+        // Check password (supports both bcrypt hashes and legacy plain text)
+        let passwordValid = false;
+        if (player.password === null) {
+            passwordValid = false;
+        } else if (isHashed(player.password)) {
+            passwordValid = await comparePassword(password, player.password);
+        } else {
+            // Legacy plain-text password — check and migrate to hash
+            passwordValid = player.password === password;
+            if (passwordValid) {
+                const hashed = await hashPassword(password);
+                await playerService.updatePlayerPassword(player.playerId, hashed);
+            }
+        }
+
+        if (!passwordValid) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
             await unit.complete(false);
             return;
@@ -327,8 +349,9 @@ authRouter.patch("/auth/password", async (req, res) => {
             return;
         }
 
-        // Update password
-        const success = await playerService.updatePlayerPassword(session.playerId, newPassword);
+        // Hash and update password
+        const hashedPassword = await hashPassword(newPassword);
+        const success = await playerService.updatePlayerPassword(session.playerId, hashedPassword);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Password changed successfully" });
@@ -496,8 +519,9 @@ authRouter.post("/auth/register", async (req, res) => {
             return;
         }
 
-        // Create player with default values (1000 coins, 10 lootboxes)
-        const [success, playerId] = await playerService.createPlayer(username, password, email, 1000, 10);
+        // Hash password and create player with default values (1000 coins, 10 lootboxes)
+        const hashedPassword = await hashPassword(password);
+        const [success, playerId] = await playerService.createPlayer(username, hashedPassword, email, 1000, 10);
 
         if (!success) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create player" });

@@ -35,7 +35,7 @@ export class PlayerService extends ServiceBase {
      * Creates a new player with the specified username, password, email and optional initial values.
      * New players are created as non-admins with the current timestamp as join date.
      * @param username - The unique username for the player.
-     * @param password - The password for the player (should be pre-hashed).
+     * @param password - The password for the player (should be pre-hashed by the caller).
      * @param email - The unique email address for the player.
      * @param coins - Initial coin amount (default: 1000).
      * @param lootboxCount - Initial lootbox count (default: 10).
@@ -208,7 +208,7 @@ export class PlayerService extends ServiceBase {
     /**
      * Updates a player's password.
      * @param id - The player's unique ID.
-     * @param password - The new password.
+     * @param password - The new password (should be pre-hashed by the caller).
      * @returns True if exactly one player was updated, false otherwise.
      */
     async updatePlayerPassword(id: number, password: string): Promise<boolean> {
