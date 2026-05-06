@@ -1,0 +1,205 @@
+<div class="poker-page">
+  <header class="poker-header">
+    <div class="poker-header__left">
+      <h1 class="poker-title">Fiery Poker</h1>
+    </div>
+    <div class="poker-header__center">
+      <span
+        class="phase-badge"
+        [class.phase-badge--playing]="phase() === 'preflop' || phase() === 'flop' || phase() === 'turn' || phase() === 'river'"
+        [class.phase-badge--finished]="phase() === 'showdown'"
+      >
+        {{ phaseLabel() }}
+      </span>
+    </div>
+    <div class="poker-header__right">
+      <!-- Reserved for a future round counter or game timer -->
+    </div>
+  </header>
+
+  <div class="poker-main">
+
+    <aside class="poker-sidebar poker-sidebar--left" aria-label="Game information">
+      <!-- Current game phase -->
+      <div class="info-block">
+        <span class="info-block__label">Phase</span>
+        <span class="info-block__value">{{ phaseLabel() }}</span>
+      </div>
+
+      <!-- Pot amount -->
+      @if (pot() > 0) {
+        <div class="info-block info-block--highlight">
+          <span class="info-block__label">Pot</span>
+          <span class="info-block__value info-block__value--large">{{ pot() }}</span>
+        </div>
+      }
+
+      @if (currentBet() > 0) {
+        <div class="info-block">
+          <span class="info-block__label">To Call</span>
+          <span class="info-block__value">{{ currentBet() }}</span>
+        </div>
+      }
+
+      @if (currentTurnPlayer(); as player) {
+        <div class="info-block">
+          <span class="info-block__label">Current Turn</span>
+          <span class="info-block__value">{{ player.name }}</span>
+        </div>
+      }
+    </aside>
+
+    <main class="poker-table-area" aria-label="Poker table">
+      <div class="pt-wrapper">
+        <div
+          class="pt-table"
+          role="img"
+          aria-label="Poker felt table"
+        >
+
+          <!-- ── Turn indicator -->
+          @if (currentTurnPlayer(); as player) {
+            <div
+              class="pt-turn-indicator"
+              aria-live="polite"
+              [attr.aria-label]="player.name + ' is taking their turn'"
+            >
+              <span class="pt-turn-indicator__dot" aria-hidden="true"></span>
+              <span class="pt-turn-indicator__name">{{ player.name }}</span>
+              <span class="pt-turn-indicator__label">'s turn</span>
+            </div>
+          }
+
+          <!-- ── Community cards (Flop / Turn / River) -->
+          <div class="pt-community" aria-label="Community cards">
+            @for (card of communitySlots(); track $index) {
+              <div
+                class="pt-card-slot"
+                [attr.aria-label]="card ? (card.rank + ' of ' + card.suit) : 'Empty card slot'"
+              >
+                @if (card) {
+                  <img
+                    [src]="cardSpriteSrc(card)"
+                    [alt]="card.rank + ' of ' + card.suit"
+                    class="pt-card-img"
+                  />
+                }
+              </div>
+            }
+          </div>
+
+          @if (pot() > 0) {
+            <div class="pt-pot" aria-live="polite" aria-label="Current pot amount">
+              <span class="pt-pot__label">Pot</span>
+              <span class="pt-pot__amount">{{ pot() }}</span>
+            </div>
+          }
+
+        </div>
+
+        <!-- Player seats -->
+        @for (pos of seatPositions; track $index) {
+          <div
+            class="pt-seat"
+            [class.pt-seat--hero]="isHero($index)"
+            [class.pt-seat--active]="seatedPlayers()[$index]?.isCurrentTurn"
+            [class.pt-seat--folded]="seatedPlayers()[$index]?.isFolded"
+            [class.pt-seat--all-in]="seatedPlayers()[$index]?.isAllIn"
+            [style.left.%]="pos.x"
+            [style.top.%]="pos.y"
+            [attr.aria-label]="'Seat ' + ($index + 1)"
+          >
+            <!-- Dealer button -->
+            @if (seatedPlayers()[$index]?.isDealer) {
+              <div class="pt-dealer" aria-label="Dealer">D</div>
+            }
+
+            <div class="pt-hole-cards">
+              @for (cardIdx of [0, 1]; track cardIdx) {
+                <div class="pt-card-slot pt-card-slot--hole">
+                  @if (seatedPlayers()[$index]?.cards?.[cardIdx]; as card) {
+                    @if (card.faceUp) {
+                      <img
+                        [src]="cardSpriteSrc(card)"
+                        [alt]="card.rank + ' of ' + card.suit"
+                        class="pt-card-img"
+                      />
+                    } @else {
+                      <img
+                        [src]="cardBackSrc()"
+                        alt="Face-down card"
+                        class="pt-card-img"
+                      />
+                    }
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="pt-seat__chip">
+              @if (seatedPlayers()[$index]; as player) {
+                <span class="pt-seat__name">{{ player.name }}</span>
+                <span class="pt-seat__chips">{{ player.chips }}</span>
+                @if (player.currentBet > 0) {
+                  <span class="pt-seat__bet">Bet: {{ player.currentBet }}</span>
+                }
+              } @else {
+                <span class="pt-seat__empty">Seat {{ $index + 1 }}</span>
+              }
+            </div>
+
+            <!-- ── Hero action panel -->
+            @if (isHero($index) && isHeroTurn() && validActions().length > 0) {
+              <div class="action-panel">
+                @for (action of validActions(); track action.type) {
+                  <button
+                    class="action-btn"
+                    [class.action-btn--primary]="action.type === 'raise' || action.type === 'all_in'"
+                    (click)="executeAction(action)"
+                  >
+                    {{ action.type | titlecase }}
+                    @if (action.amount) {
+                      <span class="action-btn__amount">{{ action.amount }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+
+          </div>
+        }
+        <!-- /seats -->
+
+      </div>
+      <!-- /pt-wrapper -->
+    </main>
+
+    <aside class="poker-sidebar poker-sidebar--right" aria-label="Player standings">
+      <h2 class="sidebar-title">Players</h2>
+      @if (seatedPlayers().length === 0) {
+        <p class="sidebar-empty">Waiting for players...</p>
+      }
+      @for (player of seatedPlayers(); track player?.playerId) {
+        @if (player) {
+          <div
+            class="player-row"
+            [class.player-row--active]="player.isCurrentTurn"
+            [class.player-row--folded]="player.isFolded"
+            [class.player-row--all-in]="player.isAllIn"
+          >
+            <div class="player-row__info">
+              <span class="player-row__name">{{ player.name }}</span>
+              @if (player.isDealer) {
+                <span class="player-row__badge player-row__badge--dealer" aria-label="Dealer">D</span>
+              }
+            </div>
+            <span class="player-row__chips" aria-label="{{ player.chips }} chips">
+              {{ player.chips }}
+            </span>
+          </div>
+        }
+      }
+    </aside>
+
+  </div>
+</div>

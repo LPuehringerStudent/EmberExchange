@@ -8,6 +8,8 @@
       <p>{{ error() }}</p>
       <button class="btn-primary" (click)="leave()">Back to Games</button>
     </div>
+  } @else if (roomStatus() === 'active') {
+    <app-poker />
   } @else {
     <header class="room-header">
       <div class="header-left">
