@@ -766,6 +766,30 @@
   margin-top: 6px;
 }
 
+.raise-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.raise-input {
+  width: 70px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.raise-input:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
 .info-block--actions {
   border-color: var(--orange);
   background: var(--orange-dim);

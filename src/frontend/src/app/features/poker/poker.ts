@@ -183,6 +183,12 @@ export class Poker {
     return this.phase() === 'showdown';
   });
 
+  readonly raiseAction = computed(() => {
+    return this.validActions().find(a => a.type === 'raise');
+  });
+
+  raiseAmount = signal<number>(0);
+
   isHero(seatIdx: number): boolean {
     return seatIdx === 0; // hero is always rotated to index 0
   }
@@ -194,6 +200,20 @@ export class Poker {
   getPlayerName(playerId: number): string {
     const p = this.rawPlayers().find(pl => pl['playerId'] === playerId);
     return String(p?.['username'] ?? p?.['name'] ?? `Player ${playerId}`);
+  }
+
+  initRaiseAmount(min: number): void {
+    this.raiseAmount.set(min);
+  }
+
+  executeRaise(): void {
+    const action = this.raiseAction();
+    if (!action) return;
+    const amount = this.raiseAmount();
+    const min = action.minAmount ?? amount;
+    const max = action.maxAmount ?? amount;
+    const clamped = Math.max(min, Math.min(max, amount));
+    this.ws.sendAction('raise', { amount: clamped });
   }
 
   private mapPlayer(p: Record<string, unknown> | undefined, seatIdx: number): PokerPlayer | null {

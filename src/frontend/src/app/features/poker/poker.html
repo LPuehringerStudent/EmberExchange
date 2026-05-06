@@ -54,16 +54,39 @@
           <span class="info-block__label">Your Turn</span>
           <div class="sidebar-action-panel">
             @for (action of validActions(); track action.type) {
-              <button
-                class="action-btn"
-                [class.action-btn--primary]="action.type === 'raise' || action.type === 'all_in'"
-                (click)="executeAction(action)"
-              >
-                {{ action.type | titlecase }}
-                @if (action.amount) {
-                  <span class="action-btn__amount">{{ action.amount }}</span>
-                }
-              </button>
+              @if (action.type === 'raise') {
+                <!-- Raise needs an amount input -->
+                @let rMin = action.minAmount ?? 0;
+                @let rMax = action.maxAmount ?? rMin;
+                <div class="raise-group">
+                  <input
+                    type="number"
+                    class="raise-input"
+                    [min]="rMin"
+                    [max]="rMax"
+                    [value]="raiseAmount() || rMin"
+                    (input)="raiseAmount.set(+($any($event.target).value))"
+                    (focus)="initRaiseAmount(rMin)"
+                  />
+                  <button
+                    class="action-btn action-btn--primary"
+                    (click)="executeRaise()"
+                  >
+                    Raise
+                  </button>
+                </div>
+              } @else {
+                <button
+                  class="action-btn"
+                  [class.action-btn--primary]="action.type === 'all_in'"
+                  (click)="executeAction(action)"
+                >
+                  {{ action.type | titlecase }}
+                  @if (action.amount) {
+                    <span class="action-btn__amount">{{ action.amount }}</span>
+                  }
+                </button>
+              }
             }
           </div>
         </div>
