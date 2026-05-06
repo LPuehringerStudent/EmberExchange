@@ -39,7 +39,8 @@
     "rxjs": "~7.8.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "ws": "^8.20.0"
   },
   "devDependencies": {
     "@angular/build": "^21.2.5",
@@ -54,6 +55,7 @@
     "@types/supertest": "^6.0.3",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.57.0",
     "@typescript-eslint/parser": "^8.57.0",
     "eslint": "^10.0.3",

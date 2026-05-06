@@ -7,6 +7,8 @@ import path from "path";
 import swaggerUi from "swagger-ui-express";
 import passport, { configurePassport } from "./utils/passport";
 import {Unit, ensureSampleDataInserted, resetDatabase, DB} from "./utils/unit";
+import { RoomPlayerService } from "./services/room-player-service";
+import { GameStateService } from "./services/game-state-service";
 import { playerRouter } from "./routers/player-router";
 import { lootboxRouter } from "./routers/lootbox-router";
 import { stoveTypeRouter } from "./routers/stove-type-router";
@@ -26,7 +28,9 @@ import { loginHistoryRouter } from "./routers/login-history-router";
 import { coinTransactionRouter } from "./routers/coin-transaction-router";
 import { authRouter } from "./routers/auth-router";
 import { oauthRouter } from "./routers/oauth-router";
+import { roomRouter } from "./routers/room-router";
 import { swaggerSpec } from "./swagger";
+import { setupWebSocketServer } from "./websocket";
 
 
 export const app = express();
@@ -64,6 +68,7 @@ app.use("/api", loginHistoryRouter);
 app.use("/api", coinTransactionRouter);
 app.use("/api", authRouter);
 app.use("/api", oauthRouter);
+app.use("/api", roomRouter);
 
 // Static files (frontend) - serve Angular build output
 app.use(express.static(path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser")));
@@ -102,10 +107,13 @@ app.get("/api/db-test", async (_req, res) => {
 
 // Start server first, then initialize DB
 if (require.main === module) {
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`🚀 EmberExchange server running on http://localhost:${PORT}`);
-        initDb().catch(err => console.error("Database initialization failed:", err));
+        initDb()
+            .then(() => cleanupStaleRoomPlayers())
+            .catch(err => console.error("Database initialization failed:", err));
     });
+    setupWebSocketServer(server);
 }
 
 async function initDb(): Promise<void> {
@@ -128,6 +136,53 @@ async function initDb(): Promise<void> {
         await unit.complete(true);
     } catch (error) {
         console.error("Database initialization failed:", error);
+        if (unit) {
+            try { await unit.complete(false); } catch { /* ignore */ }
+        }
+    }
+}
+
+async function cleanupStaleRoomPlayers(): Promise<void> {
+    let unit: Unit | null = null;
+    try {
+        unit = await Unit.create(false);
+        const roomPlayerService = new RoomPlayerService(unit);
+        const gameStateService = new GameStateService(unit);
+
+        const stmt = unit.prepare<{ roomPlayerId: string; roomId: string }, Record<string, never>>(
+            `SELECT roomPlayerId, roomId FROM RoomPlayer WHERE connectionState = 'disconnected'`
+        );
+        const stalePlayers = await stmt.all();
+
+        for (const player of stalePlayers) {
+            await roomPlayerService.removePlayer(player.roomPlayerId);
+
+            const state = await gameStateService.getState(player.roomId);
+            if (state) {
+                const playersInRoom = await roomPlayerService.getPlayersInRoom(player.roomId);
+                const baseBlob = (typeof state.stateBlob === "object" && state.stateBlob !== null)
+                    ? state.stateBlob as Record<string, unknown>
+                    : { players: [], status: "waiting", log: [] };
+
+                const newBlob = {
+                    ...baseBlob,
+                    players: playersInRoom.map(p => ({
+                        playerId: p.playerId,
+                        connectionState: p.connectionState,
+                        seatIndex: p.seatIndex
+                    }))
+                };
+                await gameStateService.updateState(player.roomId, newBlob, state.version);
+            }
+        }
+
+        if (stalePlayers.length > 0) {
+            console.log(`🧹 Cleaned up ${stalePlayers.length} stale disconnected player(s)`);
+        }
+
+        await unit.complete(true);
+    } catch (error) {
+        console.error("Cleanup of stale room players failed:", error);
         if (unit) {
             try { await unit.complete(false); } catch { /* ignore */ }
         }

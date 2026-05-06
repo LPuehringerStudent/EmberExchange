@@ -96,6 +96,16 @@ const COLUMN_MAP: Record<string, string> = {
     "rarity": "rarity",
     "rarityrank": "rarityRank",
     "receiverid": "receiverId",
+    "roomid": "roomId",
+    "roomplayerid": "roomPlayerId",
+    "maxplayers": "maxPlayers",
+    "connectionstate": "connectionState",
+    "seatindex": "seatIndex",
+    "stateblob": "stateBlob",
+    "eventid": "eventId",
+    "servertimestamp": "serverTimestamp",
+    "clienttimestamp": "clientTimestamp",
+    "sequencenumber": "sequenceNumber",
     "result": "result",
     "saledate": "saleDate",
     "saleprice": "salePrice",
@@ -540,6 +550,58 @@ export class DB {
                 updatedAt TEXT NOT NULL
             )
         `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS Room (
+                roomId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'active', 'finished')),
+                maxPlayers INTEGER NOT NULL CHECK (maxPlayers > 1),
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
+            ALTER TABLE Room ADD COLUMN IF NOT EXISTS gameType TEXT NOT NULL DEFAULT 'unknown'
+        `);
+        await connection.query(`
+            CREATE INDEX IF NOT EXISTS idx_room_gametype ON Room(gameType)
+        `);
+        await connection.query(`
+            CREATE INDEX IF NOT EXISTS idx_room_status ON Room(status)
+        `);
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS RoomPlayer (
+                roomPlayerId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                roomId UUID NOT NULL REFERENCES Room(roomId) ON DELETE CASCADE,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                connectionState TEXT NOT NULL DEFAULT 'connected' CHECK (connectionState IN ('connected', 'disconnected', 'away')),
+                seatIndex INTEGER NOT NULL,
+                UNIQUE(roomId, seatIndex)
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS GameState (
+                roomId UUID PRIMARY KEY REFERENCES Room(roomId),
+                stateBlob JSONB NOT NULL,
+                version INTEGER NOT NULL DEFAULT 0,
+                updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS EventLog (
+                eventId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                roomId UUID NOT NULL REFERENCES Room(roomId),
+                playerId INTEGER,
+                type TEXT NOT NULL,
+                payload JSONB NOT NULL,
+                sequenceNumber INTEGER,
+                clientTimestamp BIGINT,
+                serverTimestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
     }
 }
 
@@ -576,7 +638,8 @@ export class Unit {
 
     public async getLastRowId(): Promise<number> {
         const result = await this.client.query<{ id: number }>("SELECT lastval() as id");
-        return result.rows[0]?.id ?? 0;
+        const id = result.rows[0]?.id ?? 0;
+        return typeof id === "string" ? parseInt(id, 10) : id;
     }
 
     public async complete(commit: boolean | null = null): Promise<void> {
@@ -585,16 +648,19 @@ export class Unit {
         }
         this.completed = true;
 
-        if (this.inTransaction) {
-            if (commit === true) {
-                await this.client.query("COMMIT");
-            } else if (commit === false) {
-                await this.client.query("ROLLBACK");
-            } else {
-                throw new Error("transaction has been opened, requires information if commit or rollback needed");
+        try {
+            if (this.inTransaction) {
+                if (commit === true) {
+                    await this.client.query("COMMIT");
+                } else if (commit === false) {
+                    await this.client.query("ROLLBACK");
+                } else {
+                    throw new Error("transaction has been opened, requires information if commit or rollback needed");
+                }
             }
+        } finally {
+            this.client.release();
         }
-        this.client.release();
     }
 }
 
@@ -617,6 +683,10 @@ export async function resetDatabase(connection: PoolClient): Promise<void> {
         DROP TABLE IF EXISTS Session CASCADE;
         DROP TABLE IF EXISTS Stove CASCADE;
         DROP TABLE IF EXISTS StoveType CASCADE;
+        DROP TABLE IF EXISTS EventLog CASCADE;
+        DROP TABLE IF EXISTS GameState CASCADE;
+        DROP TABLE IF EXISTS RoomPlayer CASCADE;
+        DROP TABLE IF EXISTS Room CASCADE;
         DROP TABLE IF EXISTS Player CASCADE
     `);
     console.log("🗑️  All tables dropped");

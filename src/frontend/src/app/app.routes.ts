@@ -28,6 +28,16 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'games/:gameType/lobby',
+    loadComponent: () => import('./features/game-lobby/game-lobby.component').then(m => m.GameLobbyComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'game-room/:roomId',
+    loadComponent: () => import('./features/game-room/game-room.component').then(m => m.GameRoomComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'inventory',
     loadComponent: () => import('./features/inventory/inventory.component').then(m => m.InventoryComponent),
     canActivate: [authGuard]

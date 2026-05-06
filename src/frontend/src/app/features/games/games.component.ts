@@ -60,7 +60,7 @@ export class GamesComponent {
       friendsPlayed: [
         { name: 'Davidus', avatar: 'D' }
       ],
-      route: '/poker',
+      route: 'poker',
     },
     {
       id: 2,
@@ -77,7 +77,7 @@ export class GamesComponent {
       friendsPlayed: [
         { name: 'Davidus', avatar: 'D' }
       ],
-      route: '/blackjack',
+      route: 'blackjack',
     }
   ]);
 
@@ -133,7 +133,7 @@ export class GamesComponent {
   }
 
   openGame(game: Game): void {
-    this.router.navigate([game.route]);
+    this.router.navigate(['/games', game.route, 'lobby']);
   }
 
   formatPlayCount(count: number): string {
