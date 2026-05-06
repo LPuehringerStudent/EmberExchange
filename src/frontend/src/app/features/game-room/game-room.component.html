@@ -1,0 +1,60 @@
+<div class="game-room-container">
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Loading room...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">
+      <p>{{ error() }}</p>
+      <button class="btn-primary" (click)="leave()">Back to Games</button>
+    </div>
+  } @else {
+    <header class="room-header">
+      <div class="header-left">
+        <h1>Room {{ roomId() }}</h1>
+        <span class="status-badge" [class]="roomStatus()">{{ roomStatus() }}</span>
+      </div>
+      <div class="header-right">
+        <span class="connection-badge" [class]="connectionState()">{{ connectionState() }}</span>
+        <button class="btn-secondary" (click)="leave()">Leave</button>
+      </div>
+    </header>
+
+    @if (lastError()) {
+      <div class="error-banner">
+        <strong>{{ lastError()?.code }}</strong>: {{ lastError()?.message }}
+      </div>
+    }
+
+    <section class="players-section">
+      <h2>Players ({{ players().length }} / {{ maxPlayers() }})</h2>
+      <div class="players-list">
+        @for (player of players(); track player.playerId) {
+          <div class="player-card" [class.disconnected]="player.connectionState !== 'connected'">
+            <div class="player-avatar">👤</div>
+            <div class="player-info">
+              <span class="player-name">Player {{ player.playerId }}</span>
+              <span class="player-seat">Seat {{ player.seatIndex }}</span>
+              <span class="player-state">{{ player.connectionState }}</span>
+            </div>
+          </div>
+        } @empty {
+          <p class="empty-text">No players in room yet.</p>
+        }
+      </div>
+    </section>
+
+    <section class="actions-section">
+      <h2>Actions</h2>
+      <div class="actions-grid">
+        <button
+          class="btn-primary"
+          (click)="sendTestAction()"
+          [disabled]="connectionState() !== 'open'"
+        >
+          Send Test Action
+        </button>
+      </div>
+    </section>
+  }
+</div>

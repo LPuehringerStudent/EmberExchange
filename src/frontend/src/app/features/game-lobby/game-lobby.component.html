@@ -1,0 +1,53 @@
+<div class="lobby-container">
+  <header class="lobby-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">← Back</button>
+      <h1>{{ gameType() }} Lobby</h1>
+    </div>
+    <button
+      class="btn-primary"
+      (click)="createRoom()"
+      [disabled]="creating()"
+    >
+      {{ creating() ? 'Creating...' : 'Create Room' }}
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="error-banner">
+      {{ error() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Loading rooms...</p>
+    </div>
+  } @else {
+    <section class="rooms-section">
+      <h2>Open Rooms</h2>
+      <div class="rooms-list">
+        @for (room of rooms(); track room.roomId) {
+          <div class="room-card">
+            <div class="room-info">
+              <span class="room-id">Room {{ room.roomId.slice(0, 8) }}</span>
+              <span class="status-badge" [class]="room.status">{{ room.status }}</span>
+            </div>
+            <div class="room-meta">
+              <span>Max {{ room.maxPlayers }} players</span>
+              <span class="room-date">{{ formatDate(room.createdAt) }}</span>
+            </div>
+            <button class="btn-secondary" (click)="joinRoom(room.roomId)">
+              Join
+            </button>
+          </div>
+        } @empty {
+          <div class="empty-state">
+            <p>No open rooms found.</p>
+            <p class="empty-hint">Be the first to create one!</p>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

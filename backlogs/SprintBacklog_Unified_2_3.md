@@ -70,14 +70,14 @@
 ---
 
 ## Epic 6: UI/UX & Frontend Infrastructure
-
-| Task | Who | Sprint | Definition of Done | Est. Time |
-|------|-----|--------|-------------------|-----------|
-| Main Menu Redesign | David Frühwirt | 2 | Welcome section; player stats display; game carousel; live feed; responsive layout; CSS animations aligned with warm stove aesthetic | 5h |
-| Settings System | David Frühwirt | 2 | Settings component shell with 5 sub-pages (Account, Security, Appearance, Language, Social); navigation and routing working | 3h |
-| Theme System | David Frühwirt | 2 | Dark/light mode toggle; CSS variables; `ThemeService` with localStorage persistence; applies globally | 2h |
-| Frontend Modernization | Laurenz Pühringer | 3 | Migrated data fetching to Angular `HttpClient` services; added startup landing page; fixed package conflicts and build budget issues | 4h |
-| Global CSS & Warm Stove Theme | David Frühwirt | 2 | Cobblestone background; orange/red accents; consistent spacing; `min-height: 100vh` fixes; global CSS reset | 3h |
+| Task                   | Who               | Sprint | Definition of Done                                                                                                                   | Est. Time |
+| ---------------------- | ----------------- |--------|--------------------------------------------------------------------------------------------------------------------------------------| --------- |
+| Settings UI            | David Frühwirt    | 2      | Complete settings User interface and ready to add functionality                                                                      | 2h        |
+| Login UI               | David Frühwirt    | 2      | Complete login interface with form validation, styling, and responsive design                                                        | 5h        |
+| Main Page UI Rework    | David Frühwirt    | 3      | Reworked main page layout, components, and visual improvements                                                                       | 5h        |
+| Lootbox UI Rework      | David Frühwirt    | 3      | Updated lootbox interface with improved visuals and interactions                                                                     | 3h        |
+| Small UI Bugfixes      | David Frühwirt    | 3      | Various minor UI fixes and polish improvements across the application                                                                | 1-2h      |
+| Frontend Modernization | Laurenz Pühringer | 3      | Migrated data fetching to Angular `HttpClient` services; added startup landing page; fixed package conflicts and build budget issues | 4h        |
 
 **Epic Total:** ~16 hours
 

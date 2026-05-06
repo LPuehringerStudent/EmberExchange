@@ -44,14 +44,22 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   private authService   = inject(AuthService);
   private router        = inject(Router);
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     const user = this.authService.getCurrentUser();
     if (!user) {
       this.router.navigate(['/login']);
       return;
     }
     this.playerId = user.playerId;
-    this.lootboxCount.set(user.lootboxCount);
+
+    // Sync lootbox count from actual backend state (not cached auth data)
+    try {
+      const lootboxes = await firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(user.playerId));
+      this.lootboxCount.set(lootboxes.length);
+    } catch (err) {
+      console.error('Failed to sync lootbox count:', err);
+      this.lootboxCount.set(user.lootboxCount);
+    }
   }
 
   ngAfterViewInit(): void {}
@@ -61,10 +69,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   }
 
   async openBox(): Promise<void> {
-    if (!this.canOpen() || this.playerId === null) {
-      if (this.lootboxCount() <= 0) {
-        alert('You have no lootboxes available!');
-      }
+    if (this.isOpening() || this.playerId === null) {
       return;
     }
 
@@ -78,13 +83,15 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       const listedLootboxIds = new Set(listings.filter(l => l.lootboxId).map(l => l.lootboxId!));
       const availableLootboxes = lootboxes.filter(lb => !listedLootboxIds.has(lb.lootboxId));
 
+      // Sync count with actual available lootboxes
+      this.lootboxCount.set(availableLootboxes.length);
+
       if (availableLootboxes.length === 0) {
         if (lootboxes.length > 0) {
           alert('All your lootboxes are currently listed on the marketplace. Cancel a listing to open them.');
         } else {
           alert('You have no lootboxes available!');
         }
-        this.lootboxCount.set(availableLootboxes.length);
         return;
       }
       lootboxId = availableLootboxes[0].lootboxId;
