@@ -84,7 +84,7 @@
             <span class="info-block__label">Winner</span>
             @for (winner of w; track winner.playerId) {
               <span class="info-block__value info-block__value--winner">
-                {{ winner.playerId === heroPlayerId() ? 'You' : ('Player ' + winner.playerId) }}
+                {{ winner.playerId === heroPlayerId() ? 'You' : getPlayerName(winner.playerId) }}
                 won {{ winner.amount }}
                 @if (winner.handName) {
                   <span class="winner-hand">({{ winner.handName }})</span>

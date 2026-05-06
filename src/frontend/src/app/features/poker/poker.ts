@@ -191,6 +191,11 @@ export class Poker {
     this.ws.sendAction('next_hand', {});
   }
 
+  getPlayerName(playerId: number): string {
+    const p = this.rawPlayers().find(pl => pl['playerId'] === playerId);
+    return String(p?.['username'] ?? p?.['name'] ?? `Player ${playerId}`);
+  }
+
   private mapPlayer(p: Record<string, unknown> | undefined, seatIdx: number): PokerPlayer | null {
     if (!p) return null;
     const playerId = String(p['playerId'] ?? '');
