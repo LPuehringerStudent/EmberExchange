@@ -8,6 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { GameService, Game } from '../../core/services/game.service';
 
 interface RoomListItem {
   roomId: string;
@@ -30,8 +31,10 @@ export class GameLobbyComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);
+  private gameService = inject(GameService);
 
   gameType = signal<string>('');
+  game = signal<Game | null>(null);
   rooms = signal<RoomListItem[]>([]);
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
@@ -45,6 +48,12 @@ export class GameLobbyComponent implements OnInit {
       return;
     }
     this.gameType.set(gt);
+    const existing = this.gameService.getGameByType(gt);
+    if (existing) {
+      this.game.set(existing);
+    } else {
+      this.gameService.fetchGames();
+    }
     this.loadRooms();
   }
 
@@ -68,9 +77,10 @@ export class GameLobbyComponent implements OnInit {
   createRoom(): void {
     if (this.creating()) return;
     this.creating.set(true);
+    const maxPlayers = this.game()?.maxPlayers ?? 4;
     this.http
       .post<RoomListItem>('/api/rooms', {
-        maxPlayers: 4,
+        maxPlayers,
         gameType: this.gameType(),
       })
       .subscribe({

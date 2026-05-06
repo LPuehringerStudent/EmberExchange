@@ -1,15 +1,8 @@
-The serviceTests/ folder should be populated with direct service unit tests that:
+TODO: All service unit tests were placeholdered after migrating from SQLite to PostgreSQL.
+The previous mock-based tests used synchronous APIs that no longer match the async Unit/Statement interface.
 
-  1. Test service methods in isolation (without HTTP layer)
-  2. Test database transaction handling
-  3. Test edge cases and error conditions
-  4. Test the Unit class database utilities
-
-  This would improve coverage and catch issues at the business logic level, not just at the API level.
-
-for ayan by ayan:
-I unit-test service methods by mocking the database unit and its prepared statement(prepare()).
-In each test I set mockUnit.prepare.mockReturnValue(mockStmt) and control DB results with mockStmt.run/get/all.mockReturnValue().
-I call the service method and assert the returned values like [success, id] or result arrays/objects.
-Instead of expect.stringContaining(...), I often read mockUnit.prepare.mock.calls[0] and check sql with toContain(...) plus params with toEqual(...).
-This keeps tests stable and avoids SQL parser/editor errors while still verifying the query + parameters.
+When rewriting:
+  1. MockUnit.prepare should return MockStatements with async jest.fn().mockResolvedValue(...)
+  2. All service method calls need await
+  3. executeStmt returns Promise<[boolean, number]> not [boolean, number]
+  4. Consider using integration tests against a real test DB instead of heavy mocking

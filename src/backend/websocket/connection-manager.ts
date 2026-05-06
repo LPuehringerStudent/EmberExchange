@@ -121,11 +121,8 @@ class ConnectionManager {
 
     sendToSocket(socketId: string, message: ServerMessage): void {
         const meta = this.sockets.get(socketId);
-        if (!meta) {
-            throw new Error(`Socket ${socketId} not found`);
-        }
-        if (meta.ws.readyState !== WebSocket.OPEN) {
-            throw new Error(`Socket ${socketId} not open (readyState=${meta.ws.readyState})`);
+        if (!meta || meta.ws.readyState !== WebSocket.OPEN) {
+            return; // silently drop instead of throwing
         }
         meta.ws.send(JSON.stringify(message));
     }

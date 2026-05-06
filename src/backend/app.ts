@@ -29,6 +29,7 @@ import { coinTransactionRouter } from "./routers/coin-transaction-router";
 import { authRouter } from "./routers/auth-router";
 import { oauthRouter } from "./routers/oauth-router";
 import { roomRouter } from "./routers/room-router";
+import { gameRouter } from "./routers/game-router";
 import { swaggerSpec } from "./swagger";
 import { setupWebSocketServer } from "./websocket";
 
@@ -69,6 +70,7 @@ app.use("/api", coinTransactionRouter);
 app.use("/api", authRouter);
 app.use("/api", oauthRouter);
 app.use("/api", roomRouter);
+app.use("/api", gameRouter);
 
 // Static files (frontend) - serve Angular build output
 app.use(express.static(path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser")));

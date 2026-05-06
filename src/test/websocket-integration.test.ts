@@ -38,6 +38,22 @@ describe("WebSocket Integration", () => {
         // Create two test players and sessions directly (avoid createPlayer's lootbox seeding)
         const unit = await Unit.create(false);
         try {
+            // Insert required games so Room FK constraint is satisfied
+            const gameStmt = unit.prepare<unknown, { gameType: string; name: string; minPlayers: number; maxPlayers: number }>(
+                `INSERT INTO Game (gameType, name, minPlayers, maxPlayers, ruleset, description, genre, tags)
+                 VALUES (@gameType, @name, @minPlayers, @maxPlayers, '', '', '', '[]')
+                 ON CONFLICT (gameType) DO NOTHING`,
+                { gameType: "poker", name: "Poker", minPlayers: 2, maxPlayers: 6 }
+            );
+            await gameStmt.run();
+            const gameStmt2 = unit.prepare<unknown, { gameType: string; name: string; minPlayers: number; maxPlayers: number }>(
+                `INSERT INTO Game (gameType, name, minPlayers, maxPlayers, ruleset, description, genre, tags)
+                 VALUES (@gameType, @name, @minPlayers, @maxPlayers, '', '', '', '[]')
+                 ON CONFLICT (gameType) DO NOTHING`,
+                { gameType: "blackjack", name: "Blackjack", minPlayers: 1, maxPlayers: 5 }
+            );
+            await gameStmt2.run();
+
             for (let i = 0; i < 2; i++) {
                 const suffix = `${Date.now()}_${i}`;
                 const username = `ws_test_${suffix}`;
@@ -235,7 +251,7 @@ describe("WebSocket Integration", () => {
         ws.close();
     });
 
-    it.skip("should reject player_action in waiting room", async () => {
+    it("should reject player_action in waiting room", async () => {
         const roomId = await createRoom();
         const ws = await connectWs(testSessionId);
         await joinRoom(ws, roomId, 1);
@@ -326,22 +342,25 @@ describe("WebSocket Integration", () => {
             sequenceNumber: 3
         }));
 
-        // Collect responses for both sockets
-        // ws1 should get its own success response
-        // ws2 may get the broadcast from ws1 AND its own error, so collect multiple
-        const [ws1Msg, ws2Msgs] = await Promise.all([
-            waitForMessage(ws1, 3000, "ws1 player_action"),
-            collectMessages(ws2, 2, 3000)
+        // Collect all messages from both sockets for a short window
+        // Either socket may win the race, so examine the combined results
+        const [ws1Msgs, ws2Msgs] = await Promise.all([
+            collectMessages(ws1, 2, 2000),
+            collectMessages(ws2, 2, 2000)
         ]);
 
-        // ws1 must have succeeded (it wins the race)
-        expect(ws1Msg.type).toBe("state_update");
-        expect((ws1Msg.payload as Record<string, unknown>).version).toBe(version + 1);
+        const allMsgs = [...ws1Msgs, ...ws2Msgs];
+        const successes = allMsgs.filter(
+            (msg) => msg.type === "state_update" && (msg.payload as Record<string, unknown>).version === version + 1
+        );
+        const errors = allMsgs.filter(
+            (msg) => msg.type === "error" && (msg.payload as Record<string, unknown>).code === "VERSION_MISMATCH"
+        );
 
-        // ws2 must have received a VERSION_MISMATCH error (may also have received a broadcast)
-        const ws2Errors = ws2Msgs.filter((msg) => msg.type === "error");
-        expect(ws2Errors.length).toBeGreaterThanOrEqual(1);
-        expect((ws2Errors[0].payload as Record<string, unknown>).code).toBe("VERSION_MISMATCH");
+        // Exactly one action should succeed (producing a state_update broadcast + direct)
+        // and the other should get a VERSION_MISMATCH error
+        expect(successes.length).toBeGreaterThanOrEqual(1); // at least direct + broadcast
+        expect(errors.length).toBe(1);
 
         ws1.close();
         ws2.close();

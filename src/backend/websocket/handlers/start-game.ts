@@ -2,6 +2,7 @@ import { Unit } from "../../utils/unit";
 import { RoomService } from "../../services/room-service";
 import { RoomPlayerService } from "../../services/room-player-service";
 import { GameStateService } from "../../services/game-state-service";
+import { GameService } from "../../services/game-service";
 import { EventLogService } from "../../services/event-log-service";
 import { connectionManager } from "../connection-manager";
 import { isValidUUID } from "../validators";
@@ -60,6 +61,18 @@ export async function handleStartGame(socketId: string, payload: Record<string, 
             connectionManager.sendToSocket(socketId, {
                 type: "error",
                 payload: { code: ErrorCode.INVALID_STATE, message: "Not in room", recoverable: true }
+            });
+            return;
+        }
+
+        const gameService = new GameService(unit);
+        const game = await gameService.getGameByType(room.gameType);
+        const playersInRoom = await roomPlayerService.getPlayersInRoom(roomId);
+        const connectedCount = playersInRoom.filter(p => p.connectionState === "connected").length;
+        if (game && connectedCount < game.minPlayers) {
+            connectionManager.sendToSocket(socketId, {
+                type: "error",
+                payload: { code: ErrorCode.INVALID_STATE, message: `Need at least ${game.minPlayers} players to start`, recoverable: true }
             });
             return;
         }

@@ -9,10 +9,6 @@ import { handleStartGame } from "./handlers/start-game";
 
 export async function handleMessage(socketId: string, data: unknown): Promise<void> {
     const msg = data as Partial<ClientMessage> & Record<string, unknown>;
-    if (msg.type === "player_action") {
-        console.log("handleMessage player_action", socketId, msg.sequenceNumber, msg.payload);
-    }
-
     if (!msg || typeof msg !== "object") {
         sendError(socketId, ErrorCode.INVALID_STATE, "Invalid message format");
         return;

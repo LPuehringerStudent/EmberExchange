@@ -329,6 +329,18 @@ export interface StoveTypeStatisticsRow extends StoveTypeStatistics {
 export type RoomStatus = 'waiting' | 'active' | 'finished';
 export type ConnectionState = 'connected' | 'disconnected' | 'away';
 
+export interface Game {
+    gameType: string;
+    name: string;
+    minPlayers: number;
+    maxPlayers: number;
+    ruleset: string;
+    description: string;
+    genre: string;
+    tags: string[];
+    createdAt: Date;
+}
+
 export interface Room {
     status: RoomStatus;
     maxPlayers: number;

@@ -2,7 +2,7 @@
   <header class="lobby-header">
     <div class="header-left">
       <button class="btn-back" (click)="goBack()">← Back</button>
-      <h1>{{ gameType() }} Lobby</h1>
+      <h1>{{ game()?.name ?? gameType() }} Lobby</h1>
     </div>
     <button
       class="btn-primary"
@@ -11,6 +11,9 @@
     >
       {{ creating() ? 'Creating...' : 'Create Room' }}
     </button>
+    @if (game()) {
+      <span class="game-meta">{{ game()!.minPlayers }}-{{ game()!.maxPlayers }} players &middot; {{ game()!.ruleset }}</span>
+    }
   </header>
 
   @if (error()) {
@@ -25,7 +28,7 @@
     </div>
   } @else {
     <section class="rooms-section">
-      <h2>Open Rooms</h2>
+      <h2>Open Rooms {{ game() ? '(' + game()!.minPlayers + '-' + game()!.maxPlayers + ' players)' : '' }}</h2>
       <div class="rooms-list">
         @for (room of rooms(); track room.roomId) {
           <div class="room-card">

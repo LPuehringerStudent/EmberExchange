@@ -26,6 +26,12 @@
   text-transform: capitalize;
 }
 
+.game-meta {
+  font-size: 0.875rem;
+  color: #aaa;
+  margin-left: 12px;
+}
+
 .btn-back {
   background: transparent;
   border: 1px solid #555;
