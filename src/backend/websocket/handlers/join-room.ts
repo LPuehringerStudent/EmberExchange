@@ -102,6 +102,7 @@ export async function handleJoinRoom(socketId: string, payload: Record<string, u
             ...baseBlob,
             players: playersInRoom.map(p => ({
                 playerId: p.playerId,
+                username: p.username,
                 connectionState: p.connectionState,
                 seatIndex: p.seatIndex
             }))
@@ -155,6 +156,7 @@ export async function handleJoinRoom(socketId: string, payload: Record<string, u
     if (ok) {
         connectionManager.joinRoom(socketId, roomId);
         connectionManager.clearGraceTimer(roomId, meta.playerId);
+        connectionManager.clearAutoFoldTimer(roomId, meta.playerId);
         for (const m of messages) {
             if (m.target === "socket") {
                 connectionManager.sendToSocket(m.socketId!, m.message);

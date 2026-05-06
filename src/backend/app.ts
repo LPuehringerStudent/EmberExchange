@@ -170,6 +170,7 @@ async function cleanupStaleRoomPlayers(): Promise<void> {
                     ...baseBlob,
                     players: playersInRoom.map(p => ({
                         playerId: p.playerId,
+                        username: p.username,
                         connectionState: p.connectionState,
                         seatIndex: p.seatIndex
                     }))

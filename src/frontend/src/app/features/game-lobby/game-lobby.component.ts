@@ -15,6 +15,7 @@ interface RoomListItem {
   status: string;
   maxPlayers: number;
   gameType: string;
+  settings: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +40,9 @@ export class GameLobbyComponent implements OnInit {
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
   creating = signal<boolean>(false);
+  showCreateModal = signal<boolean>(false);
+  newMaxPlayers = signal<number>(4);
+  newTurnTime = signal<number>(30);
 
   ngOnInit(): void {
     const gt = this.route.snapshot.paramMap.get('gameType');
@@ -74,18 +78,29 @@ export class GameLobbyComponent implements OnInit {
       });
   }
 
-  createRoom(): void {
+  openCreateModal(): void {
+    this.newMaxPlayers.set(4);
+    this.newTurnTime.set(30);
+    this.showCreateModal.set(true);
+  }
+
+  closeCreateModal(): void {
+    this.showCreateModal.set(false);
+  }
+
+  confirmCreateRoom(): void {
     if (this.creating()) return;
     this.creating.set(true);
-    const maxPlayers = this.game()?.maxPlayers ?? 4;
     this.http
       .post<RoomListItem>('/api/rooms', {
-        maxPlayers,
+        maxPlayers: this.newMaxPlayers(),
         gameType: this.gameType(),
+        settings: { turnTime: this.newTurnTime() },
       })
       .subscribe({
         next: (room) => {
           this.creating.set(false);
+          this.showCreateModal.set(false);
           void this.router.navigate(['/game-room', room.roomId]);
         },
         error: (err: Error) => {

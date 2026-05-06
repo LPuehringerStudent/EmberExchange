@@ -7,12 +7,12 @@ export class RoomService extends ServiceBase {
         super(unit);
     }
 
-    async createRoom(maxPlayers: number, gameType: string): Promise<RoomRow> {
-        const stmt = this.unit.prepare<RoomRow, { maxPlayers: number; gameType: string }>(
-            `INSERT INTO Room (maxPlayers, status, gameType, createdAt, updatedAt)
-             VALUES (@maxPlayers, 'waiting', @gameType, NOW(), NOW())
+    async createRoom(maxPlayers: number, gameType: string, settings: Record<string, unknown> = {}): Promise<RoomRow> {
+        const stmt = this.unit.prepare<RoomRow, { maxPlayers: number; gameType: string; settings: string }>(
+            `INSERT INTO Room (maxPlayers, status, gameType, settings, createdAt, updatedAt)
+             VALUES (@maxPlayers, 'waiting', @gameType, @settings::jsonb, NOW(), NOW())
              RETURNING *`,
-            { maxPlayers, gameType }
+            { maxPlayers, gameType, settings: JSON.stringify(settings) }
         );
         const row = await stmt.get();
         if (!row) {

@@ -1,33 +1,25 @@
 import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
-import { Game } from "../../shared/model";
+import { GameRow } from "../../shared/model";
 
 export class GameService extends ServiceBase {
     constructor(unit: Unit) {
         super(unit);
     }
 
-    async getAllGames(): Promise<Game[]> {
-        const stmt = this.unit.prepare<Game>(
-            `SELECT gameType, name, minPlayers, maxPlayers, ruleset, description, genre, tags, createdAt FROM Game ORDER BY name`
+    async getAllGames(): Promise<GameRow[]> {
+        const stmt = this.unit.prepare<GameRow>(
+            `SELECT * FROM Game WHERE isActive = 1 ORDER BY name ASC`
         );
-        const rows = await stmt.all();
-        return rows.map(row => ({
-            ...row,
-            tags: JSON.parse((row.tags as unknown as string) || '[]')
-        }));
+        return stmt.all();
     }
 
-    async getGameByType(gameType: string): Promise<Game | null> {
-        const stmt = this.unit.prepare<Game, { gameType: string }>(
-            `SELECT gameType, name, minPlayers, maxPlayers, ruleset, description, genre, tags, createdAt FROM Game WHERE gameType = @gameType`,
+    async getGameByType(gameType: string): Promise<GameRow | null> {
+        const stmt = this.unit.prepare<GameRow, { gameType: string }>(
+            `SELECT * FROM Game WHERE gameType = @gameType AND isActive = 1`,
             { gameType }
         );
         const row = await stmt.get();
-        if (!row) return null;
-        return {
-            ...row,
-            tags: JSON.parse((row.tags as unknown as string) || '[]')
-        };
+        return row ?? null;
     }
 }

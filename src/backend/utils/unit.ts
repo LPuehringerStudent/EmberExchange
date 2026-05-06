@@ -553,29 +553,47 @@ export class DB {
 
         await connection.query(`
             CREATE TABLE IF NOT EXISTS Game (
-                gameType TEXT PRIMARY KEY,
+                gameId SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
-                minPlayers INTEGER NOT NULL CHECK (minPlayers >= 1),
-                maxPlayers INTEGER NOT NULL CHECK (maxPlayers > 1),
-                ruleset TEXT NOT NULL DEFAULT '',
-                description TEXT NOT NULL DEFAULT '',
+                slug TEXT NOT NULL UNIQUE,
+                gameType TEXT NOT NULL UNIQUE,
+                minPlayers INTEGER NOT NULL,
+                maxPlayers INTEGER NOT NULL,
+                ruleset TEXT NOT NULL,
+                description TEXT,
                 genre TEXT NOT NULL DEFAULT '',
-                tags TEXT NOT NULL DEFAULT '[]',
-                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                tags JSONB NOT NULL DEFAULT '[]',
+                isActive INTEGER NOT NULL DEFAULT 1
             )
         `);
+
+        // Migration: add missing columns to existing Game table
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS slug TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS gameType TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS minPlayers INTEGER DEFAULT 2`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS maxPlayers INTEGER DEFAULT 6`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS ruleset TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS description TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS genre TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS isActive INTEGER DEFAULT 1`);
 
         await connection.query(`
             CREATE TABLE IF NOT EXISTS Room (
                 roomId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'active', 'finished')),
                 maxPlayers INTEGER NOT NULL CHECK (maxPlayers > 1),
-                gameType TEXT NOT NULL REFERENCES Game(gameType),
                 createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         `);
 
+        await connection.query(`
+            ALTER TABLE Room ADD COLUMN IF NOT EXISTS gameType TEXT NOT NULL DEFAULT 'unknown'
+        `);
+        await connection.query(`
+            ALTER TABLE Room ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'
+        `);
         await connection.query(`
             CREATE INDEX IF NOT EXISTS idx_room_gametype ON Room(gameType)
         `);
@@ -695,6 +713,7 @@ export async function resetDatabase(connection: PoolClient): Promise<void> {
         DROP TABLE IF EXISTS Session CASCADE;
         DROP TABLE IF EXISTS Stove CASCADE;
         DROP TABLE IF EXISTS StoveType CASCADE;
+        DROP TABLE IF EXISTS Game CASCADE;
         DROP TABLE IF EXISTS EventLog CASCADE;
         DROP TABLE IF EXISTS GameState CASCADE;
         DROP TABLE IF EXISTS RoomPlayer CASCADE;
@@ -739,44 +758,6 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
             await stmt.run();
         }
         console.log("✅ LootboxTypes inserted");
-    }
-
-    async function insertGames(): Promise<void> {
-        const games = [
-            {
-                gameType: "poker",
-                name: "Poker (Texas Hold'em)",
-                minPlayers: 2,
-                maxPlayers: 6,
-                ruleset: "No-Limit Texas Hold'em",
-                description: "Play with multiple people and find out your skills on feeling and strategy!",
-                genre: "Strategy",
-                tags: JSON.stringify(["Multiplayer", "Gambling"])
-            },
-            {
-                gameType: "blackjack",
-                name: "Blackjack",
-                minPlayers: 1,
-                maxPlayers: 5,
-                ruleset: "Standard American casino blackjack",
-                description: "Play against the dealer and test your luck and strategy!",
-                genre: "Strategy",
-                tags: JSON.stringify(["Singleplayer", "Gambling", "Multiplayer"])
-            }
-        ];
-
-        for (const game of games) {
-            const stmt = unit.prepare<
-                unknown,
-                { gameType: string; name: string; minPlayers: number; maxPlayers: number; ruleset: string; description: string; genre: string; tags: string }
-            >(
-                `INSERT INTO Game (gameType, name, minPlayers, maxPlayers, ruleset, description, genre, tags)
-                 VALUES (@gameType, @name, @minPlayers, @maxPlayers, @ruleset, @description, @genre, @tags)`,
-                game
-            );
-            await stmt.run();
-        }
-        console.log("✅ Games inserted");
     }
 
     async function insertPlayers(): Promise<void> {
@@ -1167,9 +1148,26 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
         console.log("✅ CoinTransactions inserted");
     }
 
+    async function insertGames(): Promise<void> {
+        const games = [
+            { name: "Poker", slug: "poker", gameType: "poker", minPlayers: 2, maxPlayers: 6, ruleset: "No-Limit Texas Hold'em", description: "Classic Texas Hold'em poker with no betting limits.", genre: "card", tags: JSON.stringify(["poker", "cards", "multiplayer"]), isActive: 1 },
+            { name: "Blackjack", slug: "blackjack", gameType: "blackjack", minPlayers: 1, maxPlayers: 5, ruleset: "Standard American casino blackjack", description: "Standard American casino blackjack.", genre: "card", tags: JSON.stringify(["blackjack", "cards", "casino"]), isActive: 1 }
+        ];
+        for (const game of games) {
+            const stmt = unit.prepare<unknown, { name: string; slug: string; gameType: string; minPlayers: number; maxPlayers: number; ruleset: string; description: string; genre: string; tags: string; isActive: number }>(
+                `insert into Game (name, slug, gameType, minPlayers, maxPlayers, ruleset, description, genre, tags, isActive)
+                 values (@name, @slug, @gameType, @minPlayers, @maxPlayers, @ruleset, @description, @genre, @tags, @isActive)
+                 ON CONFLICT (gameType) DO NOTHING`,
+                game
+            );
+            await stmt.run();
+        }
+        console.log("✅ Games inserted");
+    }
+
     if (!(await alreadyPresent())) {
-        await insertLootboxTypes();
         await insertGames();
+        await insertLootboxTypes();
         await insertPlayers();
         await insertStoveTypes();
         await insertStoves();

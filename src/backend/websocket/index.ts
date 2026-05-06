@@ -7,7 +7,10 @@ import { rateLimiter } from "./rate-limiter";
 import { handleMessage } from "./message-handler";
 import { RoomPlayerService } from "../services/room-player-service";
 import { GameStateService } from "../services/game-state-service";
+import { RoomService } from "../services/room-service";
 import { Unit } from "../utils/unit";
+import { engineRegistry } from "../game-engines";
+import { clearTurnTimer } from "./turn-timer";
 
 export function setupWebSocketServer(server: http.Server): void {
     const wss = new WebSocketServer({ server, path: "/ws" });
@@ -105,6 +108,73 @@ async function handleDisconnect(socketId: string): Promise<void> {
         await unit.complete(ok);
     }
 
+    // Set auto-fold timer for active games
+    const foldUnit = await Unit.create(true);
+    try {
+        const roomService = new RoomService(foldUnit);
+        const room = await roomService.getRoomById(roomId);
+        if (room && room.status === "active") {
+            connectionManager.setAutoFoldTimer(roomId, playerId, async () => {
+                const afUnit = await Unit.create(false);
+                let afOk = false;
+                try {
+                    const afRoomService = new RoomService(afUnit);
+                    const afRoomPlayerService = new RoomPlayerService(afUnit);
+                    const afGameStateService = new GameStateService(afUnit);
+
+                    const afRoom = await afRoomService.getRoomById(roomId);
+                    if (!afRoom || afRoom.status !== "active") return;
+
+                    const state = await afGameStateService.getState(roomId);
+                    if (!state) return;
+
+                    const rp = await afRoomPlayerService.getPlayerInRoom(roomId, playerId);
+                    if (!rp || rp.connectionState !== "disconnected") return;
+
+                    const engine = engineRegistry.get(afRoom.gameType);
+                    const result = engine.processAction(
+                        state.stateBlob as Record<string, unknown>,
+                        { type: "fold" },
+                        playerId
+                    );
+
+                    if (!result.valid) return;
+
+                    const updateResult = await afGameStateService.updateState(
+                        roomId,
+                        result.newFullState!,
+                        state.version
+                    );
+                    if (!updateResult.success) return;
+
+                    const playersInRoom = await afRoomPlayerService.getPlayersInRoom(roomId);
+                    for (const p of playersInRoom) {
+                        const view = result.playerViews!.get(p.playerId);
+                        if (view) {
+                            const targetSocket = connectionManager.getSocketIdForPlayer(roomId, p.playerId);
+                            if (targetSocket) {
+                                connectionManager.sendToSocket(targetSocket, {
+                                    type: "state_update",
+                                    payload: {
+                                        stateBlob: view,
+                                        version: updateResult.newVersion,
+                                        actingPlayer: playerId
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    clearTurnTimer(roomId);
+                    afOk = true;
+                } finally {
+                    await afUnit.complete(afOk);
+                }
+            });
+        }
+    } finally {
+        await foldUnit.complete();
+    }
+
     // Re-check DB state before starting grace timer — player may have reconnected already
     const checkUnit = await Unit.create(true);
     try {
@@ -133,6 +203,7 @@ async function handleDisconnect(socketId: string): Promise<void> {
                                 ...baseBlob,
                                 players: playersInRoom.map(p => ({
                                     playerId: p.playerId,
+                                    username: p.username,
                                     connectionState: p.connectionState,
                                     seatIndex: p.seatIndex
                                 }))

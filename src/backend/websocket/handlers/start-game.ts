@@ -2,19 +2,12 @@ import { Unit } from "../../utils/unit";
 import { RoomService } from "../../services/room-service";
 import { RoomPlayerService } from "../../services/room-player-service";
 import { GameStateService } from "../../services/game-state-service";
-import { GameService } from "../../services/game-service";
 import { EventLogService } from "../../services/event-log-service";
 import { connectionManager } from "../connection-manager";
 import { isValidUUID } from "../validators";
-import { ErrorCode, ServerMessage } from "../../../shared/model";
-
-interface QueuedMessage {
-    target: "socket" | "room";
-    socketId?: string;
-    roomId?: string;
-    exclude?: string;
-    message: ServerMessage;
-}
+import { ErrorCode } from "../../../shared/model";
+import { engineRegistry } from "../../game-engines";
+import { startTurnTimer, clearTurnTimer } from "../turn-timer";
 
 export async function handleStartGame(socketId: string, payload: Record<string, unknown>): Promise<void> {
     const roomId = payload.roomId;
@@ -31,7 +24,6 @@ export async function handleStartGame(socketId: string, payload: Record<string, 
 
     const unit = await Unit.create(false);
     let ok = false;
-    const messages: QueuedMessage[] = [];
 
     try {
         const roomService = new RoomService(unit);
@@ -65,72 +57,75 @@ export async function handleStartGame(socketId: string, payload: Record<string, 
             return;
         }
 
-        const gameService = new GameService(unit);
-        const game = await gameService.getGameByType(room.gameType);
         const playersInRoom = await roomPlayerService.getPlayersInRoom(roomId);
-        const connectedCount = playersInRoom.filter(p => p.connectionState === "connected").length;
-        if (game && connectedCount < game.minPlayers) {
+        const connectedPlayers = playersInRoom.filter(p => p.connectionState === "connected");
+
+        if (!engineRegistry.has(room.gameType)) {
             connectionManager.sendToSocket(socketId, {
                 type: "error",
-                payload: { code: ErrorCode.INVALID_STATE, message: `Need at least ${game.minPlayers} players to start`, recoverable: true }
+                payload: { code: ErrorCode.INVALID_STATE, message: `No engine for game type: ${room.gameType}`, recoverable: true }
+            });
+            return;
+        }
+
+        const engine = engineRegistry.get(room.gameType);
+
+        if (connectedPlayers.length < engine.minPlayers) {
+            connectionManager.sendToSocket(socketId, {
+                type: "error",
+                payload: { code: ErrorCode.INVALID_STATE, message: `Need at least ${engine.minPlayers} players`, recoverable: true }
             });
             return;
         }
 
         await roomService.updateRoomStatus(roomId, "active");
 
-        const state = await gameStateService.getState(roomId);
-        const baseBlob = (typeof state?.stateBlob === "object" && state.stateBlob !== null)
-            ? state.stateBlob as Record<string, unknown>
-            : { players: [], status: "waiting", log: [] };
+        const initialState = engine.createInitialState(connectedPlayers);
 
-        const newBlob = { ...baseBlob, status: "active" };
-        if (state) {
-            await gameStateService.updateState(roomId, newBlob, state.version);
+        const existingState = await gameStateService.getState(roomId);
+        if (existingState) {
+            await gameStateService.updateState(roomId, initialState, existingState.version);
         } else {
-            await gameStateService.createInitialState(roomId, newBlob);
+            await gameStateService.createInitialState(roomId, initialState);
         }
 
         await eventLogService.logEvent(roomId, "start_game", { startedBy: meta.playerId }, meta.playerId);
 
         const currentState = await gameStateService.getState(roomId);
-        const stateUpdatePayload = {
-            stateBlob: currentState?.stateBlob,
-            version: currentState?.version,
-            actingPlayer: meta.playerId
-        };
+        if (!currentState) {
+            connectionManager.sendToSocket(socketId, {
+                type: "error",
+                payload: { code: ErrorCode.INVALID_STATE, message: "Failed to create game state", recoverable: true }
+            });
+            return;
+        }
 
-        messages.push({
-            target: "socket",
-            socketId,
-            message: {
-                type: "state_update",
-                payload: stateUpdatePayload
+        // Send personalized views to each connected player
+        for (const player of connectedPlayers) {
+            const view = engine.getPlayerView(currentState.stateBlob as Record<string, unknown>, player.playerId);
+            const targetSocket = connectionManager.getSocketIdForPlayer(roomId, player.playerId);
+            if (targetSocket) {
+                connectionManager.sendToSocket(targetSocket, {
+                    type: "state_update",
+                    payload: {
+                        stateBlob: view,
+                        version: currentState.version,
+                        actingPlayer: meta.playerId
+                    }
+                });
             }
-        });
+        }
 
-        messages.push({
-            target: "room",
-            roomId,
-            exclude: socketId,
-            message: {
-                type: "state_update",
-                payload: stateUpdatePayload
-            }
-        });
+        // Start turn timer for first active player
+        clearTurnTimer(roomId);
+        const blob = currentState.stateBlob as Record<string, unknown>;
+        const activePlayer = blob.activePlayer as number;
+        if (activePlayer !== -1) {
+            startTurnTimer(roomId, activePlayer, currentState.version);
+        }
 
         ok = true;
     } finally {
         await unit.complete(ok);
-    }
-
-    if (ok) {
-        for (const m of messages) {
-            if (m.target === "socket") {
-                connectionManager.sendToSocket(m.socketId!, m.message);
-            } else {
-                connectionManager.broadcastToRoom(m.roomId!, m.message, m.exclude);
-            }
-        }
     }
 }
