@@ -1,16 +1,20 @@
-<div class="game-room-container">
-  @if (loading()) {
+@if (loading()) {
+  <div class="game-room-container">
     <div class="loading-state">
       <p>Loading room...</p>
     </div>
-  } @else if (error()) {
+  </div>
+} @else if (error()) {
+  <div class="game-room-container">
     <div class="error-state">
       <p>{{ error() }}</p>
       <button class="btn-primary" (click)="leave()">Back to Games</button>
     </div>
-  } @else if (roomStatus() === 'active') {
-    <app-poker />
-  } @else {
+  </div>
+} @else if (roomStatus() === 'active') {
+  <app-poker />
+} @else {
+  <div class="game-room-container">
     <header class="room-header">
       <div class="header-left">
         <h1>Room {{ roomId() }}</h1>
@@ -77,5 +81,5 @@
         </button>
       </div>
     </section>
-  }
-</div>
+  </div>
+}

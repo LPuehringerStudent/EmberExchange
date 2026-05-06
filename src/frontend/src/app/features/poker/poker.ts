@@ -29,12 +29,12 @@ export interface ValidAction {
 }
 
 const SEAT_POSITIONS: Array<{ x: number; y: number }> = [
-  { x: 50, y: 92 }, // 0 — bottom-center  (hero)
-  { x: 18, y: 80 }, // 1 — bottom-left
-  { x:  4, y: 48 }, // 2 — mid-left
-  { x: 50, y:  6 }, // 3 — top-center
-  { x: 96, y: 48 }, // 4 — mid-right
-  { x: 82, y: 80 }, // 5 — bottom-right
+  { x: 50, y: 90 }, // 0 — bottom-center  (hero)
+  { x: 24, y: 82 }, // 1 — bottom-left
+  { x: 10, y: 48 }, // 2 — mid-left
+  { x: 50, y: 10 }, // 3 — top-center
+  { x: 90, y: 48 }, // 4 — mid-right
+  { x: 76, y: 82 }, // 5 — bottom-right
 ];
 
 @Component({
@@ -60,7 +60,8 @@ export class Poker {
   };
 
   readonly heroPlayerId = computed(() => {
-    return this.auth.getCurrentUser()?.playerId ?? -1;
+    const id = this.auth.getCurrentUser()?.playerId;
+    return id == null ? -1 : Number(id);
   });
 
   readonly phase = computed(() => {
@@ -115,14 +116,21 @@ export class Poker {
   readonly seatedPlayers = computed(() => {
     const players = this.rawPlayers();
     const heroIdx = this.heroIndex();
+    const rotated: (PokerPlayer | null)[] = new Array(SEAT_POSITIONS.length).fill(null);
+
     if (heroIdx < 0) {
       // Hero not in game — show players as-is, empty seats for remaining slots
-      return SEAT_POSITIONS.map((_, i) => this.mapPlayer(players[i], i));
+      for (let j = 0; j < Math.min(players.length, SEAT_POSITIONS.length); j++) {
+        rotated[j] = this.mapPlayer(players[j], j);
+      }
+      return rotated;
     }
-    const rotated: (PokerPlayer | null)[] = [];
-    for (let i = 0; i < SEAT_POSITIONS.length; i++) {
-      const srcIdx = (heroIdx + i) % players.length;
-      rotated.push(this.mapPlayer(players[srcIdx], i));
+
+    for (let j = 0; j < players.length; j++) {
+      const seatIdx = (j - heroIdx + players.length) % players.length;
+      if (seatIdx < SEAT_POSITIONS.length) {
+        rotated[seatIdx] = this.mapPlayer(players[j], seatIdx);
+      }
     }
     return rotated;
   });
@@ -159,8 +167,28 @@ export class Poker {
 
   readonly seatPositions = SEAT_POSITIONS;
 
+  readonly heroHandName = computed(() => {
+    const heroIdx = this.heroIndex();
+    const players = this.rawPlayers();
+    const hero = players[heroIdx];
+    return (hero?.['handName'] as string) ?? null;
+  });
+
+  readonly winners = computed(() => {
+    const blob = this.stateBlob();
+    return (blob?.['winners'] as Array<{ playerId: number; amount: number; handName: string }> | undefined) ?? [];
+  });
+
+  readonly canStartNewRound = computed(() => {
+    return this.phase() === 'showdown';
+  });
+
   isHero(seatIdx: number): boolean {
     return seatIdx === 0; // hero is always rotated to index 0
+  }
+
+  onNewRound(): void {
+    this.ws.sendAction('next_hand', {});
   }
 
   private mapPlayer(p: Record<string, unknown> | undefined, seatIdx: number): PokerPlayer | null {
@@ -171,7 +199,9 @@ export class Poker {
     const currentBet = Number(p['bet'] ?? 0);
     const isFolded = Boolean(p['folded']);
     const isAllIn = Boolean(p['allIn']);
-    const isDealer = seatIdx === this.dealerPosition();
+    const rawPlayers = this.rawPlayers();
+    const dealerPlayerId = rawPlayers[this.dealerPosition()]?.['playerId'];
+    const isDealer = p['playerId'] === dealerPlayerId;
     const isCurrentTurn = p['playerId'] === this.stateBlob()?.['activePlayer'];
 
     // Cards: face-up for hero or during showdown, back for everyone else
@@ -184,6 +214,8 @@ export class Poker {
       suit: this.cardSuit(c),
       faceUp: showCards && c !== 'back',
     }));
+
+
 
     return {
       playerId,

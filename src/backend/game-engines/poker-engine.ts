@@ -493,19 +493,24 @@ export class PokerEngine implements GameEngine {
       currentBet: state.currentBet,
       dealerPosition: state.dealerPosition,
       activePlayer: state.activePlayer,
-      players: state.players.map((p) => ({
-        playerId: p.playerId,
-        username: p.username,
-        hand:
-          p.playerId === playerId || state.phase === "showdown"
-            ? p.hand
-            : (["back", "back"] as ["back", "back"]),
-        stack: p.stack,
-        bet: p.bet,
-        totalBet: p.totalBet,
-        folded: p.folded,
-        allIn: p.allIn,
-      })),
+      players: state.players.map((p) => {
+        const showHand = p.playerId === playerId || state.phase === "showdown";
+        const handName =
+          showHand && state.communityCards.length >= 3
+            ? getHandName(evaluateHand([...p.hand, ...state.communityCards]))
+            : undefined;
+        return {
+          playerId: p.playerId,
+          username: p.username,
+          hand: showHand ? p.hand : (["back", "back"] as ["back", "back"]),
+          handName,
+          stack: p.stack,
+          bet: p.bet,
+          totalBet: p.totalBet,
+          folded: p.folded,
+          allIn: p.allIn,
+        };
+      }),
       validActions,
       log: state.log,
       winners: state.winners,

@@ -68,6 +68,7 @@ export interface PokerStateView {
     playerId: number;
     username?: string;
     hand: Card[] | ["back", "back"]; // masked for opponents
+    handName?: string; // best 5-card hand name (e.g. "Two Pair", "Flush")
     stack: number;
     bet: number;
     totalBet: number;
