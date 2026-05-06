@@ -1,10 +1,12 @@
 import { Unit } from "../../utils/unit";
 import { GameStateService } from "../../services/game-state-service";
 import { RoomPlayerService } from "../../services/room-player-service";
+import { RoomService } from "../../services/room-service";
 import { EventLogService } from "../../services/event-log-service";
 import { connectionManager } from "../connection-manager";
 import { isValidUUID } from "../validators";
 import { ErrorCode, ServerMessage } from "../../../shared/model";
+import { engineRegistry } from "../../game-engines";
 
 export async function handleRequestSync(socketId: string, payload: Record<string, unknown>): Promise<void> {
     const roomId = payload.roomId;
@@ -25,6 +27,7 @@ export async function handleRequestSync(socketId: string, payload: Record<string
     try {
         const roomPlayerService = new RoomPlayerService(unit);
         const gameStateService = new GameStateService(unit);
+        const roomService = new RoomService(unit);
 
         const roomPlayer = await roomPlayerService.getPlayerInRoom(roomId, meta.playerId);
         if (!roomPlayer) {
@@ -44,10 +47,19 @@ export async function handleRequestSync(socketId: string, payload: Record<string
             return;
         }
 
+        const room = await roomService.getRoomById(roomId);
+        let stateBlob = state.stateBlob;
+
+        // If a game engine is registered, generate a player-specific view
+        if (room && engineRegistry.has(room.gameType)) {
+            const engine = engineRegistry.get(room.gameType);
+            stateBlob = engine.getPlayerView(state.stateBlob as Record<string, unknown>, meta.playerId);
+        }
+
         messages.push({
             type: "state_update",
             payload: {
-                stateBlob: state.stateBlob,
+                stateBlob,
                 version: state.version,
                 actingPlayer: null
             }

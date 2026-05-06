@@ -14,10 +14,17 @@ interface GraceTimer {
     playerId: number;
 }
 
+interface AutoFoldTimer {
+    timeout: NodeJS.Timeout;
+    roomId: string;
+    playerId: number;
+}
+
 class ConnectionManager {
     private sockets = new Map<string, SocketMeta>();
     private rooms = new Map<string, Set<string>>();
     private graceTimers = new Map<string, GraceTimer>();
+    private autoFoldTimers = new Map<string, AutoFoldTimer>();
     private nextSocketId = 1;
 
     generateSocketId(): string {
@@ -97,6 +104,30 @@ class ConnectionManager {
         }
     }
 
+    setAutoFoldTimer(roomId: string, playerId: number, onExpire: () => void): void {
+        const key = `${roomId}:${playerId}`;
+        const existing = this.autoFoldTimers.get(key);
+        if (existing) {
+            clearTimeout(existing.timeout);
+        }
+
+        const timeout = setTimeout(() => {
+            this.autoFoldTimers.delete(key);
+            onExpire();
+        }, 10000); // 10 seconds
+
+        this.autoFoldTimers.set(key, { timeout, roomId, playerId });
+    }
+
+    clearAutoFoldTimer(roomId: string, playerId: number): void {
+        const key = `${roomId}:${playerId}`;
+        const timer = this.autoFoldTimers.get(key);
+        if (timer) {
+            clearTimeout(timer.timeout);
+            this.autoFoldTimers.delete(key);
+        }
+    }
+
     disconnect(socketId: string): void {
         const meta = this.sockets.get(socketId);
         if (meta?.roomId) {
@@ -164,11 +195,27 @@ class ConnectionManager {
         return room ? Array.from(room) : [];
     }
 
+    getSocketIdForPlayer(roomId: string, playerId: number): string | undefined {
+        const room = this.rooms.get(roomId);
+        if (!room) return undefined;
+        for (const socketId of room) {
+            const meta = this.sockets.get(socketId);
+            if (meta && meta.playerId === playerId && meta.ws.readyState === WebSocket.OPEN) {
+                return socketId;
+            }
+        }
+        return undefined;
+    }
+
     clearAll(): void {
         for (const grace of this.graceTimers.values()) {
             clearTimeout(grace.timeout);
         }
         this.graceTimers.clear();
+        for (const timer of this.autoFoldTimers.values()) {
+            clearTimeout(timer.timeout);
+        }
+        this.autoFoldTimers.clear();
         for (const meta of this.sockets.values()) {
             if (meta.ws.readyState === WebSocket.OPEN || meta.ws.readyState === WebSocket.CONNECTING) {
                 meta.ws.terminate();

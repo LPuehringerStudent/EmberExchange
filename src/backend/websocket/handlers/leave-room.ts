@@ -48,6 +48,7 @@ export async function handleLeaveRoom(socketId: string, payload: Record<string, 
                 ...baseBlob,
                 players: playersInRoom.map(p => ({
                     playerId: p.playerId,
+                    username: p.username,
                     connectionState: p.connectionState,
                     seatIndex: p.seatIndex
                 }))

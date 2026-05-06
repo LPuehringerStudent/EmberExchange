@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { WebSocketService } from '../../core/services/websocket.service';
@@ -8,7 +8,9 @@ interface RoomResponse {
   roomId: string;
   status: string;
   maxPlayers: number;
-  players: Array<{ playerId: number; seatIndex: number; connectionState: string }>;
+  gameType: string;
+  settings: Record<string, unknown>;
+  players: Array<{ playerId: number; seatIndex: number; connectionState: string; username?: string }>;
 }
 
 @Component({
@@ -26,13 +28,20 @@ export class GameRoomComponent implements OnInit, OnDestroy {
 
   roomId = signal<string>('');
   roomStatus = signal<string>('');
+  roomGameType = signal<string>('');
   maxPlayers = signal<number>(0);
+  roomSettings = signal<Record<string, unknown>>({});
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
+  mockNotification = signal<string | null>(null);
 
   connectionState = this.ws.connectionState;
   players = this.ws.playersInRoom;
   lastError = this.ws.lastError;
+
+  canStartGame = computed(() => {
+    return this.roomStatus() === 'waiting' && this.players().length >= 2;
+  });
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('roomId');
@@ -71,6 +80,8 @@ export class GameRoomComponent implements OnInit, OnDestroy {
       if (room) {
         this.roomStatus.set(room.status);
         this.maxPlayers.set(room.maxPlayers);
+        this.roomGameType.set(room.gameType);
+        this.roomSettings.set(room.settings ?? {});
       }
     } catch (e) {
       this.error.set('Room not found');
@@ -86,6 +97,19 @@ export class GameRoomComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.ws.leaveRoom();
     this.ws.disconnect();
+  }
+
+  startGame(): void {
+    this.mockNotification.set(null);
+    if (this.roomGameType() === 'test') {
+      this.mockNotification.set('No frontend yet');
+      return;
+    }
+    if (!this.canStartGame()) {
+      this.mockNotification.set('At least 2 players are required to start the game.');
+      return;
+    }
+    this.ws.sendStartGame();
   }
 
   sendTestAction(): void {

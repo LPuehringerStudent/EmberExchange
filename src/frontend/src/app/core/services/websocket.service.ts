@@ -12,6 +12,7 @@ export interface PlayerInRoom {
   playerId: number;
   seatIndex: number;
   connectionState: string;
+  username?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -151,6 +152,18 @@ export class WebSocketService {
     }
     this.send({
       type: 'request_sync',
+      payload: { roomId: this.currentRoomId },
+      clientTimestamp: Date.now(),
+      sequenceNumber: this.nextSeq()
+    });
+  }
+
+  sendStartGame(): void {
+    if (!this.currentRoomId) {
+      return;
+    }
+    this.send({
+      type: 'start_game',
       payload: { roomId: this.currentRoomId },
       clientTimestamp: Date.now(),
       sequenceNumber: this.nextSeq()

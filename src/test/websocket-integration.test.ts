@@ -173,7 +173,7 @@ describe("WebSocket Integration", () => {
         });
     }
 
-    async function createRoom(gameType = "poker"): Promise<string> {
+    async function createRoom(gameType = "test"): Promise<string> {
         const res = await request(app)
             .post("/api/rooms")
             .send({ maxPlayers: 4, gameType });
@@ -255,44 +255,52 @@ describe("WebSocket Integration", () => {
 
     it("should handle player_action with optimistic locking", async () => {
         const roomId = await createRoom();
-        const ws = await connectWs(testSessionId);
-        await joinRoom(ws, roomId, 1);
-        const stateMsg = await startGame(ws, roomId, 2);
+        const ws1 = await connectWs(testSessionId);
+        const ws2 = await connectWs(testSession2Id);
+        await joinRoom(ws1, roomId, 1);
+        await joinRoom(ws2, roomId, 1);
+        const stateMsg = await startGame(ws1, roomId, 2);
+        await waitForMessage(ws2); // player 2 also receives state_update
 
         const version = (stateMsg.payload as Record<string, unknown>).version as number;
 
-        ws.send(JSON.stringify({
+        ws1.send(JSON.stringify({
             type: "player_action",
             payload: { roomId, actionType: "test", actionData: {}, expectedVersion: version },
             clientTimestamp: Date.now(),
             sequenceNumber: 3
         }));
 
-        const actionMsg = await waitForMessage(ws, 3000, "player_action response");
+        const actionMsg = await waitForMessage(ws1, 3000, "player_action response");
         expect(actionMsg.type).toBe("state_update");
         expect((actionMsg.payload as Record<string, unknown>).version).toBe(version + 1);
 
-        ws.close();
+        ws1.close();
+        ws2.close();
     });
 
     it("should return VERSION_MISMATCH on stale version", async () => {
         const roomId = await createRoom();
-        const ws = await connectWs(testSessionId);
-        await joinRoom(ws, roomId, 1);
-        await startGame(ws, roomId, 2);
+        const ws1 = await connectWs(testSessionId);
+        const ws2 = await connectWs(testSession2Id);
+        await joinRoom(ws1, roomId, 1);
+        await joinRoom(ws2, roomId, 1);
+        await startGame(ws1, roomId, 2);
+        await waitForMessage(ws2); // player 2 also receives state_update
 
-        ws.send(JSON.stringify({
+        ws1.send(JSON.stringify({
             type: "player_action",
             payload: { roomId, actionType: "test", actionData: {}, expectedVersion: -1 },
             clientTimestamp: Date.now(),
             sequenceNumber: 3
         }));
 
-        const errMsg = await waitForMessage(ws);
+        const errMsg = await waitForMessage(ws1);
         expect(errMsg.type).toBe("error");
         expect((errMsg.payload as Record<string, unknown>).code).toBe("VERSION_MISMATCH");
 
-        ws.close();
+        ws1.close();
+        ws2.close();
     });
 
     it("should handle concurrent actions with optimistic locking", async () => {
@@ -326,22 +334,23 @@ describe("WebSocket Integration", () => {
             sequenceNumber: 3
         }));
 
-        // Collect responses for both sockets
-        // ws1 should get its own success response
-        // ws2 may get the broadcast from ws1 AND its own error, so collect multiple
-        const [ws1Msg, ws2Msgs] = await Promise.all([
-            waitForMessage(ws1, 3000, "ws1 player_action"),
-            collectMessages(ws2, 2, 3000)
+        // Collect all messages from both sockets for a short window
+        const [ws1Msgs, ws2Msgs] = await Promise.all([
+            collectMessages(ws1, 2, 2000),
+            collectMessages(ws2, 2, 2000)
         ]);
 
-        // ws1 must have succeeded (it wins the race)
-        expect(ws1Msg.type).toBe("state_update");
-        expect((ws1Msg.payload as Record<string, unknown>).version).toBe(version + 1);
+        const allMsgs = [...ws1Msgs, ...ws2Msgs];
+        const successes = allMsgs.filter(
+            (msg) => msg.type === "state_update" && (msg.payload as Record<string, unknown>).version === version + 1
+        );
+        const errors = allMsgs.filter(
+            (msg) => msg.type === "error" && (msg.payload as Record<string, unknown>).code === "VERSION_MISMATCH"
+        );
 
-        // ws2 must have received a VERSION_MISMATCH error (may also have received a broadcast)
-        const ws2Errors = ws2Msgs.filter((msg) => msg.type === "error");
-        expect(ws2Errors.length).toBeGreaterThanOrEqual(1);
-        expect((ws2Errors[0].payload as Record<string, unknown>).code).toBe("VERSION_MISMATCH");
+        // Exactly one action should succeed and one should get VERSION_MISMATCH
+        expect(successes.length).toBeGreaterThanOrEqual(1);
+        expect(errors.length).toBe(1);
 
         ws1.close();
         ws2.close();
@@ -404,5 +413,107 @@ describe("WebSocket Integration", () => {
         expect(rateLimited).toBe(true);
         ws.off("message", handler);
         ws.close();
+    });
+
+    it("should play a full poker hand with 2 players", async () => {
+        const roomId = await createRoom("poker");
+
+        const ws1 = await connectWs(testSessionId);
+        const ws2 = await connectWs(testSession2Id);
+
+        await joinRoom(ws1, roomId, 1);
+        await joinRoom(ws2, roomId, 1);
+
+        // Drain any pending broadcast messages from join
+        await new Promise((r) => setTimeout(r, 200));
+
+        // Start game
+        ws1.send(JSON.stringify({
+            type: "start_game",
+            payload: { roomId },
+            clientTimestamp: Date.now(),
+            sequenceNumber: 2
+        }));
+
+        // Both players receive personalized state_updates with hole cards
+        const [msg1, msg2] = await Promise.all([
+            waitForMessage(ws1, 3000, "p1 start_game"),
+            waitForMessage(ws2, 3000, "p2 start_game")
+        ]);
+
+        expect(msg1.type).toBe("state_update");
+        expect(msg2.type).toBe("state_update");
+
+        let blob1 = (msg1.payload as Record<string, unknown>).stateBlob as Record<string, unknown>;
+        const blob2 = (msg2.payload as Record<string, unknown>).stateBlob as Record<string, unknown>;
+
+        expect(blob1["phase"]).toBe("preflop");
+        expect(blob2["phase"]).toBe("preflop");
+
+        // Each player sees their own cards
+        const p1Players = blob1["players"] as Array<{ playerId: number; hand: string[] }>;
+        const p2Players = blob2["players"] as Array<{ playerId: number; hand: string[] }>;
+
+        const p1Self = p1Players.find((p) => p.playerId === testPlayerId);
+        const p1Opponent = p1Players.find((p) => p.playerId === testPlayer2Id);
+        const p2Self = p2Players.find((p) => p.playerId === testPlayer2Id);
+
+        expect(p1Self!.hand.length).toBe(2);
+        expect(p1Self!.hand[0]).not.toBe("back");
+        expect(p1Opponent!.hand).toEqual(["back", "back"]);
+        expect(p2Self!.hand.length).toBe(2);
+        expect(p2Self!.hand[0]).not.toBe("back");
+
+        // Track version for optimistic locking
+        let version = (msg1.payload as Record<string, unknown>).version as number;
+        let seq = 10;
+
+        // Play until showdown
+        while (blob1["phase"] !== "showdown") {
+            const activePlayer = blob1["activePlayer"] as number;
+            const activeWs = activePlayer === testPlayerId ? ws1 : ws2;
+
+            // Determine correct action: call if behind, check if matched
+            const activePlayerData = (blob1["players"] as Array<{ playerId: number; bet: number }>)
+                .find((p) => p.playerId === activePlayer);
+            const toCall = (blob1["currentBet"] as number) - (activePlayerData?.bet ?? 0);
+            const actionType = toCall > 0 ? "call" : "check";
+
+            // Set up listeners BEFORE sending action
+            const p1Promise = waitForMessage(ws1, 3000, `p1 ${blob1["phase"]} ${actionType}`);
+            const p2Promise = waitForMessage(ws2, 3000, `p2 ${blob1["phase"]} ${actionType}`);
+
+            activeWs.send(JSON.stringify({
+                type: "player_action",
+                payload: { roomId, actionType, actionData: {}, expectedVersion: version },
+                clientTimestamp: Date.now(),
+                sequenceNumber: seq++
+            }));
+
+            const [r1, r2] = await Promise.all([p1Promise, p2Promise]);
+
+            expect(r1.type).toBe("state_update");
+            expect(r2.type).toBe("state_update");
+
+            version = (r1.payload as Record<string, unknown>).version as number;
+            blob1 = (r1.payload as Record<string, unknown>).stateBlob as Record<string, unknown>;
+
+            const currentPhase = blob1["phase"] as string;
+            if (currentPhase === "flop") {
+                expect((blob1["communityCards"] as string[]).length).toBe(3);
+            } else if (currentPhase === "turn") {
+                expect((blob1["communityCards"] as string[]).length).toBe(4);
+            } else if (currentPhase === "river") {
+                expect((blob1["communityCards"] as string[]).length).toBe(5);
+            } else if (currentPhase === "showdown") {
+                const finalPlayers = blob1["players"] as Array<{ playerId: number; hand: string[] }>;
+                const opponent = finalPlayers.find((p) => p.playerId === testPlayer2Id);
+                expect(opponent!.hand[0]).not.toBe("back");
+                expect(blob1["winners"]).toBeDefined();
+            }
+        }
+
+        ws1.close();
+        ws2.close();
     });
 });

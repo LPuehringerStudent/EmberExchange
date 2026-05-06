@@ -23,7 +23,10 @@ export class RoomPlayerService extends ServiceBase {
 
     async getPlayersInRoom(roomId: string): Promise<RoomPlayerRow[]> {
         const stmt = this.unit.prepare<RoomPlayerRow, { roomId: string }>(
-            `SELECT * FROM RoomPlayer WHERE roomId = @roomId`,
+            `SELECT rp.*, p.username
+             FROM RoomPlayer rp
+             JOIN Player p ON rp.playerId = p.playerId
+             WHERE rp.roomId = @roomId`,
             { roomId }
         );
         return stmt.all();
