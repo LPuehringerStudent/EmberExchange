@@ -369,6 +369,7 @@ export interface RoomPlayer {
 export interface RoomPlayerRow extends RoomPlayer {
     roomPlayerId: string;
     username?: string;
+    disconnectedAt?: Date;
 }
 
 export interface GameState {

@@ -152,7 +152,10 @@ async function cleanupStaleRoomPlayers(): Promise<void> {
         const gameStateService = new GameStateService(unit);
 
         const stmt = unit.prepare<{ roomPlayerId: string; roomId: string }, Record<string, never>>(
-            `SELECT roomPlayerId, roomId FROM RoomPlayer WHERE connectionState = 'disconnected'`
+            `SELECT roomPlayerId, roomId FROM RoomPlayer
+             WHERE connectionState = 'disconnected'
+               AND disconnectedAt IS NOT NULL
+               AND disconnectedAt < NOW() - INTERVAL '5 minutes'`
         );
         const stalePlayers = await stmt.all();
 
