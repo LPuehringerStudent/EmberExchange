@@ -390,13 +390,14 @@ export class PokerEngine implements GameEngine {
     const activePlayers = state.players.filter((p) => !p.folded);
     if (activePlayers.length === 1) {
       const winner = activePlayers[0];
-      winner.stack += state.pots[0].amount;
+      const potAmount = state.pots[0].amount;
+      winner.stack += potAmount;
       state.pots[0].amount = 0;
       state.winners = [
         {
           playerId: winner.playerId,
-          amount: state.pots[0].amount,
-          handName: "Fold",
+          amount: potAmount,
+          handName: "Others folded",
         },
       ];
       state.phase = "showdown";
