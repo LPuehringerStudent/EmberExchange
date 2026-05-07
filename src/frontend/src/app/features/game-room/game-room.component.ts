@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { HttpClient } from '@angular/common/http';
 import { Poker } from '../poker/poker';
+import { BlackjackComponent } from '../blackjack/blackjack';
 
 interface RoomResponse {
   roomId: string;
@@ -17,7 +18,7 @@ interface RoomResponse {
 @Component({
   selector: 'app-game-room',
   standalone: true,
-  imports: [CommonModule, Poker],
+  imports: [CommonModule, Poker, BlackjackComponent],
   templateUrl: './game-room.component.html',
   styleUrls: ['./game-room.component.css']
 })
@@ -48,8 +49,12 @@ export class GameRoomComponent implements OnInit, OnDestroy {
 
   private _httpRoomStatus = signal<string>('');
 
+  minPlayers = computed(() => {
+    return this.roomGameType() === 'blackjack' ? 1 : 2;
+  });
+
   canStartGame = computed(() => {
-    return this.roomStatus() === 'waiting' && this.players().length >= 2;
+    return this.roomStatus() === 'waiting' && this.players().length >= this.minPlayers();
   });
 
   async ngOnInit(): Promise<void> {
@@ -115,7 +120,7 @@ export class GameRoomComponent implements OnInit, OnDestroy {
       return;
     }
     if (!this.canStartGame()) {
-      this.mockNotification.set('At least 2 players are required to start the game.');
+      this.mockNotification.set(`At least ${this.minPlayers()} players are required to start the game.`);
       return;
     }
 

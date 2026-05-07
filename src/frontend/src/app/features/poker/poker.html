@@ -17,6 +17,45 @@
     </div>
   </header>
 
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PHASE ANNOUNCEMENT OVERLAY (big screen text)   -->
+  <!-- ═══════════════════════════════════════════════ -->
+  @if (showPhaseOverlay()) {
+    <div class="game-announcement" role="status" aria-live="assertive">
+      <span class="game-announcement__text">{{ phaseOverlayText() }}</span>
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- WINNER OVERLAY                                  -->
+  <!-- ═══════════════════════════════════════════════ -->
+  @if (showWinnerOverlay()) {
+    <div class="winner-overlay">
+      <div class="winner-overlay__panel">
+        <h2 class="winner-overlay__title">🏆 Winner{{ winners().length > 1 ? 's' : '' }}</h2>
+        <div class="winner-overlay__list">
+          @for (winner of winners(); track winner.playerId) {
+            <div class="winner-overlay__entry">
+              <span class="winner-overlay__name">
+                {{ winner.playerId === heroPlayerId() ? 'You' : getPlayerName(winner.playerId) }}
+              </span>
+              <span class="winner-overlay__amount">
+                <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                {{ winner.amount }}
+              </span>
+              @if (winner.handName) {
+                <span class="winner-overlay__hand">{{ winner.handName }}</span>
+              }
+            </div>
+          }
+        </div>
+        <button class="winner-overlay__btn" (click)="handlePlayAgain()">
+          Play Again
+        </button>
+      </div>
+    </div>
+  }
+
   <div class="poker-main">
 
     <aside class="poker-sidebar poker-sidebar--left" aria-label="Game information">
@@ -30,14 +69,20 @@
       @if (pot() > 0) {
         <div class="info-block info-block--highlight">
           <span class="info-block__label">Pot</span>
-          <span class="info-block__value info-block__value--large">{{ pot() }}</span>
+          <span class="info-block__value info-block__value--large">
+            <img class="coal-icon coal-icon--small" [src]="coalIconSrc" alt="" />
+            {{ pot() }}
+          </span>
         </div>
       }
 
       @if (currentBet() > 0) {
         <div class="info-block">
           <span class="info-block__label">To Call</span>
-          <span class="info-block__value">{{ currentBet() }}</span>
+          <span class="info-block__value">
+            <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+            {{ currentBet() }}
+          </span>
         </div>
       }
 
@@ -48,14 +93,13 @@
         </div>
       }
 
-      <!-- ── Hero action buttons (moved from below seat) -->
+      <!-- Hero action buttons -->
       @if (isHeroTurn() && validActions().length > 0) {
         <div class="info-block info-block--actions">
           <span class="info-block__label">Your Turn</span>
           <div class="sidebar-action-panel">
             @for (action of validActions(); track action.type) {
               @if (action.type === 'raise') {
-                <!-- Raise needs an amount input -->
                 @let rMin = action.minAmount ?? 0;
                 @let rMax = action.maxAmount ?? rMin;
                 <div class="raise-group">
@@ -83,7 +127,10 @@
                 >
                   {{ action.type | titlecase }}
                   @if (action.amount) {
-                    <span class="action-btn__amount">{{ action.amount }}</span>
+                    <span class="action-btn__amount">
+                      <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                      {{ action.amount }}
+                    </span>
                   }
                 </button>
               }
@@ -92,38 +139,11 @@
         </div>
       }
 
-      <!-- ── Hero hand strength -->
+      <!-- Hero hand strength -->
       @if (heroHandName()) {
         <div class="info-block info-block--hand">
           <span class="info-block__label">Your Hand</span>
           <span class="info-block__value info-block__value--hand">{{ heroHandName() }}</span>
-        </div>
-      }
-
-      <!-- ── Showdown winner(s) -->
-      @if (winners(); as w) {
-        @if (w.length > 0) {
-          <div class="info-block info-block--winner">
-            <span class="info-block__label">Winner</span>
-            @for (winner of w; track winner.playerId) {
-              <span class="info-block__value info-block__value--winner">
-                {{ winner.playerId === heroPlayerId() ? 'You' : getPlayerName(winner.playerId) }}
-                won {{ winner.amount }}
-                @if (winner.handName) {
-                  <span class="winner-hand">({{ winner.handName }})</span>
-                }
-              </span>
-            }
-          </div>
-        }
-      }
-
-      <!-- ── New Round button -->
-      @if (canStartNewRound()) {
-        <div class="info-block info-block--new-round">
-          <button class="new-round-btn" (click)="onNewRound()">
-            New Round
-          </button>
         </div>
       }
     </aside>
@@ -136,7 +156,20 @@
           aria-label="Poker felt table"
         >
 
-          <!-- ── Turn indicator -->
+          <!-- ── Decorative chips on the felt ── -->
+          @for (chip of tableChips; track $index) {
+            <div
+              class="pt-table-chip"
+              [style.left.%]="chip.x"
+              [style.top.%]="chip.y"
+              [style.width.px]="chip.size"
+              [style.height.px]="chip.size"
+              [style.background-color]="chip.color"
+              [style.animation-delay.s]="$index * 0.08"
+            ></div>
+          }
+
+          <!-- ── Turn indicator ── -->
           @if (currentTurnPlayer(); as player) {
             <div
               class="pt-turn-indicator"
@@ -149,89 +182,149 @@
             </div>
           }
 
-          <!-- ── Community cards (Flop / Turn / River) -->
+          <!-- ── Community cards ── -->
           <div class="pt-community" aria-label="Community cards">
             @for (card of communitySlots(); track $index) {
               <div
                 class="pt-card-slot"
+                [class.pt-card-slot--filled]="card"
                 [attr.aria-label]="card ? (card.rank + ' of ' + card.suit) : 'Empty card slot'"
               >
                 @if (card) {
-                  <img
-                    [src]="cardSpriteSrc(card)"
-                    [alt]="card.rank + ' of ' + card.suit"
-                    class="pt-card-img"
-                  />
+                  <div class="card-flip" [class.card-flip--face-up]="card.faceUp">
+                    <div class="card-flip__inner">
+                      <div class="card-flip__front">
+                        <img
+                          [src]="cardSpriteSrc(card)"
+                          [alt]="card.rank + ' of ' + card.suit"
+                          class="pt-card-img"
+                          loading="eager"
+                        />
+                      </div>
+                      <div class="card-flip__back">
+                        <img
+                          [src]="cardBackSrc()"
+                          alt="Face-down card"
+                          class="pt-card-img"
+                          loading="eager"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 }
               </div>
             }
           </div>
 
+          <!-- Pot display -->
           @if (pot() > 0) {
             <div class="pt-pot" aria-live="polite" aria-label="Current pot amount">
-              <span class="pt-pot__label">Pot</span>
+              <img class="coal-icon coal-icon--pot" [src]="coalIconSrc" alt="" />
               <span class="pt-pot__amount">{{ pot() }}</span>
+            </div>
+          }
+
+          <!-- ── Start Game overlay ── -->
+          @if (!gameStarted() && isWaiting()) {
+            <div class="game-start-overlay" role="dialog" aria-modal="true" aria-label="Game not started">
+              <div class="game-start-overlay__inner">
+                <p class="game-start-overlay__hint">Waiting for game to begin</p>
+                <button class="game-start-btn" (click)="handleStartGame()" aria-label="Start the poker game">
+                  Start Game
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- ── Gathering Chips loading overlay ── -->
+          @if (isLoading()) {
+            <div class="game-gathering-overlay" role="status" aria-live="polite">
+              <div class="gathering-video-placeholder" aria-hidden="true">
+                <div class="gathering-spinner"></div>
+              </div>
+              <p class="gathering-text">Gathering Chips</p>
             </div>
           }
 
         </div>
 
-        <!-- Player seats -->
+        <!-- ── Player seats ── -->
         @let players = seatedPlayers();
-        @for (pos of seatPositions; track $index) {
+        @let positions = activeSeatPositions();
+        @for (pos of positions; track $index) {
           @let seatPlayer = players[$index];
-          <div
-            class="pt-seat"
-            [class.pt-seat--hero]="isHero($index)"
-            [class.pt-seat--active]="seatPlayer?.isCurrentTurn"
-            [class.pt-seat--folded]="seatPlayer?.isFolded"
-            [class.pt-seat--all-in]="seatPlayer?.isAllIn"
-            [style.left.%]="pos.x"
-            [style.top.%]="pos.y"
-            [attr.aria-label]="'Seat ' + ($index + 1)"
-          >
-            <!-- Dealer button -->
-            @if (seatPlayer?.isDealer) {
-              <div class="pt-dealer" aria-label="Dealer">D</div>
-            }
+          @if (shouldShowSeat($index)) {
+            <div
+              class="pt-seat"
+              [class.pt-seat--hero]="isHero($index)"
+              [class.pt-seat--active]="seatPlayer?.isCurrentTurn"
+              [class.pt-seat--folded]="seatPlayer?.isFolded"
+              [class.pt-seat--all-in]="seatPlayer?.isAllIn"
+              [style.left.%]="pos.x"
+              [style.top.%]="pos.y"
+              [attr.aria-label]="'Seat ' + ($index + 1)"
+            >
+              <!-- Dealer button -->
+              @if (seatPlayer?.isDealer) {
+                <div class="pt-dealer" aria-label="Dealer">D</div>
+              }
 
-            @if (seatPlayer) {
-              <div class="pt-hole-cards">
-                @for (cardIdx of [0, 1]; track cardIdx) {
-                  <div class="pt-card-slot pt-card-slot--hole">
-                    @if (seatPlayer.cards?.[cardIdx]; as card) {
-                      @if (card.faceUp) {
-                        <img
-                          [src]="cardSpriteSrc(card)"
-                          [alt]="card.rank + ' of ' + card.suit"
-                          class="pt-card-img"
-                        />
-                      } @else {
-                        <img
-                          [src]="cardBackSrc()"
-                          alt="Face-down card"
-                          class="pt-card-img"
-                        />
+              <!-- All-in badge -->
+              @if (seatPlayer?.isAllIn) {
+                <div class="pt-all-in-badge" aria-label="All In">ALL IN</div>
+              }
+
+              @if (seatPlayer) {
+                <div class="pt-hole-cards">
+                  @for (cardIdx of [0, 1]; track cardIdx) {
+                    <div class="pt-card-slot pt-card-slot--hole">
+                      @if (seatPlayer.cards?.[cardIdx]; as card) {
+                        <div class="card-flip" [class.card-flip--face-up]="card.faceUp">
+                          <div class="card-flip__inner">
+                            <div class="card-flip__front">
+                              <img
+                                [src]="cardSpriteSrc(card)"
+                                [alt]="card.rank + ' of ' + card.suit"
+                                class="pt-card-img"
+                                loading="eager"
+                              />
+                            </div>
+                            <div class="card-flip__back">
+                              <img
+                                [src]="cardBackSrc()"
+                                alt="Face-down card"
+                                class="pt-card-img"
+                                loading="eager"
+                              />
+                            </div>
+                          </div>
+                        </div>
                       }
-                    }
-                  </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <div class="pt-seat__chip">
+                @if (seatPlayer; as p) {
+                  <span class="pt-seat__name">{{ p.name }}</span>
+                  <span class="pt-seat__chips">
+                    <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                    {{ p.chips }}
+                  </span>
+                  @if (p.currentBet > 0) {
+                    <span class="pt-seat__bet">
+                      <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                      {{ p.currentBet }}
+                    </span>
+                  }
+                } @else {
+                  <span class="pt-seat__empty">Seat {{ $index + 1 }}</span>
                 }
               </div>
-            }
 
-            <div class="pt-seat__chip">
-              @if (seatPlayer; as p) {
-                <span class="pt-seat__name">{{ p.name }}</span>
-                <span class="pt-seat__chips">{{ p.chips }}</span>
-                @if (p.currentBet > 0) {
-                  <span class="pt-seat__bet">Bet: {{ p.currentBet }}</span>
-                }
-              } @else {
-                <span class="pt-seat__empty">Seat {{ $index + 1 }}</span>
-              }
             </div>
-
-          </div>
+          }
         }
         <!-- /seats -->
 
@@ -242,7 +335,7 @@
     <aside class="poker-sidebar poker-sidebar--right" aria-label="Player standings">
       <h2 class="sidebar-title">Players</h2>
       @if (seatedPlayers().length === 0) {
-        <p class="sidebar-empty">Waiting for players...</p>
+        <p class="sidebar-empty">Waiting for players…</p>
       }
       @for (player of seatedPlayers(); track player?.playerId) {
         @if (player) {
@@ -259,6 +352,7 @@
               }
             </div>
             <span class="player-row__chips" aria-label="{{ player.chips }} chips">
+              <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
               {{ player.chips }}
             </span>
           </div>

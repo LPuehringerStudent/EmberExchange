@@ -93,7 +93,7 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
         if (actionType === "next_hand") {
             const blob = state.stateBlob as Record<string, unknown>;
             const phase = blob.phase as string;
-            if (phase !== "showdown" && phase !== "waiting") {
+            if (phase !== "showdown" && phase !== "settled" && phase !== "waiting") {
                 connectionManager.sendToSocket(socketId, {
                     type: "error",
                     payload: { code: ErrorCode.INVALID_STATE, message: "Can only start next hand after showdown", recoverable: true }

@@ -429,3 +429,21 @@ export interface EventLog {
     clientTimestamp: number | null;
     serverTimestamp: Date;
 }
+
+// SupportTicket
+export type SupportTicketType = 'bug' | 'feature' | 'support';
+export type SupportTicketPriority = 'high' | 'medium' | 'low';
+
+export interface SupportTicket {
+    reporterId: number;
+    title: string;
+    description: string;
+    type: SupportTicketType;
+    priority: SupportTicketPriority;
+    createdAt: Date;
+    notifiedAt: Date | null;
+}
+
+export interface SupportTicketRow extends SupportTicket {
+    ticketId: number;
+}
