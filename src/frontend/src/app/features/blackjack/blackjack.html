@@ -102,11 +102,6 @@
           <div class="dealer-message">Dealer is drawing...</div>
         }
 
-        @if (canStartNewRound()) {
-          <button class="btn-primary btn-primary--large" (click)="onNewRound()">
-            {{ isShowdown() ? 'Play Again' : 'Start Round' }}
-          </button>
-        }
       </div>
 
       <!-- Winners Overlay -->
@@ -125,6 +120,7 @@
                 </div>
               }
             </div>
+            <button class="btn-primary btn-primary--large" (click)="onNewRound()">Play Again</button>
           </div>
         </div>
       }
@@ -135,6 +131,7 @@
           <div class="winners-panel">
             <h2 class="winners-title">Round Over</h2>
             <p class="no-winners">No winners this round.</p>
+            <button class="btn-primary btn-primary--large" (click)="onNewRound()">Play Again</button>
           </div>
         </div>
       }

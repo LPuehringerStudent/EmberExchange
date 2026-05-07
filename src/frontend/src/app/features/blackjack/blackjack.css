@@ -136,7 +136,8 @@
 .bj-card-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #1a1208;
   display: block;
 }
 
@@ -359,6 +360,10 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   pointer-events: auto;
   animation: panel-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.winners-panel .btn-primary {
+  margin-top: 20px;
 }
 
 @keyframes panel-in {
