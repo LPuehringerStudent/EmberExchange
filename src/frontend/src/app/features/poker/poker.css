@@ -1058,10 +1058,12 @@
   margin-top: 6px;
 }
 
-.raise-group {
+.raise-group,
+.raise-row {
   display: flex;
   gap: 6px;
   align-items: center;
+  justify-content: center;
 }
 
 .raise-input {

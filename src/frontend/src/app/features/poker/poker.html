@@ -102,7 +102,7 @@
               @if (action.type === 'raise') {
                 @let rMin = action.minAmount ?? 0;
                 @let rMax = action.maxAmount ?? rMin;
-                <div class="raise-group">
+                <div class="raise-row">
                   <button
                     class="raise-stepper"
                     (click)="decrementRaise(rMin)"
@@ -126,13 +126,13 @@
                   >
                     +
                   </button>
-                  <button
-                    class="action-btn action-btn--primary"
-                    (click)="executeRaise()"
-                  >
-                    Raise
-                  </button>
                 </div>
+                <button
+                  class="action-btn action-btn--primary"
+                  (click)="executeRaise()"
+                >
+                  Raise
+                </button>
               } @else {
                 <button
                   class="action-btn"
