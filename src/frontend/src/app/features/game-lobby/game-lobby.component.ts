@@ -90,12 +90,25 @@ export class GameLobbyComponent implements OnInit {
 
   confirmCreateRoom(): void {
     if (this.creating()) return;
+
+    const maxPlayers = this.newMaxPlayers();
+    const turnTime = this.newTurnTime();
+
+    if (maxPlayers < 2 || maxPlayers > 6) {
+      this.error.set('Max players must be between 2 and 6.');
+      return;
+    }
+    if (turnTime <= 0) {
+      this.error.set('Turn time must be greater than 0.');
+      return;
+    }
+
     this.creating.set(true);
     this.http
       .post<RoomListItem>('/api/rooms', {
-        maxPlayers: this.newMaxPlayers(),
+        maxPlayers,
         gameType: this.gameType(),
-        settings: { turnTime: this.newTurnTime() },
+        settings: { turnTime },
       })
       .subscribe({
         next: (room) => {

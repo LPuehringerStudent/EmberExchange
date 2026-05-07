@@ -118,6 +118,18 @@ export class GameRoomComponent implements OnInit, OnDestroy {
       this.mockNotification.set('At least 2 players are required to start the game.');
       return;
     }
+
+    const maxPlayers = this.maxPlayers();
+    const turnTime = this.roomSettings()['turnTime'];
+    if (maxPlayers < 2 || maxPlayers > 6) {
+      this.mockNotification.set('Max players must be between 2 and 6.');
+      return;
+    }
+    if (typeof turnTime !== 'number' || turnTime <= 0) {
+      this.mockNotification.set('Turn time must be greater than 0.');
+      return;
+    }
+
     this.ws.sendStartGame();
   }
 
