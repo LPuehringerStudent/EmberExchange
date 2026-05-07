@@ -90,7 +90,7 @@
         Trending Now
       </div>
       <div class="trending-strip">
-        @for (game of trendingGames(); track game.gameType) {
+        @for (game of trendingGames(); track game.id) {
           <button class="trending-card" (click)="openGame(game)"
                   [attr.aria-label]="'Go to ' + game.title">
             <span class="trending-icon" [style.background]="'linear-gradient(135deg, ' + game.accentColor + '22, ' + game.accentColor + '0a)'">
@@ -134,7 +134,7 @@
     }
 
     <div class="games-list">
-      @for (game of filteredGames(); track game.gameType; let i = $index) {
+      @for (game of filteredGames(); track game.id; let i = $index) {
         <article
           class="game-row"
           [style.--accent]="game.accentColor"
