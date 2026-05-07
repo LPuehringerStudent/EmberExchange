@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { GameService } from '../../core/services/game.service';
 
 export type FilterMode = 'all' | 'most-played' | 'recently-released' | 'favorites';
 
@@ -16,7 +18,7 @@ export interface Friend {
 }
 
 export interface Game {
-  id: number;
+  gameType: string;
   title: string;
   genre: string;
   tags: string[];
@@ -29,7 +31,14 @@ export interface Game {
   icon: string;
   description: string;
   route: string;
+  minPlayers: number;
+  maxPlayers: number;
 }
+
+const ACCENT_COLORS: Record<string, string> = {
+  poker: '#e85d04',
+  blackjack: '#6eabb6',
+};
 
 @Component({
   selector: 'app-games',
@@ -38,48 +47,40 @@ export interface Game {
   styleUrl: './games.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GamesComponent {
+export class GamesComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly gameService = inject(GameService);
 
   readonly filterOpen = signal(false);
   readonly activeFilter = signal<FilterMode>('all');
+  readonly apiGames = this.gameService.games;
+  readonly apiLoading = this.gameService.loading;
+  readonly apiError = this.gameService.error;
 
-  readonly allGames = signal<Game[]>([
-    {
-      id: 1,
-      title: 'Poker',
-      genre: 'Strategy',
-      tags: ['Multiplayer', 'Gambling'],
+  // Local UI state (favorites) keyed by gameType
+  readonly favorites = signal<Set<string>>(new Set());
+
+  readonly allGames = computed<Game[]>(() => {
+    const api = this.apiGames();
+    const favs = this.favorites();
+    return api.map((g, idx) => ({
+      gameType: g.gameType,
+      title: g.name,
+      genre: g.genre,
+      tags: g.tags,
       playCount: 0,
-      releaseDate: new Date('05-05-2026'),
-      isFavorite: false,
+      releaseDate: new Date(g.createdAt),
+      isFavorite: favs.has(g.gameType),
       trending: true,
-      accentColor: '#e85d04',
+      friendsPlayed: [{ name: 'Davidus', avatar: 'D' }],
+      accentColor: ACCENT_COLORS[g.gameType] || `hsl(${(idx * 137) % 360}, 70%, 50%)`,
       icon: '',
-      description: 'Play with multiple people and find out your skills on feeling and strategy!',
-      friendsPlayed: [
-        { name: 'Davidus', avatar: 'D' }
-      ],
-      route: 'poker',
-    },
-    {
-      id: 2,
-      title: 'Blackjack',
-      genre: 'Strategy',
-      tags: ['Singleplayer', 'Gambling', 'Multiplayer'],
-      playCount: 0,
-      releaseDate: new Date('05-05-2026'),
-      isFavorite: false,
-      trending: true,
-      accentColor: '#6eabb6',
-      icon: '',
-      description: 'Play with multiple people and find out your skills on feeling and strategy!',
-      friendsPlayed: [
-        { name: 'Davidus', avatar: 'D' }
-      ],
-      route: 'blackjack',
-    }
-  ]);
+      description: g.description,
+      route: g.gameType,
+      minPlayers: g.minPlayers,
+      maxPlayers: g.maxPlayers,
+    }));
+  });
 
   readonly trendingGames = computed(() =>
     this.allGames().filter((g) => g.trending)
@@ -110,6 +111,10 @@ export class GamesComponent {
     }
   });
 
+  ngOnInit(): void {
+    this.gameService.fetchGames();
+  }
+
   toggleFilter(): void {
     this.filterOpen.update((v) => !v);
   }
@@ -125,11 +130,15 @@ export class GamesComponent {
 
   toggleFavorite(game: Game, event: MouseEvent): void {
     event.stopPropagation();
-    this.allGames.update((games) =>
-      games.map((g) =>
-        g.id === game.id ? { ...g, isFavorite: !g.isFavorite } : g
-      )
-    );
+    this.favorites.update((set) => {
+      const next = new Set(set);
+      if (next.has(game.gameType)) {
+        next.delete(game.gameType);
+      } else {
+        next.add(game.gameType);
+      }
+      return next;
+    });
   }
 
   openGame(game: Game): void {

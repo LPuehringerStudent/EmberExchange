@@ -29,6 +29,7 @@ import { coinTransactionRouter } from "./routers/coin-transaction-router";
 import { authRouter } from "./routers/auth-router";
 import { oauthRouter } from "./routers/oauth-router";
 import { roomRouter } from "./routers/room-router";
+import { gameRouter } from "./routers/game-router";
 import { swaggerSpec } from "./swagger";
 import { setupWebSocketServer } from "./websocket";
 
@@ -69,6 +70,7 @@ app.use("/api", coinTransactionRouter);
 app.use("/api", authRouter);
 app.use("/api", oauthRouter);
 app.use("/api", roomRouter);
+app.use("/api", gameRouter);
 
 // Static files (frontend) - serve Angular build output
 app.use(express.static(path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser")));
@@ -150,7 +152,10 @@ async function cleanupStaleRoomPlayers(): Promise<void> {
         const gameStateService = new GameStateService(unit);
 
         const stmt = unit.prepare<{ roomPlayerId: string; roomId: string }, Record<string, never>>(
-            `SELECT roomPlayerId, roomId FROM RoomPlayer WHERE connectionState = 'disconnected'`
+            `SELECT roomPlayerId, roomId FROM RoomPlayer
+             WHERE connectionState = 'disconnected'
+               AND disconnectedAt IS NOT NULL
+               AND disconnectedAt < NOW() - INTERVAL '5 minutes'`
         );
         const stalePlayers = await stmt.all();
 
@@ -168,6 +173,7 @@ async function cleanupStaleRoomPlayers(): Promise<void> {
                     ...baseBlob,
                     players: playersInRoom.map(p => ({
                         playerId: p.playerId,
+                        username: p.username,
                         connectionState: p.connectionState,
                         seatIndex: p.seatIndex
                     }))

@@ -1,14 +1,20 @@
-<div class="game-room-container">
-  @if (loading()) {
+@if (loading()) {
+  <div class="game-room-container">
     <div class="loading-state">
       <p>Loading room...</p>
     </div>
-  } @else if (error()) {
+  </div>
+} @else if (error()) {
+  <div class="game-room-container">
     <div class="error-state">
       <p>{{ error() }}</p>
       <button class="btn-primary" (click)="leave()">Back to Games</button>
     </div>
-  } @else {
+  </div>
+} @else if (roomStatus() === 'active') {
+  <app-poker />
+} @else {
+  <div class="game-room-container">
     <header class="room-header">
       <div class="header-left">
         <h1>Room {{ roomId() }}</h1>
@@ -26,6 +32,18 @@
       </div>
     }
 
+    @if (mockNotification()) {
+      <div class="mock-notification">
+        {{ mockNotification() }}
+      </div>
+    }
+
+    @if (roomSettings()['turnTime']) {
+      <div class="settings-bar">
+        <span class="settings-item">Turn time: {{ roomSettings()['turnTime'] }}s</span>
+      </div>
+    }
+
     <section class="players-section">
       <h2>Players ({{ players().length }} / {{ maxPlayers() }})</h2>
       <div class="players-list">
@@ -33,7 +51,7 @@
           <div class="player-card" [class.disconnected]="player.connectionState !== 'connected'">
             <div class="player-avatar">👤</div>
             <div class="player-info">
-              <span class="player-name">Player {{ player.playerId }}</span>
+              <span class="player-name">{{ player.username ?? 'Player ' + player.playerId }}</span>
               <span class="player-seat">Seat {{ player.seatIndex }}</span>
               <span class="player-state">{{ player.connectionState }}</span>
             </div>
@@ -49,6 +67,13 @@
       <div class="actions-grid">
         <button
           class="btn-primary"
+          (click)="startGame()"
+          [disabled]="connectionState() !== 'open'"
+        >
+          Start Game
+        </button>
+        <button
+          class="btn-secondary"
           (click)="sendTestAction()"
           [disabled]="connectionState() !== 'open'"
         >
@@ -56,5 +81,5 @@
         </button>
       </div>
     </section>
-  }
-</div>
+  </div>
+}

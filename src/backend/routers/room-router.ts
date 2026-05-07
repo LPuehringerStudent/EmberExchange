@@ -11,7 +11,7 @@ roomRouter.post("/rooms", async (req, res) => {
     const unit = await Unit.create(false);
     let ok = false;
     try {
-        const { maxPlayers, gameType } = req.body;
+        const { maxPlayers, gameType, settings } = req.body;
         const mp = typeof maxPlayers === "number" ? maxPlayers : 4;
         if (mp < 2) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "maxPlayers must be at least 2" });
@@ -25,7 +25,8 @@ roomRouter.post("/rooms", async (req, res) => {
         const roomService = new RoomService(unit);
         const gameStateService = new GameStateService(unit);
 
-        const room = await roomService.createRoom(mp, gameType.trim());
+        const roomSettings = (settings && typeof settings === "object") ? settings as Record<string, unknown> : {};
+        const room = await roomService.createRoom(mp, gameType.trim(), roomSettings);
         await gameStateService.createInitialState(room.roomId, { players: [], status: "waiting", log: [] });
 
         ok = true;

@@ -16,9 +16,6 @@
  * ============================================================
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap');
-
-
 /* ── Design tokens ─────────────────────────────────────────────── */
 /*
  * All colours, spacing and type references live here.
@@ -102,7 +99,7 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 14px 28px;
+  padding: 16px 32px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
 }
@@ -114,7 +111,7 @@
 .poker-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text-primary);
@@ -202,7 +199,7 @@
 }
 
 .info-block__label {
-  font-size: 0.67rem;
+  font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -210,14 +207,14 @@
 }
 
 .info-block__value {
-  font-size: 0.875rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 /* Larger value — for the pot number */
 .info-block__value--large {
-  font-size: 1.45rem;
+  font-size: 2rem;
   font-family: var(--font-display);
   color: var(--orange);
   font-variant-numeric: tabular-nums;
@@ -228,7 +225,7 @@
 
 .sidebar-title {
   margin: 0 0 2px;
-  font-size: 0.68rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.10em;
@@ -340,7 +337,7 @@
 .pt-wrapper {
   position: relative;
   width: 100%;
-  max-width: 560px;
+  width: min(85vh, 85vw, 1000px);
   aspect-ratio: 1;
   font-family: var(--font-ui);
 }
@@ -360,7 +357,7 @@
  */
 .pt-table {
   position: absolute;
-  inset: 14%;
+  inset: 16%;
 
   /* Oval shape — wider than it is tall */
   border-radius: 50% / 38%;
@@ -467,7 +464,7 @@
   background: rgba(0, 0, 0, 0.36);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
-  padding: 4px 12px;
+  padding: 6px 16px;
   z-index: 5;
   white-space: nowrap;
 }
@@ -482,13 +479,13 @@
 }
 
 .pt-turn-indicator__name {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--gold);
 }
 
 .pt-turn-indicator__label {
-  font-size: 11px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.52);
 }
 
@@ -519,14 +516,14 @@
 }
 
 .pt-pot__label {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   opacity: 0.72;
 }
 
 .pt-pot__amount {
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -538,7 +535,7 @@
 .pt-card-slot {
   border-radius: var(--radius-card);
   border: 1.5px dashed var(--card-empty);
-  width: clamp(26px, 5.8%, 46px);
+  width: clamp(60px, 12%, 110px);
   aspect-ratio: 2.5 / 3.5;
   overflow: hidden;
   display: flex;
@@ -550,7 +547,7 @@
 
 /* Hole card slots (at player seats) — slightly smaller */
 .pt-card-slot--hole {
-  width: clamp(20px, 4.2%, 36px);
+  width: clamp(50px, 10%, 90px);
 }
 
 .pt-card-img {
@@ -631,8 +628,8 @@
   background: var(--seat-bg);
   border: 1px solid var(--seat-border);
   border-radius: 8px;
-  padding: 4px 10px;
-  min-width: 62px;
+  padding: 6px 14px;
+  min-width: 100px;
   text-align: center;
   backdrop-filter: blur(4px);
   transition: border-color 0.18s, box-shadow 0.18s;
@@ -640,17 +637,17 @@
 }
 
 .pt-seat__name {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 80px;
+  max-width: 130px;
 }
 
 .pt-seat__chips {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--orange);
   font-variant-numeric: tabular-nums;
@@ -686,18 +683,190 @@
   position: absolute;
   top: -10px;
   right: -10px;
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #ffffff;
   color: #111111;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1.5px solid var(--gold);
   z-index: 20;
+}
+
+
+/* ── All-in state ──────────────────────────────────────────────── */
+
+.pt-seat--all-in .pt-seat__chip {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 2px rgba(200, 86, 26, 0.35);
+}
+
+.pt-seat__bet {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+
+/* ── Action buttons (used in sidebar and future overlays) ──────── */
+
+.action-btn {
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.08s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.action-btn:hover {
+  background: var(--bg-sidebar);
+  border-color: var(--border-strong);
+}
+
+.action-btn:active {
+  transform: scale(0.96);
+}
+
+.action-btn--primary {
+  background: var(--orange);
+  color: #ffffff;
+  border-color: var(--orange);
+}
+
+.action-btn--primary:hover {
+  background: var(--orange-light);
+  border-color: var(--orange-light);
+}
+
+.action-btn__amount {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}
+
+
+/* ── Sidebar action panel ──────────────────────────────────────── */
+
+.sidebar-action-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.raise-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.raise-input {
+  width: 70px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.raise-input:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+.info-block--actions {
+  border-color: var(--orange);
+  background: var(--orange-dim);
+}
+
+/* ── Hand name display ──────────────────────────────────────────── */
+
+.info-block--hand {
+  border-color: var(--gold);
+  background: rgba(200, 136, 26, 0.08);
+}
+
+.info-block__value--hand {
+  font-size: 1.15rem;
+  font-family: var(--font-display);
+  color: var(--gold);
+}
+
+/* ── Winner display ─────────────────────────────────────────────── */
+
+.info-block--winner {
+  border-color: var(--orange);
+  background: var(--orange-dim);
+}
+
+.info-block__value--winner {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--orange);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.winner-hand {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ── New Round button ───────────────────────────────────────────── */
+
+.info-block--new-round {
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+}
+
+.new-round-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--orange);
+  color: #ffffff;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.10s;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.new-round-btn:hover {
+  background: var(--orange-light);
+}
+
+.new-round-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Player row all-in badge ───────────────────────────────────── */
+
+.player-row--all-in {
+  border-color: var(--orange);
+  background: rgba(200, 86, 26, 0.04);
 }
 
 

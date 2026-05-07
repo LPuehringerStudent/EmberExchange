@@ -326,6 +326,23 @@ export interface StoveTypeStatisticsRow extends StoveTypeStatistics {
 
 // --- Multiplayer Infrastructure ---
 
+export interface Game {
+    name: string;
+    slug: string;
+    gameType: string;
+    minPlayers: number;
+    maxPlayers: number;
+    ruleset: string;
+    description: string | null;
+    genre: string;
+    tags: string[];
+    isActive: number;
+}
+
+export interface GameRow extends Game {
+    gameId: number;
+}
+
 export type RoomStatus = 'waiting' | 'active' | 'finished';
 export type ConnectionState = 'connected' | 'disconnected' | 'away';
 
@@ -333,6 +350,7 @@ export interface Room {
     status: RoomStatus;
     maxPlayers: number;
     gameType: string;
+    settings: Record<string, unknown>;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -350,6 +368,8 @@ export interface RoomPlayer {
 
 export interface RoomPlayerRow extends RoomPlayer {
     roomPlayerId: string;
+    username?: string;
+    disconnectedAt?: Date;
 }
 
 export interface GameState {
