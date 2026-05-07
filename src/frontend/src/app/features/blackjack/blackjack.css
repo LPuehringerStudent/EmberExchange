@@ -511,6 +511,7 @@
   align-items: center;
   min-height: 56px;
   gap: 12px;
+  margin-top: 18px;
 }
 
 .bj-controls__group {

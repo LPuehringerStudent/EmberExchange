@@ -303,6 +303,14 @@ export class Poker {
     this.raiseAmount.set(min);
   }
 
+  decrementRaise(min: number): void {
+    this.raiseAmount.set(Math.max(min, this.raiseAmount() - 10));
+  }
+
+  incrementRaise(max: number): void {
+    this.raiseAmount.set(Math.min(max, this.raiseAmount() + 10));
+  }
+
   executeRaise(): void {
     const action = this.raiseAction();
     if (!action) return;

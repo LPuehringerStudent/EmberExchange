@@ -1065,8 +1065,8 @@
 }
 
 .raise-input {
-  width: 70px;
-  padding: 8px 10px;
+  width: 64px;
+  padding: 8px 6px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: #ffffff;
@@ -1075,11 +1075,50 @@
   font-size: 0.95rem;
   font-weight: 600;
   text-align: center;
+  -moz-appearance: textfield;
+}
+
+/* Hide native number spinners */
+.raise-input::-webkit-outer-spin-button,
+.raise-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .raise-input:focus {
   outline: none;
   border-color: var(--orange);
+}
+
+.raise-stepper {
+  width: 32px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-sidebar);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.raise-stepper:hover {
+  background: #f3ebe0;
+  border-color: var(--orange);
+}
+
+.raise-stepper:active {
+  transform: scale(0.95);
+}
+
+.raise-stepper:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .info-block--actions {

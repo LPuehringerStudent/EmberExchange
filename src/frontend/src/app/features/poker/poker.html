@@ -103,6 +103,13 @@
                 @let rMin = action.minAmount ?? 0;
                 @let rMax = action.maxAmount ?? rMin;
                 <div class="raise-group">
+                  <button
+                    class="raise-stepper"
+                    (click)="decrementRaise(rMin)"
+                    [disabled]="(raiseAmount() || rMin) <= rMin"
+                  >
+                    −
+                  </button>
                   <input
                     type="number"
                     class="raise-input"
@@ -112,6 +119,13 @@
                     (input)="raiseAmount.set(+($any($event.target).value))"
                     (focus)="initRaiseAmount(rMin)"
                   />
+                  <button
+                    class="raise-stepper"
+                    (click)="incrementRaise(rMax)"
+                    [disabled]="(raiseAmount() || rMin) >= rMax"
+                  >
+                    +
+                  </button>
                   <button
                     class="action-btn action-btn--primary"
                     (click)="executeRaise()"
