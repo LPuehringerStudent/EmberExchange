@@ -1,6 +1,6 @@
 import WebSocket, { WebSocketServer } from "ws";
 import http from "http";
-import url from "url";
+
 import { authenticateSession } from "./auth";
 import { connectionManager } from "./connection-manager";
 import { rateLimiter } from "./rate-limiter";
@@ -16,8 +16,8 @@ export function setupWebSocketServer(server: http.Server): void {
     const wss = new WebSocketServer({ server, path: "/ws" });
 
     wss.on("connection", async (ws, req) => {
-        const parsedUrl = url.parse(req.url || "", true);
-        const sessionId = parsedUrl.query.sessionId as string | undefined;
+        const parsedUrl = new URL(req.url || "", "http://localhost");
+        const sessionId = parsedUrl.searchParams.get("sessionId") || undefined;
 
         // Attach message listener immediately so messages don't get lost
         // while authenticateSession runs asynchronously
