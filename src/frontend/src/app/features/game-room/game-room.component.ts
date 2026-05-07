@@ -4,7 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { HttpClient } from '@angular/common/http';
 import { Poker } from '../poker/poker';
-import { BlackjackComponent } from '../blackjack/blackjack';
 
 interface RoomResponse {
   roomId: string;
@@ -18,7 +17,7 @@ interface RoomResponse {
 @Component({
   selector: 'app-game-room',
   standalone: true,
-  imports: [CommonModule, Poker, BlackjackComponent],
+  imports: [CommonModule, Poker],
   templateUrl: './game-room.component.html',
   styleUrls: ['./game-room.component.css']
 })

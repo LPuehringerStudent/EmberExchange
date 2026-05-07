@@ -12,11 +12,7 @@
     </div>
   </div>
 } @else if (roomStatus() === 'active') {
-  @if (roomGameType() === 'blackjack') {
-    <app-blackjack />
-  } @else {
-    <app-poker />
-  }
+  <app-poker />
 } @else {
   <div class="game-room-container">
     <header class="room-header">
