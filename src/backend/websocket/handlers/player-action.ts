@@ -8,6 +8,7 @@ import { isValidUUID } from "../validators";
 import { ErrorCode } from "../../../shared/model";
 import { engineRegistry } from "../../game-engines";
 import { startTurnTimer, clearTurnTimer } from "../turn-timer";
+import { syncPlayerCoinsFromState } from "../../utils/sync-player-coins";
 
 export async function handlePlayerAction(socketId: string, payload: Record<string, unknown>): Promise<void> {
     const roomId = payload.roomId;
@@ -113,6 +114,8 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
                 return;
             }
 
+            await syncPlayerCoinsFromState(unit, newState as Record<string, unknown>);
+
             await eventLogService.logEvent(
                 roomId,
                 "next_hand",
@@ -171,6 +174,8 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
             });
             return;
         }
+
+        await syncPlayerCoinsFromState(unit, result.newFullState!);
 
         await eventLogService.logEvent(
             roomId,

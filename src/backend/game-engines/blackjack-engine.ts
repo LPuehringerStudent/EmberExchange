@@ -37,7 +37,7 @@ export class BlackJackEngine implements GameEngine {
         username: p.username,
         hands: [[]],
         bets: [0],
-        stack: 1000, // starting stack
+        stack: p.coins ?? 1000, // starting stack from player coins
         result: "playing",
       })),
       activePlayer: -1,

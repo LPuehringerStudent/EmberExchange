@@ -92,6 +92,7 @@ export class PokerEngine implements GameEngine {
       stack:
         prevState?.players.find((op) => op.playerId === p.playerId)?.stack ??
         fallbackStack ??
+        p.coins ??
         STARTING_STACK,
       bet: 0,
       totalBet: 0,
