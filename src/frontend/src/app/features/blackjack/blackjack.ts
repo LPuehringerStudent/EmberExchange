@@ -204,6 +204,18 @@ export class BlackjackComponent {
     return (blob?.['currentBet'] as number) ?? 20;
   });
 
+  readonly betAction = computed(() => {
+    return this.validActions().find((a) => a.type === 'bet');
+  });
+
+  readonly minBet = computed(() => {
+    return this.betAction()?.minAmount ?? this.currentBet();
+  });
+
+  readonly maxBet = computed(() => {
+    return this.betAction()?.maxAmount ?? this.currentBet();
+  });
+
   readonly winners = computed(() => {
     const blob = this.stateBlob();
     return (
@@ -255,6 +267,11 @@ export class BlackjackComponent {
         setTimeout(() => this.showAnnouncement.set(false), 1500);
       } else {
         this.showAnnouncement.set(false);
+      }
+
+      // Reset bet amount to min when entering betting phase
+      if (currentPhase === 'betting') {
+        this.betAmount.set(this.minBet());
       }
 
       // Delay results overlay so player can see final table state

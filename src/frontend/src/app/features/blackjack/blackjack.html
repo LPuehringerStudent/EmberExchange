@@ -124,8 +124,23 @@
         <!-- Controls -->
         <div class="bj-controls">
           @if (isBetting() && canAction('bet')) {
-            <div class="bj-controls__group">
-              <span class="bj-controls__label">Bet {{ currentBet() }}</span>
+            <div class="bj-controls__group bj-controls__group--betting">
+              <div class="bj-bet-slider">
+                <span class="bj-bet-slider__label">Bet: {{ betAmount() }}</span>
+                <input
+                  type="range"
+                  class="bj-bet-slider__input"
+                  [min]="minBet()"
+                  [max]="maxBet()"
+                  [step]="10"
+                  [value]="betAmount()"
+                  (input)="betAmount.set(+$any($event.target).value)"
+                />
+                <div class="bj-bet-slider__range">
+                  <span>{{ minBet() }}</span>
+                  <span>{{ maxBet() }}</span>
+                </div>
+              </div>
               <button class="bj-btn bj-btn--primary" (click)="executeBet()">Place Bet</button>
             </div>
           }
