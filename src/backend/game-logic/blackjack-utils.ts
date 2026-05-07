@@ -69,10 +69,8 @@ export function isBust(cards: Card[]): boolean {
 
 export function canSplit(cards: Card[]): boolean {
   if (cards.length !== 2) return false;
-  // Can split if both cards have the same rank value (10, J, Q, K all count as 10)
-  const valA = cardValue(cards[0]);
-  const valB = cardValue(cards[1]);
-  return valA === valB;
+  // Can only split cards of the exact same rank (e.g. two Jacks, two 8s)
+  return cards[0][0] === cards[1][0];
 }
 
 export function canDouble(cards: Card[]): boolean {

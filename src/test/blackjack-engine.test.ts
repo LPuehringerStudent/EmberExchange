@@ -30,10 +30,13 @@ describe("BlackJack Utils", () => {
   });
 
   test("canSplit detects pairs", () => {
-    expect(canSplit(["Th", "Td"])).toBe(true);
-    expect(canSplit(["Th", "Jd"])).toBe(true); // 10-value pair
-    expect(canSplit(["Ah", "Ad"])).toBe(true);
-    expect(canSplit(["Ah", "Td"])).toBe(false);
+    expect(canSplit(["Th", "Td"])).toBe(true);   // same rank
+    expect(canSplit(["Jh", "Jd"])).toBe(true);   // same rank
+    expect(canSplit(["Qh", "Qd"])).toBe(true);   // same rank
+    expect(canSplit(["Th", "Jd"])).toBe(false);  // different rank, same value
+    expect(canSplit(["Jh", "Qd"])).toBe(false);  // different rank, same value
+    expect(canSplit(["Ah", "Ad"])).toBe(true);   // same rank
+    expect(canSplit(["Ah", "Td"])).toBe(false);  // different rank
   });
 
   test("canDouble only on 2 cards", () => {
