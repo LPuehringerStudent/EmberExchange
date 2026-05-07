@@ -30,17 +30,17 @@ export const listingRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/listings", (_req, res) => {
-    const unit = new Unit(true);
+listingRouter.get("/listings", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new ListingService(unit);
 
     try {
-        const response = service.getAllListings();
+        const response = await service.getAllListings();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -68,17 +68,17 @@ listingRouter.get("/listings", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/listings/active", (_req, res) => {
-    const unit = new Unit(true);
+listingRouter.get("/listings/active", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new ListingService(unit);
 
     try {
-        const response = service.getActiveListings();
+        const response = await service.getActiveListings();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -123,8 +123,8 @@ listingRouter.get("/listings/active", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/listings/:id", (req, res) => {
-    const unit = new Unit(true);
+listingRouter.get("/listings/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const id = req.params.id;
 
@@ -134,7 +134,7 @@ listingRouter.get("/listings/:id", (req, res) => {
             return;
         }
 
-        const response = service.getListingById(Number(id));
+        const response = await service.getListingById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Listing not found" });
         } else {
@@ -143,7 +143,7 @@ listingRouter.get("/listings/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -184,8 +184,8 @@ listingRouter.get("/listings/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/players/:sellerId/listings", (req, res) => {
-    const unit = new Unit(true);
+listingRouter.get("/players/:sellerId/listings", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const sellerId = req.params.sellerId;
 
@@ -195,12 +195,12 @@ listingRouter.get("/players/:sellerId/listings", (req, res) => {
             return;
         }
 
-        const response = service.getListingsBySellerId(Number(sellerId));
+        const response = await service.getListingsBySellerId(Number(sellerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -241,8 +241,8 @@ listingRouter.get("/players/:sellerId/listings", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/players/:sellerId/listings/active", (req, res) => {
-    const unit = new Unit(true);
+listingRouter.get("/players/:sellerId/listings/active", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const sellerId = req.params.sellerId;
 
@@ -252,12 +252,12 @@ listingRouter.get("/players/:sellerId/listings/active", (req, res) => {
             return;
         }
 
-        const response = service.getActiveListingsBySellerId(Number(sellerId));
+        const response = await service.getActiveListingsBySellerId(Number(sellerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -302,8 +302,8 @@ listingRouter.get("/players/:sellerId/listings/active", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/stoves/:stoveId/listing", (req, res) => {
-    const unit = new Unit(true);
+listingRouter.get("/stoves/:stoveId/listing", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const stoveId = req.params.stoveId;
 
@@ -313,7 +313,7 @@ listingRouter.get("/stoves/:stoveId/listing", (req, res) => {
             return;
         }
 
-        const response = service.getActiveListingByStoveId(Number(stoveId));
+        const response = await service.getActiveListingByStoveId(Number(stoveId));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "No active listing found for this stove" });
         } else {
@@ -322,7 +322,31 @@ listingRouter.get("/stoves/:stoveId/listing", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
+    }
+});
+
+listingRouter.get("/lootboxes/:lootboxId/listing", async (req, res) => {
+    const unit = await Unit.create(true);
+    const service = new ListingService(unit);
+    const lootboxId = req.params.lootboxId;
+
+    try {
+        if (isNullOrWhiteSpace(lootboxId) || isNaN(Number(lootboxId))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Lootbox ID must be a valid number" });
+            return;
+        }
+
+        const response = await service.getActiveListingByLootboxId(Number(lootboxId));
+        if (response === null) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "No active listing found for this lootbox" });
+        } else {
+            res.status(StatusCodes.OK).json(response);
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
     }
 });
 
@@ -331,7 +355,7 @@ listingRouter.get("/stoves/:stoveId/listing", (req, res) => {
  * /listings:
  *   post:
  *     summary: Create a listing
- *     description: Creates a new marketplace listing for a stove
+ *     description: Creates a new marketplace listing for a stove or lootbox
  *     tags:
  *       - Listings
  *     requestBody:
@@ -342,7 +366,6 @@ listingRouter.get("/stoves/:stoveId/listing", (req, res) => {
  *             type: object
  *             required:
  *               - sellerId
- *               - stoveId
  *               - price
  *             properties:
  *               sellerId:
@@ -351,8 +374,12 @@ listingRouter.get("/stoves/:stoveId/listing", (req, res) => {
  *                 example: 5
  *               stoveId:
  *                 type: integer
- *                 description: Stove being listed
+ *                 description: Stove being listed (provide stoveId or lootboxId)
  *                 example: 42
+ *               lootboxId:
+ *                 type: integer
+ *                 description: Lootbox being listed (provide stoveId or lootboxId)
+ *                 example: 7
  *               price:
  *                 type: integer
  *                 description: Asking price in coins
@@ -378,16 +405,26 @@ listingRouter.get("/stoves/:stoveId/listing", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.post("/listings", (req, res) => {
-    const unit = new Unit(false);
+listingRouter.post("/listings", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new ListingService(unit);
     let ok = false;
 
     try {
-        const { sellerId, stoveId, price } = req.body;
+        const { sellerId, stoveId, lootboxId, price } = req.body;
 
-        if (typeof sellerId !== "number" || typeof stoveId !== "number" || typeof price !== "number") {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "sellerId, stoveId, and price are required" });
+        if (typeof sellerId !== "number" || typeof price !== "number") {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "sellerId and price are required" });
+            return;
+        }
+
+        if ((stoveId === undefined || stoveId === null) && (lootboxId === undefined || lootboxId === null)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Either stoveId or lootboxId is required" });
+            return;
+        }
+
+        if (stoveId !== undefined && stoveId !== null && lootboxId !== undefined && lootboxId !== null) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Provide either stoveId or lootboxId, not both" });
             return;
         }
 
@@ -396,13 +433,21 @@ listingRouter.post("/listings", (req, res) => {
             return;
         }
 
-        // Check if stove is already listed
-        if (service.isStoveListed(stoveId)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Stove is already listed" });
-            return;
+        // Check if item is already listed
+        if (stoveId !== undefined && stoveId !== null) {
+            if (await service.isStoveListed(stoveId)) {
+                res.status(StatusCodes.BAD_REQUEST).json({ error: "Stove is already listed" });
+                return;
+            }
+        }
+        if (lootboxId !== undefined && lootboxId !== null) {
+            if (await service.isLootboxListed(lootboxId)) {
+                res.status(StatusCodes.BAD_REQUEST).json({ error: "Lootbox is already listed" });
+                return;
+            }
         }
 
-        const [success, id] = service.createListing(sellerId, stoveId, price);
+        const [success, id] = await service.createListing(sellerId, price, stoveId, lootboxId);
 
         if (success) {
             ok = true;
@@ -413,7 +458,7 @@ listingRouter.post("/listings", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -474,8 +519,8 @@ listingRouter.post("/listings", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.patch("/listings/:id/price", (req, res) => {
-    const unit = new Unit(false);
+listingRouter.patch("/listings/:id/price", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new ListingService(unit);
     const id = req.params.id;
     let ok = false;
@@ -492,7 +537,7 @@ listingRouter.patch("/listings/:id/price", (req, res) => {
             return;
         }
 
-        const success = service.updatePrice(Number(id), price);
+        const success = await service.updatePrice(Number(id), price);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Price updated" });
@@ -502,7 +547,7 @@ listingRouter.patch("/listings/:id/price", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -549,8 +594,8 @@ listingRouter.patch("/listings/:id/price", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.patch("/listings/:id/cancel", (req, res) => {
-    const unit = new Unit(false);
+listingRouter.patch("/listings/:id/cancel", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new ListingService(unit);
     const id = req.params.id;
     let ok = false;
@@ -561,7 +606,7 @@ listingRouter.patch("/listings/:id/cancel", (req, res) => {
             return;
         }
 
-        const success = service.cancelListing(Number(id));
+        const success = await service.cancelListing(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Listing cancelled" });
@@ -571,7 +616,7 @@ listingRouter.patch("/listings/:id/cancel", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -618,8 +663,8 @@ listingRouter.patch("/listings/:id/cancel", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.delete("/listings/:id", (req, res) => {
-    const unit = new Unit(false);
+listingRouter.delete("/listings/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new ListingService(unit);
     const id = req.params.id;
     let ok = false;
@@ -630,7 +675,7 @@ listingRouter.delete("/listings/:id", (req, res) => {
             return;
         }
 
-        const success = service.deleteListing(Number(id));
+        const success = await service.deleteListing(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Listing deleted" });
@@ -640,7 +685,7 @@ listingRouter.delete("/listings/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -679,8 +724,8 @@ listingRouter.delete("/listings/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/players/:sellerId/active-listings/count", (req, res) => {
-    const unit = new Unit(true);
+listingRouter.get("/players/:sellerId/active-listings/count", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const sellerId = req.params.sellerId;
 
@@ -690,11 +735,11 @@ listingRouter.get("/players/:sellerId/active-listings/count", (req, res) => {
             return;
         }
 
-        const count = service.countActiveListingsBySeller(Number(sellerId));
+        const count = await service.countActiveListingsBySeller(Number(sellerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });

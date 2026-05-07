@@ -30,17 +30,17 @@ export const loginHistoryRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.get("/login-history", (_req, res) => {
-    const unit = new Unit(true);
+loginHistoryRouter.get("/login-history", async (_req, res) => {
+    const unit = await Unit.create(true);
     const service = new LoginHistoryService(unit);
 
     try {
-        const response = service.getAll();
+        const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -85,8 +85,8 @@ loginHistoryRouter.get("/login-history", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.get("/login-history/:id", (req, res) => {
-    const unit = new Unit(true);
+loginHistoryRouter.get("/login-history/:id", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new LoginHistoryService(unit);
     const id = req.params.id;
 
@@ -96,7 +96,7 @@ loginHistoryRouter.get("/login-history/:id", (req, res) => {
             return;
         }
 
-        const response = service.getById(Number(id));
+        const response = await service.getById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Login history not found" });
         } else {
@@ -105,7 +105,7 @@ loginHistoryRouter.get("/login-history/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -146,8 +146,8 @@ loginHistoryRouter.get("/login-history/:id", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.get("/players/:playerId/login-history", (req, res) => {
-    const unit = new Unit(true);
+loginHistoryRouter.get("/players/:playerId/login-history", async (req, res) => {
+    const unit = await Unit.create(true);
     const service = new LoginHistoryService(unit);
     const playerId = req.params.playerId;
 
@@ -157,12 +157,12 @@ loginHistoryRouter.get("/players/:playerId/login-history", (req, res) => {
             return;
         }
 
-        const response = service.getByPlayerId(Number(playerId));
+        const response = await service.getByPlayerId(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete();
+        await unit.complete();
     }
 });
 
@@ -210,8 +210,8 @@ loginHistoryRouter.get("/players/:playerId/login-history", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.post("/login-history", (req, res) => {
-    const unit = new Unit(false);
+loginHistoryRouter.post("/login-history", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new LoginHistoryService(unit);
     let ok = false;
 
@@ -223,7 +223,7 @@ loginHistoryRouter.post("/login-history", (req, res) => {
             return;
         }
 
-        const [success, id] = service.create(playerId, sessionId ?? null);
+        const [success, id] = await service.create(playerId, sessionId ?? null);
 
         if (success) {
             ok = true;
@@ -234,7 +234,7 @@ loginHistoryRouter.post("/login-history", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });
 
@@ -279,8 +279,8 @@ loginHistoryRouter.post("/login-history", (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.delete("/login-history/:id", (req, res) => {
-    const unit = new Unit(false);
+loginHistoryRouter.delete("/login-history/:id", async (req, res) => {
+    const unit = await Unit.create(false);
     const service = new LoginHistoryService(unit);
     const id = req.params.id;
     let ok = false;
@@ -291,7 +291,7 @@ loginHistoryRouter.delete("/login-history/:id", (req, res) => {
             return;
         }
 
-        const success = service.delete(Number(id));
+        const success = await service.delete(Number(id));
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Login history deleted" });
@@ -301,6 +301,6 @@ loginHistoryRouter.delete("/login-history/:id", (req, res) => {
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        unit.complete(ok);
+        await unit.complete(ok);
     }
 });

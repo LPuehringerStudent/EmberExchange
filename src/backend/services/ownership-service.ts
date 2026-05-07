@@ -11,11 +11,11 @@ export class OwnershipService extends ServiceBase {
      * Retrieves all ownership records from the database.
      * @returns An array of all OwnershipRow objects.
      */
-    getAllOwnerships(): OwnershipRow[] {
+    async getAllOwnerships(): Promise<OwnershipRow[]> {
         const stmt = this.unit.prepare<OwnershipRow>(
             "SELECT * FROM Ownership"
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -23,12 +23,12 @@ export class OwnershipService extends ServiceBase {
      * @param id - The unique ownership ID.
      * @returns The OwnershipRow object if found, otherwise null.
      */
-    getOwnershipById(id: number): OwnershipRow | null {
+    async getOwnershipById(id: number): Promise<OwnershipRow | null> {
         const stmt = this.unit.prepare<OwnershipRow>(
             "SELECT * FROM Ownership WHERE ownershipId = @id",
             { id }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -36,12 +36,12 @@ export class OwnershipService extends ServiceBase {
      * @param stoveId - The stove's unique ID.
      * @returns An array of OwnershipRow objects for the stove, ordered by acquisition date.
      */
-    getOwnershipHistoryByStoveId(stoveId: number): OwnershipRow[] {
+    async getOwnershipHistoryByStoveId(stoveId: number): Promise<OwnershipRow[]> {
         const stmt = this.unit.prepare<OwnershipRow>(
             "SELECT * FROM Ownership WHERE stoveId = @stoveId ORDER BY acquiredAt ASC",
             { stoveId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -49,12 +49,12 @@ export class OwnershipService extends ServiceBase {
      * @param playerId - The player's unique ID.
      * @returns An array of OwnershipRow objects where the player acquired the stove.
      */
-    getOwnershipsByPlayerId(playerId: number): OwnershipRow[] {
+    async getOwnershipsByPlayerId(playerId: number): Promise<OwnershipRow[]> {
         const stmt = this.unit.prepare<OwnershipRow>(
             "SELECT * FROM Ownership WHERE playerId = @playerId ORDER BY acquiredAt DESC",
             { playerId }
         );
-        return stmt.all();
+        return await stmt.all();
     }
 
     /**
@@ -65,17 +65,17 @@ export class OwnershipService extends ServiceBase {
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new ownership record's ID (if successful).
      */
-    createOwnership(
+    async createOwnership(
         stoveId: number,
         playerId: number,
         acquiredHow: "lootbox" | "trade" | "mini-game"
-    ): [boolean, number] {
+    ): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<OwnershipRow>(
             `INSERT INTO Ownership (stoveId, playerId, acquiredAt, acquiredHow) 
-             VALUES (@stoveId, @playerId, datetime('now'), @acquiredHow)`,
+             VALUES (@stoveId, @playerId, NOW(), @acquiredHow)`,
             { stoveId, playerId, acquiredHow }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 
     /**
@@ -83,12 +83,12 @@ export class OwnershipService extends ServiceBase {
      * @param stoveId - The stove's unique ID.
      * @returns The ownership record of the current owner, or null if not found.
      */
-    getCurrentOwnership(stoveId: number): OwnershipRow | null {
+    async getCurrentOwnership(stoveId: number): Promise<OwnershipRow | null> {
         const stmt = this.unit.prepare<OwnershipRow>(
             "SELECT * FROM Ownership WHERE stoveId = @stoveId ORDER BY acquiredAt DESC LIMIT 1",
             { stoveId }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
@@ -96,12 +96,12 @@ export class OwnershipService extends ServiceBase {
      * @param id - The ownership record's unique ID.
      * @returns True if exactly one ownership record was deleted, false otherwise.
      */
-    deleteOwnership(id: number): boolean {
+    async deleteOwnership(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
             "DELETE FROM Ownership WHERE ownershipId = @id",
             { id }
         );
-        const result = stmt.run();
+        const result = await stmt.run();
         return result.changes === 1;
     }
 
@@ -110,12 +110,12 @@ export class OwnershipService extends ServiceBase {
      * @param stoveId - The stove's unique ID.
      * @returns The count of ownership records for the stove.
      */
-    countOwnershipChanges(stoveId: number): number {
+    async countOwnershipChanges(stoveId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Ownership WHERE stoveId = @stoveId",
             { stoveId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 
@@ -124,12 +124,12 @@ export class OwnershipService extends ServiceBase {
      * @param playerId - The player's unique ID.
      * @returns The count of stoves acquired by the player.
      */
-    countStovesAcquiredByPlayer(playerId: number): number {
+    async countStovesAcquiredByPlayer(playerId: number): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Ownership WHERE playerId = @playerId",
             { playerId }
         );
-        const result = stmt.get();
+        const result = await stmt.get();
         return result?.count ?? 0;
     }
 }

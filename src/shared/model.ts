@@ -116,7 +116,9 @@ export interface CoinTransactionRow extends CoinTransaction {
 // Listing
 export interface Listing {
     sellerId: number;
-    stoveId: number;
+    sellerName?: string;
+    stoveId?: number | null;
+    lootboxId?: number | null;
     price: number;
     listedAt: Date;
     status: "active" | "cancelled" | "sold";
@@ -320,4 +322,110 @@ export interface StoveTypeStatistics {
 
 export interface StoveTypeStatisticsRow extends StoveTypeStatistics {
     statId: number;
+}
+
+// --- Multiplayer Infrastructure ---
+
+export interface Game {
+    name: string;
+    slug: string;
+    gameType: string;
+    minPlayers: number;
+    maxPlayers: number;
+    ruleset: string;
+    description: string | null;
+    genre: string;
+    tags: string[];
+    isActive: number;
+}
+
+export interface GameRow extends Game {
+    gameId: number;
+}
+
+export type RoomStatus = 'waiting' | 'active' | 'finished';
+export type ConnectionState = 'connected' | 'disconnected' | 'away';
+
+export interface Room {
+    status: RoomStatus;
+    maxPlayers: number;
+    gameType: string;
+    settings: Record<string, unknown>;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface RoomRow extends Room {
+    roomId: string;
+}
+
+export interface RoomPlayer {
+    roomId: string;
+    playerId: number;
+    connectionState: ConnectionState;
+    seatIndex: number;
+}
+
+export interface RoomPlayerRow extends RoomPlayer {
+    roomPlayerId: string;
+    username?: string;
+    disconnectedAt?: Date;
+}
+
+export interface GameState {
+    roomId: string;
+    stateBlob: unknown;
+    version: number;
+    updatedAt: Date;
+}
+
+export interface GameStateRow extends GameState {
+}
+
+// WebSocket Protocol Envelopes
+
+export interface ClientMessage {
+    type: ClientMessageType;
+    payload: Record<string, unknown>;
+    clientTimestamp: number;
+    sequenceNumber: number;
+}
+
+export type ClientMessageType =
+    | 'join_room'
+    | 'leave_room'
+    | 'player_action'
+    | 'request_sync'
+    | 'start_game';
+
+export interface ServerMessage {
+    type: ServerMessageType;
+    payload: Record<string, unknown>;
+}
+
+export type ServerMessageType =
+    | 'state_update'
+    | 'player_joined'
+    | 'player_left'
+    | 'error'
+    | 'event_replay';
+
+export enum ErrorCode {
+    INVALID_STATE = 'INVALID_STATE',
+    OUT_OF_TURN = 'OUT_OF_TURN',
+    VERSION_MISMATCH = 'VERSION_MISMATCH',
+    ROOM_FULL = 'ROOM_FULL',
+    RATE_LIMITED = 'RATE_LIMITED',
+    AUTH_EXPIRED = 'AUTH_EXPIRED',
+}
+
+export interface EventLog {
+    eventId: string;
+    roomId: string;
+    playerId: number | null;
+    type: string;
+    payload: unknown;
+    sequenceNumber: number | null;
+    clientTimestamp: number | null;
+    serverTimestamp: Date;
 }

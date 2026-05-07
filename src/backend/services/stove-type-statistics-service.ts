@@ -17,13 +17,13 @@ export class StoveTypeStatisticsService extends ServiceBase {
     /**
      * Calculates statistics for a specific stove type from actual data.
      */
-    private calculateStoveTypeStats(stoveTypeId: number): StoveTypeStatisticsRow | null {
+    private async calculateStoveTypeStats(stoveTypeId: number): Promise<StoveTypeStatisticsRow | null> {
         // Check if stove type exists
         const typeStmt = this.unit.prepare<{ stoveTypeId: number; name: string; rarity: string }>(
             "SELECT typeId as stoveTypeId, name, rarity FROM StoveType WHERE typeId = @typeId",
             { typeId: stoveTypeId }
         );
-        const stoveType = typeStmt.get();
+        const stoveType = await typeStmt.get();
         if (!stoveType) return null;
 
         // Total minted (count of stoves of this type)
@@ -31,7 +31,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
             "SELECT COUNT(*) as count FROM Stove WHERE typeId = @typeId",
             { typeId: stoveTypeId }
         );
-        const totalMinted = mintedStmt.get()?.count ?? 0;
+        const totalMinted = (await mintedStmt.get())?.count ?? 0;
 
         // Currently owned (should equal total minted)
         const ownedStmt = this.unit.prepare<{ count: number }>(
@@ -39,7 +39,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
              WHERE typeId = @typeId AND currentOwnerId IS NOT NULL`,
             { typeId: stoveTypeId }
         );
-        const currentlyOwned = ownedStmt.get()?.count ?? 0;
+        const currentlyOwned = (await ownedStmt.get())?.count ?? 0;
 
         // Currently listed
         const listedStmt = this.unit.prepare<{ count: number; avgPrice: number; minPrice: number; maxPrice: number }>(
@@ -53,7 +53,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
              WHERE s.typeId = @typeId AND l.status = 'active'`,
             { typeId: stoveTypeId }
         );
-        const listedResult = listedStmt.get();
+        const listedResult = await listedStmt.get();
         const currentlyListed = listedResult?.count ?? 0;
         const averageListingPrice = listedResult?.avgPrice ?? 0;
         const currentLowestPrice = listedResult && listedResult.minPrice > 0 ? listedResult.minPrice : null;
@@ -86,7 +86,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
              WHERE s.typeId = @typeId`,
             { typeId: stoveTypeId }
         );
-        const salesResult = salesStmt.get();
+        const salesResult = await salesStmt.get();
         const totalSales = salesResult?.count ?? 0;
         const averageSalePrice = salesResult?.avgPrice ?? 0;
         const highestSalePrice = salesResult && salesResult.maxPrice > 0 ? salesResult.maxPrice : null;
@@ -102,7 +102,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
              WHERE s.typeId = @typeId`,
             { typeId: stoveTypeId }
         );
-        const totalVolumeTraded = volumeStmt.get()?.volume ?? 0;
+        const totalVolumeTraded = (await volumeStmt.get())?.volume ?? 0;
 
         // Sales in last 7 days
         const sales7dStmt = this.unit.prepare<{ count: number }>(
@@ -111,10 +111,10 @@ export class StoveTypeStatisticsService extends ServiceBase {
              JOIN Listing l ON t.listingId = l.listingId
              JOIN Stove s ON l.stoveId = s.stoveId
              WHERE s.typeId = @typeId 
-             AND t.executedAt >= datetime('now', '-7 days')`,
+             AND t.executedAt >= NOW() - INTERVAL '7 days'`,
             { typeId: stoveTypeId }
         );
-        const salesLast7Days = sales7dStmt.get()?.count ?? 0;
+        const salesLast7Days = (await sales7dStmt.get())?.count ?? 0;
 
         // Sales in last 30 days
         const sales30dStmt = this.unit.prepare<{ count: number }>(
@@ -123,13 +123,13 @@ export class StoveTypeStatisticsService extends ServiceBase {
              JOIN Listing l ON t.listingId = l.listingId
              JOIN Stove s ON l.stoveId = s.stoveId
              WHERE s.typeId = @typeId 
-             AND t.executedAt >= datetime('now', '-30 days')`,
+             AND t.executedAt >= NOW() - INTERVAL '30 days'`,
             { typeId: stoveTypeId }
         );
-        const salesLast30Days = sales30dStmt.get()?.count ?? 0;
+        const salesLast30Days = (await sales30dStmt.get())?.count ?? 0;
 
         // Percent of total supply
-        const totalStoves = this.getTotalStoveCount();
+        const totalStoves = await this.getTotalStoveCount();
         const percentOfTotalSupply = totalStoves > 0 ? (totalMinted / totalStoves) * 100 : 0;
 
         return {
@@ -164,18 +164,18 @@ export class StoveTypeStatisticsService extends ServiceBase {
         };
     }
 
-    private getTotalStoveCount(): number {
+    private async getTotalStoveCount(): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Stove"
         );
-        return stmt.get()?.count ?? 0;
+        return (await stmt.get())?.count ?? 0;
     }
 
     /**
      * Retrieves all stove type statistics (calculated from real data).
      */
-    getAll(): StoveTypeStatisticsRow[] {
-        const totalStoveCount = this.getTotalStoveCount();
+    async getAll(): Promise<StoveTypeStatisticsRow[]> {
+        const totalStoveCount = await this.getTotalStoveCount();
         const sql = `
             SELECT 
                 st.typeId as stoveTypeId,
@@ -225,8 +225,8 @@ export class StoveTypeStatisticsService extends ServiceBase {
                     AVG(l.price) as averageSalePrice,
                     MAX(l.price) as highestSalePrice,
                     MIN(l.price) as lowestSalePrice,
-                    SUM(CASE WHEN t.executedAt >= datetime('now', '-7 days') THEN 1 ELSE 0 END) as salesLast7Days,
-                    SUM(CASE WHEN t.executedAt >= datetime('now', '-30 days') THEN 1 ELSE 0 END) as salesLast30Days
+                    SUM(CASE WHEN t.executedAt >= NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) as salesLast7Days,
+                    SUM(CASE WHEN t.executedAt >= NOW() - INTERVAL '30 days' THEN 1 ELSE 0 END) as salesLast30Days
                 FROM Trade t
                 JOIN Listing l ON t.listingId = l.listingId
                 JOIN Stove s ON l.stoveId = s.stoveId
@@ -236,7 +236,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
         `;
         
         const stmt = this.unit.prepare<any>(sql);
-        const results = stmt.all();
+        const results = await stmt.all();
         
         const totalOverallStoves = totalStoveCount || 1; // Prevent division by zero
         
@@ -280,15 +280,15 @@ export class StoveTypeStatisticsService extends ServiceBase {
     /**
      * Retrieves statistics for a specific stove type.
      */
-    getByStoveTypeId(stoveTypeId: number): StoveTypeStatisticsRow | null {
-        return this.calculateStoveTypeStats(stoveTypeId);
+    async getByStoveTypeId(stoveTypeId: number): Promise<StoveTypeStatisticsRow | null> {
+        return await this.calculateStoveTypeStats(stoveTypeId);
     }
 
     /**
      * Gets top stove types by sales volume.
      */
-    getTopBySales(limit: number): StoveTypeStatisticsRow[] {
-        return this.getAll()
+    async getTopBySales(limit: number): Promise<StoveTypeStatisticsRow[]> {
+        return (await this.getAll())
             .sort((a, b) => b.totalSales - a.totalSales)
             .slice(0, limit);
     }
@@ -297,15 +297,15 @@ export class StoveTypeStatisticsService extends ServiceBase {
      * Gets most viewed stove types.
      * @deprecated Views not tracked yet
      */
-    getMostViewed(limit: number): StoveTypeStatisticsRow[] {
-        return this.getAll().slice(0, limit);
+    async getMostViewed(limit: number): Promise<StoveTypeStatisticsRow[]> {
+        return (await this.getAll()).slice(0, limit);
     }
 
     /**
      * Gets market summary across all stove types.
      */
-    getMarketSummary(): MarketSummary {
-        const allStats = this.getAll();
+    async getMarketSummary(): Promise<MarketSummary> {
+        const allStats = await this.getAll();
         
         const totalStoves = allStats.reduce((sum, s) => sum + s.totalMinted, 0);
         const totalListed = allStats.reduce((sum, s) => sum + s.currentlyListed, 0);
@@ -326,15 +326,15 @@ export class StoveTypeStatisticsService extends ServiceBase {
      * Gets stove types by demand trend.
      * @deprecated Trends not calculated yet
      */
-    getByTrend(_trend: 'increasing' | 'stable' | 'decreasing'): StoveTypeStatisticsRow[] {
-        return this.getAll();
+    async getByTrend(_trend: 'increasing' | 'stable' | 'decreasing'): Promise<StoveTypeStatisticsRow[]> {
+        return await this.getAll();
     }
 
     /**
      * Alias for getByTrend to match router expectation.
      */
-    getByDemandTrend(trend: 'increasing' | 'stable' | 'decreasing'): StoveTypeStatisticsRow[] {
-        return this.getByTrend(trend);
+    async getByDemandTrend(trend: 'increasing' | 'stable' | 'decreasing'): Promise<StoveTypeStatisticsRow[]> {
+        return await this.getByTrend(trend);
     }
 
     /**

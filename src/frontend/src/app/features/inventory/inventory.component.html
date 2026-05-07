@@ -27,7 +27,7 @@
         <h1>{{ activeTab === 'lootboxes' ? 'Lootboxes' : 'Items' }}</h1>
         <span class="hint">
           {{ activeTab === 'lootboxes'
-          ? 'Your opened lootboxes'
+          ? 'Your unopened lootboxes'
           : 'Your collected stoves' }}
         </span>
       </div>
@@ -98,11 +98,21 @@
               <span class="rarity-badge common">
                 {{ box.acquiredHow }}
               </span>
+              @if (isLootboxListed(box.id)) {
+                <span class="listed-badge">Listed</span>
+              }
             </div>
             <div class="item-info">
               <h4 class="item-name">{{ box.typeName }}</h4>
-              <p class="item-type">Opened: {{ box.openedAt | date:'short' }}</p>
-              <p class="item-owner">Lootbox #{{ box.id }}</p>
+              <p class="item-type">Lootbox #{{ box.id }}</p>
+              <p class="item-owner">Unopened</p>
+            </div>
+            <div class="item-actions">
+              @if (isLootboxListed(box.id)) {
+                <button class="btn-sell" disabled>Listed</button>
+              } @else {
+                <button class="btn-sell" (click)="openSellLootboxModal(box)">Sell</button>
+              }
             </div>
           </div>
         }
@@ -141,6 +151,9 @@
               <span class="rarity-badge" [class]="item.rarity.toLowerCase()">
                 {{item.rarity}}
               </span>
+              @if (isStoveListed(item.stoveId)) {
+                <span class="listed-badge">Listed</span>
+              }
             </div>
             <div class="item-info">
               <h4 class="item-name">{{item.stoveName || 'Stove #' + item.stoveId}}</h4>
@@ -148,7 +161,11 @@
               <p class="item-owner">Owned by you</p>
             </div>
             <div class="item-actions">
-              <button class="btn-sell" (click)="openSellModal(item)">Sell</button>
+              @if (isStoveListed(item.stoveId)) {
+                <button class="btn-sell" disabled>Listed</button>
+              } @else {
+                <button class="btn-sell" (click)="openSellStoveModal(item)">Sell</button>
+              }
             </div>
           </div>
         }
@@ -161,11 +178,11 @@
 </div>
 
 <!-- Sell Modal -->
-@if (showSellModal && selectedItem) {
+@if (showSellModal) {
   <div class="modal-overlay" (click)="closeSellModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
-      <h3>Sell {{ selectedItem.stoveName }}</h3>
-      <p class="modal-hint">Set a price in Coal for your stove.</p>
+      <h3>Sell {{ getSellModalTitle() }}</h3>
+      <p class="modal-hint">Set a price in Coal for your item.</p>
 
       <div class="form-group">
         <label for="sellPrice">Price</label>

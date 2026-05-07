@@ -28,6 +28,16 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'games/:gameType/lobby',
+    loadComponent: () => import('./features/game-lobby/game-lobby.component').then(m => m.GameLobbyComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'game-room/:roomId',
+    loadComponent: () => import('./features/game-room/game-room.component').then(m => m.GameRoomComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'inventory',
     loadComponent: () => import('./features/inventory/inventory.component').then(m => m.InventoryComponent),
     canActivate: [authGuard]
@@ -45,10 +55,6 @@ export const routes: Routes = [
   {
     path: 'settings',
     loadChildren: () => import('./features/settings/settings.routes').then(m => m.SETTINGS_ROUTES)
-  },
-  {
-    path: 'test',
-    loadComponent: () => import('./features/test-page/test-page.component').then(m => m.TestPageComponent)
   },
   {
     path: 'update-log',

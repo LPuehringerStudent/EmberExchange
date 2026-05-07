@@ -3,14 +3,7 @@
   <div class="marketplace-header">
     <div class="header-text">
       <h1>Marketplace</h1>
-      <p class="subtitle">Buy and sell stoves with other players</p>
-    </div>
-    <div class="coin-pill">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M9 12h6M12 9v6"/>
-      </svg>
-      <span>{{ formatPrice(coins()) }} Coal</span>
+      <p class="subtitle">Buy and sell stoves and lootboxes with other players</p>
     </div>
   </div>
 
@@ -64,30 +57,40 @@
               </svg>
             </div>
             <p>No active listings</p>
-            <span>Be the first to list a stove!</span>
+            <span>Be the first to list an item!</span>
             <button class="action-btn" routerLink="/inventory">Go to Inventory</button>
           </div>
         } @else {
           @for (listing of allListings(); track listing.listingId) {
-            <div class="listing-card" [class]="'rarity-' + getRarity(listing.stoveId)">
+            <div class="listing-card" [class]="'rarity-' + getRarity(listing)">
               <div class="card-visual">
                 <div class="stove-icon">
-                  @if (getImageUrl(listing.stoveId)) {
-                    <img [src]="getImageUrl(listing.stoveId)" [alt]="getStoveName(listing.stoveId)" class="stove-sprite" />
+                  @if (getImageUrl(listing)) {
+                    <img [src]="getImageUrl(listing)" [alt]="getItemName(listing)" class="stove-sprite" />
                   } @else {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
-                      <circle cx="12" cy="5" r="2"/>
+                      @if (isLootboxListing(listing)) {
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="3" y1="9" x2="21" y2="9"/>
+                        <line x1="9" y1="21" x2="9" y2="9"/>
+                      } @else {
+                        <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                        <circle cx="12" cy="5" r="2"/>
+                      }
                     </svg>
                   }
                 </div>
-                <span class="rarity-badge" [class]="getRarity(listing.stoveId)">
-                  {{ getRarity(listing.stoveId) }}
+                <span class="rarity-badge" [class]="getRarity(listing)">
+                  {{ getRarity(listing) }}
                 </span>
+                @if (isLootboxListing(listing)) {
+                  <span class="lootbox-badge">Lootbox</span>
+                }
               </div>
               <div class="card-info">
-                <h4 class="stove-name">{{ getStoveName(listing.stoveId) }}</h4>
-                <p class="stove-meta">Stove #{{ listing.stoveId }}</p>
+                <h4 class="stove-name">{{ getItemName(listing) }}</h4>
+                <p class="stove-meta">{{ getItemMeta(listing) }}</p>
+                <p class="seller">Listed by {{ listing.sellerName || 'Unknown' }}</p>
                 <p class="price">{{ formatPrice(listing.price) }} Coal</p>
                 <p class="date">Listed {{ formatDate(listing.listedAt) }}</p>
               </div>
@@ -123,33 +126,42 @@
               </svg>
             </div>
             <p>You have no listings</p>
-            <span>List your stoves to sell them!</span>
+            <span>List your items to sell them!</span>
             <button class="action-btn" routerLink="/inventory">Go to Inventory</button>
           </div>
         } @else {
           @for (listing of myListings(); track listing.listingId) {
-            <div class="listing-card" [class]="'rarity-' + getRarity(listing.stoveId)">
+            <div class="listing-card" [class]="'rarity-' + getRarity(listing)">
               <div class="card-visual">
                 <div class="stove-icon">
-                  @if (getImageUrl(listing.stoveId)) {
-                    <img [src]="getImageUrl(listing.stoveId)" [alt]="getStoveName(listing.stoveId)" class="stove-sprite" />
+                  @if (getImageUrl(listing)) {
+                    <img [src]="getImageUrl(listing)" [alt]="getItemName(listing)" class="stove-sprite" />
                   } @else {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
-                      <circle cx="12" cy="5" r="2"/>
+                      @if (isLootboxListing(listing)) {
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="3" y1="9" x2="21" y2="9"/>
+                        <line x1="9" y1="21" x2="9" y2="9"/>
+                      } @else {
+                        <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                        <circle cx="12" cy="5" r="2"/>
+                      }
                     </svg>
                   }
                 </div>
-                <span class="rarity-badge" [class]="getRarity(listing.stoveId)">
-                  {{ getRarity(listing.stoveId) }}
+                <span class="rarity-badge" [class]="getRarity(listing)">
+                  {{ getRarity(listing) }}
                 </span>
+                @if (isLootboxListing(listing)) {
+                  <span class="lootbox-badge">Lootbox</span>
+                }
                 @if (listing.status !== 'active') {
                   <span class="status-badge" [class]="listing.status">{{ listing.status }}</span>
                 }
               </div>
               <div class="card-info">
-                <h4 class="stove-name">{{ getStoveName(listing.stoveId) }}</h4>
-                <p class="stove-meta">Stove #{{ listing.stoveId }}</p>
+                <h4 class="stove-name">{{ getItemName(listing) }}</h4>
+                <p class="stove-meta">{{ getItemMeta(listing) }}</p>
                 <p class="price">{{ formatPrice(listing.price) }} Coal</p>
                 <p class="date">Listed {{ formatDate(listing.listedAt) }}</p>
               </div>

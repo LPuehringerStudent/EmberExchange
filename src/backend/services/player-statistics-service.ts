@@ -17,8 +17,8 @@ export class PlayerStatisticsService extends ServiceBase {
     /**
      * Calculates real player statistics from data tables.
      */
-    private calculatePlayerStats(playerId: number): PlayerStatisticsRow | null {
-        const player = this.getPlayer(playerId);
+    private async calculatePlayerStats(playerId: number): Promise<PlayerStatisticsRow | null> {
+        const player = await this.getPlayer(playerId);
         if (!player) return null;
 
         // Count lootboxes opened
@@ -26,14 +26,14 @@ export class PlayerStatisticsService extends ServiceBase {
             "SELECT COUNT(*) as count FROM Lootbox WHERE playerId = @playerId",
             { playerId }
         );
-        const lootboxesOpened = lootboxStmt.get()?.count ?? 0;
+        const lootboxesOpened = (await lootboxStmt.get())?.count ?? 0;
 
         // Count listings created and sold
         const listingsCreatedStmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Listing WHERE sellerId = @playerId",
             { playerId }
         );
-        const listingsCreated = listingsCreatedStmt.get()?.count ?? 0;
+        const listingsCreated = (await listingsCreatedStmt.get())?.count ?? 0;
 
         const listingsSoldStmt = this.unit.prepare<{ count: number, revenue: number }>(
             `SELECT COUNT(*) as count, COALESCE(SUM(l.price), 0) as revenue 
@@ -42,7 +42,7 @@ export class PlayerStatisticsService extends ServiceBase {
              WHERE l.sellerId = @playerId AND l.status = 'sold'`,
             { playerId }
         );
-        const listingsResult = listingsSoldStmt.get();
+        const listingsResult = await listingsSoldStmt.get();
         const listingsSold = listingsResult?.count ?? 0;
         const salesRevenue = listingsResult?.revenue ?? 0;
 
@@ -54,7 +54,7 @@ export class PlayerStatisticsService extends ServiceBase {
              WHERE t.buyerId = @playerId`,
             { playerId }
         );
-        const purchasesResult = purchasesStmt.get();
+        const purchasesResult = await purchasesStmt.get();
         const purchasesMade = purchasesResult?.count ?? 0;
         const purchaseSpending = purchasesResult?.spent ?? 0;
 
@@ -63,34 +63,34 @@ export class PlayerStatisticsService extends ServiceBase {
             "SELECT COUNT(*) as count FROM MiniGameSession WHERE playerId = @playerId",
             { playerId }
         );
-        const miniGamesPlayed = gamesStmt.get()?.count ?? 0;
+        const miniGamesPlayed = (await gamesStmt.get())?.count ?? 0;
 
         // Count stoves currently owned
         const stovesStmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM Stove WHERE currentOwnerId = @playerId",
             { playerId }
         );
-        const stovesOwned = stovesStmt.get()?.count ?? 0;
+        const stovesOwned = (await stovesStmt.get())?.count ?? 0;
 
         // Total logins from LoginHistory
         const loginsStmt = this.unit.prepare<{ count: number }>(
             "SELECT COUNT(*) as count FROM LoginHistory WHERE playerId = @playerId",
             { playerId }
         );
-        const totalLogins = loginsStmt.get()?.count ?? 0;
+        const totalLogins = (await loginsStmt.get())?.count ?? 0;
 
         // Total coins earned and spent from CoinTransaction
         const coinsEarnedStmt = this.unit.prepare<{ total: number }>(
             "SELECT COALESCE(SUM(amount), 0) as total FROM CoinTransaction WHERE playerId = @playerId AND amount > 0",
             { playerId }
         );
-        const totalCoinsEarned = coinsEarnedStmt.get()?.total ?? 0;
+        const totalCoinsEarned = (await coinsEarnedStmt.get())?.total ?? 0;
 
         const coinsSpentStmt = this.unit.prepare<{ total: number }>(
             "SELECT COALESCE(SUM(ABS(amount)), 0) as total FROM CoinTransaction WHERE playerId = @playerId AND amount < 0",
             { playerId }
         );
-        const totalCoinsSpent = coinsSpentStmt.get()?.total ?? 0;
+        const totalCoinsSpent = (await coinsSpentStmt.get())?.total ?? 0;
 
         // Best drop rarity from actual lootbox drops
         const bestRarityStmt = this.unit.prepare<{ bestRarity: string }>(
@@ -112,7 +112,7 @@ export class PlayerStatisticsService extends ServiceBase {
              LIMIT 1`,
             { playerId }
         );
-        const bestRarityRow = bestRarityStmt.get();
+        const bestRarityRow = await bestRarityStmt.get();
         const bestDropRarity = bestRarityRow?.bestRarity ?? null;
 
         // Calculate net worth (coins + value of owned stoves)
@@ -123,7 +123,7 @@ export class PlayerStatisticsService extends ServiceBase {
              WHERE s.currentOwnerId = @playerId`,
             { playerId }
         );
-        const stoveValue = stoveValueStmt.get()?.value ?? 0;
+        const stoveValue = (await stoveValueStmt.get())?.value ?? 0;
         const netWorth = player.coins + stoveValue;
 
         // Calculate market activity score (simple formula)
@@ -179,18 +179,18 @@ export class PlayerStatisticsService extends ServiceBase {
         };
     }
 
-    private getPlayer(playerId: number): PlayerRow | null {
+    private async getPlayer(playerId: number): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
             "SELECT * FROM Player WHERE playerId = @playerId",
             { playerId }
         );
-        return stmt.get() ?? null;
+        return (await stmt.get()) ?? null;
     }
 
     /**
      * Retrieves all player statistics (calculated from real data).
      */
-    getAll(): PlayerStatisticsRow[] {
+    async getAll(): Promise<PlayerStatisticsRow[]> {
         const sql = `
             SELECT 
                 p.playerId,
@@ -214,7 +214,7 @@ export class PlayerStatisticsService extends ServiceBase {
         `;
         
         const stmt = this.unit.prepare<any>(sql);
-        const results = stmt.all();
+        const results = await stmt.all();
         
         return results.map(r => {
             const marketActivityScore = (r.listingsCreated * 10) + (r.listingsSold * 20) + (r.purchasesMade * 15);
@@ -274,22 +274,22 @@ export class PlayerStatisticsService extends ServiceBase {
     /**
      * Retrieves statistics for a specific player.
      */
-    getByPlayerId(playerId: number): PlayerStatisticsRow | null {
-        return this.calculatePlayerStats(playerId);
+    async getByPlayerId(playerId: number): Promise<PlayerStatisticsRow | null> {
+        return await this.calculatePlayerStats(playerId);
     }
 
     /**
      * Gets top players by market activity score.
      */
-    getTopByActivity(limit: number): PlayerStatisticsRow[] {
-        return this.getAll().slice(0, limit);
+    async getTopByActivity(limit: number): Promise<PlayerStatisticsRow[]> {
+        return (await this.getAll()).slice(0, limit);
     }
 
     /**
      * Gets top players by net worth.
      */
-    getTopByNetWorth(limit: number): PlayerStatisticsRow[] {
-        return this.getAll()
+    async getTopByNetWorth(limit: number): Promise<PlayerStatisticsRow[]> {
+        return (await this.getAll())
             .sort((a, b) => b.netWorthEstimate - a.netWorthEstimate)
             .slice(0, limit);
     }
@@ -315,7 +315,7 @@ export class PlayerStatisticsService extends ServiceBase {
      * @param playerId - The player's ID
      * @returns Tuple [success, statId]
      */
-    createDefaultPlayerStatistics(playerId: number): [boolean, number] {
+    async createDefaultPlayerStatistics(playerId: number): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<PlayerStatisticsRow>(
             `INSERT INTO PlayerStatistics (
                 playerId, totalLogins, lastLoginAt, totalSessionMinutes, longestSessionMinutes,
@@ -331,10 +331,10 @@ export class PlayerStatisticsService extends ServiceBase {
                 marketActivityScore, updatedAt
             ) VALUES (
                 @playerId, 0, null, 0, 0, 0, 0, 0, 0, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null,
-                0, 0, 0, 0, 0, 0, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, 1000, 1000, 1000, 0, 1000, 0, datetime('now')
+                0, 0, 0, 0, 0, 0, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, 1000, 1000, 1000, 0, 1000, 0, NOW()
             )`,
             { playerId }
         );
-        return this.executeStmt(stmt);
+        return await this.executeStmt(stmt);
     }
 }

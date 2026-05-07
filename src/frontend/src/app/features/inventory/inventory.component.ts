@@ -6,17 +6,19 @@ import { StoveService } from '@core/services/stove.service';
 import { AuthService } from '@core/services/auth.service';
 import { ListingService } from '@core/services/listing.service';
 import { forkJoin, map, of, Subscription, switchMap } from 'rxjs';
-import { ShowedStove, StoveRow } from '../../../../../shared/model';
+import { ShowedStove, StoveRow, LootboxTypeRow } from '../../../../../shared/model';
 import { LootboxService } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 
 interface InventoryLootbox {
   id: number;
+  typeId: number;
   typeName: string;
   openedAt: Date;
   acquiredHow: string;
-  droppedItem?: string;
 }
+
+type SellableItem = { stoveId: number; name: string } | { lootboxId: number; name: string };
 
 @Component({
   selector: 'app-inventory',
@@ -40,9 +42,14 @@ export class InventoryComponent implements OnInit, OnDestroy {
   coins = 0;
   playerId: number | null = null;
 
+  // Listing tracking
+  listedStoveIds = new Set<number>();
+  listedLootboxIds = new Set<number>();
+
   // Sell modal
   showSellModal = false;
-  selectedItem: ShowedStove | null = null;
+  selectedStove: ShowedStove | null = null;
+  selectedLootbox: InventoryLootbox | null = null;
   sellPrice = '';
   sellError: string | null = null;
   sellLoading = false;
@@ -66,12 +73,14 @@ export class InventoryComponent implements OnInit, OnDestroy {
     this.coins = user.coins;
     this.loadItems(user.playerId);
     this.loadLootboxes(user.playerId);
+    this.loadMyListings(user.playerId);
 
     // Auto-refresh when service notifies
     const refreshSub = this._stove.refresh$.subscribe(() => {
       const currentUser = this._authService.getCurrentUser();
       if (currentUser) {
         this.loadItems(currentUser.playerId);
+        this.loadMyListings(currentUser.playerId);
       }
     });
     this._subscription.add(refreshSub);
@@ -79,6 +88,21 @@ export class InventoryComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this._subscription.unsubscribe();
+  }
+
+  async loadMyListings(playerId: number): Promise<void> {
+    try {
+      const listings = await firstValueFrom(this._listingService.getActiveListingsBySellerId(playerId));
+      this.listedStoveIds.clear();
+      this.listedLootboxIds.clear();
+      for (const listing of listings) {
+        if (listing.stoveId) this.listedStoveIds.add(listing.stoveId);
+        if (listing.lootboxId) this.listedLootboxIds.add(listing.lootboxId);
+      }
+      this.cdr.markForCheck();
+    } catch (err) {
+      console.error('Failed to load listings:', err);
+    }
   }
 
   loadItems(playerId: number): void {
@@ -120,10 +144,20 @@ export class InventoryComponent implements OnInit, OnDestroy {
 
   async loadLootboxes(playerId: number): Promise<void> {
     try {
-      const lootboxData = await firstValueFrom(this._lootboxService.getLootboxesByPlayerId(playerId));
+      const [lootboxData, types] = await Promise.all([
+        firstValueFrom(this._lootboxService.getLootboxesByPlayerId(playerId)),
+        firstValueFrom(this._lootboxService.getAllLootboxTypes())
+      ]);
+
+      const typeMap = new Map<number, string>();
+      for (const t of types) {
+        typeMap.set(t.lootboxTypeId, t.name);
+      }
+
       this.lootboxes = lootboxData.map(lb => ({
         id: lb.lootboxId,
-        typeName: this.getLootboxTypeName(lb.lootboxTypeId),
+        typeId: lb.lootboxTypeId,
+        typeName: typeMap.get(lb.lootboxTypeId) || `Lootbox #${lb.lootboxTypeId}`,
         openedAt: lb.openedAt ? new Date(lb.openedAt) : new Date(),
         acquiredHow: lb.acquiredHow
       }));
@@ -135,8 +169,25 @@ export class InventoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  openSellModal(item: ShowedStove): void {
-    this.selectedItem = item;
+  isStoveListed(stoveId: number): boolean {
+    return this.listedStoveIds.has(stoveId);
+  }
+
+  isLootboxListed(lootboxId: number): boolean {
+    return this.listedLootboxIds.has(lootboxId);
+  }
+
+  openSellStoveModal(item: ShowedStove): void {
+    this.selectedStove = item;
+    this.selectedLootbox = null;
+    this.sellPrice = '';
+    this.sellError = null;
+    this.showSellModal = true;
+  }
+
+  openSellLootboxModal(box: InventoryLootbox): void {
+    this.selectedStove = null;
+    this.selectedLootbox = box;
     this.sellPrice = '';
     this.sellError = null;
     this.showSellModal = true;
@@ -144,13 +195,21 @@ export class InventoryComponent implements OnInit, OnDestroy {
 
   closeSellModal(): void {
     this.showSellModal = false;
-    this.selectedItem = null;
+    this.selectedStove = null;
+    this.selectedLootbox = null;
     this.sellPrice = '';
     this.sellError = null;
   }
 
+  getSellModalTitle(): string {
+    if (this.selectedStove) return this.selectedStove.stoveName;
+    if (this.selectedLootbox) return this.selectedLootbox.typeName;
+    return '';
+  }
+
   async confirmSell(): Promise<void> {
-    if (!this.selectedItem || this.playerId === null) return;
+    if (this.playerId === null) return;
+    if (!this.selectedStove && !this.selectedLootbox) return;
 
     const price = Number(this.sellPrice);
     if (!this.sellPrice || isNaN(price) || price < 1) {
@@ -162,32 +221,28 @@ export class InventoryComponent implements OnInit, OnDestroy {
     this.sellError = null;
 
     try {
-      await firstValueFrom(this._listingService.createListing(this.playerId, this.selectedItem.stoveId, price));
+      if (this.selectedStove) {
+        await firstValueFrom(this._listingService.createListing(this.playerId, price, this.selectedStove.stoveId, undefined));
+      } else if (this.selectedLootbox) {
+        await firstValueFrom(this._listingService.createListing(this.playerId, price, undefined, this.selectedLootbox.id));
+      }
+
       await this._authService.refreshUser();
       this.coins = this._authService.getCurrentUser()?.coins ?? 0;
       this.closeSellModal();
       if (this.playerId !== null) {
         this.loadItems(this.playerId);
+        this.loadLootboxes(this.playerId);
+        this.loadMyListings(this.playerId);
       }
     } catch (err: any) {
       console.error('Failed to create listing:', err);
-      this.sellError = err?.error?.error || 'Failed to list item. Please try again.';
+      this.sellError = err?.message || err?.error?.error || 'Failed to list item. Please try again.';
       this.cdr.markForCheck();
     } finally {
       this.sellLoading = false;
       this.cdr.markForCheck();
     }
-  }
-
-
-
-  private getLootboxTypeName(typeId: number): string {
-    const nameMap: Record<number, string> = {
-      1: 'Standard Lootbox',
-      2: 'Premium Lootbox',
-      3: 'Legendary Crate',
-    };
-    return nameMap[typeId] || `Lootbox #${typeId}`;
   }
 
   openBox(): void {

@@ -1,0 +1,256 @@
+.game-room-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 48px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(232, 93, 4, 0.12);
+  border-radius: 16px;
+  color: #6c757d;
+}
+
+.error-state p {
+  color: #dc2626;
+  margin-bottom: 16px;
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1e293b;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.waiting {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.finished {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.connection-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.connection-badge.open {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.connection-badge.connecting,
+.connection-badge.reconnecting {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.connection-badge.closed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.error-banner {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  color: #dc2626;
+}
+
+.mock-notification {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  color: #92400e;
+  font-weight: 600;
+}
+
+.settings-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.settings-item {
+  background: #ffffff;
+  border: 1px solid rgba(232, 93, 4, 0.1);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  color: #64748b;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.players-section {
+  margin-bottom: 24px;
+}
+
+.players-section h2 {
+  font-size: 1.125rem;
+  margin-bottom: 12px;
+  color: #1e293b;
+}
+
+.players-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(232, 93, 4, 0.1);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.25s ease;
+}
+
+.player-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.player-card.disconnected {
+  opacity: 0.6;
+  border-color: #e2e8f0;
+}
+
+.player-avatar {
+  font-size: 2rem;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.player-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.player-seat {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.player-state {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #059669;
+  font-weight: 600;
+}
+
+.player-card.disconnected .player-state {
+  color: #dc2626;
+}
+
+.empty-text {
+  color: #94a3b8;
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(232, 93, 4, 0.12);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.actions-section h2 {
+  font-size: 1.125rem;
+  margin-bottom: 12px;
+  color: #1e293b;
+}
+
+.actions-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #e85d04 0%, #f48c06 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(232, 93, 4, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(232, 93, 4, 0.4);
+}
+
+.btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -4,6 +4,7 @@ import { AuthService } from '@core/services/auth.service';
 import { ListingService, Listing } from '@core/services/listing.service';
 import { TradeService } from '@core/services/trade.service';
 import { StoveService, StoveType, Stove } from '@core/services/stove.service';
+import { LootboxService, LootboxType } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -24,6 +25,7 @@ export class MarketplaceComponent implements OnInit {
   coins = signal<number>(0);
   stoveTypes = signal<Map<number, StoveType>>(new Map());
   stoves = signal<Map<number, Stove>>(new Map());
+  lootboxTypes = signal<Map<number, LootboxType>>(new Map());
   processingId = signal<number | null>(null);
 
   private _authService = inject(AuthService);
@@ -31,6 +33,7 @@ export class MarketplaceComponent implements OnInit {
   private _listingService = inject(ListingService);
   private _tradeService = inject(TradeService);
   private _stoveService = inject(StoveService);
+  private _lootboxService = inject(LootboxService);
 
   ngOnInit(): void {
     const user = this._authService.getCurrentUser();
@@ -49,13 +52,14 @@ export class MarketplaceComponent implements OnInit {
     this.error.set(null);
 
     try {
-      const [all, mine, types, stoveList] = await Promise.all([
+      const [all, mine, types, stoveList, lootboxTypeList] = await Promise.all([
         firstValueFrom(this._listingService.getActiveListings()),
         this.playerId !== null
           ? firstValueFrom(this._listingService.getListingsBySellerId(this.playerId))
           : Promise.resolve([]),
         firstValueFrom(this._stoveService.getAllStoveTypes()),
-        firstValueFrom(this._stoveService.getAllStoves())
+        firstValueFrom(this._stoveService.getAllStoves()),
+        firstValueFrom(this._lootboxService.getAllLootboxTypes())
       ]);
 
       this.allListings.set(all);
@@ -72,6 +76,12 @@ export class MarketplaceComponent implements OnInit {
         stoveMap.set(s.stoveId, s);
       }
       this.stoves.set(stoveMap);
+
+      const lootboxTypeMap = new Map<number, LootboxType>();
+      for (const lt of lootboxTypeList) {
+        lootboxTypeMap.set(lt.lootboxTypeId, lt);
+      }
+      this.lootboxTypes.set(lootboxTypeMap);
     } catch (err) {
       console.error('Failed to load marketplace:', err);
       this.error.set('Failed to load marketplace listings. Please try again.');
@@ -96,7 +106,7 @@ export class MarketplaceComponent implements OnInit {
       await this.loadData();
     } catch (err: any) {
       console.error('Failed to buy listing:', err);
-      this.error.set(err?.error?.error || 'Purchase failed. Please try again.');
+      this.error.set(err?.message || err?.error?.error || 'Purchase failed. Please try again.');
     } finally {
       this.processingId.set(null);
     }
@@ -111,31 +121,64 @@ export class MarketplaceComponent implements OnInit {
       await this.loadData();
     } catch (err: any) {
       console.error('Failed to cancel listing:', err);
-      this.error.set(err?.error?.error || 'Cancellation failed. Please try again.');
+      this.error.set(err?.message || err?.error?.error || 'Cancellation failed. Please try again.');
     } finally {
       this.processingId.set(null);
     }
   }
 
-  getStoveName(stoveId: number): string {
-    const stove = this.stoves().get(stoveId);
-    if (!stove) return `Stove #${stoveId}`;
-    const type = this.stoveTypes().get(stove.typeId);
-    return type?.name || `Stove #${stoveId}`;
+  isStoveListing(listing: Listing): boolean {
+    return !!listing.stoveId;
   }
 
-  getRarity(stoveId: number): string {
-    const stove = this.stoves().get(stoveId);
-    if (!stove) return 'common';
-    const type = this.stoveTypes().get(stove.typeId);
-    return type?.rarity?.toLowerCase() || 'common';
+  isLootboxListing(listing: Listing): boolean {
+    return !!listing.lootboxId;
   }
 
-  getImageUrl(stoveId: number): string {
-    const stove = this.stoves().get(stoveId);
-    if (!stove) return '';
-    const type = this.stoveTypes().get(stove.typeId);
-    return type?.imageUrl || '';
+  getItemName(listing: Listing): string {
+    if (listing.stoveId) {
+      const stove = this.stoves().get(listing.stoveId);
+      if (!stove) return `Stove #${listing.stoveId}`;
+      const type = this.stoveTypes().get(stove.typeId);
+      return type?.name || `Stove #${listing.stoveId}`;
+    }
+    if (listing.lootboxId) {
+      // We don't have the lootbox type directly, so we'll show a generic name
+      // The backend could include it, but for now we show the ID
+      return `Lootbox #${listing.lootboxId}`;
+    }
+    return 'Unknown Item';
+  }
+
+  getRarity(listing: Listing): string {
+    if (listing.stoveId) {
+      const stove = this.stoves().get(listing.stoveId);
+      if (!stove) return 'common';
+      const type = this.stoveTypes().get(stove.typeId);
+      return type?.rarity?.toLowerCase() || 'common';
+    }
+    // Lootboxes shown as 'common' rarity style by default
+    return 'common';
+  }
+
+  getImageUrl(listing: Listing): string {
+    if (listing.stoveId) {
+      const stove = this.stoves().get(listing.stoveId);
+      if (!stove) return '';
+      const type = this.stoveTypes().get(stove.typeId);
+      return type?.imageUrl || '';
+    }
+    return '';
+  }
+
+  getItemMeta(listing: Listing): string {
+    if (listing.stoveId) {
+      return `Stove #${listing.stoveId}`;
+    }
+    if (listing.lootboxId) {
+      return `Lootbox #${listing.lootboxId}`;
+    }
+    return '';
   }
 
   isOwnListing(listing: Listing): boolean {
