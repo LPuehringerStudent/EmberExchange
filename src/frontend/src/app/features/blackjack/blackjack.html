@@ -1,0 +1,119 @@
+<div class="blackjack-table">
+  <!-- Error display -->
+  @if (this.lastError(); as err) {
+    <div class="error-banner">{{ err }}</div>
+  }
+
+  <!-- Phase indicator -->
+  <div class="phase-indicator" [class.active]="!this.isWaiting()">
+    {{ this.phaseLabel() }}
+  </div>
+
+  <!-- Dealer Area -->
+  <div class="dealer-area">
+    @if (this.dealer(); as d) {
+      <div class="dealer-hand">
+        <div class="player-name">Dealer</div>
+        @for (hand of d.hands; track hand.handId) {
+          <div class="hand-cards">
+            @for (card of hand.cards; track $index) {
+              @if (card.faceUp) {
+                <img [src]="this.cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="card" />
+              } @else {
+                <img [src]="this.cardBackSrc()" alt="Hidden card" class="card back" />
+              }
+            }
+          </div>
+          <div class="hand-value" [class]="this.getHandStatusClass(hand)">
+            {{ this.getHandValueDisplay(hand) }}
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Players Area -->
+  <div class="players-area">
+    @for (player of this.seatedPlayers(); track player?.playerId; let i = $index) {
+      @if (player) {
+        <div class="player-seat"
+             [class.hero]="this.isHero(i)"
+             [class.current-turn]="player.isCurrentTurn"
+             [style.left.%]="this.seatPositions[i].x"
+             [style.top.%]="this.seatPositions[i].y">
+
+          <div class="player-info">
+            <span class="name">{{ player.name }}</span>
+            <span class="chips">{{ player.chips }}</span>
+          </div>
+
+          @for (hand of player.hands; track hand.handId) {
+            <div class="hand" [class.active]="hand.isCurrentTurn">
+              <div class="hand-cards">
+                @for (card of hand.cards; track $index) {
+                  @if (card.faceUp) {
+                    <img [src]="this.cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="card" />
+                  } @else {
+                    <img [src]="this.cardBackSrc()" alt="Hidden card" class="card back" />
+                  }
+                }
+              </div>
+              <div class="hand-meta">
+                <span class="bet">{{ hand.bet }}</span>
+                <span class="value" [class]="this.getHandStatusClass(hand)">
+                  {{ this.getHandValueDisplay(hand) }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-area">
+    @if (this.isBetting() && this.isHeroTurn()) {
+      <div class="betting-controls">
+        <input type="range"
+               [min]="this.minBet()"
+               [max]="this.maxBet()"
+               [value]="this.betAmount()"
+               (input)="this.betAmount.set(+$any($event.target).value)"
+        <span class="bet-amount">{{ this.betAmount() }}</span>
+        <button (click)="this.executeBet()" class="btn-primary">Place Bet</button>
+      </div>
+    }
+
+    @if (this.isPlaying() && this.isHeroTurn()) {
+      <div class="action-controls">
+        <button (click)="this.executeHit()" class="btn-action">Hit</button>
+        <button (click)="this.executeStand()" class="btn-action">Stand</button>
+        @if (this.canDouble()) {
+          <button (click)="this.executeDouble()" class="btn-action">Double</button>
+        }
+        @if (this.canSplit()) {
+          <button (click)="this.executeSplit()" class="btn-action">Split</button>
+        }
+        @if (this.canSurrender()) {
+          <button (click)="this.executeSurrender()" class="btn-action surrender">Surrender</button>
+        }
+      </div>
+    }
+
+    @if (this.canStartNewRound()) {
+      <button (click)="this.onNewRound()" class="btn-primary next-round">Next Hand</button>
+    }
+  </div>
+
+  <!-- Winners display -->
+  @if (this.isShowdown() && this.winners().length > 0) {
+    <div class="winners-overlay">
+      @for (winner of this.winners(); track winner.playerId) {
+        <div class="winner">
+          {{ this.getPlayerName(winner.playerId) }} wins {{ winner.amount }}!
+        </div>
+      }
+    </div>
+  }
+</div>
