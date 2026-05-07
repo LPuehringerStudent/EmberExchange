@@ -40,6 +40,14 @@ export interface ValidAction {
   maxAmount?: number;
 }
 
+const BJ_SEAT_POSITIONS: Array<{ x: number; y: number }> = [
+  { x: 50, y: 78 },   // 0 — bottom-center (hero)
+  { x: 16, y: 62 },   // 1 — bottom-left
+  { x: 32, y: 74 },   // 2 — lower-left
+  { x: 68, y: 74 },   // 3 — lower-right
+  { x: 84, y: 62 },   // 4 — bottom-right
+];
+
 @Component({
   selector: 'app-blackjack',
   standalone: true,
@@ -70,11 +78,10 @@ export class BlackjackComponent {
   readonly phase = computed(() => {
     const blob = this.stateBlob();
     const raw = (blob?.['phase'] as string) ?? 'betting';
-    // Map backend phases to UI phases
     if (raw === 'player_turn') return 'playing';
     if (raw === 'dealer_turn') return 'dealer';
     if (raw === 'settled') return 'showdown';
-    return raw; // 'betting'
+    return raw;
   });
 
   readonly isBetting = computed(() => this.phase() === 'betting');
@@ -85,7 +92,7 @@ export class BlackjackComponent {
   readonly dealerHand = computed((): BlackjackCard[] => {
     const blob = this.stateBlob();
     const cards = (blob?.['dealerHand'] as string[]) ?? [];
-    return cards.map((c, i) => ({
+    return cards.map((c) => ({
       rank: this.cardRank(c),
       suit: this.cardSuit(c),
       faceUp: c !== 'back',
@@ -103,8 +110,8 @@ export class BlackjackComponent {
 
   readonly players = computed((): BlackjackPlayer[] => {
     const blob = this.stateBlob();
-    const activePlayer = blob?.['activePlayer'] as number ?? -1;
-    const activeHandIndex = blob?.['activeHandIndex'] as number ?? 0;
+    const activePlayer = (blob?.['activePlayer'] as number) ?? -1;
+    const activeHandIndex = (blob?.['activeHandIndex'] as number) ?? 0;
 
     return this.rawPlayers().map((p) => {
       const playerId = Number(p['playerId']);
@@ -135,6 +142,36 @@ export class BlackjackComponent {
       return { playerId, name, chips, hands, result, isCurrentTurn };
     });
   });
+
+  readonly heroIndex = computed(() => {
+    const heroId = this.heroPlayerId();
+    return this.players().findIndex((p) => p.playerId === heroId);
+  });
+
+  readonly seatedPlayers = computed(() => {
+    const players = this.players();
+    const heroIdx = this.heroIndex();
+    const rotated: (BlackjackPlayer | null)[] = new Array(
+      BJ_SEAT_POSITIONS.length
+    ).fill(null);
+
+    if (heroIdx < 0) {
+      for (let j = 0; j < Math.min(players.length, BJ_SEAT_POSITIONS.length); j++) {
+        rotated[j] = players[j];
+      }
+      return rotated;
+    }
+
+    for (let j = 0; j < players.length; j++) {
+      const seatIdx = (j - heroIdx + players.length) % players.length;
+      if (seatIdx < BJ_SEAT_POSITIONS.length) {
+        rotated[seatIdx] = players[j];
+      }
+    }
+    return rotated;
+  });
+
+  readonly seatPositions = BJ_SEAT_POSITIONS;
 
   readonly heroPlayer = computed(() => {
     const heroId = this.heroPlayerId();
@@ -168,7 +205,11 @@ export class BlackjackComponent {
 
   readonly winners = computed(() => {
     const blob = this.stateBlob();
-    return (blob?.['winners'] as Array<{ playerId: number; amount: number; handName: string }> | undefined) ?? [];
+    return (
+      (blob?.['winners'] as
+        | Array<{ playerId: number; amount: number; handName: string }>
+        | undefined) ?? []
+    );
   });
 
   readonly canStartNewRound = computed(() => {
@@ -188,15 +229,8 @@ export class BlackjackComponent {
   // Betting state
   betAmount = signal<number>(20);
 
-  constructor() {
-    // Initialize bet amount to current bet when entering betting phase
-    const initBet = () => {
-      if (this.isBetting()) {
-        this.betAmount.set(this.currentBet());
-      }
-    };
-    // Re-run when phase changes to betting
-    // Note: In a real reactive setup we'd use effect(), but simple call is fine
+  isHeroSeat(seatIdx: number): boolean {
+    return seatIdx === 0;
   }
 
   onNewRound(): void {
@@ -280,7 +314,10 @@ export class BlackjackComponent {
     return value;
   }
 
-  private determineHandStatus(cards: BlackjackCard[], playerResult: string): string {
+  private determineHandStatus(
+    cards: BlackjackCard[],
+    playerResult: string
+  ): string {
     const value = this.calculateHandValue(cards);
     if (value > 21) return 'bust';
     if (cards.length === 2 && value === 21) return 'blackjack';

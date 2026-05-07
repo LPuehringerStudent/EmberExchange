@@ -2,7 +2,11 @@
   <!-- Header -->
   <header class="bj-header">
     <h1 class="bj-title">Blackjack</h1>
-    <span class="phase-badge" [class.phase-badge--active]="isPlaying() || isDealerTurn()">
+    <span
+      class="phase-badge"
+      [class.phase-badge--playing]="isPlaying() || isDealerTurn()"
+      [class.phase-badge--finished]="isShowdown()"
+    >
       {{ phaseLabel() }}
     </span>
   </header>
@@ -12,130 +16,172 @@
     <div class="error-banner">{{ err.message || err }}</div>
   }
 
-  <!-- Main Table Area -->
-  <div class="bj-table-area">
-    <div class="bj-wrapper">
+  <!-- Main Layout -->
+  <div class="bj-main">
+    <!-- Left Sidebar -->
+    <aside class="bj-sidebar bj-sidebar--left">
+      <div class="info-block">
+        <span class="info-block__label">Phase</span>
+        <span class="info-block__value">{{ phaseLabel() }}</span>
+      </div>
+      <div class="info-block">
+        <span class="info-block__label">Table Bet</span>
+        <span class="info-block__value">{{ currentBet() }}</span>
+      </div>
+      @if (heroPlayer(); as hero) {
+        <div class="info-block info-block--highlight">
+          <span class="info-block__label">Your Stack</span>
+          <span class="info-block__value info-block__value--large">{{ hero.chips }}</span>
+        </div>
+      }
+    </aside>
 
-      <!-- Dealer Section -->
-      <div class="dealer-section">
-        <div class="dealer-label">Dealer</div>
-        <div class="dealer-hand">
-          @for (card of dealerHand(); track $index) {
-            <div class="bj-card-slot">
-              @if (card.faceUp) {
-                <img [src]="cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="bj-card-img" />
-              } @else {
-                <img [src]="cardBackSrc()" alt="Hidden card" class="bj-card-img" />
+    <!-- Table Area -->
+    <div class="bj-table-area">
+      <div class="bj-wrapper">
+        <!-- Felt Table -->
+        <div class="bj-felt">
+          <!-- Dealer -->
+          <div class="bj-dealer">
+            <div class="bj-dealer__label">Dealer</div>
+            <div class="bj-dealer__cards">
+              @for (card of dealerHand(); track $index) {
+                <div class="bj-card bj-card--dealer">
+                  @if (card.faceUp) {
+                    <img [src]="cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="bj-card-img" />
+                  } @else {
+                    <img [src]="cardBackSrc()" alt="Hidden card" class="bj-card-img" />
+                  }
+                </div>
               }
             </div>
-          }
-        </div>
-        @if (isShowdown() || isDealerTurn()) {
-          <div class="dealer-value">{{ dealerValue() }}</div>
-        }
-      </div>
+            @if (isShowdown() || isDealerTurn()) {
+              <div class="bj-dealer__value">{{ dealerValue() }}</div>
+            }
+          </div>
 
-      <!-- Table Felt Center -->
-      <div class="bj-felt-center">
-        <!-- Placeholder for felt visual -->
-      </div>
+          <!-- Insurance marker (decorative) -->
+          <div class="bj-insurance">Insurance pays 2:1</div>
 
-      <!-- Players Section -->
-      <div class="players-section">
-        @for (player of players(); track player.playerId) {
-          <div class="player-spot" [class.hero-spot]="player.playerId === heroPlayerId()">
-            <div class="player-info">
-              <span class="player-name">{{ player.name }}</span>
-              <span class="player-chips">{{ player.chips }}</span>
-            </div>
+          <!-- Player Seats -->
+          @for (player of seatedPlayers(); track $index; let i = $index) {
+            @if (player) {
+              <div
+                class="bj-seat"
+                [class.bj-seat--hero]="isHeroSeat(i)"
+                [class.bj-seat--active]="player.isCurrentTurn"
+                [style.left.%]="seatPositions[i].x"
+                [style.top.%]="seatPositions[i].y"
+              >
+                <!-- Name plate -->
+                <div class="bj-seat__plate">
+                  <span class="bj-seat__name">{{ player.name }}</span>
+                  <span class="bj-seat__chips">{{ player.chips }}</span>
+                </div>
 
-            @for (hand of player.hands; track hand.handId) {
-              <div class="hand-container" [class.active-hand]="hand.isCurrentTurn">
-                <div class="hand-cards">
-                  @for (card of hand.cards; track $index) {
-                    <div class="bj-card-slot bj-card-slot--small">
-                      @if (card.faceUp) {
-                        <img [src]="cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="bj-card-img" />
-                      } @else {
-                        <img [src]="cardBackSrc()" alt="Hidden card" class="bj-card-img" />
-                      }
+                <!-- Hands -->
+                <div class="bj-seat__hands">
+                  @for (hand of player.hands; track hand.handId) {
+                    <div class="bj-hand" [class.bj-hand--active]="hand.isCurrentTurn">
+                      <div class="bj-hand__cards">
+                        @for (card of hand.cards; track $index) {
+                          <div class="bj-card bj-card--player">
+                            @if (card.faceUp) {
+                              <img [src]="cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="bj-card-img" />
+                            } @else {
+                              <img [src]="cardBackSrc()" alt="Hidden card" class="bj-card-img" />
+                            }
+                          </div>
+                        }
+                      </div>
+                      <div class="bj-hand__meta">
+                        @if (hand.bet > 0) {
+                          <span class="bj-hand__bet">Bet: {{ hand.bet }}</span>
+                        }
+                        <span
+                          class="bj-hand__value"
+                          [class.bj-hand__value--bust]="hand.status === 'bust'"
+                          [class.bj-hand__value--blackjack]="hand.status === 'blackjack'"
+                        >
+                          {{ getHandValueDisplay(hand) }}
+                        </span>
+                      </div>
                     </div>
                   }
                 </div>
-                <div class="hand-meta">
-                  @if (hand.bet > 0) {
-                    <span class="hand-bet">Bet: {{ hand.bet }}</span>
-                  }
-                  <span class="hand-value" [class.bust]="hand.status === 'bust'" [class.blackjack]="hand.status === 'blackjack'">
-                    {{ getHandValueDisplay(hand) }}
-                  </span>
-                </div>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Controls -->
+        <div class="bj-controls">
+          @if (isBetting() && canAction('bet')) {
+            <div class="bj-controls__group">
+              <span class="bj-controls__label">Bet {{ currentBet() }}</span>
+              <button class="bj-btn bj-btn--primary" (click)="executeBet()">Place Bet</button>
+            </div>
+          }
+
+          @if (isPlaying() && isHeroTurn()) {
+            <div class="bj-controls__group">
+              <button class="bj-btn bj-btn--action" (click)="executeHit()" [disabled]="!canAction('hit')">Hit</button>
+              <button class="bj-btn bj-btn--action" (click)="executeStand()" [disabled]="!canAction('stand')">Stand</button>
+              @if (canAction('double')) {
+                <button class="bj-btn bj-btn--highlight" (click)="executeDouble()">Double</button>
+              }
+              @if (canAction('split')) {
+                <button class="bj-btn bj-btn--highlight" (click)="executeSplit()">Split</button>
+              }
+            </div>
+          }
+
+          @if (isDealerTurn()) {
+            <div class="bj-controls__message">Dealer is drawing…</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <aside class="bj-sidebar bj-sidebar--right">
+      <h2 class="sidebar-title">Players</h2>
+      <div class="sidebar-list">
+        @for (player of players(); track player.playerId) {
+          <div class="sidebar-row" [class.sidebar-row--active]="player.isCurrentTurn">
+            <span class="sidebar-row__name">{{ player.name }}</span>
+            <span class="sidebar-row__chips">{{ player.chips }}</span>
+          </div>
+        } @empty {
+          <p class="sidebar-empty">No players</p>
+        }
+      </div>
+    </aside>
+  </div>
+
+  <!-- Results Overlay -->
+  @if (isShowdown()) {
+    <div class="bj-overlay">
+      <div class="bj-overlay__panel">
+        @if (winners().length > 0) {
+          <h2 class="bj-overlay__title">🏆 Results</h2>
+          <div class="bj-overlay__list">
+            @for (winner of winners(); track winner.playerId) {
+              <div class="bj-overlay__entry">
+                <span class="bj-overlay__name">{{ getPlayerName(winner.playerId) }}</span>
+                <span class="bj-overlay__amount">+{{ winner.amount }}</span>
+                @if (winner.handName) {
+                  <span class="bj-overlay__hand">{{ winner.handName }}</span>
+                }
               </div>
             }
           </div>
+        } @else {
+          <h2 class="bj-overlay__title">Round Over</h2>
+          <p class="bj-overlay__empty">No winners this round.</p>
         }
+        <button class="bj-overlay__btn" (click)="onNewRound()">Play Again</button>
       </div>
-
-      <!-- Controls -->
-      <div class="controls-section">
-        @if (isBetting() && canAction('bet')) {
-          <div class="betting-controls">
-            <span class="bet-label">Bet: {{ currentBet() }}</span>
-            <button class="btn-primary" (click)="executeBet()">Place Bet</button>
-          </div>
-        }
-
-        @if (isPlaying() && isHeroTurn()) {
-          <div class="action-controls">
-            <button class="btn-action" (click)="executeHit()" [disabled]="!canAction('hit')">Hit</button>
-            <button class="btn-action" (click)="executeStand()" [disabled]="!canAction('stand')">Stand</button>
-            @if (canAction('double')) {
-              <button class="btn-action btn-action--highlight" (click)="executeDouble()">Double</button>
-            }
-            @if (canAction('split')) {
-              <button class="btn-action btn-action--highlight" (click)="executeSplit()">Split</button>
-            }
-          </div>
-        }
-
-        @if (isDealerTurn()) {
-          <div class="dealer-message">Dealer is drawing...</div>
-        }
-
-      </div>
-
-      <!-- Winners Overlay -->
-      @if (isShowdown() && winners().length > 0) {
-        <div class="winners-overlay">
-          <div class="winners-panel">
-            <h2 class="winners-title">🏆 Results</h2>
-            <div class="winners-list">
-              @for (winner of winners(); track winner.playerId) {
-                <div class="winner-entry">
-                  <span class="winner-name">{{ getPlayerName(winner.playerId) }}</span>
-                  <span class="winner-amount">+{{ winner.amount }}</span>
-                  @if (winner.handName) {
-                    <span class="winner-hand">({{ winner.handName }})</span>
-                  }
-                </div>
-              }
-            </div>
-            <button class="btn-primary btn-primary--large" (click)="onNewRound()">Play Again</button>
-          </div>
-        </div>
-      }
-
-      <!-- Result for non-winners (push/lose) -->
-      @if (isShowdown() && winners().length === 0) {
-        <div class="winners-overlay">
-          <div class="winners-panel">
-            <h2 class="winners-title">Round Over</h2>
-            <p class="no-winners">No winners this round.</p>
-            <button class="btn-primary btn-primary--large" (click)="onNewRound()">Play Again</button>
-          </div>
-        </div>
-      }
-
     </div>
-  </div>
+  }
 </div>
