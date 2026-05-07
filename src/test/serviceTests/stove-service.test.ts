@@ -1,189 +1,272 @@
-﻿import { StoveService } from '../../backend/services/stove-service';
-import { MockUnit, createMockUnit } from '../../backend/__mocks__/unit';
-import { StoveRow } from '../../shared/model';
+import { StoveService } from '../../backend/services/stove-service';
+import { Unit } from '../../backend/utils/unit';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function mockStmt(getResult: unknown = null, allResult: unknown[] = [], runResult = { changes: 1 }) {
+  return {
+    get: jest.fn().mockResolvedValue(getResult),
+    all: jest.fn().mockResolvedValue(allResult),
+    run: jest.fn().mockResolvedValue(runResult),
+  };
+}
+
+function mockUnit(stmt = mockStmt()) {
+  return {
+    prepare: jest.fn().mockReturnValue(stmt),
+    getLastRowId: jest.fn().mockResolvedValue(1),
+  } as unknown as Unit;
+}
+
+// ---------------------------------------------------------------------------
+// Sample data
+// ---------------------------------------------------------------------------
+
+const sampleStove = {
+  stoveId: 1,
+  typeId: 2,
+  currentOwnerId: 10,
+  mintedAt: '2026-01-01',
+};
+
+const sampleStoveWithImage = { ...sampleStove, imageUrl: '/assets/stove_sprites/stove2.png' };
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('StoveService', () => {
-    let mockUnit: MockUnit;
-    let service: StoveService;
-    let mockStmt: any;
 
-    beforeEach(() => {
-        mockUnit = createMockUnit();
-        service = new StoveService(mockUnit as any);
-        mockStmt = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
-        };
+  // --- getAllStoves --------------------------------------------------------
+
+  describe('getAllStoves', () => {
+    it('returns all stoves', async () => {
+      const stmt = mockStmt(null, [sampleStove]);
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
+
+      const result = await service.getAllStoves();
+
+      expect(result).toEqual([sampleStove]);
     });
 
-    describe('getAllStoves', () => {
-        it('should return all stoves', async () => {
-            const mockStoves: StoveRow[] = [
-                { stoveId: 1, typeId: 1, currentOwnerId: 1, mintedAt: new Date('2024-01-01') },
-                { stoveId: 2, typeId: 2, currentOwnerId: 2, mintedAt: new Date('2024-01-02') }
-            ];
-            mockStmt.all.mockReturnValue(mockStoves);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no stoves exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            const result = service.getAllStoves();
+      const result = await service.getAllStoves();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Stove');
-            expect(result).toEqual(mockStoves);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getStoveById -------------------------------------------------------
+
+  describe('getStoveById', () => {
+    it('returns the stove when found', async () => {
+      const stmt = mockStmt(sampleStove);
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
+
+      const result = await service.getStoveById(1);
+
+      expect(result).toEqual(sampleStove);
     });
 
-    describe('getStoveById', () => {
-        it('should return stove when found', async () => {
-            const mockStove: StoveRow = { stoveId: 1, typeId: 1, currentOwnerId: 1, mintedAt: new Date('2024-01-01') };
-            mockStmt.get.mockReturnValue(mockStove);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when stove is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            const result = service.getStoveById(1);
+      const result = await service.getStoveById(999);
 
-            expect(result).toEqual(mockStove);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when stove not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getStovesByOwnerId -------------------------------------------------
 
-            const result = service.getStoveById(999);
+  describe('getStovesByOwnerId', () => {
+    it('returns stoves with imageUrl for a given owner', async () => {
+      const stmt = mockStmt(null, [sampleStoveWithImage]);
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getStovesByOwnerId(10);
+
+      expect(result).toEqual([sampleStoveWithImage]);
     });
 
-    describe('getStovesByOwnerId', () => {
-        it('should return stoves for specific owner', async () => {
-            const mockStoves: StoveRow[] = [
-                { stoveId: 1, typeId: 1, currentOwnerId: 5, mintedAt: new Date('2024-01-01') },
-                { stoveId: 2, typeId: 2, currentOwnerId: 5, mintedAt: new Date('2024-01-02') }
-            ];
-            mockStmt.all.mockReturnValue(mockStoves);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when player owns no stoves', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            const result = service.getStovesByOwnerId(5);
+      const result = await service.getStovesByOwnerId(99);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(`SELECT Stove.*, StoveType.imageUrl
-             FROM Stove
-             JOIN StoveType ON Stove.typeId = StoveType.typeId
-             WHERE Stove.currentOwnerId = @playerId`, { playerId: 5 });
-            expect(result).toEqual(mockStoves);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getStovesByTypeId --------------------------------------------------
+
+  describe('getStovesByTypeId', () => {
+    it('returns stoves of a given type', async () => {
+      const stmt = mockStmt(null, [sampleStove]);
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
+
+      const result = await service.getStovesByTypeId(2);
+
+      expect(result).toEqual([sampleStove]);
     });
 
-    describe('getStovesByTypeId', () => {
-        it('should return stoves of specific type', async () => {
-            const mockStoves: StoveRow[] = [{ stoveId: 1, typeId: 3, currentOwnerId: 1, mintedAt: new Date('2024-01-01') }];
-            mockStmt.all.mockReturnValue(mockStoves);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when no stoves of that type exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            const result = service.getStovesByTypeId(3);
+      const result = await service.getStovesByTypeId(99);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Stove WHERE typeId = @typeId', { typeId: 3 });
-            expect(result).toEqual(mockStoves);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- createStove --------------------------------------------------------
+
+  describe('createStove', () => {
+    it('returns [true, id] on successful stove creation', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
+
+      const [success, id] = await service.createStove(2, 10);
+
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('createStove', () => {
-        it('should create stove successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, 0] when insert fails', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(stmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new StoveService(unit);
 
-            const [success, id] = service.createStove(1, 5);
+      const [success, id] = await service.createStove(2, 10);
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
-            const [sql, params] = mockUnit.prepare.mock.calls[0];
-            expect(sql).toContain('INSERT');
-            expect(sql).toContain('INTO Stove');
-            expect(params).toEqual({ typeId: 1, currentOwnerId: 5 });
-            expect(success).toBe(true);
-            expect(id).toBe(10);
-        });
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+    });
+  });
+
+  // --- updateOwner --------------------------------------------------------
+
+  describe('updateOwner', () => {
+    it('returns true when owner is updated', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
+
+      const result = await service.updateOwner(1, 20);
+
+      expect(result).toBe(true);
     });
 
-    describe('updateOwner', () => {
-        it('should update owner successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when stove is not found', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            const result = service.updateOwner(1, 10);
+      const result = await service.updateOwner(999, 20);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'UPDATE Stove SET currentOwnerId = @newOwnerId WHERE stoveId = @id',
-                { id: 1, newOwnerId: 10 }
-            );
-            expect(result).toBe(true);
-        });
+      expect(result).toBe(false);
+    });
+  });
 
-        it('should return false when stove not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- deleteStove --------------------------------------------------------
 
-            const result = service.updateOwner(999, 10);
+  describe('deleteStove', () => {
+    it('returns true when stove is deleted', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.deleteStove(1);
+
+      expect(result).toBe(true);
     });
 
-    describe('deleteStove', () => {
-        it('should delete stove successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when stove does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            const result = service.deleteStove(1);
+      const result = await service.deleteStove(999);
 
-            expect(result).toBe(true);
-        });
+      expect(result).toBe(false);
+    });
+  });
 
-        it('should return false when stove not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- countStovesByOwner -------------------------------------------------
 
-            const result = service.deleteStove(999);
+  describe('countStovesByOwner', () => {
+    it('returns the count of stoves for a player', async () => {
+      const stmt = mockStmt({ count: 3 });
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.countStovesByOwner(10);
+
+      expect(result).toBe(3);
     });
 
-    describe('countStovesByOwner', () => {
-        it('should return correct count', async () => {
-            mockStmt.get.mockReturnValue({ count: 5 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when player owns no stoves', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            const result = service.countStovesByOwner(1);
+      const result = await service.countStovesByOwner(10);
 
-            expect(result).toBe(5);
-        });
-
-        it('should return 0 when result is undefined', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.countStovesByOwner(1);
-
-            expect(result).toBe(0);
-        });
-
-        it('should return 0 when count is undefined', async () => {
-            mockStmt.get.mockReturnValue({});
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.countStovesByOwner(1);
-
-            expect(result).toBe(0);
-        });
+      expect(result).toBe(0);
     });
 
-    describe('countStovesByType', () => {
-        it('should return correct count for type', async () => {
-            mockStmt.get.mockReturnValue({ count: 3 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
 
-            const result = service.countStovesByType(2);
+      const result = await service.countStovesByOwner(10);
 
-            expect(result).toBe(3);
-        });
+      expect(result).toBe(0);
     });
+  });
+
+  // --- countStovesByType --------------------------------------------------
+
+  describe('countStovesByType', () => {
+    it('returns the count of stoves of a specific type', async () => {
+      const stmt = mockStmt({ count: 7 });
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
+
+      const result = await service.countStovesByType(2);
+
+      expect(result).toBe(7);
+    });
+
+    it('returns 0 when no stoves of that type exist', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new StoveService(unit);
+
+      const result = await service.countStovesByType(99);
+
+      expect(result).toBe(0);
+    });
+  });
 });

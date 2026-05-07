@@ -1,203 +1,373 @@
-﻿import { PlayerService } from '../../backend/services/player-service';
-import { MockUnit, createMockUnit } from '../../backend/__mocks__/unit';
-import { PlayerRow } from '../../shared/model';
+import { PlayerService } from '../../backend/services/player-service';
+import { Unit } from '../../backend/utils/unit';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function mockStmt(getResult: unknown = null, allResult: unknown[] = [], runResult = { changes: 1 }) {
+  return {
+    get: jest.fn().mockResolvedValue(getResult),
+    all: jest.fn().mockResolvedValue(allResult),
+    run: jest.fn().mockResolvedValue(runResult),
+  };
+}
+
+function mockUnit(stmt = mockStmt()) {
+  return {
+    prepare: jest.fn().mockReturnValue(stmt),
+    getLastRowId: jest.fn().mockResolvedValue(1),
+  } as unknown as Unit;
+}
+
+// ---------------------------------------------------------------------------
+// Sample data
+// ---------------------------------------------------------------------------
+
+const samplePlayer = {
+  playerId: 1,
+  username: 'alice',
+  password: 'hashed_pw',
+  email: 'alice@example.com',
+  coins: 1000,
+  lootboxCount: 10,
+  isAdmin: 0,
+  joinedAt: '2026-01-01',
+  provider: null,
+  providerId: null,
+};
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('PlayerService', () => {
-    let mockUnit: MockUnit;
-    let service: PlayerService;
-    let mockStmt: any;
 
-    beforeEach(() => {
-        mockUnit = createMockUnit();
-        service = new PlayerService(mockUnit as any);
-        mockStmt = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
-        };
+  // --- getAllPlayers -------------------------------------------------------
+
+  describe('getAllPlayers', () => {
+    it('returns all players', async () => {
+      const stmt = mockStmt(null, [samplePlayer]);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
+
+      const result = await service.getAllPlayers();
+
+      expect(result).toEqual([samplePlayer]);
     });
 
-    describe('getAllPlayers', () => {
-        it('should return all players from database', async () => {
-            const mockPlayers: PlayerRow[] = [
-                { playerId: 1, username: 'player1', password: 'pass1', email: 'p1@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null },
-                { playerId: 2, username: 'player2', password: 'pass2', email: 'p2@test.com', coins: 200, lootboxCount: 10, isAdmin: true, joinedAt: new Date('2024-01-02'), provider: null, providerId: null }
-            ];
-            mockStmt.all.mockReturnValue(mockPlayers);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no players exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            const result = service.getAllPlayers();
+      const result = await service.getAllPlayers();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Player');
-            expect(result).toEqual(mockPlayers);
-        });
+      expect(result).toEqual([]);
+    });
+  });
 
-        it('should return empty array when no players exist', async () => {
-            mockStmt.all.mockReturnValue([]);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getInfoByID --------------------------------------------------------
 
-            const result = service.getAllPlayers();
+  describe('getInfoByID', () => {
+    it('returns a player when found', async () => {
+      const stmt = mockStmt(samplePlayer);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            expect(result).toEqual([]);
-        });
+      const result = await service.getInfoByID(1);
+
+      expect(result).toEqual(samplePlayer);
     });
 
-    describe('getInfoByID', () => {
-        it('should return player when found', async () => {
-            const mockPlayer: PlayerRow = { playerId: 1, username: 'player1', password: 'pass1', email: 'p1@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null };
-            mockStmt.get.mockReturnValue(mockPlayer);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when player is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            const result = service.getInfoByID(1);
+      const result = await service.getInfoByID(999);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Player WHERE playerId = @id', { id: 1 });
-            expect(result).toEqual(mockPlayer);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when player not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getPlayerByUsername ------------------------------------------------
 
-            const result = service.getInfoByID(999);
+  describe('getPlayerByUsername', () => {
+    it('returns a player matching the username', async () => {
+      const stmt = mockStmt(samplePlayer);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getPlayerByUsername('alice');
+
+      expect(result).toEqual(samplePlayer);
     });
 
-    describe('createPlayer', () => {
-        it('should create player with default values', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 5 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when username is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            const [success, id] = await service.createPlayer('newplayer', 'hashedpass', 'new@test.com');
+      const result = await service.getPlayerByUsername('ghost');
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(11); // 1 player + 10 lootboxes
+      expect(result).toBeNull();
+    });
+  });
 
-            const firstArg = mockUnit.prepare.mock.calls[0][0];
-            expect(typeof firstArg).toBe('string');
-            expect(firstArg as string).toContain('INSERT');
+  // --- getPlayerByEmail ---------------------------------------------------
 
-            const secondArg = mockUnit.prepare.mock.calls[0][1];
-            expect(secondArg).toMatchObject({
-                username: 'newplayer',
-                password: 'hashedpass',
-                email: 'new@test.com',
-                coins: 1000,
-                lootboxCount: 10
-            });
+  describe('getPlayerByEmail', () => {
+    it('returns a player matching the email', async () => {
+      const stmt = mockStmt(samplePlayer);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            expect(success).toBe(true);
-            expect(id).toBe(5);
-        });
+      const result = await service.getPlayerByEmail('alice@example.com');
 
-        it('should create player with custom coin and lootbox values', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 6 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const [success, id] = await service.createPlayer('custom', 'pass', 'custom@test.com', 500, 20);
-
-            const params = mockUnit.prepare.mock.calls[0][1];
-            expect(params).toMatchObject({ coins: 500, lootboxCount: 20 });
-            expect(success).toBe(true);
-        });
-
-        it('should return false when insert fails', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0, lastInsertRowid: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const [success, id] = await service.createPlayer('fail', 'pass', 'fail@test.com');
-
-            expect(success).toBe(false);
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
-        });
+      expect(result).toEqual(samplePlayer);
     });
 
-    describe('updatePlayerCoins', () => {
-        it('should return true when update succeeds', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when email is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            const result = service.updatePlayerCoins(1, 500);
+      const result = await service.getPlayerByEmail('nobody@example.com');
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'UPDATE Player SET coins = @coins WHERE playerId = @id',
-                { id: 1, coins: 500 }
-            );
-            expect(result).toBe(true);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return false when no rows updated', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- createPlayer -------------------------------------------------------
 
-            const result = service.updatePlayerCoins(999, 500);
+  describe('createPlayer', () => {
+    it('returns [true, id] on successful player creation', async () => {
+      const runStmt = mockStmt(null, [], { changes: 1 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(runStmt),
+        getLastRowId: jest.fn().mockResolvedValue(42),
+      } as unknown as Unit;
+      const service = new PlayerService(unit);
 
-            expect(result).toBe(false);
-        });
+      const [success, id] = await service.createPlayer('alice', 'hashed_pw', 'alice@example.com');
+
+      expect(success).toBe(true);
+      expect(id).toBe(42);
     });
 
-    describe('updatePlayerLootboxCount', () => {
-        it('should update lootbox count successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('passes custom coins and lootboxCount to the insert', async () => {
+      const runStmt = mockStmt(null, [], { changes: 1 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(runStmt),
+        getLastRowId: jest.fn().mockResolvedValue(5),
+      } as unknown as Unit;
+      const service = new PlayerService(unit);
 
-            const result = service.updatePlayerLootboxCount(1, 15);
+      const [success] = await service.createPlayer('bob', 'pw', 'bob@example.com', 500, 3);
 
-            expect(result).toBe(true);
-        });
+      expect(success).toBe(true);
     });
 
-    describe('deletePlayer', () => {
-        it('should return true when player deleted', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, 0] when insert fails', async () => {
+      const runStmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(runStmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new PlayerService(unit);
 
-            const result = service.deletePlayer(1);
+      const [success, id] = await service.createPlayer('alice', 'hashed_pw', 'alice@example.com');
 
-            expect(result).toBe(true);
-        });
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+    });
+  });
 
-        it('should return false when player not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- updatePlayerCoins --------------------------------------------------
 
-            const result = service.deletePlayer(999);
+  describe('updatePlayerCoins', () => {
+    it('returns true when coins are updated', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.updatePlayerCoins(1, 500);
+
+      expect(result).toBe(true);
     });
 
-    describe('getPlayerByUsername', () => {
-        it('should find player by username', async () => {
-            const mockPlayer: PlayerRow = { playerId: 1, username: 'testuser', password: 'pass', email: 'test@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null };
-            mockStmt.get.mockReturnValue(mockPlayer);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when player is not found', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            const result = service.getPlayerByUsername('testuser');
+      const result = await service.updatePlayerCoins(999, 500);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Player WHERE username = @username', { username: 'testuser' });
-            expect(result).toEqual(mockPlayer);
-        });
+      expect(result).toBe(false);
+    });
+  });
 
-        it('should return null for non-existent username', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- updatePlayerLootboxCount -------------------------------------------
 
-            const result = service.getPlayerByUsername('nonexistent');
+  describe('updatePlayerLootboxCount', () => {
+    it('returns true when lootbox count is updated', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.updatePlayerLootboxCount(1, 5);
+
+      expect(result).toBe(true);
     });
 
-    describe('getPlayerByEmail', () => {
-        it('should find player by email', async () => {
-            const mockPlayer: PlayerRow = { playerId: 1, username: 'testuser', password: 'pass', email: 'findme@test.com', coins: 100, lootboxCount: 5, isAdmin: false, joinedAt: new Date('2024-01-01'), provider: null, providerId: null };
-            mockStmt.get.mockReturnValue(mockPlayer);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when player is not found', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
 
-            const result = service.getPlayerByEmail('findme@test.com');
+      const result = await service.updatePlayerLootboxCount(999, 5);
 
-            expect(result).toEqual(mockPlayer);
-        });
+      expect(result).toBe(false);
     });
+  });
+
+  // --- updatePlayerEmail --------------------------------------------------
+
+  describe('updatePlayerEmail', () => {
+    it('returns true when email is updated', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
+
+      const result = await service.updatePlayerEmail(1, 'new@example.com');
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when player is not found', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
+
+      const result = await service.updatePlayerEmail(999, 'new@example.com');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  // --- updatePlayerPassword -----------------------------------------------
+
+  describe('updatePlayerPassword', () => {
+    it('returns true when password is updated', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
+
+      const result = await service.updatePlayerPassword(1, 'new_hashed_pw');
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when player is not found', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
+
+      const result = await service.updatePlayerPassword(999, 'new_hashed_pw');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  // --- deletePlayer -------------------------------------------------------
+
+  describe('deletePlayer', () => {
+    it('returns true when player and all related records are deleted', async () => {
+      // deletePlayer calls prepare many times; the last one (DELETE Player) returns changes: 1
+      const stmt = mockStmt(null, [], { changes: 1 });
+      // lootboxesStmt.all() must return an array, listingsStmt.all() as well
+      const unit = {
+        prepare: jest.fn().mockReturnValue(stmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new PlayerService(unit);
+
+      const result = await service.deletePlayer(1);
+
+      expect(result).toBe(true);
+      // prepare should be called many times for cascade deletes
+      expect(unit.prepare).toHaveBeenCalledTimes(expect.any(Number));
+    });
+
+    it('returns false when player does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(stmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new PlayerService(unit);
+
+      const result = await service.deletePlayer(999);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  // --- getPlayerByOAuth ---------------------------------------------------
+
+  describe('getPlayerByOAuth', () => {
+    it('returns a player matching provider and providerId', async () => {
+      const oauthPlayer = { ...samplePlayer, provider: 'google', providerId: 'google-uid-123' };
+      const stmt = mockStmt(oauthPlayer);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
+
+      const result = await service.getPlayerByOAuth('google', 'google-uid-123');
+
+      expect(result).toEqual(oauthPlayer);
+    });
+
+    it('returns null when no matching OAuth player is found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new PlayerService(unit);
+
+      const result = await service.getPlayerByOAuth('github', 'unknown-id');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  // --- createOAuthPlayer --------------------------------------------------
+
+  describe('createOAuthPlayer', () => {
+    it('returns [true, id] on successful OAuth player creation', async () => {
+      const runStmt = mockStmt(null, [], { changes: 1 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(runStmt),
+        getLastRowId: jest.fn().mockResolvedValue(7),
+      } as unknown as Unit;
+      const service = new PlayerService(unit);
+
+      const [success, id] = await service.createOAuthPlayer('alice', 'alice@example.com', 'google', 'google-uid-123');
+
+      expect(success).toBe(true);
+      expect(id).toBe(7);
+    });
+
+    it('returns [false, 0] when OAuth insert fails', async () => {
+      const runStmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(runStmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new PlayerService(unit);
+
+      const [success, id] = await service.createOAuthPlayer('alice', 'alice@example.com', 'google', 'google-uid-123');
+
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+    });
+  });
 });

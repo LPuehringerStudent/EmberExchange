@@ -1,306 +1,444 @@
-﻿import { ListingService } from '../../backend/services/listing-service';
-import { MockUnit, createMockUnit } from '../../backend/__mocks__/unit';
-import { ListingRow } from '../../shared/model';
+import { ListingService } from '../../backend/services/listing-service';
+import { Unit } from '../../backend/utils/unit';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Build a minimal async mock statement. */
+function mockStmt(getResult: unknown = null, allResult: unknown[] = [], runResult = { changes: 1 }) {
+  return {
+    get: jest.fn().mockResolvedValue(getResult),
+    all: jest.fn().mockResolvedValue(allResult),
+    run: jest.fn().mockResolvedValue(runResult),
+  };
+}
+
+/** Build a Unit mock whose prepare() always returns the given stmt mock. */
+function mockUnit(stmt = mockStmt()) {
+  return {
+    prepare: jest.fn().mockReturnValue(stmt),
+    getLastRowId: jest.fn().mockResolvedValue(1),
+  } as unknown as Unit;
+}
+
+// ---------------------------------------------------------------------------
+// Sample data
+// ---------------------------------------------------------------------------
+
+const sampleListing = {
+  listingId: 1,
+  sellerId: 10,
+  sellerName: 'Alice',
+  stoveId: 5,
+  lootboxId: null,
+  price: 200,
+  listedAt: '2026-01-01',
+  status: 'active',
+};
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('ListingService', () => {
-    let mockUnit: MockUnit;
-    let service: ListingService;
-    let mockStmt: any;
 
-    beforeEach(() => {
-        mockUnit = createMockUnit();
-        service = new ListingService(mockUnit as any);
-        mockStmt = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
-        };
+  // --- getAllListings ------------------------------------------------------
+
+  describe('getAllListings', () => {
+    it('returns all listings from the database', async () => {
+      const stmt = mockStmt(null, [sampleListing]);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.getAllListings();
+
+      expect(unit.prepare).toHaveBeenCalledTimes(1);
+      expect(stmt.all).toHaveBeenCalledTimes(1);
+      expect(result).toEqual([sampleListing]);
     });
 
-    describe('getAllListings', () => {
-        it('should return all listings', async () => {
-            const mockListings: ListingRow[] = [
-                { listingId: 1, sellerId: 1, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' },
-                { listingId: 2, sellerId: 2, stoveId: 2, price: 200, listedAt: new Date('2024-01-02'), status: 'sold' }
-            ];
-            mockStmt.all.mockReturnValue(mockListings);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when there are no listings', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.getAllListings();
+      const result = await service.getAllListings();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Listing');
-            expect(result).toEqual(mockListings);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getListingById -----------------------------------------------------
+
+  describe('getListingById', () => {
+    it('returns the listing when it exists', async () => {
+      const stmt = mockStmt(sampleListing);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.getListingById(1);
+
+      expect(result).toEqual(sampleListing);
     });
 
-    describe('getListingById', () => {
-        it('should return listing when found', async () => {
-            const mockListing: ListingRow = { listingId: 1, sellerId: 1, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' };
-            mockStmt.get.mockReturnValue(mockListing);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when listing does not exist', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.getListingById(1);
+      const result = await service.getListingById(999);
 
-            expect(result).toEqual(mockListing);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getActiveListings --------------------------------------------------
 
-            const result = service.getListingById(999);
+  describe('getActiveListings', () => {
+    it('returns only active listings', async () => {
+      const stmt = mockStmt(null, [sampleListing]);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getActiveListings();
+
+      expect(result).toEqual([sampleListing]);
     });
 
-    describe('getActiveListings', () => {
-        it('should return only active listings ordered by listedAt DESC', async () => {
-            const mockListings: ListingRow[] = [
-                { listingId: 2, sellerId: 2, stoveId: 2, price: 200, listedAt: new Date('2024-01-02'), status: 'active' },
-                { listingId: 1, sellerId: 1, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' }
-            ];
-            mockStmt.all.mockReturnValue(mockListings);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no active listings exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.getActiveListings();
+      const result = await service.getActiveListings();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                "SELECT * FROM Listing WHERE status = 'active' ORDER BY listedAt DESC"
-            );
-            expect(result).toEqual(mockListings);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getListingsBySellerId ---------------------------------------------
+
+  describe('getListingsBySellerId', () => {
+    it('returns listings for a given seller', async () => {
+      const stmt = mockStmt(null, [sampleListing]);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.getListingsBySellerId(10);
+
+      expect(result).toEqual([sampleListing]);
     });
 
-    describe('getListingsBySellerId', () => {
-        it('should return seller listings ordered by date', async () => {
-            const mockListings: ListingRow[] = [
-                { listingId: 1, sellerId: 5, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' }
-            ];
-            mockStmt.all.mockReturnValue(mockListings);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when seller has no listings', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.getListingsBySellerId(5);
+      const result = await service.getListingsBySellerId(99);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Listing WHERE sellerId = @sellerId ORDER BY listedAt DESC',
-                { sellerId: 5 }
-            );
-            expect(result).toEqual(mockListings);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getActiveListingsBySellerId ----------------------------------------
+
+  describe('getActiveListingsBySellerId', () => {
+    it('returns active listings for a given seller', async () => {
+      const stmt = mockStmt(null, [sampleListing]);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.getActiveListingsBySellerId(10);
+
+      expect(result).toEqual([sampleListing]);
     });
 
-    describe('getActiveListingsBySellerId', () => {
-        it('should return only active listings for seller', async () => {
-            const mockListings: ListingRow[] = [
-                { listingId: 1, sellerId: 5, stoveId: 1, price: 100, listedAt: new Date('2024-01-01'), status: 'active' }
-            ];
-            mockStmt.all.mockReturnValue(mockListings);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when seller has no active listings', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.getActiveListingsBySellerId(5);
+      const result = await service.getActiveListingsBySellerId(10);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                "SELECT * FROM Listing WHERE sellerId = @sellerId AND status = 'active' ORDER BY listedAt DESC",
-                { sellerId: 5 }
-            );
-            expect(result).toEqual(mockListings);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getActiveListingByStoveId ------------------------------------------
+
+  describe('getActiveListingByStoveId', () => {
+    it('returns the active listing for a stove', async () => {
+      const stmt = mockStmt(sampleListing);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.getActiveListingByStoveId(5);
+
+      expect(result).toEqual(sampleListing);
     });
 
-    describe('getActiveListingByStoveId', () => {
-        it('should return active listing for stove', async () => {
-            const mockListing: ListingRow = { listingId: 1, sellerId: 1, stoveId: 10, price: 100, listedAt: new Date('2024-01-01'), status: 'active' };
-            mockStmt.get.mockReturnValue(mockListing);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when stove has no active listing', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.getActiveListingByStoveId(10);
+      const result = await service.getActiveListingByStoveId(5);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                "SELECT * FROM Listing WHERE stoveId = @stoveId AND status = 'active'",
-                { stoveId: 10 }
-            );
-            expect(result).toEqual(mockListing);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when no active listing', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getActiveListingByLootboxId ----------------------------------------
 
-            const result = service.getActiveListingByStoveId(999);
+  describe('getActiveListingByLootboxId', () => {
+    it('returns the active listing for a lootbox', async () => {
+      const lootboxListing = { ...sampleListing, stoveId: null, lootboxId: 3 };
+      const stmt = mockStmt(lootboxListing);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getActiveListingByLootboxId(3);
+
+      expect(result).toEqual(lootboxListing);
     });
 
-    describe('createListing', () => {
-        it('should create listing with active status and current timestamp', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 5 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when lootbox has no active listing', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const [success, id] = service.createListing(1, 10, 500);
+      const result = await service.getActiveListingByLootboxId(3);
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
-            const [sql, params] = mockUnit.prepare.mock.calls[0];
-            expect(sql).toContain('INSERT');
-            expect(sql).toContain('INTO Listing');
-            expect(params).toEqual({ sellerId: 1, stoveId: 10, price: 500 });
-            expect(success).toBe(true);
-            expect(id).toBe(5);
-        });
+      expect(result).toBeNull();
+    });
+  });
+
+  // --- createListing ------------------------------------------------------
+
+  describe('createListing', () => {
+    it('returns [true, id] on successful stove listing creation', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const [success, id] = await service.createListing(10, 200, 5, null);
+
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('updatePrice', () => {
-        it('should update price for active listing', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [true, id] on successful lootbox listing creation', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.updatePrice(1, 750);
+      const [success, id] = await service.createListing(10, 150, null, 3);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                "UPDATE Listing SET price = @price WHERE listingId = @id AND status = 'active'",
-                { id: 1, price: 750 }
-            );
-            expect(result).toBe(true);
-        });
-
-        it('should return false when listing not active or not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.updatePrice(999, 750);
-
-            expect(result).toBe(false);
-        });
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('markAsSold', () => {
-        it('should mark listing as sold', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, 0] when insert fails', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(stmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new ListingService(unit);
 
-            const result = service.markAsSold(1);
+      const [success, id] = await service.createListing(10, 200, 5, null);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                "UPDATE Listing SET status = 'sold' WHERE listingId = @id",
-                { id: 1 }
-            );
-            expect(result).toBe(true);
-        });
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+    });
+  });
 
-        it('should return false when listing not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- updatePrice --------------------------------------------------------
 
-            const result = service.markAsSold(999);
+  describe('updatePrice', () => {
+    it('returns true when price is updated', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.updatePrice(1, 300);
+
+      expect(result).toBe(true);
     });
 
-    describe('cancelListing', () => {
-        it('should cancel active listing', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when listing not found or not active', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.cancelListing(1);
+      const result = await service.updatePrice(999, 300);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                "UPDATE Listing SET status = 'cancelled' WHERE listingId = @id AND status = 'active'",
-                { id: 1 }
-            );
-            expect(result).toBe(true);
-        });
+      expect(result).toBe(false);
+    });
+  });
 
-        it('should return false when listing not active', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- markAsSold ---------------------------------------------------------
 
-            const result = service.cancelListing(1);
+  describe('markAsSold', () => {
+    it('returns true when listing is marked as sold', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.markAsSold(1);
+
+      expect(result).toBe(true);
     });
 
-    describe('deleteListing', () => {
-        it('should delete listing', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when listing does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.deleteListing(1);
+      const result = await service.markAsSold(999);
 
-            expect(result).toBe(true);
-        });
+      expect(result).toBe(false);
+    });
+  });
 
-        it('should return false when listing not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- cancelListing ------------------------------------------------------
 
-            const result = service.deleteListing(999);
+  describe('cancelListing', () => {
+    it('returns true when active listing is cancelled', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.cancelListing(1);
+
+      expect(result).toBe(true);
     });
 
-    describe('isStoveListed', () => {
-        it('should return true when stove has active listing', async () => {
-            mockStmt.get.mockReturnValue({ count: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when listing is not active or does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.isStoveListed(10);
+      const result = await service.cancelListing(999);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                "SELECT COUNT(*) as count FROM Listing WHERE stoveId = @stoveId AND status = 'active'",
-                { stoveId: 10 }
-            );
-            expect(result).toBe(true);
-        });
+      expect(result).toBe(false);
+    });
+  });
 
-        it('should return false when stove has no active listing', async () => {
-            mockStmt.get.mockReturnValue({ count: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- deleteListing ------------------------------------------------------
 
-            const result = service.isStoveListed(10);
+  describe('deleteListing', () => {
+    it('returns true when listing is deleted', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.deleteListing(1);
 
-        it('should return false when result is undefined', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.isStoveListed(10);
-
-            expect(result).toBe(false);
-        });
+      expect(result).toBe(true);
     });
 
-    describe('countActiveListingsBySeller', () => {
-        it('should return correct count', async () => {
-            mockStmt.get.mockReturnValue({ count: 3 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when listing does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
 
-            const result = service.countActiveListingsBySeller(1);
+      const result = await service.deleteListing(999);
 
-            expect(result).toBe(3);
-        });
-
-        it('should return 0 when seller has no active listings', async () => {
-            mockStmt.get.mockReturnValue({ count: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.countActiveListingsBySeller(1);
-
-            expect(result).toBe(0);
-        });
-
-        it('should return 0 when result is undefined', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.countActiveListingsBySeller(1);
-
-            expect(result).toBe(0);
-        });
+      expect(result).toBe(false);
     });
+  });
+
+  // --- isStoveListed ------------------------------------------------------
+
+  describe('isStoveListed', () => {
+    it('returns true when stove has an active listing', async () => {
+      const stmt = mockStmt({ count: 1 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.isStoveListed(5);
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when stove has no active listing', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.isStoveListed(5);
+
+      expect(result).toBe(false);
+    });
+
+    it('returns false when count result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.isStoveListed(5);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  // --- isLootboxListed ----------------------------------------------------
+
+  describe('isLootboxListed', () => {
+    it('returns true when lootbox has an active listing', async () => {
+      const stmt = mockStmt({ count: 1 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.isLootboxListed(3);
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when lootbox has no active listing', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.isLootboxListed(3);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  // --- countActiveListingsBySeller ----------------------------------------
+
+  describe('countActiveListingsBySeller', () => {
+    it('returns the count of active listings for a seller', async () => {
+      const stmt = mockStmt({ count: 4 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.countActiveListingsBySeller(10);
+
+      expect(result).toBe(4);
+    });
+
+    it('returns 0 when seller has no active listings', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.countActiveListingsBySeller(10);
+
+      expect(result).toBe(0);
+    });
+
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new ListingService(unit);
+
+      const result = await service.countActiveListingsBySeller(10);
+
+      expect(result).toBe(0);
+    });
+  });
 });

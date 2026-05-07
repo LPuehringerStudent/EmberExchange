@@ -62,7 +62,8 @@ export const routes: Routes = [
   },
   {
     path: 'support',
-    loadComponent: () => import('./shared/components/not-found.component').then(m => m.NotFoundComponent)
+    loadComponent: () => import('./features/support/support.component').then(m => m.SupportComponent),
+    canActivate: [authGuard]
   },
   {
     path: 'signup',

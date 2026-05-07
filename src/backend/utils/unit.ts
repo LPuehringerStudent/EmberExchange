@@ -552,6 +552,33 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS Game (
+                gameId SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                slug TEXT NOT NULL UNIQUE,
+                gameType TEXT NOT NULL UNIQUE,
+                minPlayers INTEGER NOT NULL,
+                maxPlayers INTEGER NOT NULL,
+                ruleset TEXT NOT NULL,
+                description TEXT,
+                genre TEXT NOT NULL DEFAULT '',
+                tags JSONB NOT NULL DEFAULT '[]',
+                isActive INTEGER NOT NULL DEFAULT 1
+            )
+        `);
+
+        // Migration: add missing columns to existing Game table
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS slug TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS gameType TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS minPlayers INTEGER DEFAULT 2`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS maxPlayers INTEGER DEFAULT 6`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS ruleset TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS description TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS genre TEXT DEFAULT ''`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'`);
+        await connection.query(`ALTER TABLE Game ADD COLUMN IF NOT EXISTS isActive INTEGER DEFAULT 1`);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS Room (
                 roomId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'active', 'finished')),
@@ -563,6 +590,9 @@ export class DB {
 
         await connection.query(`
             ALTER TABLE Room ADD COLUMN IF NOT EXISTS gameType TEXT NOT NULL DEFAULT 'unknown'
+        `);
+        await connection.query(`
+            ALTER TABLE Room ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'
         `);
         await connection.query(`
             CREATE INDEX IF NOT EXISTS idx_room_gametype ON Room(gameType)
@@ -577,8 +607,12 @@ export class DB {
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 connectionState TEXT NOT NULL DEFAULT 'connected' CHECK (connectionState IN ('connected', 'disconnected', 'away')),
                 seatIndex INTEGER NOT NULL,
+                disconnectedAt TIMESTAMPTZ,
                 UNIQUE(roomId, seatIndex)
             )
+        `);
+        await connection.query(`
+            ALTER TABLE RoomPlayer ADD COLUMN IF NOT EXISTS disconnectedAt TIMESTAMPTZ
         `);
 
         await connection.query(`
@@ -600,6 +634,19 @@ export class DB {
                 sequenceNumber INTEGER,
                 clientTimestamp BIGINT,
                 serverTimestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS SupportTicket (
+                ticketId SERIAL PRIMARY KEY,
+                reporterId INTEGER NOT NULL REFERENCES Player(playerId),
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                type TEXT NOT NULL CHECK (type IN ('bug', 'feature', 'support')),
+                priority TEXT NOT NULL CHECK (priority IN ('high', 'medium', 'low')),
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                notifiedAt TIMESTAMPTZ
             )
         `);
     }
@@ -683,10 +730,13 @@ export async function resetDatabase(connection: PoolClient): Promise<void> {
         DROP TABLE IF EXISTS Session CASCADE;
         DROP TABLE IF EXISTS Stove CASCADE;
         DROP TABLE IF EXISTS StoveType CASCADE;
+        DROP TABLE IF EXISTS Game CASCADE;
+        DROP TABLE IF EXISTS SupportTicket CASCADE;
         DROP TABLE IF EXISTS EventLog CASCADE;
         DROP TABLE IF EXISTS GameState CASCADE;
         DROP TABLE IF EXISTS RoomPlayer CASCADE;
         DROP TABLE IF EXISTS Room CASCADE;
+        DROP TABLE IF EXISTS Game CASCADE;
         DROP TABLE IF EXISTS Player CASCADE
     `);
     console.log("🗑️  All tables dropped");
@@ -1116,7 +1166,25 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
         console.log("✅ CoinTransactions inserted");
     }
 
+    async function insertGames(): Promise<void> {
+        const games = [
+            { name: "Poker", slug: "poker", gameType: "poker", minPlayers: 2, maxPlayers: 6, ruleset: "No-Limit Texas Hold'em", description: "Classic Texas Hold'em poker with no betting limits.", genre: "card", tags: JSON.stringify(["poker", "cards", "multiplayer"]), isActive: 1 },
+            { name: "Blackjack", slug: "blackjack", gameType: "blackjack", minPlayers: 1, maxPlayers: 5, ruleset: "Standard American casino blackjack", description: "Standard American casino blackjack.", genre: "card", tags: JSON.stringify(["blackjack", "cards", "casino"]), isActive: 1 }
+        ];
+        for (const game of games) {
+            const stmt = unit.prepare<unknown, { name: string; slug: string; gameType: string; minPlayers: number; maxPlayers: number; ruleset: string; description: string; genre: string; tags: string; isActive: number }>(
+                `insert into Game (name, slug, gameType, minPlayers, maxPlayers, ruleset, description, genre, tags, isActive)
+                 values (@name, @slug, @gameType, @minPlayers, @maxPlayers, @ruleset, @description, @genre, @tags, @isActive)
+                 ON CONFLICT (gameType) DO NOTHING`,
+                game
+            );
+            await stmt.run();
+        }
+        console.log("✅ Games inserted");
+    }
+
     if (!(await alreadyPresent())) {
+        await insertGames();
         await insertLootboxTypes();
         await insertPlayers();
         await insertStoveTypes();

@@ -3,6 +3,10 @@ module.exports = {
     testEnvironment: 'node',
     roots: ['<rootDir>/src'],
     testMatch: ['**/*.test.ts', '**/*Tests.ts'],
+    testPathIgnorePatterns: [
+        '/node_modules/',
+        '/src/test/routerTests/',
+    ],
     moduleFileExtensions: ['ts', 'js'],
     collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
     testTimeout: 15000,

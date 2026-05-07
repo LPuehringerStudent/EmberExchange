@@ -1,70 +1,109 @@
-﻿import { ServiceBase } from '../../backend/services/service-base';
-import { MockUnit, createMockUnit } from '../../backend/__mocks__/unit';
+import { ServiceBase } from '../../backend/services/service-base';
+import { ITypedStatement, Unit } from '../../backend/utils/unit';
+
+// ---------------------------------------------------------------------------
+// Concrete subclass to expose the protected executeStmt method for testing
+// ---------------------------------------------------------------------------
 
 class TestService extends ServiceBase {
-    constructor(unit: any) {
-        super(unit);
-    }
+  constructor(unit: Unit) {
+    super(unit);
+  }
 
-    public testExecute(stmt: any): [boolean, number] {
-        return this.executeStmt(stmt);
-    }
+  async callExecuteStmt(stmt: ITypedStatement): Promise<[boolean, number]> {
+    return this.executeStmt(stmt);
+  }
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function mockStmt(changes: number) {
+  return {
+    run: jest.fn().mockResolvedValue({ changes }),
+    get: jest.fn(),
+    all: jest.fn(),
+  } as unknown as ITypedStatement;
+}
+
+function mockUnit(lastRowId: number) {
+  return {
+    prepare: jest.fn(),
+    getLastRowId: jest.fn().mockResolvedValue(lastRowId),
+  } as unknown as Unit;
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
 describe('ServiceBase', () => {
-    let mockUnit: MockUnit;
-    let service: TestService;
 
-    beforeEach(() => {
-        mockUnit = createMockUnit();
-        service = new TestService(mockUnit as any);
+  describe('executeStmt', () => {
+
+    it('returns [true, id] when exactly one row is changed', async () => {
+      const stmt = mockStmt(1);
+      const unit = mockUnit(42);
+      const service = new TestService(unit);
+
+      const [success, id] = await service.callExecuteStmt(stmt);
+
+      expect(success).toBe(true);
+      expect(id).toBe(42);
     });
 
-    describe('executeStmt', () => {
-        it('should return success true and correct ID when changes equals 1', async () => {
-            const mockStmt = {
-                run: jest.fn().mockReturnValue({ changes: 1, lastInsertRowid: 42 })
-            };
+    it('returns [false, id] when zero rows are changed', async () => {
+      const stmt = mockStmt(0);
+      const unit = mockUnit(0);
+      const service = new TestService(unit);
 
-            const [success, id] = service.testExecute(mockStmt);
+      const [success, id] = await service.callExecuteStmt(stmt);
 
-            expect(success).toBe(true);
-            expect(id).toBe(42);
-        });
-
-        it('should return success false when changes equals 0', async () => {
-            const mockStmt = {
-                run: jest.fn().mockReturnValue({ changes: 0, lastInsertRowid: 99 })
-            };
-
-            const [success, id] = service.testExecute(mockStmt);
-
-            expect(success).toBe(false);
-            expect(id).toBe(99);
-        });
-
-        it('should handle bigint lastInsertRowid by converting to number', async () => {
-            const mockStmt = {
-                run: jest.fn().mockReturnValue({ changes: 1, lastInsertRowid: BigInt(123) })
-            };
-
-            const [success, id] = service.testExecute(mockStmt);
-
-            expect(success).toBe(true);
-            expect(id).toBe(123);
-            expect(typeof id).toBe('number');
-        });
-
-        it('should handle large bigint values correctly', async () => {
-            const largeId = BigInt(Number.MAX_SAFE_INTEGER);
-            const mockStmt = {
-                run: jest.fn().mockReturnValue({ changes: 1, lastInsertRowid: largeId })
-            };
-
-            const [success, id] = service.testExecute(mockStmt);
-
-            expect(success).toBe(true);
-            expect(id).toBe(Number.MAX_SAFE_INTEGER);
-        });
+      expect(success).toBe(false);
+      expect(id).toBe(0);
     });
+
+    it('returns [false, id] when more than one row is changed', async () => {
+      const stmt = mockStmt(3);
+      const unit = mockUnit(7);
+      const service = new TestService(unit);
+
+      const [success, id] = await service.callExecuteStmt(stmt);
+
+      expect(success).toBe(false);
+      expect(id).toBe(7);
+    });
+
+    it('calls stmt.run() exactly once', async () => {
+      const stmt = mockStmt(1);
+      const unit = mockUnit(1);
+      const service = new TestService(unit);
+
+      await service.callExecuteStmt(stmt);
+
+      expect(stmt.run).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls unit.getLastRowId() exactly once after stmt.run()', async () => {
+      const stmt = mockStmt(1);
+      const unit = mockUnit(1);
+      const service = new TestService(unit);
+
+      await service.callExecuteStmt(stmt);
+
+      expect(unit.getLastRowId).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns the id from getLastRowId even when success is false', async () => {
+      const stmt = mockStmt(0);
+      const unit = mockUnit(99);
+      const service = new TestService(unit);
+
+      const [success, id] = await service.callExecuteStmt(stmt);
+
+      expect(success).toBe(false);
+      expect(id).toBe(99);
+    });
+  });
 });

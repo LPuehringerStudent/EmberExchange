@@ -6,6 +6,8 @@ import { EventLogService } from "../../services/event-log-service";
 import { connectionManager } from "../connection-manager";
 import { isValidUUID } from "../validators";
 import { ErrorCode } from "../../../shared/model";
+import { engineRegistry } from "../../game-engines";
+import { startTurnTimer, clearTurnTimer } from "../turn-timer";
 
 export async function handlePlayerAction(socketId: string, payload: Record<string, unknown>): Promise<void> {
     const roomId = payload.roomId;
@@ -34,7 +36,6 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
 
     const unit = await Unit.create(false);
     let ok = false;
-    let broadcastMessage: { type: "state_update"; payload: Record<string, unknown> } | null = null;
 
     try {
         const roomService = new RoomService(unit);
@@ -78,26 +79,91 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
             return;
         }
 
-        // MVP: append action to log; server is the single source of truth
-        const baseBlob = (typeof state.stateBlob === "object" && state.stateBlob !== null)
-            ? state.stateBlob as Record<string, unknown>
-            : { players: [], status: "waiting", log: [] };
+        if (!engineRegistry.has(room.gameType)) {
+            connectionManager.sendToSocket(socketId, {
+                type: "error",
+                payload: { code: ErrorCode.INVALID_STATE, message: `No engine for game type: ${room.gameType}`, recoverable: true }
+            });
+            return;
+        }
 
-        const log = Array.isArray(baseBlob.log) ? baseBlob.log : [];
-        const newBlob = {
-            ...baseBlob,
-            log: [
-                ...log,
-                {
-                    playerId: meta.playerId,
-                    actionType: actionType || "unknown",
-                    actionData: actionData || {},
-                    timestamp: Date.now()
+        const engine = engineRegistry.get(room.gameType);
+
+        // Handle next_hand meta-action
+        if (actionType === "next_hand") {
+            const blob = state.stateBlob as Record<string, unknown>;
+            const phase = blob.phase as string;
+            if (phase !== "showdown" && phase !== "settled" && phase !== "waiting") {
+                connectionManager.sendToSocket(socketId, {
+                    type: "error",
+                    payload: { code: ErrorCode.INVALID_STATE, message: "Can only start next hand after showdown", recoverable: true }
+                });
+                return;
+            }
+
+            const playersInRoom = await roomPlayerService.getPlayersInRoom(roomId);
+            const newState = engine.resetForNextHand(state.stateBlob as Record<string, unknown>, playersInRoom);
+
+            const updateResult = await gameStateService.updateState(roomId, newState, expectedVersion);
+            if (!updateResult.success) {
+                connectionManager.sendToSocket(socketId, {
+                    type: "error",
+                    payload: { code: ErrorCode.VERSION_MISMATCH, message: "Optimistic lock failed", recoverable: true }
+                });
+                return;
+            }
+
+            await eventLogService.logEvent(
+                roomId,
+                "next_hand",
+                { expectedVersion },
+                meta.playerId,
+                (payload.sequenceNumber as number | undefined) ?? null,
+                (payload.clientTimestamp as number | undefined) ?? null
+            );
+
+            for (const player of playersInRoom) {
+                const view = engine.getPlayerView(newState, player.playerId);
+                const targetSocket = connectionManager.getSocketIdForPlayer(roomId, player.playerId);
+                if (targetSocket) {
+                    connectionManager.sendToSocket(targetSocket, {
+                        type: "state_update",
+                        payload: {
+                            stateBlob: view,
+                            version: updateResult.newVersion,
+                            actingPlayer: meta.playerId
+                        }
+                    });
                 }
-            ]
-        };
+            }
 
-        const updateResult = await gameStateService.updateState(roomId, newBlob, expectedVersion);
+            // Start turn timer for new hand
+            clearTurnTimer(roomId);
+            const newBlob = newState as Record<string, unknown>;
+            const activePlayer = newBlob.activePlayer as number;
+            if (activePlayer !== -1) {
+                startTurnTimer(roomId, activePlayer, updateResult.newVersion);
+            }
+
+            ok = true;
+            return;
+        }
+
+        const result = engine.processAction(
+            state.stateBlob as Record<string, unknown>,
+            { type: actionType, amount: actionData?.amount as number | undefined },
+            meta.playerId
+        );
+
+        if (!result.valid) {
+            connectionManager.sendToSocket(socketId, {
+                type: "error",
+                payload: { code: result.errorMessage === "Not your turn" ? ErrorCode.OUT_OF_TURN : ErrorCode.INVALID_STATE, message: result.errorMessage, recoverable: true }
+            });
+            return;
+        }
+
+        const updateResult = await gameStateService.updateState(roomId, result.newFullState!, expectedVersion);
         if (!updateResult.success) {
             connectionManager.sendToSocket(socketId, {
                 type: "error",
@@ -115,24 +181,38 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
             (payload.clientTimestamp as number | undefined) ?? null
         );
 
-        broadcastMessage = {
-            type: "state_update",
-            payload: {
-                stateBlob: newBlob,
-                version: updateResult.newVersion,
-                actingPlayer: meta.playerId
+        // Send personalized views to each player in the room
+        const playersInRoom = await roomPlayerService.getPlayersInRoom(roomId);
+        for (const player of playersInRoom) {
+            const view = result.playerViews!.get(player.playerId);
+            if (view) {
+                const targetSocket = connectionManager.getSocketIdForPlayer(roomId, player.playerId);
+                if (targetSocket) {
+                    connectionManager.sendToSocket(targetSocket, {
+                        type: "state_update",
+                        payload: {
+                            stateBlob: view,
+                            version: updateResult.newVersion,
+                            actingPlayer: meta.playerId
+                        }
+                    });
+                }
             }
-        };
+        }
+
+        // Restart turn timer for next active player
+        clearTurnTimer(roomId);
+        const newState = await gameStateService.getState(roomId);
+        if (newState) {
+            const blob = newState.stateBlob as Record<string, unknown>;
+            const activePlayer = blob.activePlayer as number;
+            if (activePlayer !== -1) {
+                startTurnTimer(roomId, activePlayer, newState.version);
+            }
+        }
 
         ok = true;
     } finally {
         await unit.complete(ok);
-    }
-
-    if (ok && broadcastMessage) {
-        // Send directly to acting player
-        connectionManager.sendToSocket(socketId, broadcastMessage);
-        // Broadcast to others in room
-        connectionManager.broadcastToRoom(roomId, broadcastMessage, socketId);
     }
 }

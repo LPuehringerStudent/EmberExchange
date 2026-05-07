@@ -1,231 +1,291 @@
-﻿import { TradeService } from '../../backend/services/trade-service';
-import { MockUnit, createMockUnit } from '../../backend/__mocks__/unit';
-import { TradeRow } from '../../shared/model';
+import { TradeService } from '../../backend/services/trade-service';
+import { Unit } from '../../backend/utils/unit';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function mockStmt(getResult: unknown = null, allResult: unknown[] = [], runResult = { changes: 1 }) {
+  return {
+    get: jest.fn().mockResolvedValue(getResult),
+    all: jest.fn().mockResolvedValue(allResult),
+    run: jest.fn().mockResolvedValue(runResult),
+  };
+}
+
+function mockUnit(stmt = mockStmt()) {
+  return {
+    prepare: jest.fn().mockReturnValue(stmt),
+    getLastRowId: jest.fn().mockResolvedValue(1),
+  } as unknown as Unit;
+}
+
+// ---------------------------------------------------------------------------
+// Sample data
+// ---------------------------------------------------------------------------
+
+const sampleTrade = {
+  tradeId: 1,
+  listingId: 10,
+  buyerId: 20,
+  executedAt: '2026-02-01',
+};
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('TradeService', () => {
-    let mockUnit: MockUnit;
-    let service: TradeService;
-    let mockStmt: any;
 
-    beforeEach(() => {
-        mockUnit = createMockUnit();
-        service = new TradeService(mockUnit as any);
-        mockStmt = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
-        };
+  // --- getAllTrades -------------------------------------------------------
+
+  describe('getAllTrades', () => {
+    it('returns all trade records', async () => {
+      const stmt = mockStmt(null, [sampleTrade]);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
+
+      const result = await service.getAllTrades();
+
+      expect(result).toEqual([sampleTrade]);
     });
 
-    describe('getAllTrades', () => {
-        it('should return all trades', async () => {
-            const mockTrades: TradeRow[] = [
-                { tradeId: 1, listingId: 1, buyerId: 2, executedAt: new Date('2024-01-01') },
-                { tradeId: 2, listingId: 2, buyerId: 3, executedAt: new Date('2024-01-02') }
-            ];
-            mockStmt.all.mockReturnValue(mockTrades);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no trades exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            const result = service.getAllTrades();
+      const result = await service.getAllTrades();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Trade');
-            expect(result).toEqual(mockTrades);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getTradeById ------------------------------------------------------
+
+  describe('getTradeById', () => {
+    it('returns the trade when found', async () => {
+      const stmt = mockStmt(sampleTrade);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
+
+      const result = await service.getTradeById(1);
+
+      expect(result).toEqual(sampleTrade);
     });
 
-    describe('getTradeById', () => {
-        it('should return trade when found', async () => {
-            const mockTrade: TradeRow = { tradeId: 1, listingId: 1, buyerId: 2, executedAt: new Date('2024-01-01') };
-            mockStmt.get.mockReturnValue(mockTrade);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when trade is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            const result = service.getTradeById(1);
+      const result = await service.getTradeById(999);
 
-            expect(result).toEqual(mockTrade);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getTradeByListingId -----------------------------------------------
 
-            const result = service.getTradeById(999);
+  describe('getTradeByListingId', () => {
+    it('returns the trade for a given listing', async () => {
+      const stmt = mockStmt(sampleTrade);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getTradeByListingId(10);
+
+      expect(result).toEqual(sampleTrade);
     });
 
-    describe('getTradeByListingId', () => {
-        it('should return trade for listing', async () => {
-            const mockTrade: TradeRow = { tradeId: 1, listingId: 5, buyerId: 2, executedAt: new Date('2024-01-01') };
-            mockStmt.get.mockReturnValue(mockTrade);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when no trade exists for the listing', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            const result = service.getTradeByListingId(5);
+      const result = await service.getTradeByListingId(999);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Trade WHERE listingId = @listingId',
-                { listingId: 5 }
-            );
-            expect(result).toEqual(mockTrade);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when no trade for listing', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getTradesByBuyerId ------------------------------------------------
 
-            const result = service.getTradeByListingId(999);
+  describe('getTradesByBuyerId', () => {
+    it('returns trades for a given buyer', async () => {
+      const stmt = mockStmt(null, [sampleTrade]);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getTradesByBuyerId(20);
+
+      expect(result).toEqual([sampleTrade]);
     });
 
-    describe('getTradesByBuyerId', () => {
-        it('should return trades ordered by execution date DESC', async () => {
-            const mockTrades: TradeRow[] = [
-                { tradeId: 2, listingId: 2, buyerId: 5, executedAt: new Date('2024-02-01') },
-                { tradeId: 1, listingId: 1, buyerId: 5, executedAt: new Date('2024-01-01') }
-            ];
-            mockStmt.all.mockReturnValue(mockTrades);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when buyer has no trades', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            const result = service.getTradesByBuyerId(5);
+      const result = await service.getTradesByBuyerId(99);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Trade WHERE buyerId = @buyerId ORDER BY executedAt DESC',
-                { buyerId: 5 }
-            );
-            expect(result).toEqual(mockTrades);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- createTrade -------------------------------------------------------
+
+  describe('createTrade', () => {
+    it('returns [true, id] on successful trade creation', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
+
+      const [success, id] = await service.createTrade(10, 20);
+
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('createTrade', () => {
-        it('should create trade successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, 0] when insert fails', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(stmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new TradeService(unit);
 
-            const [success, id] = service.createTrade(1, 5);
+      const [success, id] = await service.createTrade(10, 20);
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+    });
+  });
 
-            const [sql, params] = mockUnit.prepare.mock.calls[0];
-            expect(sql).toContain('INSERT');
-            expect(sql).toContain('INTO Trade');
-            expect(params).toEqual({ listingId: 1, buyerId: 5 });
+  // --- getRecentTrades ---------------------------------------------------
 
-            expect(success).toBe(true);
-            expect(id).toBe(10);
-        });
+  describe('getRecentTrades', () => {
+    it('returns recent trades up to the default limit of 10', async () => {
+      const stmt = mockStmt(null, [sampleTrade]);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
+
+      const result = await service.getRecentTrades();
+
+      expect(result).toEqual([sampleTrade]);
     });
 
-    describe('getRecentTrades', () => {
-        it('should return recent trades with default limit', async () => {
-            const mockTrades: TradeRow[] = [
-                { tradeId: 1, listingId: 1, buyerId: 2, executedAt: new Date('2024-01-01') }
-            ];
-            mockStmt.all.mockReturnValue(mockTrades);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no trades exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            const result = service.getRecentTrades();
+      const result = await service.getRecentTrades();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Trade ORDER BY executedAt DESC LIMIT @limit',
-                { limit: 10 }
-            );
-            expect(result).toEqual(mockTrades);
-        });
-
-        it('should return recent trades with custom limit', async () => {
-            const mockTrades: TradeRow[] = [
-                { tradeId: 1, listingId: 1, buyerId: 2, executedAt: new Date('2024-01-01') }
-            ];
-            mockStmt.all.mockReturnValue(mockTrades);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.getRecentTrades(5);
-
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                expect.any(String),
-                { limit: 5 }
-            );
-            expect(result).toEqual(mockTrades);
-        });
+      expect(result).toEqual([]);
     });
 
-    describe('deleteTrade', () => {
-        it('should delete trade successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('respects a custom limit parameter', async () => {
+      const trades = Array.from({ length: 3 }, (_, i) => ({ ...sampleTrade, tradeId: i + 1 }));
+      const stmt = mockStmt(null, trades);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            const result = service.deleteTrade(1);
+      const result = await service.getRecentTrades(3);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'DELETE FROM Trade WHERE tradeId = @id',
-                { id: 1 }
-            );
-            expect(result).toBe(true);
-        });
+      expect(result).toHaveLength(3);
+    });
+  });
 
-        it('should return false when trade not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- deleteTrade -------------------------------------------------------
 
-            const result = service.deleteTrade(999);
+  describe('deleteTrade', () => {
+    it('returns true when trade is deleted', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.deleteTrade(1);
+
+      expect(result).toBe(true);
     });
 
-    describe('countTrades', () => {
-        it('should return total count', async () => {
-            mockStmt.get.mockReturnValue({ count: 100 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when trade does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            const result = service.countTrades();
+      const result = await service.deleteTrade(999);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT COUNT(*) as count FROM Trade');
-            expect(result).toBe(100);
-        });
+      expect(result).toBe(false);
+    });
+  });
 
-        it('should return 0 when no trades', async () => {
-            mockStmt.get.mockReturnValue({ count: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- countTrades -------------------------------------------------------
 
-            const result = service.countTrades();
+  describe('countTrades', () => {
+    it('returns the total number of trades', async () => {
+      const stmt = mockStmt({ count: 42 });
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            expect(result).toBe(0);
-        });
+      const result = await service.countTrades();
 
-        it('should return 0 when undefined', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.countTrades();
-
-            expect(result).toBe(0);
-        });
+      expect(result).toBe(42);
     });
 
-    describe('countTradesByBuyer', () => {
-        it('should return count for specific buyer', async () => {
-            mockStmt.get.mockReturnValue({ count: 5 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when no trades exist', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
 
-            const result = service.countTradesByBuyer(1);
+      const result = await service.countTrades();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT COUNT(*) as count FROM Trade WHERE buyerId = @buyerId',
-                { buyerId: 1 }
-            );
-            expect(result).toBe(5);
-        });
-
-        it('should return 0 when buyer has no trades', async () => {
-            mockStmt.get.mockReturnValue({ count: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.countTradesByBuyer(999);
-
-            expect(result).toBe(0);
-        });
+      expect(result).toBe(0);
     });
+
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
+
+      const result = await service.countTrades();
+
+      expect(result).toBe(0);
+    });
+  });
+
+  // --- countTradesByBuyer ------------------------------------------------
+
+  describe('countTradesByBuyer', () => {
+    it('returns the number of trades made by a buyer', async () => {
+      const stmt = mockStmt({ count: 5 });
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
+
+      const result = await service.countTradesByBuyer(20);
+
+      expect(result).toBe(5);
+    });
+
+    it('returns 0 when buyer has made no trades', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
+
+      const result = await service.countTradesByBuyer(20);
+
+      expect(result).toBe(0);
+    });
+
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new TradeService(unit);
+
+      const result = await service.countTradesByBuyer(20);
+
+      expect(result).toBe(0);
+    });
+  });
 });

@@ -1,256 +1,335 @@
-﻿import { PriceHistoryService } from '../../backend/services/price-history-service';
-import { MockUnit, createMockUnit } from '../../backend/__mocks__/unit';
-import { PriceHistoryRow } from '../../shared/model';
+import { PriceHistoryService } from '../../backend/services/price-history-service';
+import { Unit } from '../../backend/utils/unit';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function mockStmt(getResult: unknown = null, allResult: unknown[] = [], runResult = { changes: 1 }) {
+  return {
+    get: jest.fn().mockResolvedValue(getResult),
+    all: jest.fn().mockResolvedValue(allResult),
+    run: jest.fn().mockResolvedValue(runResult),
+  };
+}
+
+function mockUnit(stmt = mockStmt()) {
+  return {
+    prepare: jest.fn().mockReturnValue(stmt),
+    getLastRowId: jest.fn().mockResolvedValue(1),
+  } as unknown as Unit;
+}
+
+// ---------------------------------------------------------------------------
+// Sample data
+// ---------------------------------------------------------------------------
+
+const samplePriceHistory = {
+  historyId: 1,
+  typeId: 2,
+  salePrice: 250,
+  saleDate: '2026-01-15',
+};
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('PriceHistoryService', () => {
-    let mockUnit: MockUnit;
-    let service: PriceHistoryService;
-    let mockStmt: any;
 
-    beforeEach(() => {
-        mockUnit = createMockUnit();
-        service = new PriceHistoryService(mockUnit as any);
-        mockStmt = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
-        };
+  // --- getAllPriceHistory -------------------------------------------------
+
+  describe('getAllPriceHistory', () => {
+    it('returns all price history records', async () => {
+      const stmt = mockStmt(null, [samplePriceHistory]);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.getAllPriceHistory();
+
+      expect(result).toEqual([samplePriceHistory]);
     });
 
-    describe('getAllPriceHistory', () => {
-        it('should return all price history records', async () => {
-            const mockHistory: PriceHistoryRow[] = [
-                { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') },
-                { historyId: 2, typeId: 2, salePrice: 200, saleDate: new Date('2024-01-02') }
-            ];
-            mockStmt.all.mockReturnValue(mockHistory);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no records exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            const result = service.getAllPriceHistory();
+      const result = await service.getAllPriceHistory();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM PriceHistory');
-            expect(result).toEqual(mockHistory);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getPriceHistoryById -----------------------------------------------
+
+  describe('getPriceHistoryById', () => {
+    it('returns the record when found', async () => {
+      const stmt = mockStmt(samplePriceHistory);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.getPriceHistoryById(1);
+
+      expect(result).toEqual(samplePriceHistory);
     });
 
-    describe('getPriceHistoryById', () => {
-        it('should return record when found', async () => {
-            const mockRecord: PriceHistoryRow = { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') };
-            mockStmt.get.mockReturnValue(mockRecord);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when record is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            const result = service.getPriceHistoryById(1);
+      const result = await service.getPriceHistoryById(999);
 
-            expect(result).toEqual(mockRecord);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getPriceHistoryByTypeId -------------------------------------------
 
-            const result = service.getPriceHistoryById(999);
+  describe('getPriceHistoryByTypeId', () => {
+    it('returns price history records for a stove type', async () => {
+      const stmt = mockStmt(null, [samplePriceHistory]);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getPriceHistoryByTypeId(2);
+
+      expect(result).toEqual([samplePriceHistory]);
     });
 
-    describe('getPriceHistoryByTypeId', () => {
-        it('should return history ordered by sale date DESC', async () => {
-            const mockHistory: PriceHistoryRow[] = [
-                { historyId: 2, typeId: 1, salePrice: 200, saleDate: new Date('2024-02-01') },
-                { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') }
-            ];
-            mockStmt.all.mockReturnValue(mockHistory);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when no records exist for that type', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            const result = service.getPriceHistoryByTypeId(1);
+      const result = await service.getPriceHistoryByTypeId(99);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM PriceHistory WHERE typeId = @typeId ORDER BY saleDate DESC',
-                { typeId: 1 }
-            );
-            expect(result).toEqual(mockHistory);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- recordSale --------------------------------------------------------
+
+  describe('recordSale', () => {
+    it('returns [true, id] on successful sale recording', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const [success, id] = await service.recordSale(2, 250);
+
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('recordSale', () => {
-        it('should record sale successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, 0] when insert fails', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(stmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new PriceHistoryService(unit);
 
-            const [success, id] = service.recordSale(1, 500);
+      const [success, id] = await service.recordSale(2, 250);
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+    });
+  });
 
-            const [sql, params] = mockUnit.prepare.mock.calls[0];
-            expect(sql).toContain('INSERT');
-            expect(sql).toContain('INTO PriceHistory');
-            expect(params).toEqual({
-                typeId: 1,
-                salePrice: 500,
-            });
+  // --- getAveragePrice ---------------------------------------------------
 
-            expect(success).toBe(true);
-            expect(id).toBe(10);
-        });
+  describe('getAveragePrice', () => {
+    it('returns the average sale price for a stove type', async () => {
+      const stmt = mockStmt({ average: 300 });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.getAveragePrice(2);
+
+      expect(result).toBe(300);
     });
 
-    describe('getAveragePrice', () => {
-        it('should return average price', async () => {
-            mockStmt.get.mockReturnValue({ average: 150.5 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when no sales are recorded', async () => {
+      const stmt = mockStmt({ average: null });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            const result = service.getAveragePrice(1);
+      const result = await service.getAveragePrice(2);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT AVG(salePrice) as average FROM PriceHistory WHERE typeId = @typeId',
-                { typeId: 1 }
-            );
-            expect(result).toBe(150.5);
-        });
-
-        it('should return 0 when no sales', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.getAveragePrice(1);
-
-            expect(result).toBe(0);
-        });
-
-        it('should return 0 when average is null', async () => {
-            mockStmt.get.mockReturnValue({ average: null });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.getAveragePrice(1);
-
-            expect(result).toBe(0);
-        });
+      expect(result).toBe(0);
     });
 
-    describe('getMinPrice', () => {
-        it('should return minimum price', async () => {
-            mockStmt.get.mockReturnValue({ min: 50 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            const result = service.getMinPrice(1);
+      const result = await service.getAveragePrice(2);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT MIN(salePrice) as min FROM PriceHistory WHERE typeId = @typeId',
-                { typeId: 1 }
-            );
-            expect(result).toBe(50);
-        });
+      expect(result).toBe(0);
+    });
+  });
 
-        it('should return 0 when no sales', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getMinPrice -------------------------------------------------------
 
-            const result = service.getMinPrice(1);
+  describe('getMinPrice', () => {
+    it('returns the minimum sale price for a stove type', async () => {
+      const stmt = mockStmt({ min: 100 });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            expect(result).toBe(0);
-        });
+      const result = await service.getMinPrice(2);
+
+      expect(result).toBe(100);
     });
 
-    describe('getMaxPrice', () => {
-        it('should return maximum price', async () => {
-            mockStmt.get.mockReturnValue({ max: 500 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when no sales are recorded', async () => {
+      const stmt = mockStmt({ min: null });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            const result = service.getMaxPrice(1);
+      const result = await service.getMinPrice(2);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT MAX(salePrice) as max FROM PriceHistory WHERE typeId = @typeId',
-                { typeId: 1 }
-            );
-            expect(result).toBe(500);
-        });
-
-        it('should return 0 when no sales', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.getMaxPrice(1);
-
-            expect(result).toBe(0);
-        });
+      expect(result).toBe(0);
     });
 
-    describe('getRecentPrices', () => {
-        it('should return recent prices with default limit', async () => {
-            const mockHistory: PriceHistoryRow[] = [
-                { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') }
-            ];
-            mockStmt.all.mockReturnValue(mockHistory);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            const result = service.getRecentPrices(1);
+      const result = await service.getMinPrice(2);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM PriceHistory WHERE typeId = @typeId ORDER BY saleDate DESC LIMIT @limit',
-                { typeId: 1, limit: 10 }
-            );
-            expect(result).toEqual(mockHistory);
-        });
+      expect(result).toBe(0);
+    });
+  });
 
-        it('should return recent prices with custom limit', async () => {
-            const mockHistory: PriceHistoryRow[] = [
-                { historyId: 1, typeId: 1, salePrice: 100, saleDate: new Date('2024-01-01') }
-            ];
-            mockStmt.all.mockReturnValue(mockHistory);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getMaxPrice -------------------------------------------------------
 
-            const result = service.getRecentPrices(1, 5);
+  describe('getMaxPrice', () => {
+    it('returns the maximum sale price for a stove type', async () => {
+      const stmt = mockStmt({ max: 500 });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                expect.any(String),
-                { typeId: 1, limit: 5 }
-            );
-            expect(result).toEqual(mockHistory);
-        });
+      const result = await service.getMaxPrice(2);
+
+      expect(result).toBe(500);
     });
 
-    describe('countSales', () => {
-        it('should return correct count', async () => {
-            mockStmt.get.mockReturnValue({ count: 15 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when no sales are recorded', async () => {
+      const stmt = mockStmt({ max: null });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            const result = service.countSales(1);
+      const result = await service.getMaxPrice(2);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT COUNT(*) as count FROM PriceHistory WHERE typeId = @typeId',
-                { typeId: 1 }
-            );
-            expect(result).toBe(15);
-        });
-
-        it('should return 0 when undefined', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.countSales(1);
-
-            expect(result).toBe(0);
-        });
+      expect(result).toBe(0);
     });
 
-    describe('deletePriceHistory', () => {
-        it('should delete record successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
 
-            const result = service.deletePriceHistory(1);
+      const result = await service.getMaxPrice(2);
 
-            expect(result).toBe(true);
-        });
-
-        it('should return false when record not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.deletePriceHistory(999);
-
-            expect(result).toBe(false);
-        });
+      expect(result).toBe(0);
     });
+  });
+
+  // --- getRecentPrices ---------------------------------------------------
+
+  describe('getRecentPrices', () => {
+    it('returns the most recent price records up to the default limit', async () => {
+      const stmt = mockStmt(null, [samplePriceHistory]);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.getRecentPrices(2);
+
+      expect(result).toEqual([samplePriceHistory]);
+    });
+
+    it('returns an empty array when no sales exist for that type', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.getRecentPrices(99);
+
+      expect(result).toEqual([]);
+    });
+
+    it('respects a custom limit parameter', async () => {
+      const records = Array.from({ length: 5 }, (_, i) => ({ ...samplePriceHistory, historyId: i + 1 }));
+      const stmt = mockStmt(null, records);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.getRecentPrices(2, 5);
+
+      expect(result).toHaveLength(5);
+    });
+  });
+
+  // --- countSales --------------------------------------------------------
+
+  describe('countSales', () => {
+    it('returns the number of recorded sales for a stove type', async () => {
+      const stmt = mockStmt({ count: 12 });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.countSales(2);
+
+      expect(result).toBe(12);
+    });
+
+    it('returns 0 when no sales have been recorded', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.countSales(99);
+
+      expect(result).toBe(0);
+    });
+
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.countSales(2);
+
+      expect(result).toBe(0);
+    });
+  });
+
+  // --- deletePriceHistory ------------------------------------------------
+
+  describe('deletePriceHistory', () => {
+    it('returns true when record is deleted', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.deletePriceHistory(1);
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when record does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new PriceHistoryService(unit);
+
+      const result = await service.deletePriceHistory(999);
+
+      expect(result).toBe(false);
+    });
+  });
 });

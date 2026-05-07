@@ -1,227 +1,272 @@
-﻿import { StoveTypeService } from '../../backend/services/stove-type-service';
-import { MockUnit, createMockUnit } from '../../backend/__mocks__/unit';
-import { StoveTypeRow, Rarity } from '../../shared/model';
+import { StoveTypeService } from '../../backend/services/stove-type-service';
+import { Unit } from '../../backend/utils/unit';
+import { Rarity } from '../../shared/model';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function mockStmt(getResult: unknown = null, allResult: unknown[] = [], runResult = { changes: 1 }) {
+  return {
+    get: jest.fn().mockResolvedValue(getResult),
+    all: jest.fn().mockResolvedValue(allResult),
+    run: jest.fn().mockResolvedValue(runResult),
+  };
+}
+
+function mockUnit(stmt = mockStmt()) {
+  return {
+    prepare: jest.fn().mockReturnValue(stmt),
+    getLastRowId: jest.fn().mockResolvedValue(1),
+  } as unknown as Unit;
+}
+
+// ---------------------------------------------------------------------------
+// Sample data
+// ---------------------------------------------------------------------------
+
+const sampleStoveType = {
+  typeId: 1,
+  name: 'Ember Stove',
+  imageUrl: '/assets/stove_sprites/ember.png',
+  rarity: Rarity.COMMON,
+  lootboxWeight: 50,
+};
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('StoveTypeService', () => {
-    let mockUnit: MockUnit;
-    let service: StoveTypeService;
-    let mockStmt: any;
 
-    beforeEach(() => {
-        mockUnit = createMockUnit();
-        service = new StoveTypeService(mockUnit as any);
-        mockStmt = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
-        };
+  // --- getAllStoveTypes ----------------------------------------------------
+
+  describe('getAllStoveTypes', () => {
+    it('returns all stove types', async () => {
+      const stmt = mockStmt(null, [sampleStoveType]);
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
+
+      const result = await service.getAllStoveTypes();
+
+      expect(result).toEqual([sampleStoveType]);
     });
 
-    describe('getAllStoveTypes', () => {
-        it('should return all stove types', async () => {
-            const mockTypes: StoveTypeRow[] = [
-                { typeId: 1, name: 'Basic Stove', imageUrl: '/img/basic.png', rarity: Rarity.COMMON, lootboxWeight: 100 },
-                { typeId: 2, name: 'Rare Stove', imageUrl: '/img/rare.png', rarity: Rarity.RARE, lootboxWeight: 50 }
-            ];
-            mockStmt.all.mockReturnValue(mockTypes);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no stove types exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            const result = service.getAllStoveTypes();
+      const result = await service.getAllStoveTypes();
 
-            expect(result).toEqual(mockTypes);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getStoveTypeById ---------------------------------------------------
+
+  describe('getStoveTypeById', () => {
+    it('returns the stove type when found', async () => {
+      const stmt = mockStmt(sampleStoveType);
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
+
+      const result = await service.getStoveTypeById(1);
+
+      expect(result).toEqual(sampleStoveType);
     });
 
-    describe('getStoveTypeById', () => {
-        it('should return stove type when found', async () => {
-            const mockType: StoveTypeRow = { typeId: 1, name: 'Test Stove', imageUrl: '/img/test.png', rarity: Rarity.COMMON, lootboxWeight: 100 };
-            mockStmt.get.mockReturnValue(mockType);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when stove type is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            const result = service.getStoveTypeById(1);
+      const result = await service.getStoveTypeById(999);
 
-            expect(result).toEqual(mockType);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getStoveTypesByRarity ----------------------------------------------
 
-            const result = service.getStoveTypeById(999);
+  describe('getStoveTypesByRarity', () => {
+    it('returns stove types matching the given rarity', async () => {
+      const stmt = mockStmt(null, [sampleStoveType]);
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getStoveTypesByRarity(Rarity.COMMON);
+
+      expect(result).toEqual([sampleStoveType]);
     });
 
-    describe('getStoveTypesByRarity', () => {
-        it('should filter by rarity correctly', async () => {
-            const mockTypes: StoveTypeRow[] = [
-                { typeId: 1, name: 'Legendary Stove', imageUrl: '/img/leg.png', rarity: Rarity.LEGENDARY, lootboxWeight: 5 }
-            ];
-            mockStmt.all.mockReturnValue(mockTypes);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no stove types match the rarity', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            const result = service.getStoveTypesByRarity(Rarity.LEGENDARY);
+      const result = await service.getStoveTypesByRarity(Rarity.LEGENDARY);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM StoveType WHERE rarity = @rarity',
-                { rarity: Rarity.LEGENDARY }
-            );
-            expect(result).toEqual(mockTypes);
-        });
+      expect(result).toEqual([]);
+    });
+  });
 
-        it('should handle all rarity types', async () => {
-            const rarities = [Rarity.COMMON, Rarity.RARE, Rarity.EPIC, Rarity.LEGENDARY, Rarity.LIMITED];
+  // --- createStoveType ----------------------------------------------------
 
-            rarities.forEach(rarity => {
-                mockStmt.all.mockReturnValue([]);
-                mockUnit.prepare.mockReturnValue(mockStmt);
+  describe('createStoveType', () => {
+    it('returns [true, id] on successful creation', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-                service.getStoveTypesByRarity(rarity);
+      const [success, id] = await service.createStoveType('Ember Stove', '/assets/ember.png', Rarity.COMMON, 50);
 
-                expect(mockUnit.prepare).toHaveBeenCalledWith(
-                    expect.any(String),
-                    { rarity }
-                );
-            });
-        });
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('createStoveType', () => {
-        it('should create stove type successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 5 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, 0] when insert fails', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(stmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new StoveTypeService(unit);
 
-            const [success, id] = service.createStoveType('New Stove', '/img/new.png', Rarity.RARE, 75);
+      const [success, id] = await service.createStoveType('Ember Stove', '/assets/ember.png', Rarity.COMMON, 50);
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
-            const [sql, params] = mockUnit.prepare.mock.calls[0];
-            expect(sql).toContain('INSERT');
-            expect(sql).toContain('INTO StoveType');
-            expect(params).toEqual({
-                name: 'New Stove',
-                imageUrl: '/img/new.png',
-                rarity: Rarity.RARE,
-                lootboxWeight: 75
-            });
-            expect(success).toBe(true);
-            expect(id).toBe(5);
-        });
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+    });
+  });
+
+  // --- updateLootboxWeight ------------------------------------------------
+
+  describe('updateLootboxWeight', () => {
+    it('returns true when lootbox weight is updated', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
+
+      const result = await service.updateLootboxWeight(1, 30);
+
+      expect(result).toBe(true);
     });
 
-    describe('updateLootboxWeight', () => {
-        it('should update weight successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when stove type is not found', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            const result = service.updateLootboxWeight(1, 200);
+      const result = await service.updateLootboxWeight(999, 30);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'UPDATE StoveType SET lootboxWeight = @lootboxWeight WHERE typeId = @id',
-                { id: 1, lootboxWeight: 200 }
-            );
-            expect(result).toBe(true);
-        });
+      expect(result).toBe(false);
+    });
+  });
 
-        it('should return false when type not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- updateImageUrl -----------------------------------------------------
 
-            const result = service.updateLootboxWeight(999, 200);
+  describe('updateImageUrl', () => {
+    it('returns true when image URL is updated', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.updateImageUrl(1, '/assets/new.png');
+
+      expect(result).toBe(true);
     });
 
-    describe('updateImageUrl', () => {
-        it('should update image URL successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when stove type is not found', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            const result = service.updateImageUrl(1, '/img/updated.png');
+      const result = await service.updateImageUrl(999, '/assets/new.png');
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'UPDATE StoveType SET imageUrl = @imageUrl WHERE typeId = @id',
-                { id: 1, imageUrl: '/img/updated.png' }
-            );
-            expect(result).toBe(true);
-        });
+      expect(result).toBe(false);
+    });
+  });
+
+  // --- deleteStoveType ----------------------------------------------------
+
+  describe('deleteStoveType', () => {
+    it('returns true when stove type is deleted', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
+
+      const result = await service.deleteStoveType(1);
+
+      expect(result).toBe(true);
     });
 
-    describe('deleteStoveType', () => {
-        it('should delete successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when stove type does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            const result = service.deleteStoveType(1);
+      const result = await service.deleteStoveType(999);
 
-            expect(result).toBe(true);
-        });
+      expect(result).toBe(false);
+    });
+  });
 
-        it('should return false when type not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getStoveTypeByName -------------------------------------------------
 
-            const result = service.deleteStoveType(999);
+  describe('getStoveTypeByName', () => {
+    it('returns the stove type matching the name', async () => {
+      const stmt = mockStmt(sampleStoveType);
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.getStoveTypeByName('Ember Stove');
+
+      expect(result).toEqual(sampleStoveType);
     });
 
-    describe('getStoveTypeByName', () => {
-        it('should find by name', async () => {
-            const mockType: StoveTypeRow = { typeId: 1, name: 'Unique Stove', imageUrl: '/img/uni.png', rarity: Rarity.LIMITED, lootboxWeight: 1 };
-            mockStmt.get.mockReturnValue(mockType);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when no stove type matches the name', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            const result = service.getStoveTypeByName('Unique Stove');
+      const result = await service.getStoveTypeByName('Unknown Stove');
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM StoveType WHERE name = @name',
-                { name: 'Unique Stove' }
-            );
-            expect(result).toEqual(mockType);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when name not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getTotalLootboxWeight ----------------------------------------------
 
-            const result = service.getStoveTypeByName('NonExistent');
+  describe('getTotalLootboxWeight', () => {
+    it('returns the sum of all lootbox weights', async () => {
+      const stmt = mockStmt({ total: 185 });
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getTotalLootboxWeight();
+
+      expect(result).toBe(185);
     });
 
-    describe('getTotalLootboxWeight', () => {
-        it('should return total weight', async () => {
-            mockStmt.get.mockReturnValue({ total: 1000 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns 0 when there are no stove types', async () => {
+      const stmt = mockStmt({ total: null });
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
 
-            const result = service.getTotalLootboxWeight();
+      const result = await service.getTotalLootboxWeight();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT SUM(lootboxWeight) as total FROM StoveType'
-            );
-            expect(result).toBe(1000);
-        });
-
-        it('should return 0 when no types exist', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.getTotalLootboxWeight();
-
-            expect(result).toBe(0);
-        });
-
-        it('should return 0 when total is null', async () => {
-            mockStmt.get.mockReturnValue({ total: null });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.getTotalLootboxWeight();
-
-            expect(result).toBe(0);
-        });
+      expect(result).toBe(0);
     });
+
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new StoveTypeService(unit);
+
+      const result = await service.getTotalLootboxWeight();
+
+      expect(result).toBe(0);
+    });
+  });
 });

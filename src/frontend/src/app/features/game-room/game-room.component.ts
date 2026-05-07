@@ -1,20 +1,24 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { HttpClient } from '@angular/common/http';
+import { Poker } from '../poker/poker';
+import { BlackjackComponent } from '../blackjack/blackjack';
 
 interface RoomResponse {
   roomId: string;
   status: string;
   maxPlayers: number;
-  players: Array<{ playerId: number; seatIndex: number; connectionState: string }>;
+  gameType: string;
+  settings: Record<string, unknown>;
+  players: Array<{ playerId: number; seatIndex: number; connectionState: string; username?: string }>;
 }
 
 @Component({
   selector: 'app-game-room',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Poker, BlackjackComponent],
   templateUrl: './game-room.component.html',
   styleUrls: ['./game-room.component.css']
 })
@@ -25,14 +29,33 @@ export class GameRoomComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
 
   roomId = signal<string>('');
-  roomStatus = signal<string>('');
+  roomGameType = signal<string>('');
   maxPlayers = signal<number>(0);
+  roomSettings = signal<Record<string, unknown>>({});
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
+  mockNotification = signal<string | null>(null);
 
   connectionState = this.ws.connectionState;
   players = this.ws.playersInRoom;
   lastError = this.ws.lastError;
+  stateBlob = this.ws.stateBlob;
+
+  roomStatus = computed(() => {
+    const blobStatus = this.stateBlob()?.['status'] as string | undefined;
+    // If WS has delivered an active game state, use that; otherwise fall back to HTTP-fetched status
+    return blobStatus === 'active' ? 'active' : this._httpRoomStatus();
+  });
+
+  private _httpRoomStatus = signal<string>('');
+
+  minPlayers = computed(() => {
+    return this.roomGameType() === 'blackjack' ? 1 : 2;
+  });
+
+  canStartGame = computed(() => {
+    return this.roomStatus() === 'waiting' && this.players().length >= this.minPlayers();
+  });
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('roomId');
@@ -69,8 +92,10 @@ export class GameRoomComponent implements OnInit, OnDestroy {
     try {
       const room = await this.http.get<RoomResponse>(`/api/rooms/${id}`).toPromise();
       if (room) {
-        this.roomStatus.set(room.status);
+        this._httpRoomStatus.set(room.status);
         this.maxPlayers.set(room.maxPlayers);
+        this.roomGameType.set(room.gameType);
+        this.roomSettings.set(room.settings ?? {});
       }
     } catch (e) {
       this.error.set('Room not found');
@@ -86,6 +111,31 @@ export class GameRoomComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.ws.leaveRoom();
     this.ws.disconnect();
+  }
+
+  startGame(): void {
+    this.mockNotification.set(null);
+    if (this.roomGameType() === 'test') {
+      this.mockNotification.set('No frontend yet');
+      return;
+    }
+    if (!this.canStartGame()) {
+      this.mockNotification.set(`At least ${this.minPlayers()} players are required to start the game.`);
+      return;
+    }
+
+    const maxPlayers = this.maxPlayers();
+    const turnTime = this.roomSettings()['turnTime'];
+    if (maxPlayers < 2 || maxPlayers > 6) {
+      this.mockNotification.set('Max players must be between 2 and 6.');
+      return;
+    }
+    if (typeof turnTime !== 'number' || turnTime <= 0) {
+      this.mockNotification.set('Turn time must be greater than 0.');
+      return;
+    }
+
+    this.ws.sendStartGame();
   }
 
   sendTestAction(): void {

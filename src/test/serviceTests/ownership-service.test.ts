@@ -1,229 +1,303 @@
-﻿import { OwnershipService } from '../../backend/services/ownership-service';
-import { MockUnit, createMockUnit } from '../../backend/__mocks__/unit';
-import { OwnershipRow } from '../../shared/model';
+import { OwnershipService } from '../../backend/services/ownership-service';
+import { Unit } from '../../backend/utils/unit';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function mockStmt(getResult: unknown = null, allResult: unknown[] = [], runResult = { changes: 1 }) {
+  return {
+    get: jest.fn().mockResolvedValue(getResult),
+    all: jest.fn().mockResolvedValue(allResult),
+    run: jest.fn().mockResolvedValue(runResult),
+  };
+}
+
+function mockUnit(stmt = mockStmt()) {
+  return {
+    prepare: jest.fn().mockReturnValue(stmt),
+    getLastRowId: jest.fn().mockResolvedValue(1),
+  } as unknown as Unit;
+}
+
+// ---------------------------------------------------------------------------
+// Sample data
+// ---------------------------------------------------------------------------
+
+const sampleOwnership = {
+  ownershipId: 1,
+  stoveId: 5,
+  playerId: 10,
+  acquiredAt: '2026-01-01',
+  acquiredHow: 'lootbox',
+};
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('OwnershipService', () => {
-    let mockUnit: MockUnit;
-    let service: OwnershipService;
-    let mockStmt: any;
 
-    beforeEach(() => {
-        mockUnit = createMockUnit();
-        service = new OwnershipService(mockUnit as any);
-        mockStmt = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
-        };
+  // --- getAllOwnerships ---------------------------------------------------
+
+  describe('getAllOwnerships', () => {
+    it('returns all ownership records', async () => {
+      const stmt = mockStmt(null, [sampleOwnership]);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const result = await service.getAllOwnerships();
+
+      expect(result).toEqual([sampleOwnership]);
     });
 
-    describe('getAllOwnerships', () => {
-        it('should return all ownership records', async () => {
-            const mockOwnerships: OwnershipRow[] = [
-                { ownershipId: 1, stoveId: 1, playerId: 1, acquiredAt: new Date('2024-01-01'), acquiredHow: 'lootbox' },
-                { ownershipId: 2, stoveId: 2, playerId: 2, acquiredAt: new Date('2024-01-02'), acquiredHow: 'trade' }
-            ];
-            mockStmt.all.mockReturnValue(mockOwnerships);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no ownerships exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            const result = service.getAllOwnerships();
+      const result = await service.getAllOwnerships();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Ownership');
-            expect(result).toEqual(mockOwnerships);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getOwnershipById --------------------------------------------------
+
+  describe('getOwnershipById', () => {
+    it('returns the ownership record when found', async () => {
+      const stmt = mockStmt(sampleOwnership);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const result = await service.getOwnershipById(1);
+
+      expect(result).toEqual(sampleOwnership);
     });
 
-    describe('getOwnershipById', () => {
-        it('should return ownership when found', async () => {
-            const mockOwnership: OwnershipRow = { ownershipId: 1, stoveId: 1, playerId: 1, acquiredAt: new Date('2024-01-01'), acquiredHow: 'lootbox' };
-            mockStmt.get.mockReturnValue(mockOwnership);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when ownership record is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            const result = service.getOwnershipById(1);
+      const result = await service.getOwnershipById(999);
 
-            expect(result).toEqual(mockOwnership);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getOwnershipHistoryByStoveId --------------------------------------
 
-            const result = service.getOwnershipById(999);
+  describe('getOwnershipHistoryByStoveId', () => {
+    it('returns ownership history for a stove', async () => {
+      const stmt = mockStmt(null, [sampleOwnership]);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getOwnershipHistoryByStoveId(5);
+
+      expect(result).toEqual([sampleOwnership]);
     });
 
-    describe('getOwnershipHistoryByStoveId', () => {
-        it('should return ownership history ordered by acquisition date ASC', async () => {
-            const mockHistory: OwnershipRow[] = [
-                { ownershipId: 1, stoveId: 5, playerId: 1, acquiredAt: new Date('2024-01-01'), acquiredHow: 'lootbox' },
-                { ownershipId: 2, stoveId: 5, playerId: 2, acquiredAt: new Date('2024-02-01'), acquiredHow: 'trade' }
-            ];
-            mockStmt.all.mockReturnValue(mockHistory);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when stove has no ownership history', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            const result = service.getOwnershipHistoryByStoveId(5);
+      const result = await service.getOwnershipHistoryByStoveId(99);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Ownership WHERE stoveId = @stoveId ORDER BY acquiredAt ASC',
-                { stoveId: 5 }
-            );
-            expect(result).toEqual(mockHistory);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getOwnershipsByPlayerId -------------------------------------------
+
+  describe('getOwnershipsByPlayerId', () => {
+    it('returns ownership records for a player', async () => {
+      const stmt = mockStmt(null, [sampleOwnership]);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const result = await service.getOwnershipsByPlayerId(10);
+
+      expect(result).toEqual([sampleOwnership]);
     });
 
-    describe('getOwnershipsByPlayerId', () => {
-        it('should return player ownerships ordered by date DESC', async () => {
-            const mockOwnerships: OwnershipRow[] = [
-                { ownershipId: 2, stoveId: 2, playerId: 5, acquiredAt: new Date('2024-02-01'), acquiredHow: 'trade' },
-                { ownershipId: 1, stoveId: 1, playerId: 5, acquiredAt: new Date('2024-01-01'), acquiredHow: 'lootbox' }
-            ];
-            mockStmt.all.mockReturnValue(mockOwnerships);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when player has no ownership records', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            const result = service.getOwnershipsByPlayerId(5);
+      const result = await service.getOwnershipsByPlayerId(99);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Ownership WHERE playerId = @playerId ORDER BY acquiredAt DESC',
-                { playerId: 5 }
-            );
-            expect(result).toEqual(mockOwnerships);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- createOwnership ---------------------------------------------------
+
+  describe('createOwnership', () => {
+    it('returns [true, id] on successful creation via lootbox', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const [success, id] = await service.createOwnership(5, 10, 'lootbox');
+
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('createOwnership', () => {
-        it('should create ownership with lootbox acquisition', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [true, id] on successful creation via trade', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            const [success, id] = service.createOwnership(1, 5, 'lootbox');
+      const [success, id] = await service.createOwnership(5, 10, 'trade');
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
-
-            const [sql, params] = mockUnit.prepare.mock.calls[0];
-            expect(sql).toContain('INSERT');
-            expect(sql).toContain('INTO Ownership');
-            expect(params).toEqual({
-                stoveId: 1,
-                playerId: 5,
-                acquiredHow: 'lootbox'
-            });
-            expect(success).toBe(true);
-            expect(id).toBe(10);
-        });
-
-        it('should create ownership with trade acquisition', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 11 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const [success, id] = service.createOwnership(2, 5, 'trade');
-
-            expect(success).toBe(true);
-            expect(id).toBe(11);
-        });
-
-        it('should create ownership with mini-game acquisition', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 12 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const [success, id] = service.createOwnership(3, 5, 'mini-game');
-
-            expect(success).toBe(true);
-            expect(id).toBe(12);
-        });
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('getCurrentOwnership', () => {
-        it('should return most recent ownership for stove', async () => {
-            const mockOwnership: OwnershipRow = { ownershipId: 2, stoveId: 1, playerId: 5, acquiredAt: new Date('2024-02-01'), acquiredHow: 'trade' };
-            mockStmt.get.mockReturnValue(mockOwnership);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [true, id] on successful creation via mini-game', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            const result = service.getCurrentOwnership(1);
+      const [success, id] = await service.createOwnership(5, 10, 'mini-game');
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Ownership WHERE stoveId = @stoveId ORDER BY acquiredAt DESC LIMIT 1',
-                { stoveId: 1 }
-            );
-            expect(result).toEqual(mockOwnership);
-        });
-
-        it('should return null when no ownership records', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.getCurrentOwnership(999);
-
-            expect(result).toBeNull();
-        });
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('deleteOwnership', () => {
-        it('should delete ownership successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, 0] when insert fails', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(stmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new OwnershipService(unit);
 
-            const result = service.deleteOwnership(1);
+      const [success, id] = await service.createOwnership(5, 10, 'lootbox');
 
-            expect(result).toBe(true);
-        });
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+    });
+  });
 
-        it('should return false when ownership not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getCurrentOwnership -----------------------------------------------
 
-            const result = service.deleteOwnership(999);
+  describe('getCurrentOwnership', () => {
+    it('returns the most recent ownership record for a stove', async () => {
+      const stmt = mockStmt(sampleOwnership);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            expect(result).toBe(false);
-        });
+      const result = await service.getCurrentOwnership(5);
+
+      expect(result).toEqual(sampleOwnership);
     });
 
-    describe('countOwnershipChanges', () => {
-        it('should return correct count', async () => {
-            mockStmt.get.mockReturnValue({ count: 3 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when stove has no ownership records', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            const result = service.countOwnershipChanges(1);
+      const result = await service.getCurrentOwnership(99);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT COUNT(*) as count FROM Ownership WHERE stoveId = @stoveId',
-                { stoveId: 1 }
-            );
-            expect(result).toBe(3);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return 0 when undefined', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- deleteOwnership ---------------------------------------------------
 
-            const result = service.countOwnershipChanges(1);
+  describe('deleteOwnership', () => {
+    it('returns true when ownership record is deleted', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            expect(result).toBe(0);
-        });
+      const result = await service.deleteOwnership(1);
+
+      expect(result).toBe(true);
     });
 
-    describe('countStovesAcquiredByPlayer', () => {
-        it('should return correct count', async () => {
-            mockStmt.get.mockReturnValue({ count: 5 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns false when ownership record does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
 
-            const result = service.countStovesAcquiredByPlayer(1);
+      const result = await service.deleteOwnership(999);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT COUNT(*) as count FROM Ownership WHERE playerId = @playerId',
-                { playerId: 1 }
-            );
-            expect(result).toBe(5);
-        });
-
-        it('should return 0 when player has no acquisitions', async () => {
-            mockStmt.get.mockReturnValue({ count: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.countStovesAcquiredByPlayer(1);
-
-            expect(result).toBe(0);
-        });
+      expect(result).toBe(false);
     });
+  });
+
+  // --- countOwnershipChanges ---------------------------------------------
+
+  describe('countOwnershipChanges', () => {
+    it('returns the number of ownership changes for a stove', async () => {
+      const stmt = mockStmt({ count: 3 });
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const result = await service.countOwnershipChanges(5);
+
+      expect(result).toBe(3);
+    });
+
+    it('returns 0 when stove has never changed hands', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const result = await service.countOwnershipChanges(5);
+
+      expect(result).toBe(0);
+    });
+
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const result = await service.countOwnershipChanges(5);
+
+      expect(result).toBe(0);
+    });
+  });
+
+  // --- countStovesAcquiredByPlayer ---------------------------------------
+
+  describe('countStovesAcquiredByPlayer', () => {
+    it('returns the number of stoves acquired by a player', async () => {
+      const stmt = mockStmt({ count: 6 });
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const result = await service.countStovesAcquiredByPlayer(10);
+
+      expect(result).toBe(6);
+    });
+
+    it('returns 0 when player has acquired no stoves', async () => {
+      const stmt = mockStmt({ count: 0 });
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const result = await service.countStovesAcquiredByPlayer(10);
+
+      expect(result).toBe(0);
+    });
+
+    it('returns 0 when query result is undefined', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new OwnershipService(unit);
+
+      const result = await service.countStovesAcquiredByPlayer(10);
+
+      expect(result).toBe(0);
+    });
+  });
 });

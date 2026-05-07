@@ -1,225 +1,423 @@
-﻿import { LootboxService } from '../../backend/services/lootbox-service';
-import { MockUnit, createMockUnit } from '../../backend/__mocks__/unit';
-import { LootboxRow, LootboxTypeRow, LootboxDropRow } from '../../shared/model';
+import { LootboxService } from '../../backend/services/lootbox-service';
+import { Unit } from '../../backend/utils/unit';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function mockStmt(getResult: unknown = null, allResult: unknown[] = [], runResult = { changes: 1 }) {
+  return {
+    get: jest.fn().mockResolvedValue(getResult),
+    all: jest.fn().mockResolvedValue(allResult),
+    run: jest.fn().mockResolvedValue(runResult),
+  };
+}
+
+/**
+ * Build a unit mock where prepare() returns different stmts per call index.
+ * If fewer overrides are given than prepare() calls made, the last override repeats.
+ */
+function mockUnitSequence(stmts: ReturnType<typeof mockStmt>[]) {
+  let callIndex = 0;
+  return {
+    prepare: jest.fn().mockImplementation(() => {
+      const stmt = stmts[Math.min(callIndex, stmts.length - 1)];
+      callIndex++;
+      return stmt;
+    }),
+    getLastRowId: jest.fn().mockResolvedValue(1),
+  } as unknown as Unit;
+}
+
+function mockUnit(stmt = mockStmt()) {
+  return {
+    prepare: jest.fn().mockReturnValue(stmt),
+    getLastRowId: jest.fn().mockResolvedValue(1),
+  } as unknown as Unit;
+}
+
+const sampleLootbox = {
+  lootboxId: 1,
+  lootboxTypeId: 1,
+  playerId: 10,
+  openedAt: null,
+  acquiredHow: 'free',
+};
+
+const sampleLootboxType = {
+  lootboxTypeId: 1,
+  name: 'Standard Lootbox',
+  isAvailable: 1,
+};
+
+const sampleLootboxDrop = {
+  dropId: 1,
+  lootboxId: 1,
+  stoveId: 5,
+};
+
+const sampleStoveType = {
+  typeId: 2,
+  name: 'Ember Stove',
+  imageUrl: '/assets/stove_sprites/ember.png',
+};
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('LootboxService', () => {
-    let mockUnit: MockUnit;
-    let service: LootboxService;
-    let mockStmt: any;
 
-    beforeEach(() => {
-        mockUnit = createMockUnit();
-        service = new LootboxService(mockUnit as any);
-        mockStmt = {
-            all: jest.fn(),
-            get: jest.fn(),
-            run: jest.fn()
-        };
+  // --- getAllLootboxes ----------------------------------------------------
+
+  describe('getAllLootboxes', () => {
+    it('returns all lootboxes', async () => {
+      const stmt = mockStmt(null, [sampleLootbox]);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
+
+      const result = await service.getAllLootboxes();
+
+      expect(result).toEqual([sampleLootbox]);
     });
 
-    describe('getAllLootboxes', () => {
-        it('should return all lootboxes', async () => {
-            const mockLootboxes: LootboxRow[] = [
-                { lootboxId: 1, lootboxTypeId: 1, playerId: 1, openedAt: new Date('2024-01-01'), acquiredHow: 'free' },
-                { lootboxId: 2, lootboxTypeId: 2, playerId: 2, openedAt: new Date('2024-01-02'), acquiredHow: 'purchase' }
-            ];
-            mockStmt.all.mockReturnValue(mockLootboxes);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns an empty array when no lootboxes exist', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
 
-            const result = service.getAllLootboxes();
+      const result = await service.getAllLootboxes();
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM Lootbox');
-            expect(result).toEqual(mockLootboxes);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getLootboxById ----------------------------------------------------
+
+  describe('getLootboxById', () => {
+    it('returns the lootbox when found', async () => {
+      const stmt = mockStmt(sampleLootbox);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
+
+      const result = await service.getLootboxById(1);
+
+      expect(result).toEqual(sampleLootbox);
     });
 
-    describe('getLootboxById', () => {
-        it('should return lootbox when found', async () => {
-            const mockLootbox: LootboxRow = { lootboxId: 1, lootboxTypeId: 1, playerId: 1, openedAt: new Date('2024-01-01'), acquiredHow: 'free' };
-            mockStmt.get.mockReturnValue(mockLootbox);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when lootbox is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
 
-            const result = service.getLootboxById(1);
+      const result = await service.getLootboxById(999);
 
-            expect(result).toEqual(mockLootbox);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getLootboxesByPlayerId -------------------------------------------
 
-            const result = service.getLootboxById(999);
+  describe('getLootboxesByPlayerId', () => {
+    it('returns unopened lootboxes for a player', async () => {
+      // Call order: (1) SELECT unopened lootboxes → [sampleLootbox]
+      //             (2) SELECT lootboxCount → { lootboxCount: 1 }
+      const lootboxStmt = mockStmt(null, [sampleLootbox]);
+      const playerStmt = mockStmt({ lootboxCount: 1 });
+      const unit = mockUnitSequence([lootboxStmt, playerStmt]);
+      const service = new LootboxService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getLootboxesByPlayerId(10);
+
+      expect(result).toEqual([sampleLootbox]);
     });
 
-    describe('getLootboxesByPlayerId', () => {
-        it('should return unopened lootboxes for specific player', async () => {
-            const mockLootboxes: LootboxRow[] = [
-                { lootboxId: 1, lootboxTypeId: 1, playerId: 5, openedAt: null, acquiredHow: 'free' }
-            ];
-            const countStmt = { get: jest.fn().mockReturnValue({ lootboxCount: 1 }) };
-            mockStmt.all.mockReturnValueOnce(mockLootboxes);
-            mockUnit.prepare
-                .mockReturnValueOnce(mockStmt)
-                .mockReturnValueOnce(countStmt);
+    it('returns empty array when player has no lootboxes and lootboxCount is 0', async () => {
+      const emptyStmt = mockStmt(null, []);
+      const playerStmt = mockStmt({ lootboxCount: 0 });
+      const unit = mockUnitSequence([emptyStmt, playerStmt]);
+      const service = new LootboxService(unit);
 
-            const result = service.getLootboxesByPlayerId(5);
+      const result = await service.getLootboxesByPlayerId(10);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM Lootbox WHERE playerId = @playerId AND openedAt IS NULL',
-                { playerId: 5 }
-            );
-            expect(result).toEqual(mockLootboxes);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- createLootbox -----------------------------------------------------
+
+  describe('createLootbox', () => {
+    it('returns [true, id] and increments lootboxCount on success', async () => {
+      const insertStmt = mockStmt(null, [], { changes: 1 });
+      const updateStmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnitSequence([insertStmt, updateStmt]);
+      const service = new LootboxService(unit);
+
+      const [success, id] = await service.createLootbox(1, 10, 'free');
+
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('createLootbox', () => {
-        it('should create lootbox with free acquisition and increment player count', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 10 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, 0] when insert fails and does not increment lootboxCount', async () => {
+      const insertStmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(insertStmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new LootboxService(unit);
 
-            const [success, id] = service.createLootbox(1, 5, 'free');
+      const [success, id] = await service.createLootbox(1, 10, 'free');
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(2); // INSERT Lootbox + UPDATE Player
-            const [sql, params] = mockUnit.prepare.mock.calls[0];
-            expect(sql).toContain('INSERT');
-            expect(sql).toContain('INTO Lootbox');
-            expect(params).toEqual({ lootboxTypeId: 1, playerId: 5, acquiredHow: 'free' });
-            expect(success).toBe(true);
-            expect(id).toBe(10);
-        });
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+      // lootboxCount update should NOT have been called
+      expect(unit.prepare).toHaveBeenCalledTimes(1);
+    });
+  });
 
-        it('should create lootbox with purchase acquisition and increment player count', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 11 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getAvailableLootboxTypes ------------------------------------------
 
-            const [success, id] = service.createLootbox(2, 5, 'purchase');
+  describe('getAvailableLootboxTypes', () => {
+    it('returns only available lootbox types', async () => {
+      const stmt = mockStmt(null, [sampleLootboxType]);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(2);
-            expect(success).toBe(true);
-            expect(id).toBe(11);
-        });
+      const result = await service.getAvailableLootboxTypes();
 
-        it('should create lootbox with reward acquisition', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 12 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const [success, id] = service.createLootbox(1, 5, 'reward');
-
-            expect(success).toBe(true);
-            expect(id).toBe(12);
-        });
+      expect(result).toEqual([sampleLootboxType]);
     });
 
-    describe('getAllLootboxTypes', () => {
-        it('should return all lootbox types', async () => {
-            const mockTypes: LootboxTypeRow[] = [
-                { lootboxTypeId: 1, name: 'Standard', description: 'A standard box', costCoins: 0, costFree: true, dailyLimit: null, isAvailable: true },
-                { lootboxTypeId: 2, name: 'Premium', description: 'A premium box', costCoins: 500, costFree: false, dailyLimit: 3, isAvailable: true }
-            ];
-            mockStmt.all.mockReturnValue(mockTypes);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when no types are available', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
 
-            const result = service.getAllLootboxTypes();
+      const result = await service.getAvailableLootboxTypes();
 
-            expect(result).toEqual(mockTypes);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- getLootboxTypeById -----------------------------------------------
+
+  describe('getLootboxTypeById', () => {
+    it('returns the lootbox type when found', async () => {
+      const stmt = mockStmt(sampleLootboxType);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
+
+      const result = await service.getLootboxTypeById(1);
+
+      expect(result).toEqual(sampleLootboxType);
     });
 
-    describe('getLootboxTypeById', () => {
-        it('should return type when found', async () => {
-            const mockType: LootboxTypeRow = { lootboxTypeId: 1, name: 'Standard', description: 'A box', costCoins: 0, costFree: true, dailyLimit: null, isAvailable: true };
-            mockStmt.get.mockReturnValue(mockType);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns null when lootbox type is not found', async () => {
+      const stmt = mockStmt(undefined);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
 
-            const result = service.getLootboxTypeById(1);
+      const result = await service.getLootboxTypeById(999);
 
-            expect(result).toEqual(mockType);
-        });
+      expect(result).toBeNull();
+    });
+  });
 
-        it('should return null when not found', async () => {
-            mockStmt.get.mockReturnValue(undefined);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+  // --- getAllLootboxTypes ------------------------------------------------
 
-            const result = service.getLootboxTypeById(999);
+  describe('getAllLootboxTypes', () => {
+    it('returns all lootbox types', async () => {
+      const stmt = mockStmt(null, [sampleLootboxType]);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
 
-            expect(result).toBeNull();
-        });
+      const result = await service.getAllLootboxTypes();
+
+      expect(result).toEqual([sampleLootboxType]);
+    });
+  });
+
+  // --- getDropsByLootboxId ----------------------------------------------
+
+  describe('getDropsByLootboxId', () => {
+    it('returns drops associated with a lootbox', async () => {
+      const stmt = mockStmt(null, [sampleLootboxDrop]);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
+
+      const result = await service.getDropsByLootboxId(1);
+
+      expect(result).toEqual([sampleLootboxDrop]);
     });
 
-    describe('getAvailableLootboxTypes', () => {
-        it('should return only available types', async () => {
-            const mockTypes: LootboxTypeRow[] = [
-                { lootboxTypeId: 1, name: 'Standard', description: 'A box', costCoins: 0, costFree: true, dailyLimit: null, isAvailable: true }
-            ];
-            mockStmt.all.mockReturnValue(mockTypes);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns empty array when lootbox has no drops', async () => {
+      const stmt = mockStmt(null, []);
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
 
-            const result = service.getAvailableLootboxTypes();
+      const result = await service.getDropsByLootboxId(99);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith('SELECT * FROM LootboxType WHERE isAvailable = 1');
-            expect(result).toEqual(mockTypes);
-        });
+      expect(result).toEqual([]);
+    });
+  });
+
+  // --- createLootboxDrop -----------------------------------------------
+
+  describe('createLootboxDrop', () => {
+    it('returns [true, id] on successful drop creation', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
+
+      const [success, id] = await service.createLootboxDrop(1, 5);
+
+      expect(success).toBe(true);
+      expect(id).toBe(1);
     });
 
-    describe('getDropsByLootboxId', () => {
-        it('should return drops for lootbox', async () => {
-            const mockDrops: LootboxDropRow[] = [
-                { dropId: 1, lootboxId: 5, stoveId: 10 }
-            ];
-            mockStmt.all.mockReturnValue(mockDrops);
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, 0] when insert fails', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = {
+        prepare: jest.fn().mockReturnValue(stmt),
+        getLastRowId: jest.fn().mockResolvedValue(0),
+      } as unknown as Unit;
+      const service = new LootboxService(unit);
 
-            const result = service.getDropsByLootboxId(5);
+      const [success, id] = await service.createLootboxDrop(1, 5);
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'SELECT * FROM LootboxDrop WHERE lootboxId = @lootboxId',
-                { lootboxId: 5 }
-            );
-            expect(result).toEqual(mockDrops);
-        });
+      expect(success).toBe(false);
+      expect(id).toBe(0);
+    });
+  });
+
+  // --- openLootbox -------------------------------------------------------
+
+  describe('openLootbox', () => {
+    it('returns [false, null] when lootbox does not exist or is already opened', async () => {
+      // First prepare() = verify lootbox ownership → not found
+      const verifyStmt = mockStmt(undefined);
+      const unit = mockUnitSequence([verifyStmt]);
+      const service = new LootboxService(unit);
+
+      const [success, result] = await service.openLootbox(99, 10);
+
+      expect(success).toBe(false);
+      expect(result).toBeNull();
     });
 
-    describe('createLootboxDrop', () => {
-        it('should create drop successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1, lastInsertRowid: 20 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [false, null] when the lootbox is listed on the marketplace', async () => {
+      // (1) verifyStmt → lootbox found
+      // (2) isLootboxListed count → { count: 1 } (listed)
+      const verifyStmt = mockStmt(sampleLootbox);
+      const listedStmt = mockStmt({ count: 1 });
+      const unit = mockUnitSequence([verifyStmt, listedStmt]);
+      const service = new LootboxService(unit);
 
-            const [success, id] = service.createLootboxDrop(5, 10);
+      const [success, result] = await service.openLootbox(1, 10);
 
-            expect(mockUnit.prepare).toHaveBeenCalledTimes(1);
-            const [sql, params] = mockUnit.prepare.mock.calls[0];
-            expect(sql).toContain('INSERT');
-            expect(sql).toContain('INTO LootboxDrop');
-            expect(params).toEqual({ lootboxId: 5, stoveId: 10 });
-            expect(success).toBe(true);
-            expect(id).toBe(20);
-        });
+      expect(success).toBe(false);
+      expect(result).toBeNull();
     });
 
-    describe('deleteLootbox', () => {
-        it('should delete lootbox successfully', async () => {
-            mockStmt.run.mockReturnValue({ changes: 1 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
+    it('returns [true, drop result] on successful lootbox open', async () => {
+      // Call sequence:
+      // (1) verify lootbox → sampleLootbox
+      // (2) isLootboxListed count → { count: 0 }
+      // (3) pickStoveTypeByRarity all → [sampleStoveType]
+      // (4) INSERT Stove run
+      // (5) markOpened run
+      // (6) INSERT LootboxDrop run
+      // (7) decrement lootboxCount run
+      const verifyStmt = mockStmt(sampleLootbox);
+      const notListedStmt = mockStmt({ count: 0 });
+      const stoveTypesStmt = mockStmt(null, [sampleStoveType]);
+      const insertStmt = mockStmt(null, [], { changes: 1 });
 
-            const result = service.deleteLootbox(1);
+      const unit = mockUnitSequence([
+        verifyStmt,      // verify ownership
+        notListedStmt,   // isLootboxListed
+        stoveTypesStmt,  // pickStoveTypeByRarity
+        insertStmt,      // INSERT Stove
+        insertStmt,      // UPDATE Lootbox openedAt
+        insertStmt,      // INSERT LootboxDrop
+        insertStmt,      // UPDATE Player lootboxCount
+      ]);
+      (unit as any).getLastRowId = jest.fn()
+          .mockResolvedValueOnce(55)   // stoveId
+          .mockResolvedValueOnce(7);   // dropId
 
-            expect(mockUnit.prepare).toHaveBeenCalledWith(
-                'DELETE FROM Lootbox WHERE lootboxId = @id',
-                { id: 1 }
-            );
-            expect(result).toBe(true);
-        });
+      const service = new LootboxService(unit);
+      const [success, result] = await service.openLootbox(1, 10);
 
-        it('should return false when lootbox not found', async () => {
-            mockStmt.run.mockReturnValue({ changes: 0 });
-            mockUnit.prepare.mockReturnValue(mockStmt);
-
-            const result = service.deleteLootbox(999);
-
-            expect(result).toBe(false);
-        });
+      expect(success).toBe(true);
+      expect(result).not.toBeNull();
+      expect(result?.stoveId).toBe(55);
+      expect(result?.stoveName).toBe('Ember Stove');
+      expect(result?.lootboxId).toBe(1);
+      expect(typeof result?.rarity).toBe('string');
     });
+
+    it('returns [false, null] when no stove type matches the rolled rarity', async () => {
+      const verifyStmt = mockStmt(sampleLootbox);
+      const notListedStmt = mockStmt({ count: 0 });
+      const emptyStoveTypes = mockStmt(null, []); // no matching stove type
+
+      const unit = mockUnitSequence([verifyStmt, notListedStmt, emptyStoveTypes]);
+      const service = new LootboxService(unit);
+
+      const [success, result] = await service.openLootbox(1, 10);
+
+      expect(success).toBe(false);
+      expect(result).toBeNull();
+    });
+  });
+
+  // --- updateLootboxOwner -----------------------------------------------
+
+  describe('updateLootboxOwner', () => {
+    it('returns true when owner is updated', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
+
+      const result = await service.updateLootboxOwner(1, 20);
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when lootbox is not found', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
+
+      const result = await service.updateLootboxOwner(999, 20);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  // --- deleteLootbox -----------------------------------------------------
+
+  describe('deleteLootbox', () => {
+    it('returns true when lootbox is deleted', async () => {
+      const stmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
+
+      const result = await service.deleteLootbox(1);
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when lootbox does not exist', async () => {
+      const stmt = mockStmt(null, [], { changes: 0 });
+      const unit = mockUnit(stmt);
+      const service = new LootboxService(unit);
+
+      const result = await service.deleteLootbox(999);
+
+      expect(result).toBe(false);
+    });
+  });
 });

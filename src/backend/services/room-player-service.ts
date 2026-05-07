@@ -23,7 +23,10 @@ export class RoomPlayerService extends ServiceBase {
 
     async getPlayersInRoom(roomId: string): Promise<RoomPlayerRow[]> {
         const stmt = this.unit.prepare<RoomPlayerRow, { roomId: string }>(
-            `SELECT * FROM RoomPlayer WHERE roomId = @roomId`,
+            `SELECT rp.*, p.username
+             FROM RoomPlayer rp
+             JOIN Player p ON rp.playerId = p.playerId
+             WHERE rp.roomId = @roomId`,
             { roomId }
         );
         return stmt.all();
@@ -38,12 +41,13 @@ export class RoomPlayerService extends ServiceBase {
     }
 
     async updateConnectionState(roomPlayerId: string, state: ConnectionState): Promise<boolean> {
+        const disconnectedAt = state === 'disconnected' ? new Date() : null;
         const stmt = this.unit.prepare<
             unknown,
-            { roomPlayerId: string; state: string }
+            { roomPlayerId: string; state: string; disconnectedAt: Date | null }
         >(
-            `UPDATE RoomPlayer SET connectionState = @state WHERE roomPlayerId = @roomPlayerId`,
-            { roomPlayerId, state }
+            `UPDATE RoomPlayer SET connectionState = @state, disconnectedAt = @disconnectedAt WHERE roomPlayerId = @roomPlayerId`,
+            { roomPlayerId, state, disconnectedAt }
         );
         return (await stmt.run()).changes === 1;
     }
