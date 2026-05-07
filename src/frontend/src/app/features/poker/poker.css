@@ -604,7 +604,7 @@
 
 .pt-turn-indicator {
   position: absolute;
-  top: 12px;
+  top: 34%;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -686,7 +686,7 @@
 .pt-card-slot {
   border-radius: var(--radius-card);
   border: 1.5px dashed var(--card-empty);
-  width: clamp(75px, 14%, 130px);
+  width: clamp(95px, 16%, 150px);
   aspect-ratio: 2.5 / 3.5;
   overflow: visible;
   display: flex;
@@ -697,7 +697,7 @@
 }
 
 .pt-card-slot--hole {
-  width: clamp(58px, 11%, 95px);
+  width: clamp(75px, 13%, 115px);
 }
 
 .pt-card-slot--filled {
@@ -1210,11 +1210,11 @@
   }
 
   .pt-card-slot {
-    width: clamp(55px, 12%, 90px);
+    width: clamp(70px, 14%, 110px);
   }
 
   .pt-card-slot--hole {
-    width: clamp(48px, 10%, 75px);
+    width: clamp(58px, 11%, 90px);
   }
 
   .game-announcement__text {
