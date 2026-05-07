@@ -1,0 +1,48 @@
+<div class="casino-container">
+  <div class="felt-table">
+
+    <section class="dealer-box">
+      <div class="label">Dealer</div>
+      <div class="hand-display">
+        @for (card of this.dealerHand(); track $index) {
+          <div class="card-sprite" [class.red]="card.suit === 'H' || card.suit === 'D'">
+            <span class="rank">{{ card.rank }}</span>
+            <span class="suit">{{ card.symbol }}</span>
+          </div>
+        } @empty {
+          <div class="empty-slot"></div>
+          <div class="empty-slot"></div>
+        }
+      </div>
+    </section>
+
+    <div class="game-announcer">
+      <h1 [class.highlight]="this.gameState() === 'resolved'">{{ this.message() }}</h1>
+    </div >
+
+    <section class="player-box">
+      <div class="hand-display">
+        @for (card of this.playerHand(); track $index) {
+          <div class="card-sprite" [class.red]="card.suit === 'H' || card.suit === 'D'">
+            <span class="rank">{{ card.rank }}</span>
+            <span class="suit">{{ card.symbol }}</span>
+          </div>
+        } @empty {
+          <div class="empty-slot"></div>
+          <div class="empty-slot"></div>
+        }
+      </div>
+      <div class="label">Your Hand</div>
+    </section>
+
+    <nav class="action-bar">
+      @if (this.gameState() === 'playing') {
+        <button class="action-btn hit" (click)="this.onHit()">HIT</button>
+        <button class="action-btn stay" (click)="this.onStay()">STAY</button>
+      } @else {
+        <button class="action-btn deal" (click)="this.onDeal()">DEAL CARDS</button>
+      }
+    </nav>
+
+  </div>
+</div>
