@@ -8,8 +8,8 @@ import {
   untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WebSocketService } from '../../core/services/websocket.service';
-import { AuthService } from '../../core/services/auth.service';
+import { WebSocketService } from '@core/services/websocket.service';
+import { AuthService } from '@core/services/auth.service';
 
 export interface PokerCard {
   rank: string;
@@ -286,6 +286,11 @@ export class Poker {
 
   raiseAmount = signal<number>(0);
 
+  getRaiseValue(min: number): number {
+    const val = this.raiseAmount();
+    return val < min || val === 0 ? min : val;
+  }
+
   isHero(seatIdx: number): boolean {
     return seatIdx === 0;
   }
@@ -304,11 +309,11 @@ export class Poker {
   }
 
   decrementRaise(min: number): void {
-    this.raiseAmount.set(Math.max(min, this.raiseAmount() - 10));
+    this.raiseAmount.set(Math.max(min, this.getRaiseValue(min) - 10));
   }
 
-  incrementRaise(max: number): void {
-    this.raiseAmount.set(Math.min(max, this.raiseAmount() + 10));
+  incrementRaise(min: number, max: number): void {
+    this.raiseAmount.set(Math.min(max, this.getRaiseValue(min) + 10));
   }
 
   executeRaise(): void {

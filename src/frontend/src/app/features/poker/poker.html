@@ -93,7 +93,7 @@
                   />
                   <button
                     class="raise-stepper"
-                    (click)="incrementRaise(rMax)"
+                    (click)="incrementRaise(rMin, rMax)"
                     [disabled]="(raiseAmount() || rMin) >= rMax"
                   >
                     +
