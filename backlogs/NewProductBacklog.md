@@ -106,43 +106,7 @@
 | PB-79 | Technical Improvement | Add tests for chat, social features, and game logic | Medium | 4 | To Do | Sprint 5 | Unassigned | Chat/social/game tests are in place and passing. |
 | PB-80 | Technical Improvement | Polish the mini-games and social screens with sound, mobile layout, and error boundaries | Medium | 3 | To Do | Sprint 5 | Unassigned | Games and social screens are polished and stable. |
 
-## Future Sprints — Post-MVP Backlog
 
-### Performance & Optimization
-| ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-81 | Technical Improvement | Cache frequent queries with Redis | Low | 5 | Backlog | Future | Unassigned | Repeated queries are cached to improve performance. |
-| PB-82 | Technical Improvement | Review and optimize database queries and indexes | Low | 3 | Backlog | Future | Unassigned | Slow queries are optimized and indexes reviewed. |
-| PB-83 | Technical Improvement | Serve stove images through a CDN | Low | 3 | Backlog | Future | Unassigned | Stove images can be served via CDN. |
-| PB-84 | Non-Functional Requirement | Reach a Lighthouse performance score above 90 | Medium | 6 | Backlog | Future | Unassigned | Lighthouse performance score exceeds 90. |
-| PB-85 | Technical Improvement | Analyze bundle size and keep the main bundle under 200KB | Medium | 3 | Backlog | Future | Unassigned | Main bundle size stays under the target threshold. |
-
-### Analytics & Monitoring
-| ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-86 | User Story | As an admin, I want to be able to see active users, trades, and economy health in one dashboard | Low | 5 | Backlog | Future | Unassigned | Admin dashboard displays live operational metrics. |
-| PB-87 | Technical Improvement | Add Sentry error tracking | Low | 3 | Backlog | Future | Unassigned | Frontend and backend errors are tracked in Sentry. |
-| PB-88 | Technical Improvement | Add user behavior analytics | Low | 5 | Backlog | Future | Unassigned | User interaction analytics are collected responsibly. |
-
-### Advanced Features
-| ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-89 | User Story | As a user, I want to be able to trade directly with another player | Low | 5 | Backlog | Future | Unassigned | Users can trade directly without marketplace listings. |
-| PB-90 | User Story | As a user, I want to be able to craft higher-tier stoves from lower-tier ones | Low | 8 | Backlog | Future | Unassigned | Users can combine stoves into higher-tier items. |
-| PB-91 | User Story | As a user, I want to be able to earn and display achievements and badges | Low | 5 | Backlog | Future | Unassigned | Users can earn and display achievements. |
-| PB-92 | User Story | As a user, I want to be able to take part in seasonal events with limited-time drops | Low | 8 | Backlog | Future | Unassigned | Seasonal events provide unique limited-time rewards. |
-| PB-93 | User Story | As a user, I want to be able to use offline support and push notifications | Low | 8 | Backlog | Future | Unassigned | App supports offline and push notification features. |
-| PB-94 | Non-Functional Requirement | Support English and German translations | Low | 13 | Backlog | Future | Unassigned | UI supports English and German translations. |
-
-### Mobile & Multi-Platform
-| ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-95 | User Story | As a user, I want to be able to use a mobile app version of EmberExchange | Low | 21 | Backlog | Future | Unassigned | A mobile application variant exists. |
-| PB-96 | Technical Improvement | Improve tablet responsiveness | Low | 5 | Backlog | Future | Unassigned | Tablet layouts are improved and verified. |
-| PB-97 | Technical Improvement | Add Docker deployment configuration | Medium | 5 | Backlog | Future | Unassigned | Docker deployment is configured and documented. |
-| PB-98 | Technical Improvement | Add Playwright end-to-end tests for login, lootbox, and trade flows | High | 5 | Backlog | Future | Unassigned | End-to-end tests cover critical user flows. |
-
----
 
 ## Backlog Summary
 
@@ -154,7 +118,6 @@
 | Sprint 4 | Roulette & Blackjack MiniGames + Settings | Planned | 44 SP | ~40h |
 | Sprint 5 | Coin Flip & Slots + Social | Planned | 47 SP | ~42h |
 | **MVP Total** |  |  | **~273 SP** | **~222h** |
-| Future | Advanced Features, Mobile, Analytics | Backlog | ~80 SP | ~70h |
 
 ---
 
