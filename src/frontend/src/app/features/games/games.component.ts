@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { GameService } from '../../core/services/game.service';
+import { GameService } from '@core/services/game.service';
 
 export type FilterMode = 'all' | 'most-played' | 'recently-released' | 'favorites';
 
