@@ -89,7 +89,7 @@ export class Poker {
   readonly isLoading = signal(false);
   readonly showPhaseOverlay = signal(false);
   readonly phaseOverlayText = signal('');
-  readonly showWinnerOverlay = signal(false);
+
   private phaseTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private prevPhase = '';
 
@@ -345,7 +345,6 @@ export class Poker {
     if (phase === 'showdown') {
       this.phaseTimeoutId = setTimeout(() => {
         this.showPhaseOverlay.set(false);
-        this.showWinnerOverlay.set(true);
       }, 2500);
     } else {
       this.phaseTimeoutId = setTimeout(() => {
@@ -368,7 +367,6 @@ export class Poker {
   /* ─── Play again flow ─── */
 
   handlePlayAgain(): void {
-    this.showWinnerOverlay.set(false);
     this.isLoading.set(true);
     setTimeout(() => {
       this.isLoading.set(false);

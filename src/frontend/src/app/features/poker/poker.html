@@ -26,35 +26,7 @@
     </div>
   }
 
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- WINNER OVERLAY                                  -->
-  <!-- ═══════════════════════════════════════════════ -->
-  @if (showWinnerOverlay()) {
-    <div class="winner-overlay">
-      <div class="winner-overlay__panel">
-        <h2 class="winner-overlay__title">🏆 Winner{{ winners().length > 1 ? 's' : '' }}</h2>
-        <div class="winner-overlay__list">
-          @for (winner of winners(); track winner.playerId) {
-            <div class="winner-overlay__entry">
-              <span class="winner-overlay__name">
-                {{ winner.playerId === heroPlayerId() ? 'You' : getPlayerName(winner.playerId) }}
-              </span>
-              <span class="winner-overlay__amount">
-                <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
-                {{ winner.amount }}
-              </span>
-              @if (winner.handName) {
-                <span class="winner-overlay__hand">{{ winner.handName }}</span>
-              }
-            </div>
-          }
-        </div>
-        <button class="winner-overlay__btn" (click)="handlePlayAgain()">
-          Play Again
-        </button>
-      </div>
-    </div>
-  }
+
 
   <div class="poker-main">
 
@@ -347,29 +319,60 @@
     </main>
 
     <aside class="poker-sidebar poker-sidebar--right" aria-label="Player standings">
-      <h2 class="sidebar-title">Players</h2>
-      @if (seatedPlayers().length === 0) {
-        <p class="sidebar-empty">Waiting for players…</p>
-      }
-      @for (player of seatedPlayers(); track player?.playerId) {
-        @if (player) {
-          <div
-            class="player-row"
-            [class.player-row--active]="player.isCurrentTurn"
-            [class.player-row--folded]="player.isFolded"
-            [class.player-row--all-in]="player.isAllIn"
-          >
-            <div class="player-row__info">
-              <span class="player-row__name">{{ player.name }}</span>
-              @if (player.isDealer) {
-                <span class="player-row__badge player-row__badge--dealer" aria-label="Dealer">D</span>
+      @if (isShowdown()) {
+        <!-- Results -->
+        <div class="sidebar-results">
+          <h2 class="sidebar-title">🏆 Results</h2>
+          @if (winners().length > 0) {
+            <div class="sidebar-list">
+              @for (winner of winners(); track winner.playerId) {
+                <div class="player-row player-row--winner">
+                  <div class="player-row__info">
+                    <span class="player-row__name">
+                      {{ winner.playerId === heroPlayerId() ? 'You' : getPlayerName(winner.playerId) }}
+                    </span>
+                  </div>
+                  <span class="player-row__chips">
+                    <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                    {{ winner.amount }}
+                  </span>
+                </div>
+                @if (winner.handName) {
+                  <div class="player-row__hand">{{ winner.handName }}</div>
+                }
               }
             </div>
-            <span class="player-row__chips" aria-label="{{ player.chips }} chips">
-              <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
-              {{ player.chips }}
-            </span>
-          </div>
+          } @else {
+            <p class="sidebar-empty">No winners this round.</p>
+          }
+        </div>
+        <button class="action-btn action-btn--primary" (click)="handlePlayAgain()">Next Game</button>
+      } @else {
+        <!-- Player List -->
+        <h2 class="sidebar-title">Players</h2>
+        @if (seatedPlayers().length === 0) {
+          <p class="sidebar-empty">Waiting for players…</p>
+        }
+        @for (player of seatedPlayers(); track player?.playerId) {
+          @if (player) {
+            <div
+              class="player-row"
+              [class.player-row--active]="player.isCurrentTurn"
+              [class.player-row--folded]="player.isFolded"
+              [class.player-row--all-in]="player.isAllIn"
+            >
+              <div class="player-row__info">
+                <span class="player-row__name">{{ player.name }}</span>
+                @if (player.isDealer) {
+                  <span class="player-row__badge player-row__badge--dealer" aria-label="Dealer">D</span>
+                }
+              </div>
+              <span class="player-row__chips" aria-label="{{ player.chips }} chips">
+                <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                {{ player.chips }}
+              </span>
+            </div>
+          }
         }
       }
     </aside>
