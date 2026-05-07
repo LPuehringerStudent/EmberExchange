@@ -152,43 +152,41 @@
 
     <!-- Right Sidebar -->
     <aside class="bj-sidebar bj-sidebar--right">
-      <h2 class="sidebar-title">Players</h2>
-      <div class="sidebar-list">
-        @for (player of players(); track player.playerId) {
-          <div class="sidebar-row" [class.sidebar-row--active]="player.isCurrentTurn">
-            <span class="sidebar-row__name">{{ player.name }}</span>
-            <span class="sidebar-row__chips">{{ player.chips }}</span>
-          </div>
-        } @empty {
-          <p class="sidebar-empty">No players</p>
-        }
-      </div>
+      @if (isShowdown()) {
+        <!-- Results -->
+        <div class="sidebar-results">
+          <h2 class="sidebar-title">🏆 Results</h2>
+          @if (winners().length > 0) {
+            <div class="sidebar-list">
+              @for (winner of winners(); track winner.playerId) {
+                <div class="sidebar-row sidebar-row--winner">
+                  <span class="sidebar-row__name">{{ getPlayerName(winner.playerId) }}</span>
+                  <span class="sidebar-row__amount">+{{ winner.amount }}</span>
+                </div>
+                @if (winner.handName) {
+                  <div class="sidebar-row__hand">{{ winner.handName }}</div>
+                }
+              }
+            </div>
+          } @else {
+            <p class="sidebar-empty">No winners this round.</p>
+          }
+        </div>
+        <button class="bj-btn bj-btn--primary bj-btn--full" (click)="onNewRound()">Next Game</button>
+      } @else {
+        <!-- Player List -->
+        <h2 class="sidebar-title">Players</h2>
+        <div class="sidebar-list">
+          @for (player of players(); track player.playerId) {
+            <div class="sidebar-row" [class.sidebar-row--active]="player.isCurrentTurn">
+              <span class="sidebar-row__name">{{ player.name }}</span>
+              <span class="sidebar-row__chips">{{ player.chips }}</span>
+            </div>
+          } @empty {
+            <p class="sidebar-empty">No players</p>
+          }
+        </div>
+      }
     </aside>
   </div>
-
-  <!-- Results Overlay -->
-  @if (showResultsOverlay()) {
-    <div class="bj-overlay">
-      <div class="bj-overlay__panel">
-        @if (winners().length > 0) {
-          <h2 class="bj-overlay__title">🏆 Results</h2>
-          <div class="bj-overlay__list">
-            @for (winner of winners(); track winner.playerId) {
-              <div class="bj-overlay__entry">
-                <span class="bj-overlay__name">{{ getPlayerName(winner.playerId) }}</span>
-                <span class="bj-overlay__amount">+{{ winner.amount }}</span>
-                @if (winner.handName) {
-                  <span class="bj-overlay__hand">{{ winner.handName }}</span>
-                }
-              </div>
-            }
-          </div>
-        } @else {
-          <h2 class="bj-overlay__title">Round Over</h2>
-          <p class="bj-overlay__empty">No winners this round.</p>
-        }
-        <button class="bj-overlay__btn" (click)="onNewRound()">Play Again</button>
-      </div>
-    </div>
-  }
 </div>
