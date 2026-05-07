@@ -607,8 +607,12 @@ export class DB {
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 connectionState TEXT NOT NULL DEFAULT 'connected' CHECK (connectionState IN ('connected', 'disconnected', 'away')),
                 seatIndex INTEGER NOT NULL,
+                disconnectedAt TIMESTAMPTZ,
                 UNIQUE(roomId, seatIndex)
             )
+        `);
+        await connection.query(`
+            ALTER TABLE RoomPlayer ADD COLUMN IF NOT EXISTS disconnectedAt TIMESTAMPTZ
         `);
 
         await connection.query(`
