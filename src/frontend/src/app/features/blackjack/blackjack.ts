@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -226,8 +227,50 @@ export class BlackjackComponent {
     return labels[this.phase()] ?? this.phase();
   });
 
+  // Animation / pacing state
+  showAnnouncement = signal(false);
+  announcementText = signal('');
+  showResultsOverlay = signal(false);
+
   // Betting state
   betAmount = signal<number>(20);
+
+  constructor() {
+    let lastPhase = '';
+    let showdownTimer: number | null = null;
+
+    effect(() => {
+      const currentPhase = this.phase();
+      if (currentPhase === lastPhase) return;
+      lastPhase = currentPhase;
+
+      // Phase announcements
+      if (currentPhase === 'dealer') {
+        this.announcementText.set("Dealer's Turn");
+        this.showAnnouncement.set(true);
+        setTimeout(() => this.showAnnouncement.set(false), 1500);
+      } else if (currentPhase === 'showdown') {
+        this.announcementText.set('Showdown');
+        this.showAnnouncement.set(true);
+        setTimeout(() => this.showAnnouncement.set(false), 1500);
+      } else {
+        this.showAnnouncement.set(false);
+      }
+
+      // Delay results overlay so player can see final table state
+      if (currentPhase === 'showdown') {
+        showdownTimer = window.setTimeout(() => {
+          this.showResultsOverlay.set(true);
+        }, 2000);
+      } else {
+        if (showdownTimer) {
+          clearTimeout(showdownTimer);
+          showdownTimer = null;
+        }
+        this.showResultsOverlay.set(false);
+      }
+    });
+  }
 
   isHeroSeat(seatIdx: number): boolean {
     return seatIdx === 0;

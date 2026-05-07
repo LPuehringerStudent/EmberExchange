@@ -338,6 +338,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.30);
   flex-shrink: 0;
   line-height: 0;
+  animation: card-deal-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .bj-card--dealer {
@@ -561,6 +562,66 @@
 .bj-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PHASE ANNOUNCEMENT OVERLAY
+   Big text shown briefly on phase transitions
+   ════════════════════════════════════════════════════════════════ */
+
+.bj-announcement {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.50);
+  pointer-events: none;
+  animation: backdrop-lifecycle 1.8s ease-in-out forwards;
+}
+
+.bj-announcement__text {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 10vw, 6rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 50px rgba(200, 86, 26, 0.50),
+    0 4px 16px rgba(0, 0, 0, 0.55);
+  animation: text-lifecycle 1.8s ease-in-out forwards;
+}
+
+@keyframes backdrop-lifecycle {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes text-lifecycle {
+  0%   { opacity: 0; transform: scale(0.85); }
+  12%  { opacity: 1; transform: scale(1); }
+  70%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+
+/* Card dealing animation */
+@keyframes card-deal-in {
+  0% {
+    transform: scale(0.35) rotate(-18deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06) rotate(2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 /* ── Results Overlay ───────────────────────────────────────── */

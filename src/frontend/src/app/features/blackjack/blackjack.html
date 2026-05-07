@@ -11,6 +11,13 @@
     </span>
   </header>
 
+  <!-- Phase Announcement -->
+  @if (showAnnouncement()) {
+    <div class="bj-announcement" role="status" aria-live="assertive">
+      <span class="bj-announcement__text">{{ announcementText() }}</span>
+    </div>
+  }
+
   <!-- Error -->
   @if (lastError(); as err) {
     <div class="error-banner">{{ err.message || err }}</div>
@@ -160,7 +167,7 @@
   </div>
 
   <!-- Results Overlay -->
-  @if (isShowdown()) {
+  @if (showResultsOverlay()) {
     <div class="bj-overlay">
       <div class="bj-overlay__panel">
         @if (winners().length > 0) {
