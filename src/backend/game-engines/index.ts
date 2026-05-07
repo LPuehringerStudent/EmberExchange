@@ -1,5 +1,6 @@
 import { GameEngine } from "./types";
 import { PokerEngine } from "./poker-engine";
+import { BlackJackEngine } from "./blackjack-engine";
 import { TestEngine } from "./test-engine";
 
 class EngineRegistry {
@@ -27,3 +28,4 @@ export const engineRegistry = new EngineRegistry();
 // Register all engines
 engineRegistry.register(new TestEngine());
 engineRegistry.register(new PokerEngine());
+engineRegistry.register(new BlackJackEngine());

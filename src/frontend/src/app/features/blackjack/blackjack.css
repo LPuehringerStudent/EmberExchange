@@ -1,0 +1,232 @@
+.bj-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #faf6f1;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: #1c1208;
+}
+
+.bj-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background: #ffffff;
+  border-bottom: 1px solid #e4d0ba;
+}
+
+.bj-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.bj-phase {
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(120, 100, 80, 0.08);
+  border: 1px solid #e4d0ba;
+}
+
+.bj-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 32px;
+}
+
+/* Dealer */
+.bj-dealer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.bj-dealer h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #7a6452;
+}
+
+/* Players */
+.bj-players {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.bj-player {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid #e4d0ba;
+  border-radius: 12px;
+  min-width: 200px;
+}
+
+.bj-player--active {
+  border-color: #c8881a;
+  box-shadow: 0 0 0 3px rgba(200, 136, 26, 0.25);
+}
+
+.bj-player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bj-player-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.bj-player-stack {
+  font-size: 0.9rem;
+  color: #c8561a;
+  font-weight: 600;
+}
+
+.bj-player-result {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bj-player-result.won,
+.bj-player-result.blackjack {
+  color: #2a6832;
+}
+
+.bj-player-result.lost,
+.bj-player-result.bust {
+  color: #dc2626;
+}
+
+.bj-player-result.push {
+  color: #7a6452;
+}
+
+/* Hands */
+.bj-hand-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: #f3ebe0;
+  border-radius: 8px;
+}
+
+.bj-hand {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.bj-card {
+  width: clamp(50px, 10%, 80px);
+  aspect-ratio: 2.5 / 3.5;
+  border-radius: 5px;
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.bj-hand-total {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1c1208;
+}
+
+.bj-hand-bet {
+  font-size: 0.8rem;
+  color: #c8561a;
+  font-weight: 600;
+}
+
+/* Controls */
+.bj-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.bj-bet-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.bj-bet-input {
+  width: 80px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e4d0ba;
+  background: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.bj-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.bj-btn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: 1px solid #e4d0ba;
+  background: #ffffff;
+  color: #1c1208;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.08s;
+}
+
+.bj-btn:hover {
+  background: #f3ebe0;
+  border-color: #c8a882;
+}
+
+.bj-btn:active {
+  transform: scale(0.97);
+}
+
+.bj-btn--primary {
+  background: #c8561a;
+  color: #ffffff;
+  border-color: #c8561a;
+}
+
+.bj-btn--primary:hover {
+  background: #e07840;
+  border-color: #e07840;
+}
+
+/* Winners */
+.bj-winners {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 20px;
+  background: rgba(200, 86, 26, 0.08);
+  border: 1px solid #c8a882;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #c8561a;
+}
