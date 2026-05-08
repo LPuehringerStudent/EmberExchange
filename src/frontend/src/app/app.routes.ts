@@ -4,10 +4,6 @@ import { reverseAuthGuard } from './core/guards/reverse-auth.guard';
 
 export const routes: Routes = [
   {
-    path: 'poker',
-    loadComponent: () => import('./features/poker/poker').then(m => m.Poker)
-  },
-  {
     path: '',
     loadComponent: () => import('./features/auth/pages/startup/startup.component').then(m => m.StartupComponent)
   },

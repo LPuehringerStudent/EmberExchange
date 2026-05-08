@@ -6,7 +6,7 @@
   <a routerLink="/statistics" (click)="sidebarOpen.set(false)">Statistics</a>
   <a routerLink="/update-log" (click)="sidebarOpen.set(false)">Update Log</a>
   <a routerLink="/support" (click)="sidebarOpen.set(false)">Support</a>
-  <a routerLink="/poker" (click)="sidebarOpen.set(false)">Pokertest</a>
+  <a routerLink="/games" (click)="sidebarOpen.set(false)">Games</a>
   @if (!isLoggedIn()) {
     <a routerLink="/" (click)="sidebarOpen.set(false)">Login</a>
   } @else {
@@ -26,6 +26,7 @@
   <div class="topbar-left">
     <div class="menu-btn" (click)="toggleSidebar()">☰</div>
     <div class="logo" routerLink="/">
+      <!--<img style="width: 160px; height: auto;" src="logos/Ember_Exchange_Logo.ico" fill/> -->
       Ember Exchange
     </div>
   </div>

@@ -3,77 +3,77 @@
  * POKER COMPONENT STYLES
  * ============================================================
  *
- * Theme: Warm White & Orange
- * Aesthetic direction: "Modern Parlor" — clean, friendly,
- * no casino flash. Think a well-designed board-game app:
- * warm ivory surfaces, burnt-orange accents, earthy wood tones.
+ * Theme   : Warm White & Orange — "Modern Parlor"
+ * Aesthetic: Clean, friendly, zero casino flash.
+ *            Warm ivory surfaces · burnt-orange accents · earthy wood rail.
  *
- * Fonts loaded here via @import.
- * Alternatively, add these links to index.html instead:
- *   <link rel="preconnect" href="https://fonts.googleapis.com">
- *   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
- *   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+ * Font setup: either keep this @import or move the two <link>
+ * tags to your index.html for a faster initial paint.
  * ============================================================
  */
 
-/* ── Design tokens ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+
+/* ── Design tokens ─────────────────────────────────────────────────── */
 /*
- * All colours, spacing and type references live here.
- * Change a variable once → it updates everywhere.
+ * All colours, spacing, and type values live here.
+ * Change a variable once → updates everywhere.
  */
 :host {
 
   /* Page backgrounds */
-  --bg-page:       #faf6f1;        /* warm ivory */
-  --bg-sidebar:    #f3ebe0;        /* slightly deeper beige */
-  --bg-card:       #ffffff;
+  --bg-page:        #faf6f1;
+  --bg-sidebar:     #f3ebe0;
+  --bg-card:        #ffffff;
 
-  /* Brand / accent — burnt orange */
-  --orange:        #c8561a;
-  --orange-light:  #e07840;
-  --orange-dim:    rgba(200, 86, 26, 0.10);
+  /* Brand accent — burnt orange */
+  --orange:         #c8561a;
+  --orange-light:   #e07840;
+  --orange-dim:     rgba(200, 86, 26, 0.10);
 
   /* Text */
-  --text-primary:  #1c1208;        /* near-black, warm undertone */
-  --text-muted:    #7a6452;        /* warm mid-grey */
+  --text-primary:   #1c1208;
+  --text-muted:     #7a6452;
 
   /* Borders */
-  --border:        #e4d0ba;
-  --border-strong: #c8a882;
+  --border:         #e4d0ba;
+  --border-strong:  #c8a882;
 
   /* Table felt */
-  --felt:          #3a6b3e;
-  --felt-mid:      #2f5832;
-  --felt-dark:     #1e3a21;
+  --felt:           #3a6b3e;
+  --felt-mid:       #2f5832;
+  --felt-dark:      #1e3a21;
 
-  /* Table rail (wood ring) */
-  --rail:          #6b3c18;
-  --rail-hi:       #8a5120;
-  --rail-lo:       #3c1e08;
+  /* Wood rail — layered box-shadows on .pt-table */
+  --rail:           #6b3c18;
+  --rail-hi:        #8a5120;
+  --rail-lo:        #3c1e08;
 
-  /* Gold — used for pot, dealer button, active-turn ring */
-  --gold:          #c8881a;
-  --gold-dim:      rgba(200, 136, 26, 0.40);
+  /* Gold — pot, dealer button, active-turn ring */
+  --gold:           #c8881a;
+  --gold-dim:       rgba(200, 136, 26, 0.40);
 
   /* Seat name plates */
-  --seat-bg:       rgba(250, 246, 241, 0.93);
-  --seat-border:   rgba(228, 208, 186, 0.85);
+  --seat-bg:        rgba(250, 246, 241, 0.94);
+  --seat-border:    rgba(228, 208, 186, 0.85);
 
-  /* Card slots on the table */
-  --card-empty:    rgba(255, 255, 255, 0.22);
-  --radius-card:   5px;
+  /* Empty card-slot outline on the felt */
+  --card-empty:     rgba(255, 255, 255, 0.22);
+
+  /* Card corner radius */
+  --radius-card:    6px;
 
   /* Fonts */
-  --font-display:  'Lora', Georgia, serif;
-  --font-ui:       'DM Sans', system-ui, sans-serif;
+  --font-display:   'Lora', Georgia, serif;
+  --font-ui:        'DM Sans', system-ui, sans-serif;
 }
 
 
-/* ── Host element ──────────────────────────────────────────────── */
+/* ── Host element ──────────────────────────────────────────────────── */
 /*
- * Make the component itself a block element that fills its container.
- * Without this, :host is inline by default and has zero height.
- * This was the reason the table wasn't visible in earlier versions.
+ * :host must be display:block — without this the host stays
+ * inline with zero height and the table is invisible.
  */
 :host {
   display: block;
@@ -84,47 +84,47 @@
 }
 
 
-/* ── Page shell ─────────────────────────────────────────────────── */
+/* ── Page shell ─────────────────────────────────────────────────────── */
 
 .poker-page {
   display: grid;
   grid-template-rows: auto 1fr;
   min-height: 100vh;
+  position: relative;  /* anchor for the fixed announcement overlay */
 }
 
 
-/* ── Header ─────────────────────────────────────────────────────── */
+/* ── Header ─────────────────────────────────────────────────────────── */
 
 .poker-header {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 16px 32px;
+  padding: 14px 28px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
 }
 
-.poker-header__left  { display: flex; align-items: center; }
+.poker-header__left   { display: flex; align-items: center; }
 .poker-header__center { display: flex; justify-content: center; }
-.poker-header__right { display: flex; justify-content: flex-end; }
+.poker-header__right  { display: flex; justify-content: flex-end; }
 
 .poker-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text-primary);
 }
 
-/* Phase badge — small pill in the header center */
+/* Phase badge pill */
 .phase-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   padding: 4px 14px;
   border-radius: 20px;
-  font-size: 0.7rem;
+  font-size: 0.70rem;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -134,72 +134,88 @@
   transition: background 0.25s, color 0.25s, border-color 0.25s;
 }
 
-/* Orange badge — gathering / dealing */
-.phase-badge--active {
-  background: var(--orange-dim);
-  color: var(--orange);
-  border-color: rgba(200, 86, 26, 0.22);
-}
-
-/* Green badge — game is live */
 .phase-badge--playing {
   background: rgba(40, 110, 50, 0.10);
   color: #2a6832;
   border-color: rgba(40, 110, 50, 0.20);
 }
 
-/* Muted badge — round over */
 .phase-badge--finished {
-  background: rgba(100, 90, 80, 0.08);
-  color: var(--text-muted);
-  border-color: var(--border);
+  background: var(--orange-dim);
+  color: var(--orange);
+  border-color: rgba(200, 86, 26, 0.22);
 }
 
 
-/* ── Three-column main layout ───────────────────────────────────── */
+/* ── Three-column main layout ───────────────────────────────────────── */
 
 .poker-main {
   display: grid;
   grid-template-columns: 220px 1fr 220px;
-  min-height: 0;   /* required for children to respect grid row height */
+  min-height: 0;
 }
 
 
-/* ── Sidebars ───────────────────────────────────────────────────── */
+/* ── Sidebars ───────────────────────────────────────────────────────── */
 
 .poker-sidebar {
   background: var(--bg-sidebar);
-  padding: 24px 18px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  overflow-y: auto;
 }
 
 .poker-sidebar--left  { border-right: 1px solid var(--border); }
 .poker-sidebar--right { border-left:  1px solid var(--border); }
 
 
-/* Info blocks (left sidebar cards) */
+/* ── Info blocks (left sidebar) ────────────────────────────────────── */
 
 .info-block {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  transition: border-color 0.2s;
 }
 
-/* Highlighted variant — used for the pot display */
+/* Highlighted variant — pot amount */
 .info-block--highlight {
   border-color: var(--border-strong);
   background: var(--orange-dim);
 }
 
+/* Hand strength info */
+.info-block--hand {
+  border-color: rgba(40, 110, 50, 0.30);
+  background: rgba(40, 110, 50, 0.06);
+}
+
+/* Winner result */
+.info-block--winner {
+  border-color: var(--gold);
+  background: rgba(200, 136, 26, 0.08);
+}
+
+/* Action buttons container */
+.info-block--actions {
+  border-color: var(--orange);
+  background: var(--orange-dim);
+}
+
+/* New Round button container */
+.info-block--new-round {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
 .info-block__label {
-  font-size: 0.78rem;
+  font-size: 0.67rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -207,25 +223,128 @@
 }
 
 .info-block__value {
-  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-/* Larger value — for the pot number */
 .info-block__value--large {
-  font-size: 2rem;
+  font-size: 1.4rem;
   font-family: var(--font-display);
   color: var(--orange);
   font-variant-numeric: tabular-nums;
 }
 
+.info-block__value--hand {
+  color: #2a6832;
+  font-style: italic;
+}
 
-/* Sidebar heading (right panel) */
+.info-block__value--winner {
+  color: var(--gold);
+}
+
+.winner-hand {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+
+/* ── Action panel ───────────────────────────────────────────────────── */
+
+.sidebar-action-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.raise-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.raise-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.raise-input:focus { border-color: var(--orange); }
+
+/* Action buttons */
+.action-btn {
+  width: 100%;
+  padding: 9px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.action-btn:hover { background: var(--bg-sidebar); }
+
+.action-btn--primary {
+  background: var(--orange);
+  color: #ffffff;
+  border-color: var(--orange);
+}
+
+.action-btn--primary:hover { background: var(--orange-light); }
+
+.action-btn__amount {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.action-btn--primary .action-btn__amount { color: rgba(255, 255, 255, 0.75); }
+
+/* New Round button */
+.new-round-btn {
+  width: 100%;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  background: var(--orange);
+  color: #ffffff;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.10s;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+}
+
+.new-round-btn:hover  { background: var(--orange-light); }
+.new-round-btn:active { transform: scale(0.97); }
+
+
+/* ── Sidebar title + player rows (right sidebar) ────────────────────── */
 
 .sidebar-title {
   margin: 0 0 2px;
-  font-size: 0.8rem;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.10em;
@@ -238,28 +357,24 @@
   font-style: italic;
 }
 
-
-/* Player rows (right sidebar) */
-
 .player-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 10px 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
   transition: border-color 0.18s, background 0.18s;
 }
 
-/* Highlight whose turn it is */
 .player-row--active {
   border-color: var(--gold);
   background: rgba(200, 136, 26, 0.06);
 }
 
-.player-row--folded      { opacity: 0.42; }
-.player-row--disconnected { opacity: 0.50; }
+.player-row--folded  { opacity: 0.40; }
+.player-row--all-in  { border-color: var(--orange); }
 
 .player-row__info {
   display: flex;
@@ -278,6 +393,9 @@
 }
 
 .player-row__chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--orange);
@@ -285,39 +403,56 @@
   flex-shrink: 0;
 }
 
-/* Small badge — dealer button or offline indicator */
+/* Small inline badges */
 .player-row__badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
   font-size: 0.6rem;
   font-weight: 800;
   flex-shrink: 0;
 }
 
 .player-row__badge--dealer {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   background: #ffffff;
   color: #111111;
   border: 1.5px solid var(--gold);
 }
 
-.player-row__badge--offline {
-  width: auto;
+.player-row__badge--allin {
+  padding: 1px 5px;
   border-radius: 4px;
-  padding: 0 5px;
   font-size: 0.55rem;
-  font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: var(--border);
-  color: var(--text-muted);
+  text-transform: uppercase;
+  background: var(--orange-dim);
+  color: var(--orange);
+  border: 1px solid rgba(200, 86, 26, 0.30);
 }
 
 
-/* ── Table area ─────────────────────────────────────────────────── */
+/* ── Currency icon (coal sprite) ────────────────────────────────────── */
+/*
+ * Used inline next to every chip count.
+ * Pixelated rendering preserves the pixel-art appearance.
+ */
+.currency-icon {
+  image-rendering: pixelated;
+  width: 18px;
+  height: auto;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.currency-icon--small {
+  width: 14px;
+}
+
+
+/* ── Table area (center column) ─────────────────────────────────────── */
 
 .poker-table-area {
   display: flex;
@@ -328,41 +463,36 @@
 }
 
 
-/* ── Table wrapper ──────────────────────────────────────────────── */
+/* ── Wrapper (square, seats positioned inside) ──────────────────────── */
 /*
- * Square container that player seats are positioned relative to.
- * aspect-ratio: 1 keeps it square at any width, which makes the
- * percentage-based seat coordinates (SEAT_POSITIONS) work correctly.
+ * aspect-ratio: 1 keeps the square regardless of screen width.
+ * All player seats use percentage coordinates relative to this box.
  */
 .pt-wrapper {
   position: relative;
   width: 100%;
-  width: min(85vh, 85vw, 1000px);
+  max-width: 580px;
   aspect-ratio: 1;
   font-family: var(--font-ui);
 }
 
 
-/* ── Felt table ─────────────────────────────────────────────────── */
+/* ── The felt table ─────────────────────────────────────────────────── */
 /*
- * The oval table is drawn with CSS only — no image needed.
- * It sits inset ~14% inside .pt-wrapper, leaving space for seats.
+ * Oval shape drawn entirely in CSS (border-radius trick).
+ * Sits inset ~14% inside .pt-wrapper so seats can reach over the edges.
  *
- * SPRITE SWAP (optional):
- *   If you want to use poker_table.png, add to .pt-table:
- *     background-image: url('assets/poker/poker_table.png');
- *     background-size: cover;
- *     background-position: center top;
- *   …and remove the radial-gradient line below.
+ * SPRITE SWAP — to use poker_table.png instead:
+ *   1. Add:    background-image: url('assets/poker/poker_table.png');
+ *              background-size: cover;
+ *              background-position: center top;
+ *   2. Remove: the radial-gradient background line below.
  */
 .pt-table {
   position: absolute;
-  inset: 16%;
-
-  /* Oval shape — wider than it is tall */
+  inset: 14%;
   border-radius: 50% / 38%;
 
-  /* Green felt gradient — slightly lighter in the center */
   background: radial-gradient(
     ellipse 72% 66% at 50% 44%,
     #4a7f4e 0%,
@@ -370,11 +500,7 @@
     var(--felt-dark) 100%
   );
 
-  /*
-   * Wood rail — achieved with layered box-shadows.
-   * No extra HTML element needed.
-   * No glow: shadows are solid color steps, not blurs.
-   */
+  /* Wood rail: layered solid-color box-shadows — no glow */
   box-shadow:
     0 0 0 5px  var(--rail-lo),
     0 0 0 16px var(--rail),
@@ -391,7 +517,7 @@
   overflow: hidden;
 }
 
-/* Subtle inner edge on the felt */
+/* Subtle inner felt edge line */
 .pt-table::after {
   content: '';
   position: absolute;
@@ -402,57 +528,160 @@
 }
 
 
-/* ── Gathering chips overlay ────────────────────────────────────── */
+/* ── Decorative chips on the felt ───────────────────────────────────── */
 /*
- * Covers the table while phase === 'gathering'.
- * Replace .pt-overlay__gif-placeholder with an <img> tag when
- * your GIF is ready:
- *   <img src="assets/animations/gathering-chips.gif" class="pt-overlay__gif" alt="" />
+ * Scattered around the edges of the felt (away from the center
+ * community-card zone and away from the seat corners).
+ * Pure decoration — no pointer-events.
  */
-.pt-overlay {
+.pt-chips-deco {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background: rgba(10, 22, 10, 0.68);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pt-deco-chip {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+/* Tick-mark ring — gives chips the segmented look */
+.pt-deco-chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    rgba(255, 255, 255, 0.18) 0deg 8deg,
+    transparent              8deg 28deg
+  );
+}
+
+/* Chip colours */
+.pt-deco-chip--red   { background: #b03020; box-shadow: 0 0 0 2px #c84030, 0 0 0 4px #8a2218, 0 2px 5px rgba(0,0,0,.5); }
+.pt-deco-chip--blue  { background: #165e94; box-shadow: 0 0 0 2px #1e7ab8, 0 0 0 4px #0e4570, 0 2px 5px rgba(0,0,0,.5); }
+.pt-deco-chip--black { background: #242424; box-shadow: 0 0 0 2px #484848, 0 0 0 4px #141414, 0 2px 5px rgba(0,0,0,.5); }
+
+/* Scatter positions — avoid center (community cards) and edges */
+.pt-deco-chip--a { left:  8%; top:  20%; transform: rotate(12deg);  }
+.pt-deco-chip--b { left: 18%; top:  35%; transform: rotate(-28deg); }
+.pt-deco-chip--c { left:  9%; bottom: 30%; transform: rotate(55deg);  }
+.pt-deco-chip--d { left: 22%; bottom: 18%; transform: rotate(-15deg); }
+.pt-deco-chip--e { right:  7%; top:  22%; transform: rotate(-20deg); }
+.pt-deco-chip--f { right: 16%; top:  40%; transform: rotate(70deg);  }
+.pt-deco-chip--g { right:  8%; bottom: 28%; transform: rotate(-50deg); }
+.pt-deco-chip--h { right: 24%; bottom: 16%; transform: rotate(33deg);  }
+
+
+/* ── Community cards ────────────────────────────────────────────────── */
+
+.pt-community {
   display: flex;
-  flex-direction: column;
+  gap: 8px;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  z-index: 20;
-  animation: fade-in 0.3s ease;
-}
-
-/* Placeholder circle — swap this for the <img> once your GIF exists */
-.pt-overlay__gif-placeholder {
-  width: clamp(48px, 18%, 76px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 2px dashed rgba(255, 255, 255, 0.18);
-}
-
-/* Ready-to-use class for the real GIF image */
-.pt-overlay__gif {
-  width: clamp(48px, 18%, 76px);
-  height: auto;
-}
-
-.pt-overlay__text {
-  margin: 0;
-  font-size: clamp(9px, 1.6%, 12px);
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.75);
+  z-index: 2;
 }
 
 
-/* ── Turn indicator ─────────────────────────────────────────────── */
+/* ── Card slots ─────────────────────────────────────────────────────── */
 /*
- * A small pill at the top of the table showing whose turn it is.
- * Only rendered when phase === 'playing'.
+ * CARD SIZES — deliberately large so suits and ranks are readable.
+ * Community cards: ~68px wide on desktop.
+ * Hole cards: ~52px wide on desktop.
  */
+.pt-card-slot {
+  border-radius: var(--radius-card);
+  border: 1.5px dashed var(--card-empty);
+  width: clamp(42px, 9%, 68px);
+  aspect-ratio: 2.5 / 3.5;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 2;
+  /* Perspective enables the 3-D card flip */
+  perspective: 600px;
+}
+
+.pt-card-slot--hole {
+  width: clamp(32px, 7%, 52px);
+}
+
+/*
+ * Card image — fills its slot completely so any sprite size works.
+ * The card-deal animation triggers every time this element enters the DOM
+ * (i.e. whenever a new card is dealt). animation-delay is set inline
+ * from the template to stagger community-card deals.
+ */
+.pt-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: calc(var(--radius-card) - 1px);
+  display: block;
+
+  /* Card flip / deal animation */
+  animation: card-deal 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* ── Card deal (flip) keyframe ───────────────────────────────────────── */
+/*
+ * Simulates the card spinning face-up from a face-down position.
+ * Step 0  : rotated 90° on Y-axis (thin edge, invisible)
+ * Step 60 : slight overshoot — feels physical
+ * Step 100: flat, fully visible
+ */
+@keyframes card-deal {
+  0% {
+    transform: rotateY(90deg) scale(0.85);
+    opacity: 0;
+  }
+  60% {
+    transform: rotateY(-6deg) scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+
+/* ── Pot display ────────────────────────────────────────────────────── */
+
+.pt-pot {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid var(--gold-dim);
+  border-radius: 20px;
+  padding: 4px 14px;
+  color: var(--gold);
+  z-index: 2;
+}
+
+.pt-pot__label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.pt-pot__amount {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* ── Turn indicator ─────────────────────────────────────────────────── */
+
 .pt-turn-indicator {
   position: absolute;
   top: 12px;
@@ -464,7 +693,7 @@
   background: rgba(0, 0, 0, 0.36);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
-  padding: 6px 16px;
+  padding: 4px 12px;
   z-index: 5;
   white-space: nowrap;
 }
@@ -479,128 +708,22 @@
 }
 
 .pt-turn-indicator__name {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--gold);
 }
 
 .pt-turn-indicator__label {
-  font-size: 14px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.52);
 }
 
 
-/* ── Community cards ────────────────────────────────────────────── */
-
-.pt-community {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-}
-
-
-/* ── Pot display (center of table) ─────────────────────────────── */
-
-.pt-pot {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(0, 0, 0, 0.32);
-  border: 1px solid var(--gold-dim);
-  border-radius: 20px;
-  padding: 3px 14px;
-  color: var(--gold);
-  z-index: 2;
-}
-
-.pt-pot__label {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.72;
-}
-
-.pt-pot__amount {
-  font-size: 20px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-
-/* ── Card slots ─────────────────────────────────────────────────── */
-
-/* Community card slots (center of table) */
-.pt-card-slot {
-  border-radius: var(--radius-card);
-  border: 1.5px dashed var(--card-empty);
-  width: clamp(60px, 12%, 110px);
-  aspect-ratio: 2.5 / 3.5;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  z-index: 2;
-}
-
-/* Hole card slots (at player seats) — slightly smaller */
-.pt-card-slot--hole {
-  width: clamp(50px, 10%, 90px);
-}
-
-.pt-card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: calc(var(--radius-card) - 1px);
-  display: block;
-}
-
-
-/* ── Start game button ──────────────────────────────────────────── */
+/* ── Player seats ───────────────────────────────────────────────────── */
 /*
- * Sits above the table in the center. Uses pointer-events: none
- * on the wrapper so only the button itself is clickable.
- */
-.pt-start-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-  pointer-events: none;
-}
-
-.pt-start-btn {
-  pointer-events: all;
-  padding: 14px 44px;
-  background: var(--orange);
-  color: #ffffff;
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.18s, transform 0.10s;
-  /* A single, clean shadow — no glow */
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
-}
-
-.pt-start-btn:hover  { background: var(--orange-light); }
-.pt-start-btn:active { transform: scale(0.97); }
-
-
-/* ── Player seats ───────────────────────────────────────────────── */
-/*
- * Each seat is absolutely positioned inside .pt-wrapper at the
- * coordinates defined in SEAT_POSITIONS. The CSS transform
- * centers the seat on its coordinate point.
+ * Each seat is absolutely positioned inside .pt-wrapper using
+ * percentage coordinates from SEAT_POSITIONS in poker.ts.
+ * translate(-50%, -50%) centers the seat on its coordinate point.
  */
 .pt-seat {
   position: absolute;
@@ -612,14 +735,13 @@
   z-index: 10;
 }
 
-/* The two hole-card slots side by side */
 .pt-hole-cards {
   display: flex;
-  gap: 3px;
+  gap: 4px;
 }
 
 
-/* ── Seat name plate ────────────────────────────────────────────── */
+/* ── Seat name plate ────────────────────────────────────────────────── */
 
 .pt-seat__chip {
   display: flex;
@@ -628,28 +750,37 @@
   background: var(--seat-bg);
   border: 1px solid var(--seat-border);
   border-radius: 8px;
-  padding: 6px 14px;
-  min-width: 100px;
+  padding: 4px 10px;
+  min-width: 62px;
   text-align: center;
   backdrop-filter: blur(4px);
-  transition: border-color 0.18s, box-shadow 0.18s;
   position: relative;
+  transition: border-color 0.18s, box-shadow 0.18s;
 }
 
 .pt-seat__name {
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 130px;
+  max-width: 80px;
 }
 
 .pt-seat__chips {
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--orange);
+  font-variant-numeric: tabular-nums;
+}
+
+.pt-seat__bet {
+  font-size: 9px;
+  color: var(--gold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -659,7 +790,7 @@
   font-style: italic;
 }
 
-/* Hero — local player — orange border on name plate */
+/* Hero seat — orange border */
 .pt-seat--hero .pt-seat__chip {
   border-color: var(--orange);
 }
@@ -670,25 +801,49 @@
   box-shadow: 0 0 0 2px rgba(200, 136, 26, 0.35);
 }
 
-/* Folded player — greyed out, non-interactive */
+/* Folded — greyed out, non-interactive */
 .pt-seat--folded {
   opacity: 0.35;
   pointer-events: none;
 }
 
+/* All-in — orange accent border */
+.pt-seat--all-in .pt-seat__chip {
+  border-color: var(--orange);
+}
 
-/* ── Dealer button ──────────────────────────────────────────────── */
+
+/* ── All-in badge (on seat) ─────────────────────────────────────────── */
+
+.pt-all-in-badge {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--orange);
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+
+/* ── Dealer button ──────────────────────────────────────────────────── */
 
 .pt-dealer {
   position: absolute;
   top: -10px;
   right: -10px;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #ffffff;
   color: #111111;
-  font-size: 12px;
+  font-size: 9px;
   font-weight: 900;
   display: flex;
   align-items: center;
@@ -698,179 +853,176 @@
 }
 
 
-/* ── All-in state ──────────────────────────────────────────────── */
-
-.pt-seat--all-in .pt-seat__chip {
-  border-color: var(--orange);
-  box-shadow: 0 0 0 2px rgba(200, 86, 26, 0.35);
-}
-
-.pt-seat__bet {
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--gold);
-}
-
-
-/* ── Action buttons (used in sidebar and future overlays) ──────── */
-
-.action-btn {
-  padding: 10px 22px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: #ffffff;
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.08s;
-  white-space: nowrap;
+/* ── Start Game overlay ─────────────────────────────────────────────── */
+/*
+ * Covers the entire .pt-wrapper (table + seats) with a dark veil.
+ * The "Start Game" button floats at the center of the table.
+ * Disappears as soon as gatheringVisible() becomes true.
+ */
+.game-start-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 8, 5, 0.72);
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  z-index: 50;
+  animation: fade-in 0.3s ease;
 }
 
-.action-btn:hover {
-  background: var(--bg-sidebar);
-  border-color: var(--border-strong);
-}
-
-.action-btn:active {
-  transform: scale(0.96);
-}
-
-.action-btn--primary {
-  background: var(--orange);
-  color: #ffffff;
-  border-color: var(--orange);
-}
-
-.action-btn--primary:hover {
-  background: var(--orange-light);
-  border-color: var(--orange-light);
-}
-
-.action-btn__amount {
-  font-variant-numeric: tabular-nums;
-  opacity: 0.9;
-}
-
-
-/* ── Sidebar action panel ──────────────────────────────────────── */
-
-.sidebar-action-panel {
+.game-start-overlay__inner {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.raise-group {
-  display: flex;
-  gap: 6px;
   align-items: center;
+  gap: 14px;
 }
 
-.raise-input {
-  width: 70px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: #ffffff;
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.raise-input:focus {
-  outline: none;
-  border-color: var(--orange);
-}
-
-.info-block--actions {
-  border-color: var(--orange);
-  background: var(--orange-dim);
-}
-
-/* ── Hand name display ──────────────────────────────────────────── */
-
-.info-block--hand {
-  border-color: var(--gold);
-  background: rgba(200, 136, 26, 0.08);
-}
-
-.info-block__value--hand {
-  font-size: 1.15rem;
-  font-family: var(--font-display);
-  color: var(--gold);
-}
-
-/* ── Winner display ─────────────────────────────────────────────── */
-
-.info-block--winner {
-  border-color: var(--orange);
-  background: var(--orange-dim);
-}
-
-.info-block__value--winner {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--orange);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.winner-hand {
-  font-size: 0.85rem;
+.game-start-overlay__hint {
+  margin: 0;
+  font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-muted);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
 }
 
-/* ── New Round button ───────────────────────────────────────────── */
-
-.info-block--new-round {
-  padding: 10px 12px;
-  background: transparent;
-  border: none;
-}
-
-.new-round-btn {
-  width: 100%;
-  padding: 12px 20px;
-  border-radius: 10px;
-  border: none;
+.game-start-btn {
+  padding: 14px 46px;
   background: var(--orange);
   color: #ffffff;
   font-family: var(--font-ui);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 12px;
   cursor: pointer;
+  /* One clean shadow — no glow */
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.35);
   transition: background 0.18s, transform 0.10s;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
 }
 
-.new-round-btn:hover {
-  background: var(--orange-light);
+.game-start-btn:hover  { background: var(--orange-light); }
+.game-start-btn:active { transform: scale(0.97); }
+
+
+/* ── Gathering Chips overlay ────────────────────────────────────────── */
+/*
+ * Covers .pt-wrapper while the chip-gathering animation plays (~3 s).
+ * Swap .gathering-video-placeholder for a real <video> element in the
+ * template once your mp4 is ready.
+ */
+.game-gathering-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: rgba(10, 8, 5, 0.82);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 60;
+  animation: fade-in 0.25s ease;
 }
 
-.new-round-btn:active {
-  transform: scale(0.97);
+/* Placeholder shown until the real video asset exists */
+.gathering-video-placeholder {
+  width: clamp(60px, 20%, 100px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ── Player row all-in badge ───────────────────────────────────── */
+/* Spinning ring — replaces the gif/mp4 during development */
+.gathering-spinner {
+  width: 64px;
+  height: 64px;
+  border: 4px solid rgba(200, 136, 26, 0.20);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
 
-.player-row--all-in {
-  border-color: var(--orange);
-  background: rgba(200, 86, 26, 0.04);
+/* Real video — uncomment <video> in the template and use this class */
+.gathering-video {
+  width: clamp(80px, 28%, 160px);
+  height: auto;
+  border-radius: 8px;
+}
+
+.gathering-text {
+  margin: 0;
+  font-size: clamp(10px, 1.8%, 14px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.70);
 }
 
 
-/* ── Animations ─────────────────────────────────────────────────── */
+/* ── Phase Announcement overlay ─────────────────────────────────────── */
+/*
+ * Full-screen, fixed overlay — appears over everything including the header.
+ * Visible for exactly 2.5 s (matches the setTimeout in poker.ts).
+ * The CSS animation handles the entrance (0–20 %) and exit (75–100 %)
+ * within that same 2.5 s so no JavaScript is needed for the fade.
+ *
+ * Text examples: PRE-FLOP · FLOP · TURN · RIVER · SHOWDOWN
+ */
+.game-announcement {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.52);
+  pointer-events: none;
+  animation: backdrop-lifecycle 2.5s ease-in-out forwards;
+}
+
+.game-announcement__text {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 12vw, 8rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  /* Warm orange drop shadow — the only glow-like effect, kept subtle */
+  text-shadow:
+    0 0 60px rgba(200, 86, 26, 0.55),
+    0 4px 20px rgba(0, 0, 0, 0.60);
+
+  animation: announcement-text 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/*
+ * The text scales in quickly, holds, then fades out — all within 2.5 s.
+ * timeline: 0 → 18 % entrance · 20–72 % hold · 72–100 % exit
+ */
+@keyframes announcement-text {
+  0%   { opacity: 0;   transform: scale(0.5) translateY(40px); }
+  18%  { opacity: 1;   transform: scale(1.06); }
+  25%  { transform: scale(1); }
+  72%  { opacity: 1;   transform: scale(1); }
+  100% { opacity: 0;   transform: scale(1.12) translateY(-24px); }
+}
+
+@keyframes backdrop-lifecycle {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  72%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+
+/* ── Shared keyframes ───────────────────────────────────────────────── */
 
 @keyframes fade-in {
   from { opacity: 0; }
@@ -882,11 +1034,15 @@
   50%       { opacity: 0.20; }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
-/* ── Responsive ─────────────────────────────────────────────────── */
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
 /*
- * Below 760 px: collapse the three-column layout into a
- * vertical stack — sidebars above and below the table.
+ * Below 760 px: stack the three columns vertically.
+ * Sidebars become horizontal strips above / below the table.
  */
 @media (max-width: 760px) {
 
@@ -895,30 +1051,32 @@
     grid-template-rows: auto auto auto;
   }
 
-  /* Left sidebar stretches horizontally */
   .poker-sidebar--left {
     border-right: none;
     border-bottom: 1px solid var(--border);
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 10px;
-    padding: 14px;
+    gap: 8px;
+    padding: 12px;
   }
 
-  /* Right sidebar goes below the table */
   .poker-sidebar--right {
     border-left: none;
     border-top: 1px solid var(--border);
-    padding: 14px;
+    padding: 12px;
   }
 
   .poker-table-area {
-    padding: 16px;
+    padding: 14px;
   }
 
-  /* Tighter name plates on small screens */
   .pt-seat__chip {
     min-width: 48px;
     padding: 3px 7px;
+  }
+
+  /* Shrink announcement text on small screens */
+  .game-announcement__text {
+    font-size: clamp(2.2rem, 14vw, 4.5rem);
   }
 }
