@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, inject, viewChild, ChangeDetectorRef, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { Router } from '@angular/router';
-import { LootBoxHelper, LootItem } from '../../../../../middleground/LootboxHelper';
+import { LootBoxHelper, LootItem } from './lootbox-helper';
 import { LootboxService } from '@core/services/lootbox.service';
 import { ListingService } from '@core/services/listing.service';
 import { AuthService } from '@core/services/auth.service';
