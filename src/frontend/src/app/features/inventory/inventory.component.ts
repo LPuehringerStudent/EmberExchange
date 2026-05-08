@@ -6,7 +6,7 @@ import { StoveService } from '@core/services/stove.service';
 import { AuthService } from '@core/services/auth.service';
 import { ListingService } from '@core/services/listing.service';
 import { forkJoin, map, of, Subscription, switchMap } from 'rxjs';
-import { ShowedStove, StoveRow, LootboxTypeRow } from '../../../../../shared/model';
+import { ShowedStove, StoveRow, LootboxTypeRow } from '@shared/model';
 import { LootboxService } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 

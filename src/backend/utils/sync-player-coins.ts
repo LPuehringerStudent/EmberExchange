@@ -36,9 +36,9 @@ export async function syncPlayerCoinsFromState(
             const success = await playerService.updatePlayerCoins(p.playerId, p.stack);
             if (success) {
                 updated.push(p.playerId);
-                console.log(`[coins] synced player ${p.playerId} -> ${p.stack}`);
+                // Coin sync succeeded
             } else {
-                console.error(`[coins] FAILED to sync player ${p.playerId} -> ${p.stack}`);
+                console.error(`[coins] FAILED to sync player ${p.playerId}`);
             }
         }
     }

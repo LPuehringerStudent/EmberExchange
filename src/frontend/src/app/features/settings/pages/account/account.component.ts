@@ -7,7 +7,7 @@ import { AuthService } from '@core/services/auth.service';
   selector: 'app-account',
   imports: [ReactiveFormsModule],
   templateUrl: './account.component.html',
-  styleUrls: ['../../settings.component.css', './account.component.css'],
+  styleUrls: ['../../settings.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountComponent implements OnInit {

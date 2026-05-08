@@ -88,22 +88,28 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
       if (availableLootboxes.length === 0) {
         if (lootboxes.length > 0) {
-          alert('All your lootboxes are currently listed on the marketplace. Cancel a listing to open them.');
+          this.resultText.set('All your lootboxes are listed. Cancel a listing to open them.');
+          this.showPopup.set(true);
         } else {
-          alert('You have no lootboxes available!');
+          this.resultText.set('You have no lootboxes available.');
+          this.showPopup.set(true);
         }
         return;
       }
       lootboxId = availableLootboxes[0].lootboxId;
     } catch (err) {
       console.error('Failed to fetch lootboxes:', err);
-      alert('Failed to open lootbox. Please try again.');
+      this.resultText.set('Failed to open lootbox. Please try again.');
+      this.showPopup.set(true);
+      this.isOpening.set(false);
+      this.playingGif.set(false);
+      return;
       return;
     }
 
     try {
       const result = await firstValueFrom(this.lootboxApi.openLootbox(lootboxId, this.playerId));
-      console.log('Lootbox opened:', result);
+      // Lootbox opened successfully
 
       this.lootboxCount.update(count => Math.max(0, count - 1));
       void this.authService.refreshUser();
@@ -142,7 +148,11 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       }, 1400);
     } catch (err) {
       console.error('Failed to open lootbox:', err);
-      alert('Failed to open lootbox. Please try again.');
+      this.resultText.set('Failed to open lootbox. Please try again.');
+      this.showPopup.set(true);
+      this.isOpening.set(false);
+      this.playingGif.set(false);
+      return;
       this.isOpening.set(false);
       this.playingGif.set(false);
     }
