@@ -1,65 +1,78 @@
 # Product Backlog
 
+> Consolidated from `ProductBacklogTemplate.md` and `ProductBacklog.md`  
+> Updated for the EmberExchange roadmap
+
 | ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 
 ## Sprint 1 — Foundation & Core Systems
 | ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-01 | Technical Improvement | Project infrastructure: repository setup, CI configuration, tech research, and documentation | High | 4 | Completed | Sprint 1 | Laurenz Pühringer | Repository and CI are configured correctly. |
-| PB-03 | Technical Improvement | Database architecture: ERD, schema migrations in `unit.ts`, and seed data scripts | High | 7 | Completed | Sprint 1 | Laurenz Pühringer | ERD covers all core entities and schema is implemented. |
-| PB-06 | Technical Improvement | Player management backend: service layer (CRUD, coin ops) and REST API endpoints | High | 7 | Completed | Sprint 1 | Laurenz Pühringer | Player service and endpoints work correctly. |
-| PB-08 | Technical Improvement | Authentication and inventory backend: JWT/session auth, inventory service, and API endpoints | High | 11 | Completed | Sprint 1 | Laurenz Pühringer | Auth and inventory APIs are functional. |
-| PB-11 | Technical Improvement | Lootbox core: weighted random drops and REST endpoints | High | 8 | Completed | Sprint 1 | Laurenz Pühringer | Lootbox opening returns weighted random drops. |
-| PB-14 | Technical Improvement | Swagger API documentation for all implemented endpoints | High | 3 | Completed | Sprint 1 | Laurenz Pühringer | Swagger docs exist for all implemented endpoints. |
-| PB-13 | Technical Improvement | Unit tests for player and inventory services | High | 2 | Completed | Sprint 1 | Muhammad Ayan | Service tests cover core backend flows. |
-| PB-13b | Technical Improvement | Integration tests for auth and lootbox endpoints | High | 3 | Completed | Sprint 1 | Muhammad Ayan | Endpoint tests pass successfully. |
+| PB-01 | Technical Improvement | Set up repository branching strategy and CI basics | High | 1 | Completed | Sprint 1 | Unassigned | Repository and CI are configured correctly. |
+| PB-02 | Spike | Research and document the tech stack | High | 1 | Completed | Sprint 1 | Unassigned | Tech stack research is documented and approved. |
+| PB-03 | Technical Improvement | Complete the database ERD for players, inventory, stoves, trades, and price history | High | 2 | Completed | Sprint 1 | Unassigned | ERD covers all core entities and relationships. |
+| PB-04 | Technical Improvement | Implement the database schema and migrations in `unit.ts` | High | 3 | Completed | Sprint 1 | Unassigned | Database schema is implemented in `unit.ts`. |
+| PB-05 | Technical Improvement | Create seed data for test players, stove types, and lootboxes | Medium | 2 | Completed | Sprint 1 | Unassigned | Seed scripts generate valid test data. |
+| PB-06 | Technical Improvement | Build the Player Service layer for CRUD and coin management | High | 4 | Completed | Sprint 1 | Unassigned | Player service supports create, read, update, delete, and coin operations. |
+| PB-07 | User Story | As a user, I want to be able to manage my player account and coin balance | High | 3 | Completed | Sprint 1 | Unassigned | Player management endpoints work correctly through the API. |
+| PB-08 | User Story | As a user, I want to be able to register and log in securely | High | 4 | Completed | Sprint 1 | Unassigned | Users can register and log in using JWT and session auth. |
+| PB-09 | User Story | As a user, I want to be able to view and manage my inventory items | High | 4 | Completed | Sprint 1 | Unassigned | Inventory backend supports items, lootboxes, and stoves. |
+| PB-10 | User Story | As a user, I want to be able to browse and manage my inventory through the API | High | 3 | Completed | Sprint 1 | Unassigned | Inventory endpoints return correct data. |
+| PB-11 | User Story | As a user, I want to be able to open lootboxes and receive random stove drops | High | 3 | Completed | Sprint 1 | Unassigned | Lootbox opening returns weighted random drops. |
+| PB-12 | User Story | As a user, I want to be able to view and open my lootboxes | High | 5 | Completed | Sprint 1 | Unassigned | Lootbox endpoints allow viewing and opening lootboxes. |
+| PB-13 | Technical Improvement | Add comprehensive unit and integration tests | High | 5 | Completed | Sprint 1 | Unassigned | Tests cover core backend flows and pass successfully. |
+| PB-14 | Technical Improvement | Document all implemented endpoints in Swagger | High | 3 | Completed | Sprint 1 | Unassigned | Swagger docs exist for all implemented endpoints. |
+| PB-15 | Technical Improvement | Prepare sprint documentation and handover materials | Medium | 2 | Completed | Sprint 1 | Unassigned | Sprint documentation and handover materials are complete. |
 
 ## Sprint 2 — Stove Trading, Marketplace & Auth Expansion
 | ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-16 | Technical Improvement | Stove management backend: service layer and collection API | High | 7 | Completed | Sprint 2 | Laurenz Pühringer | Stove service supports minting, transfers, and ownership history. |
-| PB-18 | User Story | Marketplace core: listings, browsing, and atomic purchases | High | 13 | Completed | Sprint 2 | Laurenz Pühringer | Users can create listings, browse, and buy with atomic coin transfer. |
-| PB-21 | User Story | Marketplace analytics: pricing, history, and ownership tracking | High | 8 | Completed | Sprint 2 | Laurenz Pühringer | Price history and ownership chain are tracked and retrievable. |
-| PB-24 | Technical Improvement | API documentation and statistics backend | High | 8 | Completed | Sprint 2 | Laurenz Pühringer | Statistics tables, services, and Swagger docs are complete. |
-| PB-26 | User Story | OAuth and session-based authentication | High | 8 | Completed | Sprint 2 | Laurenz Pühringer | OAuth login works for Google and GitHub; session guards function. |
-| PB-30 | Technical Improvement | Chat and mini-game session backend | High | 3 | Completed | Sprint 2 | Laurenz Pühringer | Chat and mini-game session backend structures exist. |
-| PB-25 | Technical Improvement | Unit tests for marketplace service layer | High | 2 | Completed | Sprint 2 | Muhammad Ayan | Service-layer trading logic is covered by tests. |
-| PB-25b | Technical Improvement | Router tests for listing and trade endpoints | High | 2 | Completed | Sprint 2 | Muhammad Ayan | Listing and trade routes are covered by tests. |
-| PB-31 | User Story | Login page layout and form styling | High | 2 | Completed | Sprint 2 | David Frühwirt | Login page layout is styled and responsive. |
-| PB-31b | User Story | Login form validation and responsive design | High | 2 | Completed | Sprint 2 | David Frühwirt | Login form validates inputs and adapts to screen sizes. |
-| PB-31c | User Story | Login OAuth button integration and error states | High | 1 | Completed | Sprint 2 | David Frühwirt | OAuth buttons and error messages are integrated. |
-| PB-32 | User Story | Main page hero section and navigation | High | 2 | Completed | Sprint 2 | David Frühwirt | Main page hero and navigation are styled. |
-| PB-32b | User Story | Main page stove carousel and live feed | High | 2 | Completed | Sprint 2 | David Frühwirt | Carousel and feed display correctly on the main page. |
-| PB-32c | User Story | Main page CSS animations and mobile layout | High | 1 | Completed | Sprint 2 | David Frühwirt | Animations and mobile layout are polished. |
-| PB-33 | User Story | Settings page shell and navigation | Medium | 1 | Completed | Sprint 2 | David Frühwirt | Settings shell and navigation are usable. |
-| PB-33b | User Story | Settings sub-pages (Account, Security, Appearance) | Medium | 1 | Completed | Sprint 2 | David Frühwirt | Sub-pages are accessible and styled. |
-| PB-34 | Bug Fix | Fix topbar and sidebar styling issues | Medium | 1 | Completed | Sprint 2 | David Frühwirt | Topbar and sidebar styling issues are resolved. |
-| PB-34b | Bug Fix | Fix form input and button consistency | Medium | 1 | Completed | Sprint 2 | David Frühwirt | Form inputs and buttons are visually consistent. |
+| PB-16 | Technical Improvement | Build the stove service for minting, ownership transfer, and history | High | 4 | Completed | Sprint 2 | Unassigned | Stove service supports minting, transfers, and ownership history. |
+| PB-17 | User Story | As a user, I want to be able to view my stove collection with ownership details | High | 3 | Completed | Sprint 2 | Unassigned | Users can view their stove collection with ownership details. |
+| PB-18 | User Story | As a user, I want to be able to list my stoves for sale at a chosen price | High | 4 | Completed | Sprint 2 | Unassigned | Users can create marketplace listings. |
+| PB-19 | User Story | As a user, I want to be able to browse the marketplace with useful filters | High | 4 | Completed | Sprint 2 | Unassigned | Marketplace supports filtering by rarity, price, and type. |
+| PB-20 | User Story | As a user, I want to be able to buy stoves with secure coin transfers | High | 5 | Completed | Sprint 2 | Unassigned | Buying stoves performs atomic coin transfer correctly. |
+| PB-21 | Technical Improvement | Calculate and store 30-day median prices per stove type | High | 3 | Completed | Sprint 2 | Unassigned | 30-day median price data is calculated and stored. |
+| PB-22 | User Story | As a user, I want to be able to view price history charts for stove types | High | 3 | Completed | Sprint 2 | Unassigned | Price history charts display correctly. |
+| PB-23 | User Story | As a user, I want to be able to see the full ownership chain of a stove | Medium | 2 | Completed | Sprint 2 | Unassigned | Ownership chain can be retrieved for any stove. |
+| PB-24 | Technical Improvement | Document marketplace endpoints in Swagger | High | 3 | Completed | Sprint 2 | Unassigned | Marketplace endpoints are documented in Swagger. |
+| PB-25 | Technical Improvement | Add trading tests for service and route coverage | High | 4 | Completed | Sprint 2 | Unassigned | Trading logic and routes are covered by tests. |
+| PB-26 | User Story | As a user, I want to be able to sign in with Google or GitHub | High | 4 | Completed | Sprint 2 | Unassigned | OAuth login works for Google and GitHub. |
+| PB-27 | Technical Improvement | Implement session-based auth with session guards | High | 4 | Completed | Sprint 2 | Unassigned | Session auth and guards function properly. |
+| PB-28 | Technical Improvement | Add statistics tables for player, daily, and stove-type metrics | High | 2 | Completed | Sprint 2 | Unassigned | Statistics tables exist and match the model. |
+| PB-29 | Technical Improvement | Build statistics services and aggregation routers | High | 3 | Completed | Sprint 2 | Unassigned | Statistics are calculated and exposed through APIs. |
+| PB-30 | Technical Improvement | Add `ChatMessage` and `MiniGameSession` backend tables, services, and routers | High | 3 | Completed | Sprint 2 | Unassigned | Chat and mini-game session backend structures exist. |
+| PB-31 | User Story | As a user, I want to be able to use a responsive login and registration flow | High | 5 | Completed | Sprint 2 | Unassigned | Login/register UI is usable and responsive. |
+| PB-32 | User Story | As a user, I want to be able to use a warm-themed main page that feels cohesive | High | 5 | Completed | Sprint 2 | Unassigned | Main UI follows the warm-stove theme. |
+| PB-33 | User Story | As a user, I want to be able to open a settings page to manage my account | Medium | 2 | Completed | Sprint 2 | Unassigned | Settings page UI exists and is usable. |
+| PB-34 | Bug Fix | Fix small UI issues across the application | Medium | 2 | Completed | Sprint 2 | Unassigned | Major UI bugs are fixed. |
 
 ## Sprint 3 — Marketplace Frontend, Lootbox Rework & Polish
 | ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-35 | User Story | Marketplace frontend: buy/sell flows, inventory integration, and coin UI | High | 11 | Completed | Sprint 3 | Laurenz Pühringer | Marketplace frontend supports coin-based transactions. |
-| PB-38 | User Story | Lootbox inventory rework and function restoration | High | 6 | Completed | Sprint 3 | Laurenz Pühringer | Lootboxes behave as inventory items and function correctly. |
-| PB-41 | Technical Improvement | Player tracking and profile page with live statistics | High | 7 | Completed | Sprint 3 | Laurenz Pühringer | Profile page displays live user stats. |
-| PB-43 | Technical Improvement | Frontend modernization: HttpClient migration, landing page, and build fixes | Medium | 6 | Completed | Sprint 3 | Laurenz Pühringer | Frontend uses modern service patterns and updated landing page. |
-| PB-46 | Technical Improvement | Stove sprite system: asset creation, DB wiring, and UI integration | High | 12 | Completed | Sprint 3 | Laurenz Pühringer | Sprite assets are created, linked to DB, and displayed across UI. |
-| PB-51 | Technical Improvement | Backend quality: route fixes, schema stability, and documentation | High | 8 | Completed | Sprint 3 | Laurenz Pühringer | Routes no longer shadow; test DB stays in sync; docs updated. |
-| PB-39 | Bug Fix | Investigate and reproduce lootbox rarity mapping bug | High | 1 | Completed | Sprint 3 | Timon Brindl | Bug is identified and reproducible. |
-| PB-39b | Bug Fix | Implement and verify rarity-to-stoveTypeId fix | High | 1 | Completed | Sprint 3 | Timon Brindl | Lootbox drops map correctly to stove type IDs. |
-| PB-50 | Technical Improvement | Lootbox router tests | High | 3 | Completed | Sprint 3 | Muhammad Ayan | Lootbox routes are covered by tests. |
-| PB-50b | Technical Improvement | Statistics router tests | High | 2 | Completed | Sprint 3 | Muhammad Ayan | Statistics routes are covered by tests. |
-| PB-50c | Technical Improvement | Auth and login history router tests | High | 3 | Completed | Sprint 3 | Muhammad Ayan | Auth and login history routes are covered by tests. |
-| PB-50d | Technical Improvement | Chat and coin transaction router tests | High | 2 | Completed | Sprint 3 | Muhammad Ayan | Chat and coin transaction routes are covered by tests. |
-| PB-45 | User Story | Chest idle and opening GIF animations | High | 2 | Completed | Sprint 3 | David Frühwirt | Chest animations are integrated and smooth. |
-| PB-45b | User Story | Lootbox reward preview card layout | High | 2 | Completed | Sprint 3 | David Frühwirt | Reward preview cards display correctly. |
-| PB-45c | User Story | Lootbox responsive styling and CSS polish | High | 1 | Completed | Sprint 3 | David Frühwirt | Lootbox UI is responsive and polished. |
-| PB-54 | User Story | Register step 1: Identity form with validation | High | 2 | Completed | Sprint 3 | David Frühwirt | Identity form validates username and email. |
-| PB-54b | User Story | Register step 2: Password strength meter and confirm | High | 2 | Completed | Sprint 3 | David Frühwirt | Password strength feedback and confirmation work. |
-| PB-54c | User Story | Register step 3: Terms acceptance and submit flow | High | 1 | Completed | Sprint 3 | David Frühwirt | Terms checkbox and submit flow are functional. |
-| PB-55 | User Story | Shell topbar styling and coin pill design | Medium | 2 | Completed | Sprint 3 | David Frühwirt | Topbar styling and coin pill are polished. |
-| PB-55b | User Story | Account dropdown and logout interaction polish | Medium | 1 | Completed | Sprint 3 | David Frühwirt | Account dropdown and logout interactions are smooth. |
+| PB-35 | User Story | As a user, I want to be able to use a marketplace frontend with coin-based buying and selling | High | 5 | Completed | Sprint 3 | Unassigned | Marketplace frontend supports coin-based transactions. |
+| PB-36 | User Story | As a user, I want to be able to sell items directly from my inventory | High | 4 | Completed | Sprint 3 | Unassigned | Users can sell items directly from inventory. |
+| PB-37 | User Story | As a user, I want to be able to see my coin balance in the top bar | High | 2 | Completed | Sprint 3 | Unassigned | Coin balance is visible in the top bar. |
+| PB-38 | User Story | As a user, I want lootboxes to appear as real inventory items | High | 3 | Completed | Sprint 3 | Unassigned | Lootboxes behave as inventory items. |
+| PB-39 | Bug Fix | Correct loot drop mapping so rarity resolves to the right stove type | High | 2 | Completed | Sprint 3 | Unassigned | Lootbox drops map correctly to stove type IDs. |
+| PB-40 | Bug Fix | Restore lootbox functionality after the inventory rework | High | 3 | Completed | Sprint 3 | Unassigned | Lootbox function works after inventory rework. |
+| PB-41 | Technical Improvement | Track login history and coin transactions for accurate stats | High | 3 | Completed | Sprint 3 | Unassigned | Tracking tables record user activity accurately. |
+| PB-42 | User Story | As a user, I want to be able to view a profile page with my info and live statistics | High | 4 | Completed | Sprint 3 | Unassigned | Profile page displays live user stats. |
+| PB-43 | Technical Improvement | Modernize the frontend data layer and landing page | Medium | 4 | Completed | Sprint 3 | Unassigned | Frontend uses modern service patterns and updated landing page. |
+| PB-44 | Bug Fix | Fix package conflicts and Angular build budget issues | Medium | 2 | Completed | Sprint 3 | Unassigned | Build completes without package or budget conflicts. |
+| PB-45 | User Story | As a user, I want to be able to open lootboxes with animations and reward previews | High | 5 | Completed | Sprint 3 | Unassigned | Lootbox UI includes animations and previews. |
+| PB-46 | Technical Improvement | Add stove sprite assets and wire them to the database | High | 4 | Completed | Sprint 3 | Unassigned | Stove sprite assets are created and linked to DB records. |
+| PB-47 | User Story | As a user, I want to be able to see actual stove sprites in my inventory | High | 3 | Completed | Sprint 3 | Unassigned | Inventory shows actual stove sprites. |
+| PB-48 | User Story | As a user, I want to be able to see stove sprites on marketplace listing cards | High | 3 | Completed | Sprint 3 | Unassigned | Listing cards render stove sprites correctly. |
+| PB-49 | Bug Fix | Remove hardcoded stove names and read them from `StoveType` | High | 2 | Completed | Sprint 3 | Unassigned | UI reads stove names dynamically from `StoveType`. |
+| PB-50 | Technical Improvement | Add router tests for lootbox, statistics, auth, chat, and coin transactions | High | 10 | Completed | Sprint 3 | Unassigned | Router tests cover the listed backend areas. |
+| PB-51 | Bug Fix | Fix Express route shadowing issues such as `/count` before `/:id` | High | 2 | Completed | Sprint 3 | Unassigned | Routes no longer shadow each other. |
+| PB-52 | Bug Fix | Fix test database schema drift and migration issues | High | 3 | Completed | Sprint 3 | Unassigned | Test DB migrations stay in sync with schema. |
+| PB-53 | Technical Improvement | Keep the full test suite passing | High | 1 | Completed | Sprint 3 | Unassigned | Test suite passes completely. |
+| PB-54 | User Story | As a user, I want to be able to register through a step-by-step flow with password strength feedback | High | 5 | Completed | Sprint 3 | Unassigned | Registration wizard works with password validation. |
+| PB-55 | User Story | As a user, I want to be able to use a polished top bar with account controls | Medium | 3 | Completed | Sprint 3 | Unassigned | Topbar account controls are polished. |
+| PB-56 | Technical Improvement | Unify sprint backlog documentation | Medium | 2 | Completed | Sprint 3 | Unassigned | Backlog documentation is unified and maintained. |
 
 ## Sprint 4 — Roulette & Blackjack MiniGames + Settings
 | ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
@@ -93,64 +106,18 @@
 | PB-79 | Technical Improvement | Add tests for chat, social features, and game logic | Medium | 4 | To Do | Sprint 5 | Unassigned | Chat/social/game tests are in place and passing. |
 | PB-80 | Technical Improvement | Polish the mini-games and social screens with sound, mobile layout, and error boundaries | Medium | 3 | To Do | Sprint 5 | Unassigned | Games and social screens are polished and stable. |
 
-## Future Sprints — Post-MVP Backlog
 
-### Performance & Optimization
-| ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-81 | Technical Improvement | Cache frequent queries with Redis | Low | 5 | Backlog | Future | Unassigned | Repeated queries are cached to improve performance. |
-| PB-82 | Technical Improvement | Review and optimize database queries and indexes | Low | 3 | Backlog | Future | Unassigned | Slow queries are optimized and indexes reviewed. |
-| PB-83 | Technical Improvement | Serve stove images through a CDN | Low | 3 | Backlog | Future | Unassigned | Stove images can be served via CDN. |
-| PB-84 | Non-Functional Requirement | Reach a Lighthouse performance score above 90 | Medium | 6 | Backlog | Future | Unassigned | Lighthouse performance score exceeds 90. |
-| PB-85 | Technical Improvement | Analyze bundle size and keep the main bundle under 200KB | Medium | 3 | Backlog | Future | Unassigned | Main bundle size stays under the target threshold. |
-
-### Analytics & Monitoring
-| ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-86 | User Story | As an admin, I want to be able to see active users, trades, and economy health in one dashboard | Low | 5 | Backlog | Future | Unassigned | Admin dashboard displays live operational metrics. |
-| PB-87 | Technical Improvement | Add Sentry error tracking | Low | 3 | Backlog | Future | Unassigned | Frontend and backend errors are tracked in Sentry. |
-| PB-88 | Technical Improvement | Add user behavior analytics | Low | 5 | Backlog | Future | Unassigned | User interaction analytics are collected responsibly. |
-
-### Advanced Features
-| ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-89 | User Story | As a user, I want to be able to trade directly with another player | Low | 5 | Backlog | Future | Unassigned | Users can trade directly without marketplace listings. |
-| PB-90 | User Story | As a user, I want to be able to craft higher-tier stoves from lower-tier ones | Low | 8 | Backlog | Future | Unassigned | Users can combine stoves into higher-tier items. |
-| PB-91 | User Story | As a user, I want to be able to earn and display achievements and badges | Low | 5 | Backlog | Future | Unassigned | Users can earn and display achievements. |
-| PB-92 | User Story | As a user, I want to be able to take part in seasonal events with limited-time drops | Low | 8 | Backlog | Future | Unassigned | Seasonal events provide unique limited-time rewards. |
-| PB-93 | User Story | As a user, I want to be able to use offline support and push notifications | Low | 8 | Backlog | Future | Unassigned | App supports offline and push notification features. |
-| PB-94 | Non-Functional Requirement | Support English and German translations | Low | 13 | Backlog | Future | Unassigned | UI supports English and German translations. |
-
-### Mobile & Multi-Platform
-| ID | Type of Item | Description | Priority | Story Points | Status | Sprint | Assignee | Acceptance Criteria |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| PB-95 | User Story | As a user, I want to be able to use a mobile app version of EmberExchange | Low | 21 | Backlog | Future | Unassigned | A mobile application variant exists. |
-| PB-96 | Technical Improvement | Improve tablet responsiveness | Low | 5 | Backlog | Future | Unassigned | Tablet layouts are improved and verified. |
-| PB-97 | Technical Improvement | Add Docker deployment configuration | Medium | 5 | Backlog | Future | Unassigned | Docker deployment is configured and documented. |
-| PB-98 | Technical Improvement | Add Playwright end-to-end tests for login, lootbox, and trade flows | High | 5 | Backlog | Future | Unassigned | End-to-end tests cover critical user flows. |
-
----
 
 ## Backlog Summary
 
 | Sprint | Focus | Status | Story Points | Est. Hours |
 |--------|-------|--------|-------------|-----------|
-| Sprint 1 | Foundation & Core Systems | Completed | 45 SP | ~45h |
+| Sprint 1 | Foundation & Core Systems | Completed | 42 SP | ~45h |
 | Sprint 2 | Stove Trading, Marketplace & Auth Expansion | Completed | 65 SP | ~50h |
 | Sprint 3 | Marketplace Frontend, Lootbox Rework & Polish | Completed | 75 SP | ~45h |
 | Sprint 4 | Roulette & Blackjack MiniGames + Settings | Planned | 44 SP | ~40h |
 | Sprint 5 | Coin Flip & Slots + Social | Planned | 47 SP | ~42h |
-| **MVP Total** |  |  | **~276 SP** | **~222h** |
-| Future | Advanced Features, Mobile, Analytics | Backlog | ~80 SP | ~70h |
-
-### Team Contribution Summary (Sprints 1–3)
-
-| Team Member | Items Completed | Story Points | Primary Focus |
-|-------------|----------------|-------------|---------------|
-| Laurenz Pühringer | 18 | 137 | Backend architecture, core systems, marketplace, sprites, docs |
-| David Frühwirt | 18 | 27 | Frontend UI/UX: login, register, main page, settings, lootbox |
-| Muhammad Ayan | 8 | 19 | Test coverage: services, routers, auth, statistics |
-| Timon Brindl | 2 | 2 | Bug fixes: lootbox rarity mapping |
+| **MVP Total** |  |  | **~273 SP** | **~222h** |
 
 ---
 

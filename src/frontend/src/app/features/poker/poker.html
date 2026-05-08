@@ -1,73 +1,48 @@
-<!--
-  ============================================================
-  POKER TEMPLATE
-  ============================================================
-
-  Overlay stack (highest z-index first):
-    z-100  .game-announcement   — full-screen phase text (PRE-FLOP, FLOP …)
-    z-60   .game-gathering      — gathering-chips loader + video
-    z-50   .game-start-overlay  — "Start Game" cover
-    z-10   .pt-seat             — player seats (above table)
-    z-2    table content        — community cards, pot, turn indicator
-
-  The table felt (.pt-table) is drawn entirely in CSS; swap to the
-  poker_table.png sprite by following the comment inside .pt-table
-  in poker.css.
-  ============================================================
--->
-
 <div class="poker-page">
-
-
-  <!-- ═══════════════════════════════════════════════════════════
-       HEADER — title + current phase badge
-  ════════════════════════════════════════════════════════════ -->
   <header class="poker-header">
-
     <div class="poker-header__left">
       <h1 class="poker-title">Fiery Poker</h1>
     </div>
-
     <div class="poker-header__center">
       <span
         class="phase-badge"
-        [class.phase-badge--playing]="
-          phase() === 'preflop' ||
-          phase() === 'flop'    ||
-          phase() === 'turn'    ||
-          phase() === 'river'"
+        [class.phase-badge--playing]="phase() === 'preflop' || phase() === 'flop' || phase() === 'turn' || phase() === 'river'"
         [class.phase-badge--finished]="phase() === 'showdown'"
       >
         {{ phaseLabel() }}
       </span>
     </div>
-
     <div class="poker-header__right">
-      <!-- Reserved for a round counter or timer -->
+      <!-- Reserved for a future round counter or game timer -->
     </div>
-
   </header>
 
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PHASE ANNOUNCEMENT OVERLAY (big screen text)   -->
+  <!-- ═══════════════════════════════════════════════ -->
+  @if (showPhaseOverlay()) {
+    <div class="game-announcement" role="status" aria-live="assertive">
+      <span class="game-announcement__text">{{ phaseOverlayText() }}</span>
+    </div>
+  }
 
-  <!-- ═══════════════════════════════════════════════════════════
-       MAIN — left sidebar | table | right sidebar
-  ════════════════════════════════════════════════════════════ -->
+
+
   <div class="poker-main">
 
-
-    <!-- ── Left sidebar: game info + actions ──────────────────── -->
     <aside class="poker-sidebar poker-sidebar--left" aria-label="Game information">
-
+      <!-- Current game phase -->
       <div class="info-block">
         <span class="info-block__label">Phase</span>
         <span class="info-block__value">{{ phaseLabel() }}</span>
       </div>
 
+      <!-- Pot amount -->
       @if (pot() > 0) {
         <div class="info-block info-block--highlight">
           <span class="info-block__label">Pot</span>
           <span class="info-block__value info-block__value--large">
-            <img [src]="coalIconSrc" class="currency-icon" alt="" aria-hidden="true" />
+            <img class="coal-icon coal-icon--small" [src]="coalIconSrc" alt="" />
             {{ pot() }}
           </span>
         </div>
@@ -77,7 +52,7 @@
         <div class="info-block">
           <span class="info-block__label">To Call</span>
           <span class="info-block__value">
-            <img [src]="coalIconSrc" class="currency-icon" alt="" aria-hidden="true" />
+            <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
             {{ currentBet() }}
           </span>
         </div>
@@ -90,7 +65,7 @@
         </div>
       }
 
-      <!-- Action buttons — only shown on the hero's turn -->
+      <!-- Hero action buttons -->
       @if (isHeroTurn() && validActions().length > 0) {
         <div class="info-block info-block--actions">
           <span class="info-block__label">Your Turn</span>
@@ -99,7 +74,14 @@
               @if (action.type === 'raise') {
                 @let rMin = action.minAmount ?? 0;
                 @let rMax = action.maxAmount ?? rMin;
-                <div class="raise-group">
+                <div class="raise-row">
+                  <button
+                    class="raise-stepper"
+                    (click)="decrementRaise(rMin)"
+                    [disabled]="(raiseAmount() || rMin) <= rMin"
+                  >
+                    −
+                  </button>
                   <input
                     type="number"
                     class="raise-input"
@@ -109,10 +91,20 @@
                     (input)="raiseAmount.set(+($any($event.target).value))"
                     (focus)="initRaiseAmount(rMin)"
                   />
-                  <button class="action-btn action-btn--primary" (click)="executeRaise()">
-                    Raise
+                  <button
+                    class="raise-stepper"
+                    (click)="incrementRaise(rMin, rMax)"
+                    [disabled]="(raiseAmount() || rMin) >= rMax"
+                  >
+                    +
                   </button>
                 </div>
+                <button
+                  class="action-btn action-btn--primary"
+                  (click)="executeRaise()"
+                >
+                  Raise
+                </button>
               } @else {
                 <button
                   class="action-btn"
@@ -121,7 +113,10 @@
                 >
                   {{ action.type | titlecase }}
                   @if (action.amount) {
-                    <span class="action-btn__amount">{{ action.amount }}</span>
+                    <span class="action-btn__amount">
+                      <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                      {{ action.amount }}
+                    </span>
                   }
                 </button>
               }
@@ -130,83 +125,37 @@
         </div>
       }
 
-      <!-- Hero's current hand ranking -->
+      <!-- Hero hand strength -->
       @if (heroHandName()) {
         <div class="info-block info-block--hand">
           <span class="info-block__label">Your Hand</span>
           <span class="info-block__value info-block__value--hand">{{ heroHandName() }}</span>
         </div>
       }
-
-      <!-- Showdown: winner list -->
-      @if (winners(); as w) {
-        @if (w.length > 0) {
-          <div class="info-block info-block--winner">
-            <span class="info-block__label">Winner</span>
-            @for (winner of w; track winner.playerId) {
-              <span class="info-block__value info-block__value--winner">
-                {{ winner.playerId === heroPlayerId() ? 'You' : getPlayerName(winner.playerId) }}
-                won
-                <img [src]="coalIconSrc" class="currency-icon" alt="" aria-hidden="true" />
-                {{ winner.amount }}
-                @if (winner.handName) {
-                  <span class="winner-hand">({{ winner.handName }})</span>
-                }
-              </span>
-            }
-          </div>
-        }
-      }
-
-      <!-- New Round button (shown after showdown) -->
-      @if (canStartNewRound()) {
-        <div class="info-block info-block--new-round">
-          <button class="new-round-btn" (click)="onNewRound()">
-            New Round
-          </button>
-        </div>
-      }
-
     </aside>
 
-
-    <!-- ── Center: the poker table ────────────────────────────── -->
     <main class="poker-table-area" aria-label="Poker table">
       <div class="pt-wrapper">
-
-
-        <!-- ── The felt table (CSS oval + decorative chips) ──── -->
-        <!--
-          SPRITE SWAP:
-          To use poker_table.png instead of the CSS oval, add to .pt-table:
-            background-image: url('assets/poker/poker_table.png');
-            background-size: cover;
-            background-position: center top;
-          …and remove the radial-gradient background in poker.css.
-        -->
         <div
           class="pt-table"
           role="img"
           aria-label="Poker felt table"
         >
 
-          <!--
-            Decorative poker chips lying flat on the felt.
-            Positioned away from the center (community cards) and
-            away from the seat corners. Pure eye candy.
-          -->
-          <div class="pt-chips-deco" aria-hidden="true">
-            <div class="pt-deco-chip pt-deco-chip--red   pt-deco-chip--a"></div>
-            <div class="pt-deco-chip pt-deco-chip--blue  pt-deco-chip--b"></div>
-            <div class="pt-deco-chip pt-deco-chip--black pt-deco-chip--c"></div>
-            <div class="pt-deco-chip pt-deco-chip--red   pt-deco-chip--d"></div>
-            <div class="pt-deco-chip pt-deco-chip--blue  pt-deco-chip--e"></div>
-            <div class="pt-deco-chip pt-deco-chip--black pt-deco-chip--f"></div>
-            <div class="pt-deco-chip pt-deco-chip--red   pt-deco-chip--g"></div>
-            <div class="pt-deco-chip pt-deco-chip--blue  pt-deco-chip--h"></div>
-          </div>
+          <!-- ── Decorative chips on the felt ── -->
+          @for (chip of tableChips; track $index) {
+            <div
+              class="pt-table-chip"
+              [style.left.%]="chip.x"
+              [style.top.%]="chip.y"
+              [style.width.px]="chip.size"
+              [style.height.px]="chip.size"
+              [style.background-color]="chip.color"
+              [style.animation-delay.s]="$index * 0.08"
+            ></div>
+          }
 
-          <!-- Turn indicator — shows whose turn it is during play -->
+          <!-- ── Turn indicator ── -->
           @if (currentTurnPlayer(); as player) {
             <div
               class="pt-turn-indicator"
@@ -219,107 +168,78 @@
             </div>
           }
 
-          <!-- Community cards (5 slots: flop ×3, turn, river) -->
+          <!-- ── Community cards ── -->
           <div class="pt-community" aria-label="Community cards">
             @for (card of communitySlots(); track $index) {
               <div
                 class="pt-card-slot"
+                [class.pt-card-slot--filled]="card"
                 [attr.aria-label]="card ? (card.rank + ' of ' + card.suit) : 'Empty card slot'"
               >
                 @if (card) {
-                  <!--
-                    animation-delay staggers each community card deal.
-                    The card-deal keyframe handles the flip animation.
-                  -->
-                  <img
-                    [src]="cardSpriteSrc(card)"
-                    [alt]="card.rank + ' of ' + card.suit"
-                    [style.animation-delay]="$index * 120 + 'ms'"
-                    class="pt-card-img"
-                  />
+                  <div class="card-flip" [class.card-flip--face-up]="card.faceUp">
+                    <div class="card-flip__inner">
+                      <div class="card-flip__front">
+                        <img
+                          [src]="cardSpriteSrc(card)"
+                          [alt]="card.rank + ' of ' + card.suit"
+                          class="pt-card-img"
+                          loading="eager"
+                        />
+                      </div>
+                      <div class="card-flip__back">
+                        <img
+                          [src]="cardBackSrc()"
+                          alt="Face-down card"
+                          class="pt-card-img"
+                          loading="eager"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 }
               </div>
             }
           </div>
 
-          <!-- Pot display — centered below the community cards -->
+          <!-- Pot display -->
           @if (pot() > 0) {
             <div class="pt-pot" aria-live="polite" aria-label="Current pot amount">
-              <img [src]="coalIconSrc" class="currency-icon" alt="" aria-hidden="true" />
-              <span class="pt-pot__label">POT</span>
+              <img class="coal-icon coal-icon--pot" [src]="coalIconSrc" alt="" />
               <span class="pt-pot__amount">{{ pot() }}</span>
             </div>
           }
 
+          <!-- ── Start Game overlay ── -->
+          @if (!gameStarted() && isWaiting()) {
+            <div class="game-start-overlay" role="dialog" aria-modal="true" aria-label="Game not started">
+              <div class="game-start-overlay__inner">
+                <p class="game-start-overlay__hint">Waiting for game to begin</p>
+                <button class="game-start-btn" (click)="handleStartGame()" aria-label="Start the poker game">
+                  Start Game
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- ── Gathering Chips loading overlay ── -->
+          @if (isLoading()) {
+            <div class="game-gathering-overlay" role="status" aria-live="polite">
+              <div class="gathering-video-placeholder" aria-hidden="true">
+                <div class="gathering-spinner"></div>
+              </div>
+              <p class="gathering-text">Gathering Chips</p>
+            </div>
+          }
+
         </div>
-        <!-- /pt-table -->
 
-
-        <!-- ── Start Game overlay ─────────────────────────────── -->
-        <!--
-          Covers the whole pt-wrapper with a dark veil.
-          Disappears once the gathering animation begins.
-        -->
-        @if (isWaiting() && !gatheringVisible()) {
-          <div class="game-start-overlay" role="dialog" aria-modal="true" aria-label="Game not started">
-            <div class="game-start-overlay__inner">
-              <p class="game-start-overlay__hint">Waiting for game to begin</p>
-              <button
-                class="game-start-btn"
-                (click)="onStartGame()"
-                aria-label="Start the poker game"
-              >
-                Start Game
-              </button>
-            </div>
-          </div>
-        }
-
-
-        <!-- ── Gathering Chips overlay ────────────────────────── -->
-        <!--
-          Shown for ~3 seconds after clicking "Start Game".
-          Replace the placeholder div with your video when ready:
-            <video src="assets/poker/gathering-chips.mp4"
-                   autoplay muted playsinline
-                   class="gathering-video"
-                   aria-hidden="true"></video>
-        -->
-        @if (gatheringVisible()) {
-          <div class="game-gathering-overlay" role="status" aria-live="polite">
-            <!-- Swap this div for a <video> when your mp4 is ready -->
-            <div class="gathering-video-placeholder" aria-hidden="true">
-              <div class="gathering-spinner"></div>
-            </div>
-            <!-- Uncomment when mp4 is ready:
-            <video
-              src="assets/poker/gathering-chips.mp4"
-              autoplay
-              muted
-              playsinline
-              class="gathering-video"
-              aria-hidden="true"
-            ></video>
-            -->
-            <p class="gathering-text">Gathering Chips</p>
-          </div>
-        }
-
-
-        <!-- ── Player seats ────────────────────────────────────── -->
-        <!--
-          One seat per entry in SEAT_POSITIONS (6 total).
-
-          EMPTY SEAT RULE:
-          When only 2 players are seated (activeSeatCount() <= 2),
-          we skip rendering the empty seat placeholders. With 3+ players
-          empty seat outlines are shown to give table context.
-        -->
+        <!-- ── Player seats ── -->
         @let players = seatedPlayers();
-        @for (pos of seatPositions; track $index) {
+        @let positions = activeSeatPositions();
+        @for (pos of positions; track $index) {
           @let seatPlayer = players[$index];
-
-          @if (seatPlayer || activeSeatCount() > 2) {
+          @if (shouldShowSeat($index)) {
             <div
               class="pt-seat"
               [class.pt-seat--hero]="isHero($index)"
@@ -330,10 +250,9 @@
               [style.top.%]="pos.y"
               [attr.aria-label]="'Seat ' + ($index + 1)"
             >
-
-              <!-- Dealer button badge -->
+              <!-- Dealer button -->
               @if (seatPlayer?.isDealer) {
-                <div class="pt-dealer" aria-label="Dealer button">D</div>
+                <div class="pt-dealer" aria-label="Dealer">D</div>
               }
 
               <!-- All-in badge -->
@@ -341,43 +260,49 @@
                 <div class="pt-all-in-badge" aria-label="All In">ALL IN</div>
               }
 
-              <!-- Hole cards (2 slots each, staggered deal animation) -->
               @if (seatPlayer) {
                 <div class="pt-hole-cards">
                   @for (cardIdx of [0, 1]; track cardIdx) {
                     <div class="pt-card-slot pt-card-slot--hole">
                       @if (seatPlayer.cards?.[cardIdx]; as card) {
-                        @if (card.faceUp) {
-                          <img
-                            [src]="cardSpriteSrc(card)"
-                            [alt]="card.rank + ' of ' + card.suit"
-                            [style.animation-delay]="cardIdx * 150 + 'ms'"
-                            class="pt-card-img"
-                          />
-                        } @else {
-                          <img
-                            [src]="cardBackSrc()"
-                            alt="Face-down card"
-                            [style.animation-delay]="cardIdx * 150 + 'ms'"
-                            class="pt-card-img"
-                          />
-                        }
+                        <div class="card-flip" [class.card-flip--face-up]="card.faceUp">
+                          <div class="card-flip__inner">
+                            <div class="card-flip__front">
+                              <img
+                                [src]="cardSpriteSrc(card)"
+                                [alt]="card.rank + ' of ' + card.suit"
+                                class="pt-card-img"
+                                loading="eager"
+                              />
+                            </div>
+                            <div class="card-flip__back">
+                              <img
+                                [src]="cardBackSrc()"
+                                alt="Face-down card"
+                                class="pt-card-img"
+                                loading="eager"
+                              />
+                            </div>
+                          </div>
+                        </div>
                       }
                     </div>
                   }
                 </div>
               }
 
-              <!-- Name plate: player info or empty seat label -->
               <div class="pt-seat__chip">
                 @if (seatPlayer; as p) {
                   <span class="pt-seat__name">{{ p.name }}</span>
                   <span class="pt-seat__chips">
-                    <img [src]="coalIconSrc" class="currency-icon currency-icon--small" alt="" aria-hidden="true" />
+                    <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
                     {{ p.chips }}
                   </span>
                   @if (p.currentBet > 0) {
-                    <span class="pt-seat__bet">Bet: {{ p.currentBet }}</span>
+                    <span class="pt-seat__bet">
+                      <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                      {{ p.currentBet }}
+                    </span>
                   }
                 } @else {
                   <span class="pt-seat__empty">Seat {{ $index + 1 }}</span>
@@ -389,66 +314,68 @@
         }
         <!-- /seats -->
 
-
       </div>
       <!-- /pt-wrapper -->
     </main>
 
-
-    <!-- ── Right sidebar: player standings ────────────────────── -->
     <aside class="poker-sidebar poker-sidebar--right" aria-label="Player standings">
-
-      <h2 class="sidebar-title">Players</h2>
-
-      @if (seatedPlayers().length === 0) {
-        <p class="sidebar-empty">Waiting for players...</p>
-      }
-
-      @for (player of seatedPlayers(); track player?.playerId) {
-        @if (player) {
-          <div
-            class="player-row"
-            [class.player-row--active]="player.isCurrentTurn"
-            [class.player-row--folded]="player.isFolded"
-            [class.player-row--all-in]="player.isAllIn"
-          >
-            <div class="player-row__info">
-              <span class="player-row__name">{{ player.name }}</span>
-              @if (player.isDealer) {
-                <span class="player-row__badge player-row__badge--dealer" aria-label="Dealer">D</span>
-              }
-              @if (player.isAllIn) {
-                <span class="player-row__badge player-row__badge--allin" aria-label="All In">ALL IN</span>
+      @if (isShowdown()) {
+        <!-- Results -->
+        <div class="sidebar-results">
+          <h2 class="sidebar-title">🏆 Results</h2>
+          @if (winners().length > 0) {
+            <div class="sidebar-list">
+              @for (winner of winners(); track winner.playerId) {
+                <div class="player-row player-row--winner">
+                  <div class="player-row__info">
+                    <span class="player-row__name">
+                      {{ winner.playerId === heroPlayerId() ? 'You' : getPlayerName(winner.playerId) }}
+                    </span>
+                  </div>
+                  <span class="player-row__chips">
+                    <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                    {{ winner.amount }}
+                  </span>
+                </div>
+                @if (winner.handName) {
+                  <div class="player-row__hand">{{ winner.handName }}</div>
+                }
               }
             </div>
-            <span class="player-row__chips" [attr.aria-label]="player.chips + ' chips'">
-              <img [src]="coalIconSrc" class="currency-icon currency-icon--small" alt="" aria-hidden="true" />
-              {{ player.chips }}
-            </span>
-          </div>
+          } @else {
+            <p class="sidebar-empty">No winners this round.</p>
+          }
+        </div>
+        <button class="action-btn action-btn--primary" (click)="handlePlayAgain()">Next Game</button>
+      } @else {
+        <!-- Player List -->
+        <h2 class="sidebar-title">Players</h2>
+        @if (seatedPlayers().length === 0) {
+          <p class="sidebar-empty">Waiting for players…</p>
+        }
+        @for (player of seatedPlayers(); track player?.playerId) {
+          @if (player) {
+            <div
+              class="player-row"
+              [class.player-row--active]="player.isCurrentTurn"
+              [class.player-row--folded]="player.isFolded"
+              [class.player-row--all-in]="player.isAllIn"
+            >
+              <div class="player-row__info">
+                <span class="player-row__name">{{ player.name }}</span>
+                @if (player.isDealer) {
+                  <span class="player-row__badge player-row__badge--dealer" aria-label="Dealer">D</span>
+                }
+              </div>
+              <span class="player-row__chips" aria-label="{{ player.chips }} chips">
+                <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                {{ player.chips }}
+              </span>
+            </div>
+          }
         }
       }
-
     </aside>
 
-
   </div>
-  <!-- /poker-main -->
-
-
-  <!-- ═══════════════════════════════════════════════════════════
-       PHASE ANNOUNCEMENT OVERLAY (z-100, fixed, full-screen)
-
-       Appears for 2.5 s on every phase change: PRE-FLOP, FLOP,
-       TURN, RIVER, SHOWDOWN. The CSS animation handles both the
-       entrance and exit within that same 2.5 s window.
-  ════════════════════════════════════════════════════════════ -->
-  @if (announcementVisible()) {
-    <div class="game-announcement" role="status" aria-live="assertive">
-      <span class="game-announcement__text">{{ announcementText() }}</span>
-    </div>
-  }
-
-
 </div>
-<!-- /poker-page -->

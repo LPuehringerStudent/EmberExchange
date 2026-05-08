@@ -636,6 +636,19 @@ export class DB {
                 serverTimestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS SupportTicket (
+                ticketId SERIAL PRIMARY KEY,
+                reporterId INTEGER NOT NULL REFERENCES Player(playerId),
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                type TEXT NOT NULL CHECK (type IN ('bug', 'feature', 'support')),
+                priority TEXT NOT NULL CHECK (priority IN ('high', 'medium', 'low')),
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                notifiedAt TIMESTAMPTZ
+            )
+        `);
     }
 }
 
@@ -718,6 +731,7 @@ export async function resetDatabase(connection: PoolClient): Promise<void> {
         DROP TABLE IF EXISTS Stove CASCADE;
         DROP TABLE IF EXISTS StoveType CASCADE;
         DROP TABLE IF EXISTS Game CASCADE;
+        DROP TABLE IF EXISTS SupportTicket CASCADE;
         DROP TABLE IF EXISTS EventLog CASCADE;
         DROP TABLE IF EXISTS GameState CASCADE;
         DROP TABLE IF EXISTS RoomPlayer CASCADE;
