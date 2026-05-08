@@ -25,7 +25,7 @@ export class PokerEngine implements GameEngine {
   maxPlayers = 6;
 
   createInitialState(players: RoomPlayerRow[]): Record<string, unknown> {
-    return this._createHandState(players, 0, STARTING_STACK);
+    return this._createHandState(players, 0, undefined);
   }
 
   resetForNextHand(
