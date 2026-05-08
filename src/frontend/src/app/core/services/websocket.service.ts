@@ -202,6 +202,16 @@ export class WebSocketService {
         }
         if (blob && Array.isArray(blob['players'])) {
           this.playersInRoom.set(blob['players'] as PlayerInRoom[]);
+
+          // Keep the header coin display in sync with the in-game stack
+          const currentUser = this.auth.getCurrentUser();
+          if (currentUser) {
+            const me = (blob['players'] as Array<{ playerId: number; stack?: number }>)
+              .find(p => p.playerId === currentUser.playerId);
+            if (me && typeof me.stack === 'number') {
+              this.auth.patchCurrentUserCoins(me.stack);
+            }
+          }
         }
         break;
       }

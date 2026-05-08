@@ -114,7 +114,10 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
                 return;
             }
 
-            await syncPlayerCoinsFromState(unit, newState as Record<string, unknown>);
+            const syncedIds = await syncPlayerCoinsFromState(unit, newState as Record<string, unknown>);
+            if (syncedIds.length === 0 && (newState as Record<string, unknown>).players) {
+                console.error("[coins] next_hand: zero players synced despite players array present");
+            }
 
             await eventLogService.logEvent(
                 roomId,
@@ -175,7 +178,10 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
             return;
         }
 
-        await syncPlayerCoinsFromState(unit, result.newFullState!);
+        const syncedIds = await syncPlayerCoinsFromState(unit, result.newFullState!);
+        if (syncedIds.length === 0 && result.newFullState!.players) {
+            console.error("[coins] processAction: zero players synced despite players array present");
+        }
 
         await eventLogService.logEvent(
             roomId,

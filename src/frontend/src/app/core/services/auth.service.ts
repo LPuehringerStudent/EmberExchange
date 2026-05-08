@@ -104,6 +104,18 @@ export class AuthService {
     return this.currentUser();
   }
 
+  /**
+   * Updates the cached current-user coin balance in-place.
+   * Used by the WebSocket service so the header coin display
+   * stays in sync with in-game winnings/losses without an extra HTTP round-trip.
+   */
+  patchCurrentUserCoins(coins: number): void {
+    const user = this.currentUser();
+    if (user) {
+      this.currentUser.set({ ...user, coins });
+    }
+  }
+
   private async fetchCurrentUser(sessionId: string): Promise<Player | null> {
     return firstValueFrom(
       this.api.get<Player | null>('/auth/me', new HttpHeaders({ 'session-id': sessionId }))

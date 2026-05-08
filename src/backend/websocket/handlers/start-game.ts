@@ -8,6 +8,7 @@ import { isValidUUID } from "../validators";
 import { ErrorCode } from "../../../shared/model";
 import { engineRegistry } from "../../game-engines";
 import { startTurnTimer, clearTurnTimer } from "../turn-timer";
+import { syncPlayerCoinsFromState } from "../../utils/sync-player-coins";
 
 export async function handleStartGame(socketId: string, payload: Record<string, unknown>): Promise<void> {
     const roomId = payload.roomId;
@@ -81,6 +82,7 @@ export async function handleStartGame(socketId: string, payload: Record<string, 
         await roomService.updateRoomStatus(roomId, "active");
 
         const initialState = engine.createInitialState(connectedPlayers);
+        await syncPlayerCoinsFromState(unit, initialState);
 
         const existingState = await gameStateService.getState(roomId);
         if (existingState) {
