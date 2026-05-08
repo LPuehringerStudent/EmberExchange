@@ -1,4 +1,4 @@
-import { PlayerService } from '../../backend/services/player-service';
+﻿import { PlayerService } from '../../backend/services/player-service';
 import { Unit } from '../../backend/utils/unit';
 
 // ---------------------------------------------------------------------------
@@ -297,7 +297,7 @@ describe('PlayerService', () => {
 
       expect(result).toBe(true);
       // prepare should be called many times for cascade deletes
-      expect(unit.prepare).toHaveBeenCalledTimes(expect.any(Number));
+      expect(unit.prepare).toHaveBeenCalled();
     });
 
     it('returns false when player does not exist', async () => {
