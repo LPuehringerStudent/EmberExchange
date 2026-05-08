@@ -780,7 +780,7 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
 
     async function insertPlayers(): Promise<void> {
         const players = [
-            { username: "admin", password: "admin123", email: "admin@emberexchange.com", coins: 999999, lootboxCount: 100, isAdmin: 1 },
+            { username: "admin", password: "123admin", email: "admin@emberexchange.com", coins: 999999, lootboxCount: 100, isAdmin: 1 },
             { username: "player1", password: "pass123", email: "player1@example.com", coins: 5000, lootboxCount: 10, isAdmin: 0 },
             { username: "player2", password: "pass456", email: "player2@example.com", coins: 3500, lootboxCount: 10, isAdmin: 0 },
             { username: "trader_joe", password: "trade789", email: "trader@example.com", coins: 10000, lootboxCount: 10, isAdmin: 0 },
