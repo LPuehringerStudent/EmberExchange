@@ -7,6 +7,7 @@
   <a routerLink="/update-log" (click)="sidebarOpen.set(false)">Update Log</a>
   <a routerLink="/support" (click)="sidebarOpen.set(false)">Support</a>
   <a routerLink="/games" (click)="sidebarOpen.set(false)">Games</a>
+  <a routerLink="/merging" (click)="sidebarOpen.set(false)">Games</a>
   @if (!isLoggedIn()) {
     <a routerLink="/" (click)="sidebarOpen.set(false)">Login</a>
   } @else {
