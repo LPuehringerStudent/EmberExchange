@@ -88,6 +88,8 @@ export class PokerEngine implements GameEngine {
     const pokerPlayers: PokerPlayerState[] = players.map((p, i) => ({
       playerId: p.playerId,
       username: p.username,
+      activeTitle: p.activeTitle,
+      activeBanner: p.activeBanner,
       hand: hands[i],
       stack:
         prevState?.players.find((op) => op.playerId === p.playerId)?.stack ??
@@ -504,6 +506,8 @@ export class PokerEngine implements GameEngine {
         return {
           playerId: p.playerId,
           username: p.username,
+          activeTitle: p.activeTitle,
+          activeBanner: p.activeBanner,
           hand: showHand ? p.hand : (["back", "back"] as ["back", "back"]),
           handName,
           stack: p.stack,

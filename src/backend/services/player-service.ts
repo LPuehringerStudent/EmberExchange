@@ -104,45 +104,60 @@ export class PlayerService extends ServiceBase {
      */
     async deletePlayer(id: number): Promise<boolean> {
         // Delete related records in correct order to respect foreign keys
-        
+
         // 1. Delete sessions
         await this.unit.prepare("DELETE FROM Session WHERE playerId = @id", { id }).run();
-        
+
         // 2. Delete player statistics
         await this.unit.prepare("DELETE FROM PlayerStatistics WHERE playerId = @id", { id }).run();
-        
-        // 3. Delete mini game sessions
+
+        // 3. Delete player settings
+        await this.unit.prepare("DELETE FROM PlayerSettings WHERE playerId = @id", { id }).run();
+
+        // 4. Delete login history
+        await this.unit.prepare("DELETE FROM LoginHistory WHERE playerId = @id", { id }).run();
+
+        // 5. Delete mini game sessions
         await this.unit.prepare("DELETE FROM MiniGameSession WHERE playerId = @id", { id }).run();
-        
-        // 4. Delete chat messages (sent or received)
+
+        // 6. Delete coin transactions
+        await this.unit.prepare("DELETE FROM CoinTransaction WHERE playerId = @id", { id }).run();
+
+        // 7. Delete support tickets
+        await this.unit.prepare("DELETE FROM SupportTicket WHERE reporterId = @id", { id }).run();
+
+        // 8. Delete room players
+        await this.unit.prepare("DELETE FROM RoomPlayer WHERE playerId = @id", { id }).run();
+
+        // 9. Delete chat messages (sent or received)
         await this.unit.prepare("DELETE FROM ChatMessage WHERE senderId = @id OR receiverId = @id", { id }).run();
-        
-        // 5. Delete ownership records
+
+        // 10. Delete ownership records
         await this.unit.prepare("DELETE FROM Ownership WHERE playerId = @id", { id }).run();
-        
-        // 6. Delete trades where player is buyer
+
+        // 11. Delete trades where player is buyer
         await this.unit.prepare("DELETE FROM Trade WHERE buyerId = @id", { id }).run();
-        
-        // 7. Delete listings (this will cascade delete related trades via foreign key)
+
+        // 12. Delete listings (this will cascade delete related trades via foreign key)
         // First get all listings by this player
         const listingsStmt = this.unit.prepare<{ listingId: number }>(
             "SELECT listingId FROM Listing WHERE sellerId = @id",
             { id }
         );
         const listings = await listingsStmt.all() ?? [];
-        
+
         // Delete trades for these listings first
         for (const listing of listings) {
             await this.unit.prepare("DELETE FROM Trade WHERE listingId = @listingId", { listingId: listing.listingId }).run();
         }
-        
+
         // Now delete the listings
         await this.unit.prepare("DELETE FROM Listing WHERE sellerId = @id", { id }).run();
-        
-        // 8. Delete stoves owned by this player
+
+        // 13. Delete stoves owned by this player
         await this.unit.prepare("DELETE FROM Stove WHERE currentOwnerId = @id", { id }).run();
-        
-        // 9. Delete lootbox drops for this player's lootboxes first (to respect FK constraints)
+
+        // 14. Delete lootbox drops for this player's lootboxes first (to respect FK constraints)
         const lootboxesStmt = this.unit.prepare<{ lootboxId: number }>(
             "SELECT lootboxId FROM Lootbox WHERE playerId = @id",
             { id }
@@ -151,11 +166,17 @@ export class PlayerService extends ServiceBase {
         for (const lb of lootboxes) {
             await this.unit.prepare("DELETE FROM LootboxDrop WHERE lootboxId = @lootboxId", { lootboxId: lb.lootboxId }).run();
         }
-        
-        // 10. Delete lootboxes owned by this player
+
+        // 15. Delete lootboxes owned by this player
         await this.unit.prepare("DELETE FROM Lootbox WHERE playerId = @id", { id }).run();
-        
-        // 10. Finally delete the player
+
+        // 16. Delete player achievements
+        await this.unit.prepare("DELETE FROM PlayerAchievement WHERE playerId = @id", { id }).run();
+
+        // 17. Delete notifications
+        await this.unit.prepare("DELETE FROM Notification WHERE playerId = @id", { id }).run();
+
+        // 18. Finally delete the player
         const stmt = this.unit.prepare(
             "DELETE FROM Player WHERE playerId = @id",
             { id }
@@ -215,6 +236,50 @@ export class PlayerService extends ServiceBase {
         const stmt = this.unit.prepare(
             "UPDATE Player SET password = @password WHERE playerId = @id",
             { id, password }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
+    }
+
+    /**
+     * Updates a player's username.
+     * Checks uniqueness before updating.
+     * @param id - The player's unique ID.
+     * @param username - The new username.
+     * @returns True if exactly one player was updated, false otherwise.
+     */
+    async updatePlayerUsername(id: number, username: string): Promise<boolean> {
+        const existing = await this.getPlayerByUsername(username);
+        if (existing && existing.playerId !== id) {
+            return false;
+        }
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET username = @username WHERE playerId = @id",
+            { id, username }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
+    }
+
+    /**
+     * Updates a player's motto.
+     * @param id - The player's unique ID.
+     * @param motto - The new motto (max 100 chars).
+     * @returns True if exactly one player was updated, false otherwise.
+     */
+    async updatePlayerMotto(id: number, motto: string): Promise<boolean> {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET motto = @motto WHERE playerId = @id",
+            { id, motto: motto.slice(0, 100) }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
+    }
+
+    async updatePlayerIsPublic(id: number, isPublic: boolean): Promise<boolean> {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET isPublic = @isPublic WHERE playerId = @id",
+            { id, isPublic: isPublic ? 1 : 0 }
         );
         const result = await stmt.run();
         return result.changes === 1;

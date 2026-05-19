@@ -35,6 +35,8 @@ export class BlackJackEngine implements GameEngine {
       players: players.map((p) => ({
         playerId: p.playerId,
         username: p.username,
+        activeTitle: p.activeTitle,
+        activeBanner: p.activeBanner,
         hands: [[]],
         bets: [0],
         stack: p.coins ?? 1000, // starting stack from player coins
@@ -210,6 +212,8 @@ export class BlackJackEngine implements GameEngine {
       players: state.players.map((p) => ({
         playerId: p.playerId,
         username: p.username,
+        activeTitle: p.activeTitle,
+        activeBanner: p.activeBanner,
         hands: p.hands,
         bets: p.bets,
         stack: p.stack,
@@ -282,16 +286,19 @@ export class BlackJackEngine implements GameEngine {
       dealerHand: [],
       players: state.players
         .filter((p) => players.some((rp) => rp.playerId === p.playerId))
-        .map((p) => ({
-          playerId: p.playerId,
-          username:
-            players.find((rp) => rp.playerId === p.playerId)?.username ??
-            p.username,
-          hands: [[]],
-          bets: [0],
-          stack: p.stack,
-          result: "playing",
-        })),
+        .map((p) => {
+          const rp = players.find((rp) => rp.playerId === p.playerId);
+          return {
+            playerId: p.playerId,
+            username: rp?.username ?? p.username,
+            activeTitle: rp?.activeTitle ?? p.activeTitle,
+            activeBanner: rp?.activeBanner ?? p.activeBanner,
+            hands: [[]],
+            bets: [0],
+            stack: p.stack,
+            result: "playing",
+          };
+        }),
       activePlayer: -1,
       activeHandIndex: 0,
       currentBet: state.currentBet,

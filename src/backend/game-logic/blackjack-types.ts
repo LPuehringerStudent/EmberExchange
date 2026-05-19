@@ -18,6 +18,8 @@ export type HandResult =
 export interface BlackjackPlayerState {
   playerId: number;
   username?: string;
+  activeTitle?: { titleId?: string; label: string; animation?: string } | null;
+  activeBanner?: { bannerId?: number; name: string; cssClass?: string } | null;
   hands: Card[][];      // supports split: each element is one hand
   bets: number[];       // bet per hand, aligned with hands[]
   stack: number;
@@ -50,6 +52,8 @@ export interface BlackjackState {
 export interface BlackjackPlayerStateView {
   playerId: number;
   username?: string;
+  activeTitle?: { titleId?: string; label: string; animation?: string } | null;
+  activeBanner?: { bannerId?: number; name: string; cssClass?: string } | null;
   hands: Card[][];
   bets: number[];
   stack: number;

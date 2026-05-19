@@ -28,14 +28,14 @@ export class StoveTypeStatisticsService extends ServiceBase {
 
         // Total minted (count of stoves of this type)
         const mintedStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*) as count FROM Stove WHERE typeId = @typeId",
+            "SELECT COUNT(*)::INTEGER as count FROM Stove WHERE typeId = @typeId",
             { typeId: stoveTypeId }
         );
         const totalMinted = (await mintedStmt.get())?.count ?? 0;
 
         // Currently owned (should equal total minted)
         const ownedStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*) as count FROM Stove 
+            `SELECT COUNT(*)::INTEGER as count FROM Stove 
              WHERE typeId = @typeId AND currentOwnerId IS NOT NULL`,
             { typeId: stoveTypeId }
         );
@@ -44,10 +44,10 @@ export class StoveTypeStatisticsService extends ServiceBase {
         // Currently listed
         const listedStmt = this.unit.prepare<{ count: number; avgPrice: number; minPrice: number; maxPrice: number }>(
             `SELECT 
-                COUNT(*) as count,
-                COALESCE(AVG(price), 0) as avgPrice,
-                COALESCE(MIN(price), 0) as minPrice,
-                COALESCE(MAX(price), 0) as maxPrice
+                COUNT(*)::INTEGER as count,
+                COALESCE(AVG(price)::INTEGER, 0) as avgPrice,
+                COALESCE(MIN(price)::INTEGER, 0) as minPrice,
+                COALESCE(MAX(price)::INTEGER, 0) as maxPrice
              FROM Listing l
              JOIN Stove s ON l.stoveId = s.stoveId
              WHERE s.typeId = @typeId AND l.status = 'active'`,
@@ -71,10 +71,10 @@ export class StoveTypeStatisticsService extends ServiceBase {
             lastPrice: number;
         }>(
             `SELECT 
-                COUNT(*) as count,
-                COALESCE(AVG(l.price), 0) as avgPrice,
-                COALESCE(MAX(l.price), 0) as maxPrice,
-                COALESCE(MIN(l.price), 0) as minPrice,
+                COUNT(*)::INTEGER as count,
+                COALESCE(AVG(l.price)::INTEGER, 0) as avgPrice,
+                COALESCE(MAX(l.price)::INTEGER, 0) as maxPrice,
+                COALESCE(MIN(l.price)::INTEGER, 0) as minPrice,
                 COALESCE((SELECT price FROM Trade t2 
                   JOIN Listing l2 ON t2.listingId = l2.listingId
                   JOIN Stove s2 ON l2.stoveId = s2.stoveId
@@ -106,24 +106,24 @@ export class StoveTypeStatisticsService extends ServiceBase {
 
         // Sales in last 7 days
         const sales7dStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*) as count
+            `SELECT COUNT(*)::INTEGER as count
              FROM Trade t
              JOIN Listing l ON t.listingId = l.listingId
              JOIN Stove s ON l.stoveId = s.stoveId
              WHERE s.typeId = @typeId 
-             AND t.executedAt >= NOW() - INTERVAL '7 days'`,
+             AND t.executedAt >= (NOW() - INTERVAL '7 days')::TEXT`,
             { typeId: stoveTypeId }
         );
         const salesLast7Days = (await sales7dStmt.get())?.count ?? 0;
 
         // Sales in last 30 days
         const sales30dStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*) as count
+            `SELECT COUNT(*)::INTEGER as count
              FROM Trade t
              JOIN Listing l ON t.listingId = l.listingId
              JOIN Stove s ON l.stoveId = s.stoveId
              WHERE s.typeId = @typeId 
-             AND t.executedAt >= NOW() - INTERVAL '30 days'`,
+             AND t.executedAt >= (NOW() - INTERVAL '30 days')::TEXT`,
             { typeId: stoveTypeId }
         );
         const salesLast30Days = (await sales30dStmt.get())?.count ?? 0;
@@ -166,7 +166,7 @@ export class StoveTypeStatisticsService extends ServiceBase {
 
     private async getTotalStoveCount(): Promise<number> {
         const stmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*) as count FROM Stove"
+            "SELECT COUNT(*)::INTEGER as count FROM Stove"
         );
         return (await stmt.get())?.count ?? 0;
     }
@@ -201,17 +201,17 @@ export class StoveTypeStatisticsService extends ServiceBase {
             FROM StoveType st
             LEFT JOIN (
                 SELECT typeId, 
-                       COUNT(*) as totalMinted,
-                       COUNT(currentOwnerId) as currentlyOwned
+                       COUNT(*)::INTEGER as totalMinted,
+                       COUNT(currentOwnerId)::INTEGER as currentlyOwned
                 FROM Stove GROUP BY typeId
             ) s_stats ON st.typeId = s_stats.typeId
             LEFT JOIN (
                 SELECT 
                     s.typeId,
-                    COUNT(*) as currentlyListed,
-                    AVG(l.price) as averageListingPrice,
-                    MIN(l.price) as currentLowestPrice,
-                    MAX(l.price) as currentHighestPrice
+                    COUNT(*)::INTEGER as currentlyListed,
+                    COALESCE(AVG(l.price)::INTEGER, 0) as averageListingPrice,
+                    MIN(l.price)::INTEGER as currentLowestPrice,
+                    MAX(l.price)::INTEGER as currentHighestPrice
                 FROM Listing l
                 JOIN Stove s ON l.stoveId = s.stoveId
                 WHERE l.status = 'active'
@@ -220,13 +220,13 @@ export class StoveTypeStatisticsService extends ServiceBase {
             LEFT JOIN (
                 SELECT 
                     s.typeId,
-                    COUNT(*) as totalSales,
-                    SUM(l.price) as totalVolumeTraded,
-                    AVG(l.price) as averageSalePrice,
-                    MAX(l.price) as highestSalePrice,
-                    MIN(l.price) as lowestSalePrice,
-                    SUM(CASE WHEN t.executedAt >= NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) as salesLast7Days,
-                    SUM(CASE WHEN t.executedAt >= NOW() - INTERVAL '30 days' THEN 1 ELSE 0 END) as salesLast30Days
+                    COUNT(*)::INTEGER as totalSales,
+                    COALESCE(SUM(l.price)::INTEGER, 0) as totalVolumeTraded,
+                    COALESCE(AVG(l.price)::INTEGER, 0) as averageSalePrice,
+                    MAX(l.price)::INTEGER as highestSalePrice,
+                    MIN(l.price)::INTEGER as lowestSalePrice,
+                    SUM(CASE WHEN t.executedAt >= (NOW() - INTERVAL '7 days')::TEXT THEN 1 ELSE 0 END)::INTEGER as salesLast7Days,
+                    SUM(CASE WHEN t.executedAt >= (NOW() - INTERVAL '30 days')::TEXT THEN 1 ELSE 0 END)::INTEGER as salesLast30Days
                 FROM Trade t
                 JOIN Listing l ON t.listingId = l.listingId
                 JOIN Stove s ON l.stoveId = s.stoveId

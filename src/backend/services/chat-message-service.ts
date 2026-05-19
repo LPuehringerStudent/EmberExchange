@@ -65,13 +65,39 @@ export class ChatMessageService extends ServiceBase {
      */
     async getConversation(player1Id: number, player2Id: number): Promise<ChatMessageRow[]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
-            `SELECT * FROM ChatMessage 
-             WHERE (senderId = @player1Id AND receiverId = @player2Id) 
+            `SELECT * FROM ChatMessage
+             WHERE (senderId = @player1Id AND receiverId = @player2Id)
                 OR (senderId = @player2Id AND receiverId = @player1Id)
              ORDER BY sentAt ASC`,
             { player1Id, player2Id }
         );
         return await stmt.all();
+    }
+
+    /**
+     * Retrieves paginated conversation between two players.
+     * @param player1Id - First player ID.
+     * @param player2Id - Second player ID.
+     * @param limit - Max messages to return.
+     * @param offset - Offset for pagination.
+     * @returns Array of ChatMessageRow objects.
+     */
+    async getConversationPaginated(
+        player1Id: number,
+        player2Id: number,
+        limit: number = 20,
+        offset: number = 0
+    ): Promise<ChatMessageRow[]> {
+        const stmt = this.unit.prepare<ChatMessageRow>(
+            `SELECT * FROM ChatMessage
+             WHERE (senderId = @player1Id AND receiverId = @player2Id)
+                OR (senderId = @player2Id AND receiverId = @player1Id)
+             ORDER BY sentAt DESC
+             LIMIT @limit OFFSET @offset`,
+            { player1Id, player2Id, limit, offset }
+        );
+        const rows = await stmt.all();
+        return rows.reverse();
     }
 
     /**
@@ -103,13 +129,21 @@ export class ChatMessageService extends ServiceBase {
      * @param senderId - The sender's player ID.
      * @param receiverId - The receiver's player ID (null for global).
      * @param content - The message content.
+     * @param messageType - 'text' or 'trade_offer'.
+     * @param data - Extra JSON data.
      * @returns Tuple [success, id].
      */
-    async create(senderId: number, receiverId: number | null, content: string): Promise<[boolean, number]> {
+    async create(
+        senderId: number,
+        receiverId: number | null,
+        content: string,
+        messageType: 'text' | 'trade_offer' = 'text',
+        data: Record<string, unknown> = {}
+    ): Promise<[boolean, number]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
-            `INSERT INTO ChatMessage (senderId, receiverId, content, sentAt, isRead) 
-             VALUES (@senderId, @receiverId, @content, NOW(), 0)`,
-            { senderId, receiverId, content }
+            `INSERT INTO ChatMessage (senderId, receiverId, content, sentAt, isRead, messageType, data)
+             VALUES (@senderId, @receiverId, @content, NOW(), 0, @messageType, @data)`,
+            { senderId, receiverId, content, messageType, data: JSON.stringify(data) }
         );
         return await this.executeStmt(stmt);
     }

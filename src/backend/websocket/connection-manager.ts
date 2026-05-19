@@ -170,6 +170,16 @@ class ConnectionManager {
         }
     }
 
+    sendToPlayerGlobal(playerId: number, message: ServerMessage): boolean {
+        for (const [, meta] of this.sockets) {
+            if (meta.playerId === playerId && meta.ws.readyState === WebSocket.OPEN) {
+                meta.ws.send(JSON.stringify(message));
+                return true;
+            }
+        }
+        return false;
+    }
+
     isDuplicate(socketId: string, sequenceNumber: number): boolean {
         const meta = this.sockets.get(socketId);
         if (!meta) return false;

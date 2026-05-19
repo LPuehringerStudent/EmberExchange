@@ -3,7 +3,8 @@ export enum Rarity {
     RARE = "rare",
     EPIC = "epic",
     LEGENDARY = "legendary",
-    LIMITED = "limited"
+    LIMITED = "limited",
+    SECRET = "secret"
 }
 
 // Player
@@ -11,16 +12,20 @@ export interface Player {
     username: string;
     password: string | null;
     email: string;
+    motto: string;
     coins: number;
     lootboxCount: number;
     isAdmin: boolean;
+    isPublic: boolean;
     joinedAt: Date;
     provider: 'google' | 'github' | null;
     providerId: string | null;
+    totpEnabled: boolean;
 }
 
 export interface PlayerRow extends Player {
     playerId: number;
+    totpSecret: string | null;
 }
 
 // StoveType
@@ -29,6 +34,9 @@ export interface StoveType {
     imageUrl: string;
     rarity: Rarity;
     lootboxWeight: number;
+    collection: string;
+    minHeat: number;
+    maxHeat: number;
 }
 
 export interface StoveTypeRow extends StoveType {
@@ -40,8 +48,8 @@ export interface Stove {
     typeId: number;
     currentOwnerId: number;
     mintedAt: Date;
+    heatLevel: number;
 }
-
 
 export interface StoveRow extends Stove {
     stoveId: number;
@@ -89,6 +97,15 @@ export interface LootboxDropRow extends LootboxDrop {
     dropId: number;
 }
 
+// RecentPull — feed item for the dashboard
+export interface RecentPull {
+    username: string;
+    itemName: string;
+    rarity: string;
+    imageUrl?: string;
+    timeAgo: string;
+}
+
 // LoginHistory
 export interface LoginHistory {
     playerId: number;
@@ -104,7 +121,7 @@ export interface LoginHistoryRow extends LoginHistory {
 export interface CoinTransaction {
     playerId: number;
     amount: number;
-    type: 'trade_in' | 'trade_out' | 'mini_game' | 'listing_sale' | 'listing_purchase' | 'admin_adjust';
+    type: 'trade_in' | 'trade_out' | 'mini_game' | 'listing_sale' | 'listing_purchase' | 'admin_adjust' | 'daily_reward' | 'shop_purchase' | 'shop_sale' | 'forgery';
     description: string | null;
     createdAt: Date;
 }
@@ -168,7 +185,7 @@ export interface Ownership {
     stoveId: number;
     playerId: number;
     acquiredAt: Date;
-    acquiredHow: "lootbox" | "trade" | "mini-game";
+    acquiredHow: "lootbox" | "trade" | "mini-game" | "shop" | "craft";
 }
 
 export interface OwnershipRow extends Ownership {
@@ -194,15 +211,34 @@ export interface ChatMessage {
     content: string;
     sentAt: Date;
     isRead: boolean;
+    messageType: 'text' | 'trade_offer';
+    data: Record<string, unknown>;
 }
 
 export interface ChatMessageRow extends ChatMessage {
     messageId: number;
 }
 
+// Friend
+export interface Friend {
+    requesterId: number;
+    addresseeId: number;
+    status: 'pending' | 'accepted' | 'blocked';
+    createdAt: Date;
+}
+
+export interface FriendRow extends Friend {
+    friendId: number;
+}
+
+export interface FriendWithUser extends FriendRow {
+    username: string;
+}
+
 // PlayerStatistics
 export interface PlayerStatistics {
     playerId: number;
+    username?: string;
     totalLogins: number;
     lastLoginAt: Date | null;
     totalSessionMinutes: number;
@@ -239,6 +275,7 @@ export interface PlayerStatistics {
     totalStovesAcquired: number;
     totalStovesSold: number;
     totalStovesTraded: number;
+    totalStovesCrafted: number;
     rarestStoveOwned: Rarity | null;
     highestCoinBalance: number;
     lowestCoinBalance: number;
@@ -292,6 +329,8 @@ export interface DailyStatisticsRow extends DailyStatistics {
 // StoveTypeStatistics
 export interface StoveTypeStatistics {
     stoveTypeId: number;
+    name?: string;
+    rarity?: string;
     totalMinted: number;
     currentlyOwned: number;
     currentlyListed: number;
@@ -371,6 +410,8 @@ export interface RoomPlayerRow extends RoomPlayer {
     username?: string;
     disconnectedAt?: Date;
     coins?: number;
+    activeTitle?: { titleId?: string; label: string; animation?: string } | null;
+    activeBanner?: { bannerId?: number; name: string; cssClass?: string } | null;
 }
 
 export interface GameState {
@@ -397,7 +438,8 @@ export type ClientMessageType =
     | 'leave_room'
     | 'player_action'
     | 'request_sync'
-    | 'start_game';
+    | 'start_game'
+    | 'chat_message';
 
 export interface ServerMessage {
     type: ServerMessageType;
@@ -409,7 +451,8 @@ export type ServerMessageType =
     | 'player_joined'
     | 'player_left'
     | 'error'
-    | 'event_replay';
+    | 'event_replay'
+    | 'chat_message';
 
 export enum ErrorCode {
     INVALID_STATE = 'INVALID_STATE',
@@ -447,4 +490,126 @@ export interface SupportTicket {
 
 export interface SupportTicketRow extends SupportTicket {
     ticketId: number;
+}
+
+export interface PlayerSettings {
+    playerId: number;
+    notifyFriendRequests: boolean;
+    notifyChatMessages: boolean;
+    notifyTradeOffers: boolean;
+    notifyDailyReward: boolean;
+}
+
+export interface PlayerSettingsRow extends PlayerSettings {
+}
+
+export interface PlayerAchievement {
+    playerId: number;
+    achievementId: string;
+    progress: number;
+    target: number;
+    unlockedAt: Date | null;
+}
+
+export interface PlayerAchievementRow extends PlayerAchievement {
+    playerAchievementId: number;
+}
+
+// Notification
+export interface Notification {
+    playerId: number;
+    type: 'friend_request' | 'chat_message' | 'trade_offer' | 'daily_reward' | 'system';
+    title: string;
+    message: string;
+    data: Record<string, unknown>;
+    isRead: boolean;
+    createdAt: Date;
+}
+
+export interface NotificationRow extends Notification {
+    notificationId: number;
+}
+
+// Shop
+export interface ShopListing {
+    itemType: 'stove' | 'lootbox';
+    itemId: number;
+    price: number;
+    stock: number;
+    rotationDate: Date | null;
+    isFeatured: boolean;
+    createdAt: Date;
+}
+
+export interface ShopListingRow extends ShopListing {
+    listingId: number;
+}
+
+export interface PlayerDailyReward {
+    playerId: number;
+    lastClaimAt: Date | null;
+    streakCount: number;
+}
+
+
+// --- GitHub Integration ---
+
+export interface GitHubCommit {
+    sha: string;
+    shortSha: string;
+    message: string;
+    messageTitle: string;
+    messageBody: string[];
+    authorName: string;
+    authorLogin: string;
+    authorAvatar: string;
+    date: string;
+    url: string;
+}
+
+export interface GitHubContributor {
+    login: string;
+    avatarUrl: string;
+    htmlUrl: string;
+    contributions: number;
+}
+
+export interface GitHubRelease {
+    tagName: string;
+    name: string;
+    body: string;
+    publishedAt: string;
+    htmlUrl: string;
+    prerelease: boolean;
+}
+
+export interface GitHubRepoInfo {
+    name: string;
+    fullName: string;
+    description: string;
+    stars: number;
+    forks: number;
+    openIssues: number;
+    language: string;
+    createdAt: string;
+    updatedAt: string;
+    htmlUrl: string;
+}
+
+// Forgery (Tradeup)
+export interface ForgeryRequest {
+    stoveIds: number[];
+}
+
+export interface ForgedStove extends StoveRow {
+    name: string;
+    rarity: Rarity;
+    imageUrl: string;
+    collection: string;
+}
+
+export interface ForgeryResult {
+    success: boolean;
+    newStove?: ForgedStove;
+    error?: string;
 }

@@ -3,6 +3,7 @@ import { RoomService } from "../../services/room-service";
 import { RoomPlayerService } from "../../services/room-player-service";
 import { GameStateService } from "../../services/game-state-service";
 import { EventLogService } from "../../services/event-log-service";
+import { MiniGameSessionService } from "../../services/mini-game-session-service";
 import { connectionManager } from "../connection-manager";
 import { isValidUUID } from "../validators";
 import { ErrorCode } from "../../../shared/model";
@@ -181,6 +182,22 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
         const syncedIds = await syncPlayerCoinsFromState(unit, result.newFullState!);
         if (syncedIds.length === 0 && result.newFullState!.players) {
             console.error("[coins] processAction: zero players synced despite players array present");
+        }
+
+        // Record mini-game sessions when a hand settles (e.g. blackjack)
+        const newPhase = (result.newFullState! as Record<string, unknown>).phase as string;
+        if (newPhase === "settled") {
+            const miniGameSessionService = new MiniGameSessionService(unit);
+            const gamePlayers = (result.newFullState! as Record<string, unknown>).players as Array<Record<string, unknown>>;
+            const winners = ((result.newFullState! as Record<string, unknown>).winners ?? []) as Array<{ playerId: number; amount: number }>;
+            for (const p of gamePlayers) {
+                const pid = p.playerId as number;
+                const pResult = p.result as string;
+                const payout = winners
+                    .filter(w => w.playerId === pid)
+                    .reduce((sum, w) => sum + w.amount, 0);
+                await miniGameSessionService.create(pid, room.gameType, pResult, payout);
+            }
         }
 
         await eventLogService.logEvent(

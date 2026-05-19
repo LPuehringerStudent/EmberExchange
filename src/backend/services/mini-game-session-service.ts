@@ -1,6 +1,7 @@
 import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { MiniGameSessionRow } from "../../shared/model";
+import { PlayerPrestigeService } from "./player-prestige-service";
 
 export class MiniGameSessionService extends ServiceBase {
     constructor(unit: Unit) {
@@ -71,7 +72,19 @@ export class MiniGameSessionService extends ServiceBase {
              VALUES (@playerId, @gameType, @result, @coinPayout, NOW())`,
             { playerId, gameType, result, coinPayout }
         );
-        return await this.executeStmt(stmt);
+        const [success, id] = await this.executeStmt(stmt);
+
+        // Award XP for winning
+        if (success && result.toLowerCase() === 'win') {
+            try {
+                const prestigeService = new PlayerPrestigeService(this.unit);
+                await prestigeService.addXP(playerId, 15, 'mini_game_win', `Won ${gameType}`);
+            } catch {
+                // Ignore XP errors
+            }
+        }
+
+        return [success, id];
     }
 
     /**
