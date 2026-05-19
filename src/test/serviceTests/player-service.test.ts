@@ -339,6 +339,56 @@ describe('PlayerService', () => {
     });
   });
 
+  // --- updatePlayerUsername -----------------------------------------------
+
+  describe('updatePlayerUsername', () => {
+    it('updates username when unique', async () => {
+      const getStmt = mockStmt(null);
+      const runStmt = mockStmt(null, [], { changes: 1 });
+      let callCount = 0;
+      const unit = {
+        prepare: jest.fn().mockImplementation(() => {
+          callCount++;
+          return callCount === 1 ? getStmt : runStmt;
+        }),
+      } as unknown as Unit;
+      const service = new PlayerService(unit);
+
+      const result = await service.updatePlayerUsername(1, 'newname');
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when username is taken by another player', async () => {
+      const getStmt = mockStmt({ playerId: 2, username: 'taken' });
+      const unit = mockUnit(getStmt);
+      const service = new PlayerService(unit);
+
+      const result = await service.updatePlayerUsername(1, 'taken');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  // --- updatePlayerMotto ----------------------------------------------------
+
+  describe('updatePlayerMotto', () => {
+    it('updates motto and truncates to 100 chars', async () => {
+      const runStmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(runStmt);
+      const service = new PlayerService(unit);
+
+      const longMotto = 'a'.repeat(200);
+      const result = await service.updatePlayerMotto(1, longMotto);
+
+      expect(result).toBe(true);
+      expect(unit.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE Player SET motto'),
+        expect.objectContaining({ motto: 'a'.repeat(100) })
+      );
+    });
+  });
+
   // --- createOAuthPlayer --------------------------------------------------
 
   describe('createOAuthPlayer', () => {

@@ -4,7 +4,7 @@ import request from "supertest";
 import { app } from "../backend/app";
 import { setupWebSocketServer } from "../backend/websocket";
 import { connectionManager } from "../backend/websocket/connection-manager";
-import { Unit, DB, resetDatabase } from "../backend/utils/unit";
+import { Unit, DB } from "../backend/utils/unit";
 import { PlayerService } from "../backend/services/player-service";
 
 describe("WebSocket Integration", () => {
@@ -14,6 +14,7 @@ describe("WebSocket Integration", () => {
     let testSessionId: string;
     let testPlayer2Id: number;
     let testSession2Id: string;
+    const createdRoomIds: string[] = [];
 
     beforeAll(async () => {
         server = http.createServer(app);
@@ -30,7 +31,7 @@ describe("WebSocket Integration", () => {
         // Ensure all tables exist (tests don't run app.ts main block)
         const client = await DB.createDBConnection();
         try {
-            await resetDatabase(client);
+            await DB.ensureTablesCreated(client);
         } finally {
             client.release();
         }
@@ -98,6 +99,37 @@ describe("WebSocket Integration", () => {
     });
 
     afterAll(async () => {
+        // Clean up rooms created during tests (in dependency order)
+        if (createdRoomIds.length > 0) {
+            try {
+                const unit = await Unit.create(false);
+                try {
+                    const placeholders = createdRoomIds.map((_, i) => `@room${i}`).join(",");
+                    const params: Record<string, string> = {};
+                    createdRoomIds.forEach((id, i) => { params[`room${i}`] = id; });
+
+                    await unit.prepare(
+                        `DELETE FROM EventLog WHERE roomId IN (${placeholders})`,
+                        params
+                    ).run();
+                    await unit.prepare(
+                        `DELETE FROM GameState WHERE roomId IN (${placeholders})`,
+                        params
+                    ).run();
+                    await unit.prepare(
+                        `DELETE FROM Room WHERE roomId IN (${placeholders})`,
+                        params
+                    ).run();
+                } catch {
+                    // ignore room cleanup errors
+                } finally {
+                    await unit.complete(true).catch(() => {});
+                }
+            } catch {
+                // ignore
+            }
+        }
+
         // Clean up test players
         for (const pid of [testPlayerId, testPlayer2Id]) {
             if (pid) {
@@ -122,7 +154,7 @@ describe("WebSocket Integration", () => {
 
         (server as any).closeAllConnections?.();
         await new Promise<void>((resolve) => server.close(() => resolve()));
-        await DB.getPool().end();
+        // DO NOT call DB.getPool().end() — the pool is shared with the running server
     }, 30000);
 
     function connectWs(sessionId?: string): Promise<WebSocket> {
@@ -194,7 +226,9 @@ describe("WebSocket Integration", () => {
             .post("/api/rooms")
             .send({ maxPlayers: 4, gameType });
         expect(res.status).toBe(201);
-        return res.body.roomId as string;
+        const roomId = res.body.roomId as string;
+        createdRoomIds.push(roomId);
+        return roomId;
     }
 
     async function joinRoom(ws: WebSocket, roomId: string, seq: number): Promise<void> {
