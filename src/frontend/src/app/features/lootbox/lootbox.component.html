@@ -24,8 +24,8 @@
         <img
           class="object-contain drop-shadow-[0_8px_20px_rgba(232,93,4,0.18)] transition-all duration-300"
           [ngSrc]="playingGif()
-            ? 'assets/animation/chest-opening.gif'
-            : 'assets/animation/chest-idle.gif'"
+            ? getOpeningImage()
+            : getChestImage()"
           [alt]="playingGif() ? 'Chest opening' : 'Idle chest'"
           width="200"
           height="200"
@@ -90,7 +90,7 @@
               <div class="flex items-center gap-3">
                 <div class="w-12 h-12 shrink-0 flex items-center justify-center rounded-xl bg-surface-secondary overflow-hidden">
                   <img
-                    src="assets/animation/chest-idle.gif"
+                    [src]="getSelectorChestImage(getLootboxTypeName(box.lootboxTypeId))"
                     alt="Lootbox"
                     class="w-10 h-10 object-contain"
                     loading="lazy">

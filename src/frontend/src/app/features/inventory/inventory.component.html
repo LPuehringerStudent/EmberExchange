@@ -89,7 +89,7 @@
           <div class="item-card bg-surface rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border-2 border-transparent flex flex-col gap-4 transition-all duration-250 rarity-common">
             <div class="relative h-40 flex items-center justify-center bg-surface-secondary rounded-xl">
               <div class="stove-icon">
-                <img src="assets/animation/chest-idle.gif" [alt]="box.typeName" class="w-[140px] h-[140px] object-contain" />
+                <img [src]="getLootboxImage(box.typeName)" [alt]="box.typeName" class="w-[140px] h-[140px] object-contain" />
               </div>
               <span class="rarity-badge common absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)]">
                 {{ box.acquiredHow }}

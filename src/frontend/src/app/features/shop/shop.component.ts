@@ -244,6 +244,9 @@ export class ShopComponent implements OnInit {
       if (name.includes('dragon')) {
         return 'assets/stove_sprites/legendary/red-dragon-stove.png';
       }
+      if (name.includes('legendary')) {
+        return 'assets/animation/legendary-chest-idle-animation.gif';
+      }
       if (name.includes('golden')) {
         return 'assets/animation/chest-idle-gold.gif';
       }

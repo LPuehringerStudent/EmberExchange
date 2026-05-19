@@ -254,4 +254,15 @@ export class InventoryComponent implements OnInit, OnDestroy {
   openLootbox(box: InventoryLootbox): void {
     void this.router.navigate(['/lootboxes'], { queryParams: { id: box.id } });
   }
+
+  getLootboxImage(typeName: string): string {
+    const name = typeName.toLowerCase();
+    if (name.includes('legendary')) {
+      return 'assets/animation/legendary-chest-idle-animation.gif';
+    }
+    if (name.includes('golden')) {
+      return 'assets/animation/chest-idle-gold.gif';
+    }
+    return 'assets/animation/chest-idle.gif';
+  }
 }

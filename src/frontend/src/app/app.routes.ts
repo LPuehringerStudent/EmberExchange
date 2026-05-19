@@ -112,11 +112,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/pages/oauth-callback/oauth-callback.component').then(m => m.OAuthCallbackComponent)
   },
   {
-    path: 'merging',
-    loadComponent: () => import('./features/merging/merging').then(m => m.Merging),
-    canActivate: [authGuard]
-  },
-  {
     path: '**',
     loadComponent: () => import('./shared/components/not-found.component').then(m => m.NotFoundComponent)
   }

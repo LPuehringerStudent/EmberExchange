@@ -132,6 +132,17 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     return this.acquisitionLabels[how] || how;
   }
 
+  getSelectorChestImage(typeName: string): string {
+    const name = typeName.toLowerCase();
+    if (name.includes('legendary')) {
+      return 'assets/animation/legendary-chest-idle-animation.gif';
+    }
+    if (name.includes('golden')) {
+      return 'assets/animation/chest-idle-gold.gif';
+    }
+    return 'assets/animation/chest-idle.gif';
+  }
+
   selectLootbox(lootboxId: number): void {
     if (this.isOpening()) return;
     this.selectedLootboxId.set(lootboxId);
@@ -143,6 +154,25 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   canOpen(): boolean {
     return !this.isOpening() && this.lootboxCount() > 0 && this.playerId !== null && this.selectedLootboxId() !== null;
+  }
+
+  getChestImage(): string {
+    const typeName = this.selectedTypeName().toLowerCase();
+    if (typeName.includes('legendary')) {
+      return 'assets/animation/legendary-chest-idle-animation.gif';
+    }
+    if (typeName.includes('golden')) {
+      return 'assets/animation/chest-idle-gold.gif';
+    }
+    return 'assets/animation/chest-idle.gif';
+  }
+
+  getOpeningImage(): string {
+    const typeName = this.selectedTypeName().toLowerCase();
+    if (typeName.includes('legendary')) {
+      return 'assets/animation/legendary-chest-open-animation.gif';
+    }
+    return 'assets/animation/chest-opening.gif';
   }
 
   // ── Open flow ──────────────────────────────────────────────
