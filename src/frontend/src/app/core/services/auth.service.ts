@@ -26,6 +26,16 @@ export interface AuthResponse {
   playerId: number;
 }
 
+export interface TwoFALoginResponse {
+  requires2FA: true;
+  challengeId: string;
+}
+
+export interface TwoFASetupResponse {
+  secret: string;
+  qrCodeDataUrl: string;
+}
+
 export interface OAuthStatus {
   google: boolean;
   github: boolean;
@@ -36,43 +46,76 @@ export class AuthService {
   private currentUser = signal<Player | null>(null);
   private isAuthenticated = signal<boolean>(false);
   private sessionId = signal<string | null>(null);
+  private pending2FAChallenge = signal<string | null>(null);
+
+  private initResolve!: () => void;
+  private initPromise = new Promise<void>(resolve => { this.initResolve = resolve; });
+  ready = (): Promise<void> => this.initPromise;
 
   readonly user = this.currentUser.asReadonly();
   readonly authenticated = this.isAuthenticated.asReadonly();
   readonly currentSessionId = this.sessionId.asReadonly();
+  readonly twoFAChallenge = this.pending2FAChallenge.asReadonly();
 
   private api = inject(ApiService);
   private router = inject(Router);
 
   async initialize(): Promise<void> {
-    const storedSessionId = this.getStoredSessionId();
-    if (!storedSessionId) {
-      return;
-    }
-
     try {
-      const player = await this.fetchCurrentUser(storedSessionId);
-      if (player) {
-        this.sessionId.set(storedSessionId);
-        this.currentUser.set(player);
-        this.isAuthenticated.set(true);
-      } else {
-        this.clearStoredSession();
+      const storedSessionId = this.getStoredSessionId();
+      if (storedSessionId) {
+        try {
+          const player = await this.fetchCurrentUser(storedSessionId);
+          if (player) {
+            this.sessionId.set(storedSessionId);
+            this.currentUser.set(player);
+            this.isAuthenticated.set(true);
+          } else {
+            this.clearStoredSession();
+          }
+        } catch (error) {
+          console.error('Failed to initialize auth:', error);
+          this.clearStoredSession();
+        }
       }
-    } catch (error) {
-      console.error('Failed to initialize auth:', error);
-      this.clearStoredSession();
+    } finally {
+      this.initResolve();
     }
   }
 
-  async login(usernameOrEmail: string, password: string, rememberMe: boolean): Promise<void> {
+  async login(usernameOrEmail: string, password: string, rememberMe: boolean): Promise<AuthResponse | TwoFALoginResponse> {
     const credentials: LoginRequest = {
       usernameOrEmail: usernameOrEmail.trim(),
       password
     };
 
-    const response = await firstValueFrom(this.api.post<AuthResponse>('/auth/login', credentials));
+    const response = await firstValueFrom(this.api.post<AuthResponse | TwoFALoginResponse>('/auth/login', credentials));
+
+    if ('requires2FA' in response && response.requires2FA) {
+      this.pending2FAChallenge.set(response.challengeId);
+      return response;
+    }
+
+    await this.handleAuthResponse(response as AuthResponse, rememberMe);
+    return response as AuthResponse;
+  }
+
+  async verify2FA(token: string, rememberMe: boolean): Promise<void> {
+    const challengeId = this.pending2FAChallenge();
+    if (!challengeId) {
+      throw new Error('No pending 2FA challenge');
+    }
+
+    const response = await firstValueFrom(
+      this.api.post<AuthResponse>('/auth/2fa/verify', { challengeId, token })
+    );
+
+    this.pending2FAChallenge.set(null);
     await this.handleAuthResponse(response, rememberMe);
+  }
+
+  cancel2FA(): void {
+    this.pending2FAChallenge.set(null);
   }
 
   async register(username: string, password: string, email: string, rememberMe: boolean): Promise<void> {
@@ -188,6 +231,7 @@ export class AuthService {
     this.sessionId.set(null);
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
+    this.pending2FAChallenge.set(null);
     this.clearStoredSession();
   }
 
@@ -223,6 +267,81 @@ export class AuthService {
   async deleteAccount(sessionId: string): Promise<void> {
     await firstValueFrom(
       this.api.delete<void>('/auth/me', new HttpHeaders({ 'session-id': sessionId }))
+    );
+  }
+
+  async getSessions(): Promise<{ sessionId: string; createdAt: string; expiresAt: string }[]> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    return firstValueFrom(
+      this.api.get<{ sessionId: string; createdAt: string; expiresAt: string }[]>('/auth/sessions', new HttpHeaders({ 'session-id': sessionId }))
+    );
+  }
+
+  async logoutAllDevices(): Promise<{ message: string; closed: number }> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    return firstValueFrom(
+      this.api.delete<{ message: string; closed: number }>('/auth/sessions', new HttpHeaders({ 'session-id': sessionId }))
+    );
+  }
+
+  async updateProfile(playerId: number, profile: { username?: string; email?: string; motto?: string; isPublic?: boolean }): Promise<void> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    await firstValueFrom(
+      this.api.patch<void>(`/players/${playerId}/profile`, profile, new HttpHeaders({ 'session-id': sessionId }))
+    );
+    await this.refreshUser();
+  }
+
+  async getNotificationSettings(playerId: number): Promise<{ playerId: number; notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean }> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    return firstValueFrom(
+      this.api.get<{ playerId: number; notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean }>(`/players/${playerId}/settings`, new HttpHeaders({ 'session-id': sessionId }))
+    );
+  }
+
+  async updateNotificationSettings(playerId: number, settings: Partial<{ notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean }>): Promise<void> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    await firstValueFrom(
+      this.api.patch<void>(`/players/${playerId}/settings`, settings, new HttpHeaders({ 'session-id': sessionId }))
+    );
+  }
+
+  // ─── 2FA Methods ───
+
+  async get2FAStatus(): Promise<{ enabled: boolean }> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    return firstValueFrom(
+      this.api.get<{ enabled: boolean }>('/auth/2fa/status', new HttpHeaders({ 'session-id': sessionId }))
+    );
+  }
+
+  async setup2FA(): Promise<TwoFASetupResponse> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    return firstValueFrom(
+      this.api.post<TwoFASetupResponse>('/auth/2fa/setup', null, new HttpHeaders({ 'session-id': sessionId }))
+    );
+  }
+
+  async confirm2FA(token: string): Promise<{ message: string }> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    return firstValueFrom(
+      this.api.post<{ message: string }>('/auth/2fa/confirm', { token }, new HttpHeaders({ 'session-id': sessionId }))
+    );
+  }
+
+  async disable2FA(password: string): Promise<{ message: string }> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    return firstValueFrom(
+      this.api.delete<{ message: string }>('/auth/2fa', new HttpHeaders({ 'session-id': sessionId }), { password })
     );
   }
 }

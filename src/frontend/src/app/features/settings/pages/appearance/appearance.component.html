@@ -1,20 +1,18 @@
-<!-- appearance.component.html -->
 <div class="settings-section">
   <h1>Appearance</h1>
   <p class="subtitle">Choose your preferred theme</p>
 
-  <div class="theme-grid">
+  <div class="flex flex-col gap-4">
     @for (theme of themes; track theme.id) {
       <button
-        class="theme-card"
-        [class.selected]="selectedTheme === theme.id"
-        [style.--bg]="theme.bg"
-        [style.--border-color]="theme.border"
+        class="flex items-center gap-4 w-full px-5 py-4 bg-surface-secondary border-2 border-transparent rounded-2xl cursor-pointer transition-all duration-250 ease-out relative hover:translate-x-[5px] hover:bg-surface-hover"
+        [class.border-accent]="selectedTheme === theme.id"
+        [class.bg-accent-light]="selectedTheme === theme.id"
         (click)="selectTheme(theme.id)">
-        <div class="theme-preview"></div>
-        <span class="theme-label">{{ theme.label }}</span>
+        <span class="text-2xl">{{ theme.icon }}</span>
+        <span class="text-base font-medium text-text-primary flex-1 text-left">{{ theme.label }}</span>
         @if (selectedTheme === theme.id) {
-          <div class="checkmark">✓</div>
+          <div class="w-7 h-7 bg-accent text-white rounded-full flex items-center justify-center text-sm font-bold">✓</div>
         }
       </button>
     }

@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from './auth.service';
+import type { ChatMessageRow } from '@shared/model';
 
 export type WsConnectionState = 'closed' | 'connecting' | 'open' | 'reconnecting';
 
@@ -13,6 +14,8 @@ export interface PlayerInRoom {
   seatIndex: number;
   connectionState: string;
   username?: string;
+  activeTitle?: { titleId?: string; label: string; animation?: string } | null;
+  activeBanner?: { bannerId?: number; name: string; cssClass?: string } | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +36,7 @@ export class WebSocketService {
   readonly playersInRoom = signal<PlayerInRoom[]>([]);
   readonly currentVersion = signal<number>(0);
   readonly stateBlob = signal<Record<string, unknown> | null>(null);
+  readonly incomingChatMessage = signal<ChatMessageRow | null>(null);
 
   connect(): void {
     if (this.ws) {
@@ -170,6 +174,15 @@ export class WebSocketService {
     });
   }
 
+  sendChatMessage(receiverId: number, content: string): void {
+    this.send({
+      type: 'chat_message',
+      payload: { receiverId, content },
+      clientTimestamp: Date.now(),
+      sequenceNumber: this.nextSeq()
+    });
+  }
+
   private send(msg: Record<string, unknown>): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg));
@@ -225,6 +238,11 @@ export class WebSocketService {
         const code = payload['code'] as string;
         const message = payload['message'] as string;
         this.lastError.set({ code: code || 'UNKNOWN', message: message || 'Unknown error' });
+        break;
+      }
+      case 'chat_message': {
+        const chatMsg = payload as unknown as ChatMessageRow;
+        this.incomingChatMessage.set(chatMsg);
         break;
       }
     }

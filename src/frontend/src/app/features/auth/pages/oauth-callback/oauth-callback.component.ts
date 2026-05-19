@@ -42,10 +42,6 @@ import { AuthService } from '@core/services/auth.service';
       margin: 0 auto 1.5rem;
     }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
     h2 {
       margin: 0 0 0.5rem;
       font-size: 1.5rem;

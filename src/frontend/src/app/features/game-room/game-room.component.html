@@ -1,13 +1,13 @@
 @if (loading()) {
-  <div class="game-room-container">
-    <div class="loading-state">
+  <div class="max-w-[800px] mx-auto p-6">
+    <div class="text-center py-12 bg-surface/85 backdrop-blur-[10px] border border-accent/10 rounded-2xl text-text-secondary">
       <p>Loading room...</p>
     </div>
   </div>
 } @else if (error()) {
-  <div class="game-room-container">
-    <div class="error-state">
-      <p>{{ error() }}</p>
+  <div class="max-w-[800px] mx-auto p-6">
+    <div class="text-center py-12 bg-surface/85 backdrop-blur-[10px] border border-accent/10 rounded-2xl text-text-secondary">
+      <p class="text-red-600 mb-4">{{ error() }}</p>
       <button class="btn-primary" (click)="leave()">Back to Games</button>
     </div>
   </div>
@@ -18,57 +18,75 @@
     <app-poker />
   }
 } @else {
-  <div class="game-room-container">
-    <header class="room-header">
-      <div class="header-left">
-        <h1>Room {{ roomId() }}</h1>
-        <span class="status-badge" [class]="roomStatus()">{{ roomStatus() }}</span>
+  <div class="max-w-[800px] mx-auto p-6">
+    <header class="flex justify-between items-center mb-6 pb-4 border-b border-black/5">
+      <div class="flex items-center gap-3">
+        <h1 class="m-0 text-2xl text-text-primary">Room {{ roomId() }}</h1>
+        <span [class]="'px-3 py-1 rounded-xl text-xs font-semibold uppercase ' + roomStatus()"
+              [class.bg-amber-100]="roomStatus() === 'waiting'"
+              [class.text-amber-800]="roomStatus() === 'waiting'"
+              [class.bg-emerald-100]="roomStatus() === 'active'"
+              [class.text-emerald-800]="roomStatus() === 'active'"
+              [class.bg-gray-100]="roomStatus() === 'finished'"
+              [class.text-gray-600]="roomStatus() === 'finished'">{{ roomStatus() }}</span>
       </div>
-      <div class="header-right">
-        <span class="connection-badge" [class]="connectionState()">{{ connectionState() }}</span>
+      <div class="flex items-center gap-3">
+        <span [class]="'px-3 py-1 rounded-xl text-xs font-semibold uppercase ' + connectionState()"
+              [class.bg-emerald-100]="connectionState() === 'open'"
+              [class.text-emerald-800]="connectionState() === 'open'"
+              [class.bg-amber-100]="connectionState() === 'connecting' || connectionState() === 'reconnecting'"
+              [class.text-amber-800]="connectionState() === 'connecting' || connectionState() === 'reconnecting'"
+              [class.bg-red-100]="connectionState() === 'closed'"
+              [class.text-red-800]="connectionState() === 'closed'">{{ connectionState() }}</span>
         <button class="btn-secondary" (click)="leave()">Leave</button>
       </div>
     </header>
 
     @if (lastError()) {
-      <div class="error-banner">
+      <div class="bg-red-500/[0.08] border border-red-500/30 rounded-xl px-4 py-3 mb-6 text-red-600">
         <strong>{{ lastError()?.code }}</strong>: {{ lastError()?.message }}
       </div>
     }
 
     @if (mockNotification()) {
-      <div class="mock-notification">
+      <div class="bg-amber-50 border border-amber-400 rounded-xl px-4 py-3 mb-6 text-amber-800 font-semibold">
         {{ mockNotification() }}
       </div>
     }
 
     @if (roomSettings()['turnTime']) {
-      <div class="settings-bar">
-        <span class="settings-item">Turn time: {{ roomSettings()['turnTime'] }}s</span>
+      <div class="flex gap-4 mb-4">
+        <span class="bg-surface border border-accent/10 rounded-[10px] px-3 py-1.5 text-sm text-text-secondary shadow-[0_2px_6px_rgba(0,0,0,0.04)]">Turn time: {{ roomSettings()['turnTime'] }}s</span>
       </div>
     }
 
-    <section class="players-section">
-      <h2>Players ({{ players().length }} / {{ maxPlayers() }})</h2>
-      <div class="players-list">
+    <section class="mb-6">
+      <h2 class="text-lg mb-3 text-text-primary">Players ({{ players().length }} / {{ maxPlayers() }})</h2>
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
         @for (player of players(); track player.playerId) {
-          <div class="player-card" [class.disconnected]="player.connectionState !== 'connected'">
-            <div class="player-avatar">👤</div>
-            <div class="player-info">
-              <span class="player-name">{{ player.username ?? 'Player ' + player.playerId }}</span>
-              <span class="player-seat">Seat {{ player.seatIndex }}</span>
-              <span class="player-state">{{ player.connectionState }}</span>
+          <div class="player-card relative flex items-center gap-3 bg-surface border border-accent/10 rounded-2xl p-3.5 pt-[18px] shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-all duration-250 overflow-hidden hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)]" [class.disconnected]="player.connectionState !== 'connected'">
+            @if (player.activeBanner?.cssClass) {
+              <div [class]="'player-banner ' + player.activeBanner!.cssClass"></div>
+            }
+            <div class="text-[2rem]">👤</div>
+            <div class="flex flex-col">
+              <span class="font-semibold text-text-primary">{{ player.username ?? 'Player ' + player.playerId }}</span>
+              @if (player.activeTitle) {
+                <span class="self-start text-[0.65rem] font-bold text-accent bg-accent/10 px-1.5 py-px rounded-md uppercase tracking-wider">{{ player.activeTitle?.label }}</span>
+              }
+              <span class="text-xs text-text-secondary">Seat {{ player.seatIndex }}</span>
+              <span class="player-state text-[0.7rem] uppercase text-emerald-600 font-semibold">{{ player.connectionState }}</span>
             </div>
           </div>
         } @empty {
-          <p class="empty-text">No players in room yet.</p>
+          <p class="text-text-muted italic bg-surface/85 backdrop-blur-[10px] border border-accent/10 rounded-2xl p-6 text-center">No players in room yet.</p>
         }
       </div>
     </section>
 
-    <section class="actions-section">
-      <h2>Actions</h2>
-      <div class="actions-grid">
+    <section>
+      <h2 class="text-lg mb-3 text-text-primary">Actions</h2>
+      <div class="flex gap-3 flex-wrap">
         <button
           class="btn-primary"
           (click)="startGame()"

@@ -1,82 +1,49 @@
-<section class="settings-content">
+<section class="flex flex-col gap-9">
 
   <div class="settings-section">
     <h1>Account Information</h1>
+    <p class="subtitle">Manage your basic account details</p>
 
-    <!-- Success/Error Messages -->
-    @if (emailSuccess()) {
-      <div class="alert alert-success">{{ emailSuccess() }}</div>
+    @if (profileSuccess()) {
+      <div class="alert alert-success">{{ profileSuccess() }}</div>
     }
-    @if (emailError()) {
-      <div class="alert alert-error">{{ emailError() }}</div>
+    @if (profileError()) {
+      <div class="alert alert-error">{{ profileError() }}</div>
     }
 
-    <div class="form-grid" [formGroup]="emailForm">
+    <div class="form-grid" [formGroup]="profileForm">
       <div class="input-group">
         <label>Username</label>
-        <input type="text" [value]="username()" readonly disabled>
-        <small>Username cannot be changed</small>
+        <input type="text" formControlName="username" placeholder="Your username">
+        @if (usernameError()) {
+          <small class="text-red-500 text-xs mt-1">{{ usernameError() }}</small>
+        }
       </div>
 
       <div class="input-group">
         <label>Email</label>
-        <input
-          type="email"
-          formControlName="email"
-          placeholder="you@example.com">
+        <input type="email" formControlName="email" placeholder="you@example.com">
+      </div>
+
+      <div class="input-group" style="grid-column: 1 / -1;">
+        <label>Motto (for Hall of Glory)</label>
+        <input type="text" formControlName="motto" placeholder="Your personal motto..." maxlength="100">
+        <small class="text-text-muted text-xs mt-1">{{ (profileForm.value.motto || '').length }}/100</small>
       </div>
     </div>
 
-    <button
-      class="btn-primary"
-      (click)="saveChanges()"
-      [disabled]="loading()">
+    <div class="toggle-card mt-4" (click)="isPublic.update(v => !v)">
+      <div class="toggle-info">
+        <span class="toggle-title">Public Profile</span>
+        <span class="toggle-desc">Allow others to view your Hall of Glory profile</span>
+      </div>
+      <div class="toggle" [class.active]="isPublic()">
+        <div class="toggle-circle"></div>
+      </div>
+    </div>
+
+    <button class="btn-primary mt-4" (click)="saveProfile()" [disabled]="loading()">
       {{ loading() ? 'Saving...' : 'Save Changes' }}
-    </button>
-  </div>
-
-  <div class="settings-section">
-    <h1>Password & Security</h1>
-
-    <!-- Success/Error Messages -->
-    @if (passwordSuccess()) {
-      <div class="alert alert-success">{{ passwordSuccess() }}</div>
-    }
-    @if (passwordError()) {
-      <div class="alert alert-error">{{ passwordError() }}</div>
-    }
-
-    <div class="form-grid" [formGroup]="passwordForm">
-      <div class="input-group">
-        <label>Current Password</label>
-        <input
-          type="password"
-          formControlName="currentPassword"
-          placeholder="••••••••">
-      </div>
-
-      <div class="input-group">
-        <label>New Password</label>
-        <input
-          type="password"
-          formControlName="newPassword"
-          placeholder="••••••••">
-      </div>
-
-      <div class="input-group">
-        <label>Confirm New Password</label>
-        <input
-          type="password"
-          formControlName="confirmPassword"
-          placeholder="••••••••">
-      </div>
-    </div>
-
-    <button
-      class="btn-danger"
-      (click)="updatePassword()"
-      [disabled]="loading()">
-      {{ loading() ? 'Updating...' : 'Update Password' }}
     </button>
   </div>
 

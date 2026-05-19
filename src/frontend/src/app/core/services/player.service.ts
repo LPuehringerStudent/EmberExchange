@@ -26,6 +26,10 @@ export class PlayerService {
     return this.api.get<Player>(`/players/${id}`);
   }
 
+  lookupPlayerByUsername(username: string): Observable<{ playerId: number; username: string }> {
+    return this.api.get<{ playerId: number; username: string }>(`/players/lookup/${encodeURIComponent(username)}`);
+  }
+
   createPlayer(username: string, password?: string, email?: string, coins?: number, lootboxCount?: number): Observable<CreatePlayerResponse> {
     const body: Record<string, unknown> = { username };
     if (password !== undefined) body["password"] = password;

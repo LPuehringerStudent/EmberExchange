@@ -1,25 +1,62 @@
-﻿<!-- settings-component.html -->
-<div class="settings-page">
+<div class="p-10 px-5 bg-body min-h-screen">
+  <div class="max-w-[1200px] mx-auto flex gap-10 max-tablet:flex-col">
 
-  <div class="settings-wrapper">
-
-    <!-- Left Navigation -->
-    <aside class="settings-sidebar">
-      <h2>Settings</h2>
-      <ul>
-        <li [class.active]="activeTab === 'account'" (click)="setActiveTab('account')">Account</li>
-        <li [class.active]="activeTab === 'security'" (click)="setActiveTab('security')">Security</li>
-        <li [class.active]="activeTab === 'appearance'" (click)="setActiveTab('appearance')">Appearance</li>
-        <li [class.active]="activeTab === 'language'" (click)="setActiveTab('language')">Language</li>
-        <li [class.active]="activeTab === 'socials'" (click)="setActiveTab('socials')">Socials</li>
+    <!-- Sidebar -->
+    <aside class="w-[250px] shrink-0 h-fit p-[30px_20px] rounded-[20px] border border-border shadow-[0_15px_40px_var(--shadow-color)] bg-gradient-to-b from-surface to-surface-secondary max-tablet:w-full">
+      <h2 class="mb-6 text-xl text-accent font-semibold">Settings</h2>
+      <ul class="list-none p-0 m-0 flex flex-col gap-1">
+        <li
+          class="px-4 py-3 rounded-xl text-sm transition-all duration-250 ease-out cursor-pointer text-text-secondary hover:bg-surface-hover hover:text-accent hover:translate-x-1"
+          [class.bg-accent]="activeTab === 'account'"
+          [class.text-white]="activeTab === 'account'"
+          [class.hover:text-white]="activeTab === 'account'"
+          (click)="setActiveTab('account')"
+        >
+          Account
+        </li>
+        <li
+          class="px-4 py-3 rounded-xl text-sm transition-all duration-250 ease-out cursor-pointer text-text-secondary hover:bg-surface-hover hover:text-accent hover:translate-x-1"
+          [class.bg-accent]="activeTab === 'security'"
+          [class.text-white]="activeTab === 'security'"
+          [class.hover:text-white]="activeTab === 'security'"
+          (click)="setActiveTab('security')"
+        >
+          Security
+        </li>
+        <li
+          class="px-4 py-3 rounded-xl text-sm transition-all duration-250 ease-out cursor-pointer text-text-secondary hover:bg-surface-hover hover:text-accent hover:translate-x-1"
+          [class.bg-accent]="activeTab === 'notifications'"
+          [class.text-white]="activeTab === 'notifications'"
+          [class.hover:text-white]="activeTab === 'notifications'"
+          (click)="setActiveTab('notifications')"
+        >
+          Notifications
+        </li>
+        <li
+          class="px-4 py-3 rounded-xl text-sm transition-all duration-250 ease-out cursor-pointer text-text-secondary hover:bg-surface-hover hover:text-accent hover:translate-x-1"
+          [class.bg-accent]="activeTab === 'appearance'"
+          [class.text-white]="activeTab === 'appearance'"
+          [class.hover:text-white]="activeTab === 'appearance'"
+          (click)="setActiveTab('appearance')"
+        >
+          Appearance
+        </li>
+        <li
+          class="px-4 py-3 rounded-xl text-sm transition-all duration-250 ease-out cursor-pointer text-text-secondary hover:bg-surface-hover hover:text-accent hover:translate-x-1"
+          [class.bg-accent]="activeTab === 'danger-zone'"
+          [class.text-white]="activeTab === 'danger-zone'"
+          [class.hover:text-white]="activeTab === 'danger-zone'"
+          (click)="setActiveTab('danger-zone')"
+        >
+          Danger Zone
+        </li>
       </ul>
     </aside>
 
-    <!-- Right Content -->
-    <main class="settings-content">
+    <!-- Content -->
+    <main class="flex-1 flex flex-col gap-9">
       <router-outlet></router-outlet>
     </main>
 
   </div>
-
 </div>

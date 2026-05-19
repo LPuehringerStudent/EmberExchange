@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, inject, viewChild, ChangeDetectorRef, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { LootBoxHelper, LootItem } from './lootbox-helper';
 import { LootboxService } from '@core/services/lootbox.service';
 import { ListingService } from '@core/services/listing.service';
@@ -25,16 +25,19 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   showPopup    = signal<boolean>(false);
   resultText   = signal<string>('');
   resultImageUrl = signal<string>('');
+  selectedLootboxId = signal<number | null>(null);
+  selectedTypeName  = signal<string>('Standard Lootbox');
+  returnToInventory = signal<boolean>(false);
 
   items: LootItem[] = [];
   finalItem: LootItem | null = null;
   playerId: number | null = null;
 
   readonly previewDrops = [
-    { label: 'Rusty Stove',    src: '/assets/stove_sprites/rusty.png',    rarity: 'common',    rarityLabel: 'Common'    },
-    { label: 'Bronze Stove',   src: '/assets/stove_sprites/bronze.png',   rarity: 'rare',      rarityLabel: 'Rare'      },
-    { label: 'Golden Stove',   src: '/assets/stove_sprites/golden.png',   rarity: 'epic',      rarityLabel: 'Epic'      },
-    { label: 'Dragon Stove',   src: '/assets/stove_sprites/dragon.png',   rarity: 'legendary', rarityLabel: 'Legendary' },
+    { label: 'Rusty Stove',    src: '/assets/stove_sprites/common/rusty.png',    rarity: 'common',    rarityLabel: 'Common'    },
+    { label: 'Bronze Stove',   src: '/assets/stove_sprites/rare/bronze.png',   rarity: 'rare',      rarityLabel: 'Rare'      },
+    { label: 'Golden Stove',   src: '/assets/stove_sprites/epic/golden.png',   rarity: 'epic',      rarityLabel: 'Epic'      },
+    { label: 'Dragon Stove',   src: '/assets/stove_sprites/legendary/dragon.png',   rarity: 'legendary', rarityLabel: 'Legendary' },
   ];
 
   private lootBoxHelper = new LootBoxHelper();
@@ -43,6 +46,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   private cdr           = inject(ChangeDetectorRef);
   private authService   = inject(AuthService);
   private router        = inject(Router);
+  private route         = inject(ActivatedRoute);
 
   async ngOnInit(): Promise<void> {
     const user = this.authService.getCurrentUser();
@@ -51,6 +55,13 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       return;
     }
     this.playerId = user.playerId;
+
+    // Read selected lootbox id from query param
+    const idParam = this.route.snapshot.queryParamMap.get('id');
+    if (idParam) {
+      this.selectedLootboxId.set(Number(idParam));
+      this.returnToInventory.set(true);
+    }
 
     // Sync lootbox count from actual backend state (not cached auth data)
     try {
@@ -75,10 +86,16 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
     let lootboxId: number | null = null;
     try {
-      const [lootboxes, listings] = await Promise.all([
+      const [lootboxes, listings, types] = await Promise.all([
         firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId)),
-        firstValueFrom(this.listingApi.getActiveListingsBySellerId(this.playerId))
+        firstValueFrom(this.listingApi.getActiveListingsBySellerId(this.playerId)),
+        firstValueFrom(this.lootboxApi.getAllLootboxTypes())
       ]);
+
+      const typeMap = new Map<number, string>();
+      for (const t of types) {
+        typeMap.set(t.lootboxTypeId, t.name);
+      }
 
       const listedLootboxIds = new Set(listings.filter(l => l.lootboxId).map(l => l.lootboxId!));
       const availableLootboxes = lootboxes.filter(lb => !listedLootboxIds.has(lb.lootboxId));
@@ -96,14 +113,30 @@ export class LootboxComponent implements AfterViewInit, OnInit {
         }
         return;
       }
-      lootboxId = availableLootboxes[0].lootboxId;
+
+      const targetId = this.selectedLootboxId();
+      if (targetId !== null) {
+        const target = availableLootboxes.find(lb => lb.lootboxId === targetId);
+        if (target) {
+          lootboxId = target.lootboxId;
+          this.selectedTypeName.set(typeMap.get(target.lootboxTypeId) || 'Standard Lootbox');
+        } else {
+          this.resultText.set('Selected lootbox is not available (it may be listed or already opened).');
+          this.showPopup.set(true);
+          this.isOpening.set(false);
+          this.playingGif.set(false);
+          return;
+        }
+      } else {
+        lootboxId = availableLootboxes[0].lootboxId;
+        this.selectedTypeName.set(typeMap.get(availableLootboxes[0].lootboxTypeId) || 'Standard Lootbox');
+      }
     } catch (err) {
       console.error('Failed to fetch lootboxes:', err);
       this.resultText.set('Failed to open lootbox. Please try again.');
       this.showPopup.set(true);
       this.isOpening.set(false);
       this.playingGif.set(false);
-      return;
       return;
     }
 
@@ -152,9 +185,6 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       this.showPopup.set(true);
       this.isOpening.set(false);
       this.playingGif.set(false);
-      return;
-      this.isOpening.set(false);
-      this.playingGif.set(false);
     }
   }
 
@@ -177,6 +207,14 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     if (itemsEl) {
       itemsEl.style.transition = 'none';
       itemsEl.style.transform = 'translateX(0px)';
+    }
+  }
+
+  closePopup(): void {
+    if (this.returnToInventory()) {
+      void this.router.navigate(['/inventory']);
+    } else {
+      this.resetAll();
     }
   }
 }

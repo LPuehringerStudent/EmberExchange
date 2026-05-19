@@ -1,99 +1,193 @@
-<div class="lobby-container">
-  <header class="lobby-header">
-    <div class="header-left">
-      <button class="btn-back" (click)="goBack()">← Back</button>
-      <h1>{{ game()?.name ?? gameType() }} Lobby</h1>
-    </div>
-    <button
-      class="btn-primary"
-      (click)="openCreateModal()"
-      [disabled]="creating()"
-    >
-      {{ creating() ? 'Creating...' : 'Create Room' }}
-    </button>
-    @if (game()) {
-      <span class="game-meta">{{ game()!.minPlayers }}-{{ game()!.maxPlayers }} players &middot; {{ game()!.ruleset }}</span>
+<div class="min-h-screen bg-body">
+  <div class="max-w-[900px] mx-auto px-5 py-8 md:px-8 md:py-10">
+
+    <!-- ═══ HEADER ═══ -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div class="flex items-center gap-4">
+        <button
+          class="group inline-flex items-center gap-1.5 px-4 py-2.5 bg-surface border border-border rounded-xl font-semibold text-sm text-text-secondary transition-all duration-200 hover:bg-surface-secondary hover:border-accent/30 hover:text-accent"
+          (click)="goBack()"
+        >
+          <svg class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Back
+        </button>
+        <div>
+          <h1 class="m-0 text-2xl font-bold text-text-primary capitalize">{{ game()?.name ?? gameType() }} Lobby</h1>
+          @if (game()) {
+            <p class="m-0 mt-0.5 text-xs text-text-muted font-medium">{{ game()!.minPlayers }}-{{ game()!.maxPlayers }} players · {{ game()!.ruleset }}</p>
+          }
+        </div>
+      </div>
+      <button
+        class="btn-primary shrink-0"
+        (click)="openCreateModal()"
+        [disabled]="creating()"
+      >
+        @if (creating()) {
+          <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0"></span>
+          Creating...
+        } @else {
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Create Room
+        }
+      </button>
+    </header>
+
+    <!-- ═══ ERROR ═══ -->
+    @if (error()) {
+      <div class="bg-red-500/[0.08] border border-red-500/30 rounded-2xl px-5 py-4 mb-6 text-red-500 text-sm font-medium flex items-center gap-3">
+        <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ error() }}
+      </div>
     }
-  </header>
 
-  @if (error()) {
-    <div class="error-banner">
-      {{ error() }}
-    </div>
-  }
+    <!-- ═══ ROOMS ═══ -->
+    @if (loading()) {
+      <div class="text-center py-16 bg-surface/80 backdrop-blur-md border border-border rounded-2xl">
+        <div class="w-8 h-8 border-2 border-accent/20 border-t-accent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-text-muted text-sm font-medium">Loading rooms...</p>
+      </div>
+    } @else {
+      <section>
+        <div class="flex items-center gap-3 mb-5">
+          <div class="h-px flex-1 bg-gradient-to-r from-border to-transparent"></div>
+          <span class="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Open Rooms</span>
+          <span class="text-[11px] font-bold text-text-muted bg-surface-secondary px-2 py-0.5 rounded-full">{{ rooms().length }}</span>
+          <div class="h-px flex-1 bg-gradient-to-l from-border to-transparent"></div>
+        </div>
 
-  @if (loading()) {
-    <div class="loading-state">
-      <p>Loading rooms...</p>
-    </div>
-  } @else {
-    <section class="rooms-section">
-      <h2>Open Rooms {{ game() ? '(' + game()!.minPlayers + '-' + game()!.maxPlayers + ' players)' : '' }}</h2>
-      <div class="rooms-list">
-        @for (room of rooms(); track room.roomId) {
-          <div class="room-card">
-            <div class="room-info">
-              <span class="room-id">Room {{ room.roomId.slice(0, 8) }}</span>
-              <span class="status-badge" [class]="room.status">{{ room.status }}</span>
+        <div class="flex flex-col gap-3">
+          @for (room of rooms(); track room.roomId) {
+            <div class="group relative flex items-center bg-surface border border-border rounded-2xl px-5 py-4 gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5 hover:border-accent/20 overflow-hidden"
+                 [class]="'border-l-[3px] ' + (room.status === 'waiting' ? 'border-l-amber-500' : room.status === 'active' ? 'border-l-emerald-500' : 'border-l-text-muted')">
+
+              <!-- Status glow on hover -->
+              <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                   [class]="room.status === 'waiting' ? 'bg-amber-500/[0.03]' : room.status === 'active' ? 'bg-emerald-500/[0.03]' : ''"></div>
+
+              <!-- Room info -->
+              <div class="relative flex items-center gap-4 flex-1 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-surface-secondary border border-border flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="6" width="20" height="12" rx="2"/>
+                    <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2.5 mb-0.5">
+                    <span class="font-semibold text-sm text-text-primary truncate">Room {{ room.roomId.slice(0, 8) }}</span>
+                    <span
+                      class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider shrink-0 border"
+                      [class]="room.status === 'waiting'
+                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                        : room.status === 'active'
+                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                          : 'bg-surface-secondary text-text-muted border-border'"
+                    >
+                      {{ room.status }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-3 text-[11px] text-text-muted">
+                    <span class="flex items-center gap-1">
+                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                      </svg>
+                      {{ room.maxPlayers }} max
+                    </span>
+                    @if (room.settings && room.settings['turnTime']) {
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        {{ room.settings['turnTime'] }}s turn
+                      </span>
+                    }
+                    <span class="hidden sm:inline">·</span>
+                    <span class="hidden sm:inline">{{ formatDate(room.createdAt) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Join button -->
+              <button
+                class="relative shrink-0 px-5 py-2.5 bg-surface-secondary border border-border rounded-xl font-semibold text-sm text-text-primary transition-all duration-200 hover:bg-accent hover:border-accent hover:text-white hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/20"
+                (click)="joinRoom(room.roomId)"
+              >
+                Join
+              </button>
             </div>
-            <div class="room-meta">
-              <span>Max {{ room.maxPlayers }} players</span>
-              @if (room.settings && room.settings['turnTime']) {
-                <span class="room-setting">{{ room.settings['turnTime'] }}s turns</span>
-              }
-              <span class="room-date">{{ formatDate(room.createdAt) }}</span>
+          } @empty {
+            <div class="text-center py-16 bg-surface/80 backdrop-blur-md border border-dashed border-border rounded-2xl">
+              <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-surface-secondary border border-border flex items-center justify-center">
+                <svg class="w-7 h-7 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="6" width="20" height="12" rx="2"/>
+                  <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01"/>
+                </svg>
+              </div>
+              <p class="text-text-secondary font-semibold text-base mb-1">No open rooms</p>
+              <p class="text-text-muted text-sm">Be the first to create one and start playing!</p>
             </div>
-            <button class="btn-secondary" (click)="joinRoom(room.roomId)">
-              Join
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ═══ CREATE MODAL ═══ -->
+    @if (showCreateModal()) {
+      <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-5 animate-[fadeIn_0.2s_ease]" (click)="closeCreateModal()">
+        <div class="bg-surface border border-border rounded-[20px] p-7 w-full max-w-[400px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[slideUp_0.3s_ease]" (click)="$event.stopPropagation()">
+          <h2 class="m-0 mb-6 text-xl font-bold text-text-primary">Create Room</h2>
+
+          <div class="mb-5">
+            <label for="maxPlayers" class="block mb-2 text-xs font-bold text-text-muted uppercase tracking-wider">Max Players</label>
+            <input
+              id="maxPlayers"
+              type="number"
+              [value]="newMaxPlayers()"
+              (input)="newMaxPlayers.set(+($any($event).target.value))"
+              min="2"
+              max="6"
+              class="w-full px-4 py-3 bg-surface-secondary border border-border rounded-xl text-text-primary text-base font-medium transition-colors duration-200 focus:outline-none focus:border-accent"
+            />
+          </div>
+
+          <div class="mb-6">
+            <label for="turnTime" class="block mb-2 text-xs font-bold text-text-muted uppercase tracking-wider">Turn Time (seconds)</label>
+            <input
+              id="turnTime"
+              type="number"
+              [value]="newTurnTime()"
+              (input)="newTurnTime.set(+($any($event).target.value))"
+              min="10"
+              max="120"
+              class="w-full px-4 py-3 bg-surface-secondary border border-border rounded-xl text-text-primary text-base font-medium transition-colors duration-200 focus:outline-none focus:border-accent"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3">
+            <button
+              class="px-5 py-2.5 bg-transparent border border-border rounded-xl font-semibold text-sm text-text-secondary transition-all duration-200 hover:bg-surface-secondary hover:border-text-muted"
+              (click)="closeCreateModal()"
+            >
+              Cancel
+            </button>
+            <button
+              class="btn-primary"
+              (click)="confirmCreateRoom()"
+              [disabled]="creating()"
+            >
+              {{ creating() ? 'Creating...' : 'Create' }}
             </button>
           </div>
-        } @empty {
-          <div class="empty-state">
-            <p>No open rooms found.</p>
-            <p class="empty-hint">Be the first to create one!</p>
-          </div>
-        }
+        </div>
       </div>
-    </section>
-  }
+    }
 
-  @if (showCreateModal()) {
-    <div class="modal-overlay" (click)="closeCreateModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <h2>Create Room</h2>
-        <div class="form-group">
-          <label for="maxPlayers">Max Players</label>
-          <input
-            id="maxPlayers"
-            type="number"
-            [value]="newMaxPlayers()"
-            (input)="newMaxPlayers.set(+($any($event).target.value))"
-            min="2"
-            max="6"
-          />
-        </div>
-        <div class="form-group">
-          <label for="turnTime">Turn Time (seconds)</label>
-          <input
-            id="turnTime"
-            type="number"
-            [value]="newTurnTime()"
-            (input)="newTurnTime.set(+($any($event).target.value))"
-            min="10"
-            max="120"
-          />
-        </div>
-        <div class="modal-actions">
-          <button class="btn-secondary" (click)="closeCreateModal()">Cancel</button>
-          <button
-            class="btn-primary"
-            (click)="confirmCreateRoom()"
-            [disabled]="creating()"
-          >
-            {{ creating() ? 'Creating...' : 'Create' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  }
+  </div>
 </div>

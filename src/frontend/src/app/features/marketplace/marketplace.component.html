@@ -1,22 +1,22 @@
-<div class="marketplace-layout">
+<div class="p-[30px_40px] max-w-[1400px] mx-auto max-mobile:p-5">
   <!-- Header -->
-  <div class="marketplace-header">
-    <div class="header-text">
-      <h1>Marketplace</h1>
-      <p class="subtitle">Buy and sell stoves and lootboxes with other players</p>
+  <div class="flex items-start justify-between gap-4 mb-6 max-mobile:flex-col max-mobile:gap-3">
+    <div>
+      <h1 class="text-[28px] text-text-primary font-bold m-0 mb-1.5">Marketplace</h1>
+      <p class="m-0 text-text-secondary text-sm">Buy and sell stoves and lootboxes with other players</p>
     </div>
   </div>
 
   <!-- Tabs -->
-  <div class="marketplace-tabs">
+  <div class="flex gap-3 mb-6">
     <button
-      class="tab-btn"
+      class="tab-btn px-5 py-3 rounded-xl bg-surface text-text-secondary text-sm font-semibold cursor-pointer transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-none hover:bg-surface-secondary hover:text-accent"
       [class.active]="activeTab === 'all'"
       (click)="activeTab = 'all'">
       All Listings ({{ allListings().length }})
     </button>
     <button
-      class="tab-btn"
+      class="tab-btn px-5 py-3 rounded-xl bg-surface text-text-secondary text-sm font-semibold cursor-pointer transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-none hover:bg-surface-secondary hover:text-accent"
       [class.active]="activeTab === 'my'"
       (click)="activeTab = 'my'">
       My Listings ({{ myListings().length }})
@@ -25,50 +25,50 @@
 
   <!-- Inline Error -->
   @if (error()) {
-    <div class="inline-error">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <div class="flex items-center gap-2.5 mb-5 px-4 py-3 bg-red-500/[0.08] border border-red-500/25 rounded-xl text-red-500 text-sm">
+      <svg class="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/>
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
       <span>{{ error() }}</span>
-      <button class="close-error" (click)="error.set(null)">Dismiss</button>
+      <button class="ml-auto bg-transparent border-none text-red-500 text-xs font-semibold cursor-pointer underline" (click)="error.set(null)">Dismiss</button>
     </div>
   }
 
   <!-- Loading State -->
   @if (loading()) {
-    <div class="empty-state">
-      <div class="spinner"></div>
-      <p>Loading marketplace...</p>
+    <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
+      <div class="w-10 h-10 border-[3px] border-accent/20 border-t-accent rounded-full animate-spin mb-4"></div>
+      <p class="text-lg font-semibold text-text-primary m-0 mb-2">Loading marketplace...</p>
     </div>
   }
 
   <!-- Listings Grid -->
   @if (!loading() && !error()) {
-    <div class="listings-grid">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-6 max-mobile:grid-cols-1">
       @if (activeTab === 'all') {
         @if (allListings().length === 0) {
-          <div class="empty-state">
-            <div class="empty-graphic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
+            <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+              <svg class="w-12 h-12 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M3 3h18v18H3z"/>
                 <path d="M3 9h18M9 21V9"/>
               </svg>
             </div>
-            <p>No active listings</p>
-            <span>Be the first to list an item!</span>
-            <button class="action-btn" routerLink="/inventory">Go to Inventory</button>
+            <p class="text-lg font-semibold text-text-primary m-0 mb-2">No active listings</p>
+            <span class="text-sm text-text-secondary mb-6">Be the first to list an item!</span>
+            <button class="btn-primary" routerLink="/inventory">Go to Inventory</button>
           </div>
         } @else {
           @for (listing of allListings(); track listing.listingId) {
-            <div class="listing-card" [class]="'rarity-' + getRarity(listing)">
-              <div class="card-visual">
+            <div [class]="'listing-card bg-surface rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border-2 border-transparent flex flex-col gap-4 transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(0,0,0,0.15)] rarity-' + getRarity(listing)">
+              <div class="relative h-40 flex items-center justify-center bg-surface-secondary rounded-xl">
                 <div class="stove-icon">
                   @if (getImageUrl(listing)) {
-                    <img [src]="getImageUrl(listing)" [alt]="getItemName(listing)" class="stove-sprite" />
+                    <img [src]="getImageUrl(listing)" [alt]="getItemName(listing)" class="w-[150px] h-[150px] object-contain" />
                   } @else {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <svg class="w-16 h-16 text-text-secondary drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                       @if (isLootboxListing(listing)) {
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                         <line x1="3" y1="9" x2="21" y2="9"/>
@@ -80,30 +80,35 @@
                     </svg>
                   }
                 </div>
-                <span class="rarity-badge" [class]="getRarity(listing)">
+                <span [class]="'rarity-badge absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] ' + getRarity(listing)">
                   {{ getRarity(listing) }}
                 </span>
+                @if (getHeatLevel(listing) !== null) {
+                  <span class="heat-badge heat-{{getHeatLevel(listing)! | heatTier | lowercase}}">
+                    {{ getHeatLevel(listing)! | heatTier }}
+                  </span>
+                }
                 @if (isLootboxListing(listing)) {
-                  <span class="lootbox-badge">Lootbox</span>
+                  <span class="lootbox-badge absolute bottom-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] text-white">Lootbox</span>
                 }
               </div>
-              <div class="card-info">
-                <h4 class="stove-name">{{ getItemName(listing) }}</h4>
-                <p class="stove-meta">{{ getItemMeta(listing) }}</p>
-                <p class="seller">Listed by {{ listing.sellerName || 'Unknown' }}</p>
-                <p class="price">{{ formatPrice(listing.price) }} Coal</p>
-                <p class="date">Listed {{ formatDate(listing.listedAt) }}</p>
+              <div class="flex flex-col gap-1">
+                <h4 class="m-0 text-base text-text-primary font-bold">{{ getItemName(listing) }}</h4>
+                <p class="m-0 text-[13px] text-text-secondary font-medium">{{ getItemMeta(listing) }}</p>
+                <p class="m-0 text-[13px] text-text-secondary">Listed by {{ listing.sellerName || 'Unknown' }}</p>
+                <p class="mt-1.5 m-0 text-lg text-accent font-bold">{{ formatPrice(listing.price) }} Coal</p>
+                <p class="m-0 text-xs text-text-muted">Listed {{ formatDate(listing.listedAt) }}</p>
               </div>
-              <div class="card-actions">
+              <div class="mt-auto">
                 @if (isOwnListing(listing)) {
-                  <button class="btn-secondary" disabled>Your listing</button>
+                  <button class="btn-secondary w-full py-3 rounded-[10px] text-sm font-semibold flex items-center justify-center gap-2" disabled>Your listing</button>
                 } @else {
                   <button
-                    class="btn-primary"
+                    class="btn-primary w-full py-3 rounded-[10px] text-sm font-semibold flex items-center justify-center gap-2"
                     [disabled]="listing.status !== 'active' || processingId() === listing.listingId"
                     (click)="buyListing(listing)">
                     @if (processingId() === listing.listingId) {
-                      <span class="btn-spinner"></span>
+                      <span class="w-4 h-4 border-2 border-white/35 border-t-white rounded-full animate-spin"></span>
                       <span>Buying...</span>
                     } @else {
                       <span>Buy Now</span>
@@ -118,26 +123,26 @@
 
       @if (activeTab === 'my') {
         @if (myListings().length === 0) {
-          <div class="empty-state">
-            <div class="empty-graphic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
+            <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+              <svg class="w-12 h-12 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
                 <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
               </svg>
             </div>
-            <p>You have no listings</p>
-            <span>List your items to sell them!</span>
-            <button class="action-btn" routerLink="/inventory">Go to Inventory</button>
+            <p class="text-lg font-semibold text-text-primary m-0 mb-2">You have no listings</p>
+            <span class="text-sm text-text-secondary mb-6">List your items to sell them!</span>
+            <button class="btn-primary" routerLink="/inventory">Go to Inventory</button>
           </div>
         } @else {
           @for (listing of myListings(); track listing.listingId) {
-            <div class="listing-card" [class]="'rarity-' + getRarity(listing)">
-              <div class="card-visual">
+            <div [class]="'listing-card bg-surface rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border-2 border-transparent flex flex-col gap-4 transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(0,0,0,0.15)] rarity-' + getRarity(listing)">
+              <div class="relative h-40 flex items-center justify-center bg-surface-secondary rounded-xl">
                 <div class="stove-icon">
                   @if (getImageUrl(listing)) {
-                    <img [src]="getImageUrl(listing)" [alt]="getItemName(listing)" class="stove-sprite" />
+                    <img [src]="getImageUrl(listing)" [alt]="getItemName(listing)" class="w-[150px] h-[150px] object-contain" />
                   } @else {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <svg class="w-16 h-16 text-text-secondary drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                       @if (isLootboxListing(listing)) {
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                         <line x1="3" y1="9" x2="21" y2="9"/>
@@ -149,37 +154,42 @@
                     </svg>
                   }
                 </div>
-                <span class="rarity-badge" [class]="getRarity(listing)">
+                <span [class]="'rarity-badge absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] ' + getRarity(listing)">
                   {{ getRarity(listing) }}
                 </span>
+                @if (getHeatLevel(listing) !== null) {
+                  <span class="heat-badge heat-{{getHeatLevel(listing)! | heatTier | lowercase}}">
+                    {{ getHeatLevel(listing)! | heatTier }}
+                  </span>
+                }
                 @if (isLootboxListing(listing)) {
-                  <span class="lootbox-badge">Lootbox</span>
+                  <span class="lootbox-badge absolute bottom-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] text-white">Lootbox</span>
                 }
                 @if (listing.status !== 'active') {
-                  <span class="status-badge" [class]="listing.status">{{ listing.status }}</span>
+                  <span [class]="'status-badge absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-[20px] text-[11px] font-bold uppercase text-white ' + listing.status">{{ listing.status }}</span>
                 }
               </div>
-              <div class="card-info">
-                <h4 class="stove-name">{{ getItemName(listing) }}</h4>
-                <p class="stove-meta">{{ getItemMeta(listing) }}</p>
-                <p class="price">{{ formatPrice(listing.price) }} Coal</p>
-                <p class="date">Listed {{ formatDate(listing.listedAt) }}</p>
+              <div class="flex flex-col gap-1">
+                <h4 class="m-0 text-base text-text-primary font-bold">{{ getItemName(listing) }}</h4>
+                <p class="m-0 text-[13px] text-text-secondary font-medium">{{ getItemMeta(listing) }}</p>
+                <p class="mt-1.5 m-0 text-lg text-accent font-bold">{{ formatPrice(listing.price) }} Coal</p>
+                <p class="m-0 text-xs text-text-muted">Listed {{ formatDate(listing.listedAt) }}</p>
               </div>
-              <div class="card-actions">
+              <div class="mt-auto">
                 @if (listing.status === 'active') {
                   <button
-                    class="btn-danger"
+                    class="btn-danger w-full py-3 rounded-[10px] text-sm font-semibold flex items-center justify-center gap-2"
                     [disabled]="processingId() === listing.listingId"
                     (click)="cancelListing(listing)">
                     @if (processingId() === listing.listingId) {
-                      <span class="btn-spinner"></span>
+                      <span class="w-4 h-4 border-2 border-white/35 border-t-white rounded-full animate-spin"></span>
                       <span>Canceling...</span>
                     } @else {
                       <span>Cancel</span>
                     }
                   </button>
                 } @else {
-                  <button class="btn-secondary" disabled>{{ listing.status }}</button>
+                  <button class="btn-secondary w-full py-3 rounded-[10px] text-sm font-semibold flex items-center justify-center gap-2" disabled>{{ listing.status }}</button>
                 }
               </div>
             </div>

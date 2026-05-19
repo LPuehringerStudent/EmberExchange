@@ -1,18 +1,18 @@
-<div class="poker-page">
-  <header class="poker-header">
-    <div class="poker-header__left">
-      <h1 class="poker-title">Fiery Poker</h1>
+<div class="poker-page grid min-h-screen grid-rows-[auto_1fr] bg-[var(--bg-page)] font-[var(--font-ui)] text-[var(--text-primary)]">
+  <header class="poker-header grid grid-cols-[1fr_auto_1fr] items-center px-8 py-4 border-b border-[var(--border)]" style="background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-sidebar) 100%);">
+    <div class="poker-header__left flex items-center">
+      <h1 class="poker-title text-[1.6rem] font-bold tracking-[-0.01em] text-[var(--text-primary)]" style="font-family: var(--font-display)">Fiery Poker</h1>
     </div>
-    <div class="poker-header__center">
+    <div class="poker-header__center flex justify-center">
       <span
-        class="phase-badge"
+        class="phase-badge inline-flex items-center gap-[6px] px-[14px] py-1 rounded-[20px] text-[0.7rem] font-semibold tracking-[0.07em] uppercase border shadow-sm"
         [class.phase-badge--playing]="phase() === 'preflop' || phase() === 'flop' || phase() === 'turn' || phase() === 'river'"
         [class.phase-badge--finished]="phase() === 'showdown'"
       >
         {{ phaseLabel() }}
       </span>
     </div>
-    <div class="poker-header__right">
+    <div class="poker-header__right flex justify-end">
       <!-- Reserved for a future round counter or game timer -->
     </div>
   </header>
@@ -21,62 +21,62 @@
   <!-- PHASE ANNOUNCEMENT OVERLAY (big screen text)   -->
   <!-- ═══════════════════════════════════════════════ -->
   @if (showPhaseOverlay()) {
-    <div class="game-announcement" role="status" aria-live="assertive">
-      <span class="game-announcement__text">{{ phaseOverlayText() }}</span>
+    <div class="game-announcement fixed inset-0 z-[100] flex items-center justify-center bg-black/52 pointer-events-none" role="status" aria-live="assertive">
+      <span class="game-announcement__text font-bold text-white tracking-[0.12em] uppercase">{{ phaseOverlayText() }}</span>
     </div>
   }
 
 
 
-  <div class="poker-main">
+  <div class="poker-main grid grid-cols-[220px_1fr_220px] min-h-0">
 
-    <aside class="poker-sidebar poker-sidebar--left" aria-label="Game information">
+    <aside class="poker-sidebar poker-sidebar--left flex flex-col gap-[14px] bg-[var(--bg-sidebar)] px-[18px] py-6" aria-label="Game information">
       <!-- Current game phase -->
-      <div class="info-block">
-        <span class="info-block__label">Phase</span>
-        <span class="info-block__value">{{ phaseLabel() }}</span>
+      <div class="info-block flex flex-col gap-1 px-4 py-[14px] bg-surface border border-[var(--border)] rounded-[10px]">
+        <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Phase</span>
+        <span class="info-block__value text-[1.05rem] font-semibold text-[var(--text-primary)] flex items-center gap-[2px]">{{ phaseLabel() }}</span>
       </div>
 
       <!-- Pot amount -->
       @if (pot() > 0) {
-        <div class="info-block info-block--highlight">
-          <span class="info-block__label">Pot</span>
-          <span class="info-block__value info-block__value--large">
-            <img class="coal-icon coal-icon--small" [src]="coalIconSrc" alt="" />
+        <div class="info-block info-block--highlight flex flex-col gap-1 px-4 py-[14px] bg-surface border border-[var(--border)] rounded-[10px]">
+          <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Pot</span>
+          <span class="info-block__value info-block__value--large text-[2rem] text-[var(--orange)] tabular-nums flex items-center gap-[2px]">
+            <img class="coal-icon coal-icon--small inline-block align-middle w-[22px] h-auto mr-[3px] -mt-[3px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
             {{ pot() }}
           </span>
         </div>
       }
 
       @if (currentBet() > 0) {
-        <div class="info-block">
-          <span class="info-block__label">To Call</span>
-          <span class="info-block__value">
-            <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+        <div class="info-block flex flex-col gap-1 px-4 py-[14px] bg-surface border border-[var(--border)] rounded-[10px]">
+          <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">To Call</span>
+          <span class="info-block__value text-[1.05rem] font-semibold text-[var(--text-primary)] flex items-center gap-[2px]">
+            <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
             {{ currentBet() }}
           </span>
         </div>
       }
 
       @if (currentTurnPlayer(); as player) {
-        <div class="info-block">
-          <span class="info-block__label">Current Turn</span>
-          <span class="info-block__value">{{ player.name }}</span>
+        <div class="info-block flex flex-col gap-1 px-4 py-[14px] bg-surface border border-[var(--border)] rounded-[10px]">
+          <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Current Turn</span>
+          <span class="info-block__value text-[1.05rem] font-semibold text-[var(--text-primary)] flex items-center gap-[2px]">{{ player.name }}</span>
         </div>
       }
 
       <!-- Hero action buttons -->
       @if (isHeroTurn() && validActions().length > 0) {
-        <div class="info-block info-block--actions">
-          <span class="info-block__label">Your Turn</span>
-          <div class="sidebar-action-panel">
+        <div class="info-block info-block--actions flex flex-col gap-1 px-4 py-[14px] bg-surface border border-[var(--border)] rounded-[10px]">
+          <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Your Turn</span>
+          <div class="sidebar-action-panel flex flex-col gap-2 mt-[6px]">
             @for (action of validActions(); track action.type) {
               @if (action.type === 'raise') {
                 @let rMin = action.minAmount ?? 0;
                 @let rMax = action.maxAmount ?? rMin;
-                <div class="raise-row">
+                <div class="raise-row flex gap-[6px] items-center justify-center">
                   <button
-                    class="raise-stepper"
+                    class="raise-stepper w-8 h-9 rounded-lg border border-[var(--border)] bg-[var(--bg-sidebar)] text-[var(--text-primary)] text-[1.1rem] font-bold cursor-pointer flex items-center justify-center"
                     (click)="decrementRaise(rMin)"
                     [disabled]="(raiseAmount() || rMin) <= rMin"
                   >
@@ -84,7 +84,7 @@
                   </button>
                   <input
                     type="number"
-                    class="raise-input"
+                    class="raise-input w-16 py-2 px-[6px] rounded-lg border border-[var(--border)] bg-surface text-[var(--text-primary)] text-[0.95rem] font-semibold text-center"
                     [min]="rMin"
                     [max]="rMax"
                     [value]="raiseAmount() || rMin"
@@ -92,7 +92,7 @@
                     (focus)="initRaiseAmount(rMin)"
                   />
                   <button
-                    class="raise-stepper"
+                    class="raise-stepper w-8 h-9 rounded-lg border border-[var(--border)] bg-[var(--bg-sidebar)] text-[var(--text-primary)] text-[1.1rem] font-bold cursor-pointer flex items-center justify-center"
                     (click)="incrementRaise(rMin, rMax)"
                     [disabled]="(raiseAmount() || rMin) >= rMax"
                   >
@@ -100,21 +100,21 @@
                   </button>
                 </div>
                 <button
-                  class="action-btn action-btn--primary"
+                  class="action-btn action-btn--primary py-[10px] px-[22px] rounded-[10px] border text-[0.95rem] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1"
                   (click)="executeRaise()"
                 >
                   Raise
                 </button>
               } @else {
                 <button
-                  class="action-btn"
+                  class="action-btn py-[10px] px-[22px] rounded-[10px] border border-[var(--border)] bg-surface text-[var(--text-primary)] text-[0.95rem] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1"
                   [class.action-btn--primary]="action.type === 'all_in'"
                   (click)="executeAction(action)"
                 >
                   {{ action.type | titlecase }}
                   @if (action.amount) {
-                    <span class="action-btn__amount">
-                      <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                    <span class="action-btn__amount tabular-nums opacity-90 flex items-center gap-[2px]">
+                      <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
                       {{ action.amount }}
                     </span>
                   }
@@ -127,25 +127,27 @@
 
       <!-- Hero hand strength -->
       @if (heroHandName()) {
-        <div class="info-block info-block--hand">
-          <span class="info-block__label">Your Hand</span>
-          <span class="info-block__value info-block__value--hand">{{ heroHandName() }}</span>
+        <div class="info-block info-block--hand flex flex-col gap-1 px-4 py-[14px] bg-surface border border-[var(--border)] rounded-[10px]">
+          <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Your Hand</span>
+          <span class="info-block__value info-block__value--hand text-[1.15rem] text-[var(--gold)] flex items-center gap-[2px]">{{ heroHandName() }}</span>
         </div>
       }
     </aside>
 
-    <main class="poker-table-area" aria-label="Poker table">
-      <div class="pt-wrapper">
+    <main class="poker-table-area flex items-center justify-center p-7 bg-[var(--bg-page)]" aria-label="Poker table">
+      <div class="pt-wrapper relative w-full aspect-square">
         <div
-          class="pt-table"
+          class="pt-table absolute flex flex-col items-center justify-center gap-[14px] overflow-hidden"
           role="img"
           aria-label="Poker felt table"
         >
+          <!-- Table Brand -->
+          <div class="pt-table__brand">Ember Exchange</div>
 
           <!-- ── Decorative chips on the felt ── -->
           @for (chip of tableChips; track $index) {
             <div
-              class="pt-table-chip"
+              class="pt-table-chip absolute rounded-full z-[1] pointer-events-none opacity-[0.55]"
               [style.left.%]="chip.x"
               [style.top.%]="chip.y"
               [style.width.px]="chip.size"
@@ -158,40 +160,40 @@
           <!-- ── Turn indicator ── -->
           @if (currentTurnPlayer(); as player) {
             <div
-              class="pt-turn-indicator"
+              class="pt-turn-indicator absolute top-[22%] left-1/2 -translate-x-1/2 flex items-center gap-[6px] bg-black/55 border border-white/15 rounded-[20px] px-4 py-[6px] z-[15] whitespace-nowrap"
               aria-live="polite"
               [attr.aria-label]="player.name + ' is taking their turn'"
             >
-              <span class="pt-turn-indicator__dot" aria-hidden="true"></span>
-              <span class="pt-turn-indicator__name">{{ player.name }}</span>
-              <span class="pt-turn-indicator__label">'s turn</span>
+              <span class="pt-turn-indicator__dot w-[7px] h-[7px] rounded-full bg-[var(--gold)] shrink-0" aria-hidden="true"></span>
+              <span class="pt-turn-indicator__name text-sm font-bold text-[var(--gold)]">{{ player.name }}</span>
+              <span class="pt-turn-indicator__label text-sm text-white/50">'s turn</span>
             </div>
           }
 
           <!-- ── Community cards ── -->
-          <div class="pt-community" aria-label="Community cards">
+          <div class="pt-community flex gap-[10px] items-center justify-center z-[2]" aria-label="Community cards">
             @for (card of communitySlots(); track $index) {
               <div
-                class="pt-card-slot"
+                class="pt-card-slot rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]"
                 [class.pt-card-slot--filled]="card"
                 [attr.aria-label]="card ? (card.rank + ' of ' + card.suit) : 'Empty card slot'"
               >
                 @if (card) {
-                  <div class="card-flip" [class.card-flip--face-up]="card.faceUp">
-                    <div class="card-flip__inner">
-                      <div class="card-flip__front">
+                  <div class="card-flip w-full h-full rounded-[var(--radius-card)]" [class.card-flip--face-up]="card.faceUp">
+                    <div class="card-flip__inner w-full h-full relative rounded-[var(--radius-card)]">
+                      <div class="card-flip__front absolute w-full h-full rounded-[var(--radius-card)] overflow-hidden">
                         <img
                           [src]="cardSpriteSrc(card)"
                           [alt]="card.rank + ' of ' + card.suit"
-                          class="pt-card-img"
+                          class="pt-card-img w-full h-full object-cover block"
                           loading="eager"
                         />
                       </div>
-                      <div class="card-flip__back">
+                      <div class="card-flip__back absolute w-full h-full rounded-[var(--radius-card)] overflow-hidden">
                         <img
                           [src]="cardBackSrc()"
                           alt="Face-down card"
-                          class="pt-card-img"
+                          class="pt-card-img w-full h-full object-cover block"
                           loading="eager"
                         />
                       </div>
@@ -204,18 +206,18 @@
 
           <!-- Pot display -->
           @if (pot() > 0) {
-            <div class="pt-pot" aria-live="polite" aria-label="Current pot amount">
-              <img class="coal-icon coal-icon--pot" [src]="coalIconSrc" alt="" />
-              <span class="pt-pot__amount">{{ pot() }}</span>
+            <div class="pt-pot flex items-center gap-1 bg-black/32 border border-[var(--gold-dim)] rounded-[20px] px-4 py-1 text-[var(--gold)] z-[2]" aria-live="polite" aria-label="Current pot amount">
+              <img class="coal-icon coal-icon--pot inline-block align-middle w-6 h-auto mr-1 select-none pointer-events-none" [src]="coalIconSrc" alt="" />
+              <span class="pt-pot__amount text-[22px] font-bold tabular-nums">{{ pot() }}</span>
             </div>
           }
 
           <!-- ── Start Game overlay ── -->
           @if (!gameStarted() && isWaiting()) {
-            <div class="game-start-overlay" role="dialog" aria-modal="true" aria-label="Game not started">
-              <div class="game-start-overlay__inner">
-                <p class="game-start-overlay__hint">Waiting for game to begin</p>
-                <button class="game-start-btn" (click)="handleStartGame()" aria-label="Start the poker game">
+            <div class="game-start-overlay absolute inset-0 rounded-xl flex items-center justify-center z-[50]" role="dialog" aria-modal="true" aria-label="Game not started">
+              <div class="game-start-overlay__inner flex flex-col items-center gap-[14px] px-10 py-8 rounded-2xl">
+                <p class="game-start-overlay__hint text-[0.75rem] font-medium tracking-[0.10em] uppercase text-[var(--text-muted)]">Waiting for game to begin</p>
+                <button class="game-start-btn py-[14px] px-[46px] text-white text-[0.95rem] font-bold tracking-[0.05em] uppercase border-none rounded-xl cursor-pointer" (click)="handleStartGame()" aria-label="Start the poker game">
                   Start Game
                 </button>
               </div>
@@ -224,11 +226,11 @@
 
           <!-- ── Gathering Chips loading overlay ── -->
           @if (isLoading()) {
-            <div class="game-gathering-overlay" role="status" aria-live="polite">
-              <div class="gathering-video-placeholder" aria-hidden="true">
-                <div class="gathering-spinner"></div>
+            <div class="game-gathering-overlay absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-5 z-[60]" role="status" aria-live="polite">
+              <div class="gathering-video-placeholder flex items-center justify-center" aria-hidden="true">
+                <div class="gathering-spinner w-16 h-16 rounded-full"></div>
               </div>
-              <p class="gathering-text">Gathering Chips</p>
+              <p class="gathering-text font-semibold tracking-[0.14em] uppercase text-white/70">Gathering Chips</p>
             </div>
           }
 
@@ -241,7 +243,7 @@
           @let seatPlayer = players[$index];
           @if (shouldShowSeat($index)) {
             <div
-              class="pt-seat"
+              class="pt-seat absolute flex flex-col items-center gap-1 z-[10]"
               [class.pt-seat--hero]="isHero($index)"
               [class.pt-seat--active]="seatPlayer?.isCurrentTurn"
               [class.pt-seat--folded]="seatPlayer?.isFolded"
@@ -252,34 +254,34 @@
             >
               <!-- Dealer button -->
               @if (seatPlayer?.isDealer) {
-                <div class="pt-dealer" aria-label="Dealer">D</div>
+                <div class="pt-dealer absolute -top-[10px] -right-[10px] w-[26px] h-[26px] rounded-full bg-surface text-[var(--text-primary)] text-xs font-black flex items-center justify-center border-2 border-[var(--gold)] z-[20]" aria-label="Dealer">D</div>
               }
 
               <!-- All-in badge -->
               @if (seatPlayer?.isAllIn) {
-                <div class="pt-all-in-badge" aria-label="All In">ALL IN</div>
+                <div class="pt-all-in-badge absolute -top-[18px] left-1/2 -translate-x-1/2 px-[6px] py-px rounded text-[0.55rem] font-extrabold uppercase tracking-[0.05em] bg-[var(--orange)] text-white whitespace-nowrap" aria-label="All In">ALL IN</div>
               }
 
               @if (seatPlayer) {
-                <div class="pt-hole-cards">
+                <div class="pt-hole-cards flex gap-1">
                   @for (cardIdx of [0, 1]; track cardIdx) {
-                    <div class="pt-card-slot pt-card-slot--hole">
+                    <div class="pt-card-slot pt-card-slot--hole rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]">
                       @if (seatPlayer.cards?.[cardIdx]; as card) {
-                        <div class="card-flip" [class.card-flip--face-up]="card.faceUp">
-                          <div class="card-flip__inner">
-                            <div class="card-flip__front">
+                        <div class="card-flip w-full h-full rounded-[var(--radius-card)]" [class.card-flip--face-up]="card.faceUp">
+                          <div class="card-flip__inner w-full h-full relative rounded-[var(--radius-card)]">
+                            <div class="card-flip__front absolute w-full h-full rounded-[var(--radius-card)] overflow-hidden">
                               <img
                                 [src]="cardSpriteSrc(card)"
                                 [alt]="card.rank + ' of ' + card.suit"
-                                class="pt-card-img"
+                                class="pt-card-img w-full h-full object-cover block"
                                 loading="eager"
                               />
                             </div>
-                            <div class="card-flip__back">
+                            <div class="card-flip__back absolute w-full h-full rounded-[var(--radius-card)] overflow-hidden">
                               <img
                                 [src]="cardBackSrc()"
                                 alt="Face-down card"
-                                class="pt-card-img"
+                                class="pt-card-img w-full h-full object-cover block"
                                 loading="eager"
                               />
                             </div>
@@ -291,21 +293,21 @@
                 </div>
               }
 
-              <div class="pt-seat__chip">
+              <div class="pt-seat__chip flex flex-col items-center bg-[var(--seat-bg)] border border-[var(--seat-border)] rounded-lg px-[10px] py-1 min-w-[62px] text-center relative">
                 @if (seatPlayer; as p) {
-                  <span class="pt-seat__name">{{ p.name }}</span>
-                  <span class="pt-seat__chips">
-                    <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                  <span class="pt-seat__name text-[10px] font-bold text-[var(--text-primary)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]">{{ p.name }}</span>
+                  <span class="pt-seat__chips text-[10px] font-semibold text-[var(--orange)] tabular-nums flex items-center gap-[2px]">
+                    <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
                     {{ p.chips }}
                   </span>
                   @if (p.currentBet > 0) {
-                    <span class="pt-seat__bet">
-                      <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                    <span class="pt-seat__bet text-[10px] font-semibold text-[var(--gold)] flex items-center gap-[2px]">
+                      <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
                       {{ p.currentBet }}
                     </span>
                   }
                 } @else {
-                  <span class="pt-seat__empty">Seat {{ $index + 1 }}</span>
+                  <span class="pt-seat__empty text-[11px] text-[var(--text-muted)] italic">Seat {{ $index + 1 }}</span>
                 }
               </div>
 
@@ -318,57 +320,57 @@
       <!-- /pt-wrapper -->
     </main>
 
-    <aside class="poker-sidebar poker-sidebar--right" aria-label="Player standings">
+    <aside class="poker-sidebar poker-sidebar--right flex flex-col gap-[14px] bg-[var(--bg-sidebar)] px-[18px] py-6" aria-label="Player standings">
       @if (isShowdown()) {
         <!-- Results -->
-        <div class="sidebar-results">
-          <h2 class="sidebar-title">🏆 Results</h2>
+        <div class="sidebar-results flex flex-col gap-[10px]">
+          <h2 class="sidebar-title mb-0.5 text-[0.8rem] font-semibold uppercase tracking-[0.10em] text-[var(--text-muted)]">🏆 Results</h2>
           @if (winners().length > 0) {
             <div class="sidebar-list">
               @for (winner of winners(); track winner.playerId) {
-                <div class="player-row player-row--winner">
-                  <div class="player-row__info">
-                    <span class="player-row__name">
+                <div class="player-row player-row--winner flex items-center justify-between px-[14px] py-[10px] bg-surface border border-[var(--border)] rounded-[10px]">
+                  <div class="player-row__info flex items-center gap-[6px] min-w-0">
+                    <span class="player-row__name text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis text-[var(--text-primary)]">
                       {{ winner.playerId === heroPlayerId() ? 'You' : getPlayerName(winner.playerId) }}
                     </span>
                   </div>
-                  <span class="player-row__chips">
-                    <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+                  <span class="player-row__chips text-sm font-semibold text-[var(--orange)] tabular-nums shrink-0 flex items-center gap-[2px]">
+                    <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
                     {{ winner.amount }}
                   </span>
                 </div>
                 @if (winner.handName) {
-                  <div class="player-row__hand">{{ winner.handName }}</div>
+                  <div class="player-row__hand text-[0.75rem] font-medium text-[var(--text-muted)] text-center -mt-2 mb-1 pl-[10px]">{{ winner.handName }}</div>
                 }
               }
             </div>
           } @else {
-            <p class="sidebar-empty">No winners this round.</p>
+            <p class="sidebar-empty text-[0.85rem] text-[var(--text-muted)] italic">No winners this round.</p>
           }
         </div>
-        <button class="action-btn action-btn--primary" (click)="handlePlayAgain()">Next Game</button>
+        <button class="action-btn action-btn--primary py-[10px] px-[22px] rounded-[10px] border text-[0.95rem] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1" (click)="handlePlayAgain()">Next Game</button>
       } @else {
         <!-- Player List -->
-        <h2 class="sidebar-title">Players</h2>
+        <h2 class="sidebar-title mb-0.5 text-[0.8rem] font-semibold uppercase tracking-[0.10em] text-[var(--text-muted)]">Players</h2>
         @if (seatedPlayers().length === 0) {
-          <p class="sidebar-empty">Waiting for players…</p>
+          <p class="sidebar-empty text-[0.85rem] text-[var(--text-muted)] italic">Waiting for players…</p>
         }
         @for (player of seatedPlayers(); track player?.playerId) {
           @if (player) {
             <div
-              class="player-row"
+              class="player-row flex items-center justify-between px-[14px] py-[10px] bg-surface border border-[var(--border)] rounded-[10px]"
               [class.player-row--active]="player.isCurrentTurn"
               [class.player-row--folded]="player.isFolded"
               [class.player-row--all-in]="player.isAllIn"
             >
-              <div class="player-row__info">
-                <span class="player-row__name">{{ player.name }}</span>
+              <div class="player-row__info flex items-center gap-[6px] min-w-0">
+                <span class="player-row__name text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis text-[var(--text-primary)]">{{ player.name }}</span>
                 @if (player.isDealer) {
-                  <span class="player-row__badge player-row__badge--dealer" aria-label="Dealer">D</span>
+                  <span class="player-row__badge player-row__badge--dealer inline-flex items-center justify-center w-[18px] h-[18px] rounded-full text-[0.6rem] font-extrabold shrink-0" aria-label="Dealer">D</span>
                 }
               </div>
-              <span class="player-row__chips" aria-label="{{ player.chips }} chips">
-                <img class="coal-icon coal-icon--inline" [src]="coalIconSrc" alt="" />
+              <span class="player-row__chips text-sm font-semibold text-[var(--orange)] tabular-nums shrink-0 flex items-center gap-[2px]" aria-label="{{ player.chips }} chips">
+                <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
                 {{ player.chips }}
               </span>
             </div>

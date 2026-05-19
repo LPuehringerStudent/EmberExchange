@@ -38,9 +38,9 @@ export class ApiService {
       .pipe(catchError(err => this.handleError(err)));
   }
 
-  delete<T>(path: string, headers?: HttpHeaders): Observable<T> {
+  delete<T>(path: string, headers?: HttpHeaders, body?: unknown): Observable<T> {
     return this.http
-      .delete<T>(`${this.baseUrl}${path}`, { headers })
+      .delete<T>(`${this.baseUrl}${path}`, { headers, body })
       .pipe(catchError(err => this.handleError(err)));
   }
 }

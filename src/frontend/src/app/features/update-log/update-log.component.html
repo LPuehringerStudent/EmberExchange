@@ -1,60 +1,209 @@
-﻿<div class="update-log-container">
-  <!-- Simple Header -->
-  <header class="log-header">
-    <h1>Update Log</h1>
-    <p>See what's new in Ember Exchange</p>
-  </header>
+<div class="max-w-[800px] mx-auto px-5 py-8 text-text-primary min-h-screen">
 
-  <!-- Update Card -->
-  <div class="update-box">
-    <div class="update-header-row">
-      <span class="version-tag">v0.0.1</span>
-      <span class="date">Feb 26, 2026</span>
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="h-[100px] rounded-[20px] mb-6 skeleton-shimmer"></div>
+    <div class="flex gap-1 mb-7">
+      <div class="flex-1 h-10 rounded-[10px] skeleton-shimmer"></div>
+      <div class="flex-1 h-10 rounded-[10px] skeleton-shimmer"></div>
+      <div class="flex-1 h-10 rounded-[10px] skeleton-shimmer"></div>
     </div>
-
-    <h2>Main Menu Redesign</h2>
-
-    <p class="update-text">
-      Updated the main menu with a new UI. You can now look at the stats etc.
-    </p>
-
-    <div class="changes-list">
-      <div class="change-item">
-        <span class="check">✓</span>
-        <span>New user welcome section with coal balance and stats</span>
-      </div>
-      <div class="change-item">
-        <span class="check">✓</span>
-        <span>Recent pulls by players </span>
-      </div>
-      <div class="change-item">
-        <span class="check">✓</span>
-        <span>Quick access inventory button</span>
-      </div>
+    <div class="flex flex-col gap-4">
+      <div class="h-[160px] rounded-2xl skeleton-shimmer"></div>
+      <div class="h-[160px] rounded-2xl skeleton-shimmer"></div>
+      <div class="h-[160px] rounded-2xl skeleton-shimmer"></div>
     </div>
+  }
 
-    <div class="update-footer">
-      <span class="commit">#a1b2c3d</span>
-      <span class="author">by &#64;ui-dev</span>
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <div class="bg-surface rounded-[20px] px-8 py-10 text-center shadow-[0_8px_30px_var(--shadow-color)] border border-border">
+      <h3 class="text-lg text-text-primary m-0 mb-2">Unable to load data</h3>
+      <p class="text-text-muted m-0 mb-5 text-sm">{{ error() }}</p>
+      <a href="https://github.com/LPuehringerStudent/EmberExchange" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-accent text-sm font-semibold px-4 py-2 rounded-lg hover:bg-accent-light transition-all duration-200 no-underline">
+        View on GitHub
+      </a>
     </div>
-  </div>
+  }
 
-  <!-- Previous Updates (Collapsed) -->
-  <div class="older-updates">
-    <h3>Older Updates</h3>
-    <div class="mini-list">
-      <div class="mini-item">
-        <span class="mini-version">v.0.0.1</span>
-        <span class="mini-title">Done with animation</span>
-        <span class="mini-date">Feb 16</span>
+  @if (!loading() && !error()) {
+    <!-- Repo Hero -->
+    @if (repoInfo()) {
+      <div class="bg-surface rounded-[20px] px-8 py-7 mb-6 shadow-[0_8px_30px_var(--shadow-color)] border border-border flex justify-between items-start flex-wrap gap-5 transition-all duration-300">
+        <div>
+          <h1 class="text-2xl font-bold m-0 mb-1.5 text-accent tracking-tight">{{ repoInfo()!.name }}</h1>
+          <p class="m-0 mb-2.5 text-text-secondary text-sm leading-relaxed">{{ repoInfo()!.description || 'Ember Exchange — A stove trading and lootbox game.' }}</p>
+          <div class="flex items-center gap-2 text-xs text-text-tertiary">
+            <span class="text-accent font-semibold">{{ repoInfo()!.language }}</span>
+            <span class="opacity-50">&middot;</span>
+            <span>Updated {{ formatRelativeDate(repoInfo()!.updatedAt) }}</span>
+          </div>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <a [href]="repoInfo()!.htmlUrl" target="_blank" rel="noopener" class="flex flex-col items-center gap-0.5 px-4 py-2.5 rounded-xl bg-surface-secondary border border-border no-underline text-inherit transition-all duration-200 hover:bg-surface-hover hover:border-accent hover:-translate-y-0.5 min-w-[64px]">
+            <span class="text-base font-bold text-text-primary">{{ repoInfo()!.stars }}</span>
+            <span class="text-[10px] text-text-tertiary uppercase tracking-wide">Stars</span>
+          </a>
+          <a [href]="repoInfo()!.htmlUrl + '/network/members'" target="_blank" rel="noopener" class="flex flex-col items-center gap-0.5 px-4 py-2.5 rounded-xl bg-surface-secondary border border-border no-underline text-inherit transition-all duration-200 hover:bg-surface-hover hover:border-accent hover:-translate-y-0.5 min-w-[64px]">
+            <span class="text-base font-bold text-text-primary">{{ repoInfo()!.forks }}</span>
+            <span class="text-[10px] text-text-tertiary uppercase tracking-wide">Forks</span>
+          </a>
+          <a [href]="repoInfo()!.htmlUrl + '/issues'" target="_blank" rel="noopener" class="flex flex-col items-center gap-0.5 px-4 py-2.5 rounded-xl bg-surface-secondary border border-border no-underline text-inherit transition-all duration-200 hover:bg-surface-hover hover:border-accent hover:-translate-y-0.5 min-w-[64px]">
+            <span class="text-base font-bold text-text-primary">{{ repoInfo()!.openIssues }}</span>
+            <span class="text-[10px] text-text-tertiary uppercase tracking-wide">Issues</span>
+          </a>
+        </div>
       </div>
-    </div>
-    <button class="view-all-btn">View all 10 updates</button>
-  </div>
+    }
 
-  <!-- GitHub Link -->
-  <div class="github-box">
-    <span class="github-icon"></span>
-    <span>Track changes on <a href="#">GitHub</a></span>
-  </div>
+    <!-- Tabs -->
+    <nav class="flex gap-1 mb-7 bg-surface rounded-[14px] p-1.5 shadow-[0_4px_16px_var(--shadow-color)] border border-border">
+      @for (tab of tabs; track tab.key) {
+        <button
+          class="flex-1 px-4 py-2.5 border-none rounded-[10px] text-sm font-medium cursor-pointer transition-all duration-200"
+          [class.bg-accent]="activeTab() === tab.key"
+          [class.text-white]="activeTab() === tab.key"
+          [class.shadow-md]="activeTab() === tab.key"
+          [class.text-text-secondary]="activeTab() !== tab.key"
+          [class.hover:bg-surface-hover]="activeTab() !== tab.key"
+          [class.hover:text-text-primary]="activeTab() !== tab.key"
+          (click)="setTab(tab.key)">
+          {{ tab.label }}
+        </button>
+      }
+    </nav>
+
+    <!-- Changelog Tab -->
+    @if (activeTab() === 'changelog') {
+      <section>
+        <header class="mb-6">
+          <h2 class="text-lg font-semibold m-0 mb-1 text-text-primary">Changelog</h2>
+          <p class="m-0 text-text-muted text-sm">Latest commits from the repository</p>
+        </header>
+
+        <div class="flex flex-col">
+          @for (commit of commits(); track commit.sha; let first = $first) {
+            <div class="flex gap-4 relative">
+              <div class="flex flex-col items-center shrink-0 w-5 pt-6">
+                <div
+                  class="w-2.5 h-2.5 rounded-full border-2 border-surface transition-all duration-300"
+                  [class.bg-accent]="first"
+                  [class.shadow-[0_0_0_2px_var(--accent)]]="first"
+                  [class.bg-border-color]="!first"
+                  [class.shadow-[0_0_0_2px_var(--border-color)]]="!first"
+                ></div>
+                @if (!$last) {
+                  <div class="flex-1 w-0.5 bg-border-color mt-1.5 min-h-[40px]"></div>
+                }
+              </div>
+              <div
+                class="flex-1 bg-surface rounded-2xl px-6 py-5 mb-4 border border-border transition-all duration-250 hover:border-accent hover:shadow-[0_4px_16px_var(--accent-glow)] hover:-translate-y-0.5"
+                [class.border-l-[3px]="first"
+                [class.border-l-accent]="first"
+              >
+                <div class="flex items-center gap-3 mb-3 flex-wrap">
+                  <a [href]="commit.url" target="_blank" rel="noopener" class="font-mono text-xs font-semibold text-accent no-underline px-2.5 py-0.5 rounded-md bg-accent-light hover:bg-accent hover:text-white transition-all duration-200">
+                    {{ commit.shortSha }}
+                  </a>
+                  <span class="text-[13px] text-text-muted">{{ formatDate(commit.date) }}</span>
+                  <span class="text-xs text-text-tertiary ml-auto">{{ formatRelativeDate(commit.date) }}</span>
+                </div>
+
+                <h3 class="text-base font-semibold m-0 mb-3 text-text-primary leading-snug">{{ commit.messageTitle }}</h3>
+
+                @if (commit.messageBody.length > 0) {
+                  <div class="bg-surface-secondary rounded-[10px] px-[18px] py-3.5 mb-3.5 border-l-2 border-border">
+                    @for (line of commit.messageBody; track line) {
+                      <div class="text-[13px] leading-relaxed text-text-secondary py-0.5">{{ line }}</div>
+                    }
+                  </div>
+                }
+
+                <div class="flex items-center justify-between pt-3 border-t border-border">
+                  <a [href]="'https://github.com/' + commit.authorLogin" target="_blank" rel="noopener" class="flex items-center gap-2 no-underline text-text-muted text-[13px] font-medium hover:text-accent transition-colors duration-200">
+                    @if (commit.authorAvatar) {
+                      <img [src]="commit.authorAvatar" alt="" class="w-[22px] h-[22px] rounded-full border border-border" />
+                    }
+                    <span>{{ commit.authorLogin }}</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="flex justify-center py-2 pb-8">
+          <button class="btn-secondary" (click)="loadMoreCommits()" [disabled]="loadingMore()">
+            {{ loadingMore() ? 'Loading...' : 'Load more commits' }}
+          </button>
+        </div>
+      </section>
+    }
+
+    <!-- Contributors Tab -->
+    @if (activeTab() === 'contributors') {
+      <section>
+        <header class="mb-6">
+          <h2 class="text-lg font-semibold m-0 mb-1 text-text-primary">Contributors</h2>
+          <p class="m-0 text-text-muted text-sm">People building Ember Exchange</p>
+        </header>
+
+        @if (contributors().length === 0) {
+          <p class="text-center py-12 text-text-muted text-sm">No contributor data available.</p>
+        } @else {
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+            @for (c of contributors(); track c.login) {
+              <a [href]="c.htmlUrl" target="_blank" rel="noopener" class="bg-surface rounded-2xl px-4 py-6 flex flex-col items-center gap-2.5 border border-border no-underline text-inherit transition-all duration-250 hover:border-accent hover:shadow-[0_6px_20px_var(--accent-glow)] hover:-translate-y-[3px]">
+                <img [src]="c.avatarUrl" [alt]="c.login" class="w-14 h-14 rounded-full border-2 border-border transition-colors duration-200 hover:border-accent" />
+                <span class="text-[13px] font-semibold text-text-primary">{{ c.login }}</span>
+                <span class="text-xs text-text-tertiary">{{ c.contributions }} commits</span>
+              </a>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Releases Tab -->
+    @if (activeTab() === 'releases') {
+      <section>
+        <header class="mb-6">
+          <h2 class="text-lg font-semibold m-0 mb-1 text-text-primary">Releases</h2>
+          <p class="m-0 text-text-muted text-sm">Official version releases</p>
+        </header>
+
+        @if (releases().length === 0) {
+          <div class="text-center py-12 text-text-muted text-sm">
+            <p class="m-0 mb-3">No releases published yet.</p>
+            <a href="https://github.com/LPuehringerStudent/EmberExchange/releases" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-accent text-sm font-semibold px-4 py-2 rounded-lg hover:bg-accent-light transition-all duration-200 no-underline">
+              Create a release on GitHub
+            </a>
+          </div>
+        } @else {
+          <div class="flex flex-col gap-4">
+            @for (release of releases(); track release.tagName) {
+              <div class="bg-surface rounded-2xl px-[26px] py-5 border border-border transition-all duration-250 hover:border-accent hover:shadow-[0_4px_16px_var(--accent-glow)]">
+                <div class="flex items-center gap-2.5 mb-2.5 flex-wrap">
+                  <span class="font-mono text-xs font-semibold text-accent px-2.5 py-0.5 rounded-md bg-accent-light">{{ release.tagName }}</span>
+                  @if (release.prerelease) {
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-amber-500/10 text-amber-500">Pre-release</span>
+                  } @else {
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-green-500/10 text-green-500">Stable</span>
+                  }
+                  <span class="text-xs text-text-tertiary ml-auto">{{ formatDate(release.publishedAt) }}</span>
+                </div>
+                <h3 class="text-base font-semibold m-0 mb-2.5 text-text-primary">{{ release.name }}</h3>
+                @if (release.body) {
+                  <pre class="bg-surface-secondary rounded-[10px] px-[18px] py-3.5 text-[13px] leading-relaxed text-text-secondary whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto m-0 mb-3.5 border border-border font-inherit">{{ release.body }}</pre>
+                }
+                <a [href]="release.htmlUrl" target="_blank" rel="noopener" class="text-accent text-[13px] font-semibold no-underline hover:opacity-80 hover:underline transition-all duration-200">
+                  View release on GitHub
+                </a>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+  }
 </div>
