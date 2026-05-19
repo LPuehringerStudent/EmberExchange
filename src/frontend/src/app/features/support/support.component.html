@@ -1,24 +1,26 @@
-<div class="support-container">
-  <header class="support-header">
-    <h1>Support</h1>
-    <p>Report a bug, request a feature, or ask for help</p>
+<div class="max-w-xl mx-auto p-5 font-sans text-text-primary bg-body min-h-screen">
+  <header class="text-center mb-6 p-5">
+    <h1 class="text-3xl mb-2 text-accent">Support</h1>
+    <p class="text-text-muted text-[15px]">Report a bug, request a feature, or ask for help</p>
   </header>
 
   @if (success()) {
-    <div class="alert success">
+    <div class="rounded-xl p-4 mb-5 text-sm bg-green-50 border border-green-500 text-green-800">
       <strong>Ticket submitted!</strong> We'll get back to you as soon as possible.
     </div>
   }
 
   @if (error()) {
-    <div class="alert error">
+    <div class="rounded-xl p-4 mb-5 text-sm bg-red-50 border border-red-500 text-red-800">
       <strong>Error:</strong> {{ error() }}
     </div>
   }
 
-  <form class="support-form" (ngSubmit)="onSubmit()">
-    <div class="form-group">
-      <label for="title">Title <span class="required">*</span></label>
+  <form class="bg-surface rounded-2xl p-6 shadow-sm border border-border" (ngSubmit)="onSubmit()">
+    <div class="mb-5">
+      <label for="title" class="block text-sm font-semibold text-text-secondary mb-2">
+        Title <span class="text-accent">*</span>
+      </label>
       <input
         id="title"
         type="text"
@@ -27,29 +29,48 @@
         placeholder="Short summary of your issue"
         required
         [disabled]="loading()"
+        class="w-full p-3 text-[15px] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface disabled:opacity-60 disabled:cursor-not-allowed"
       />
     </div>
 
-    <div class="form-group">
-      <label for="type">Category <span class="required">*</span></label>
-      <select id="type" [(ngModel)]="form().type" name="type" [disabled]="loading()">
+    <div class="mb-5">
+      <label for="type" class="block text-sm font-semibold text-text-secondary mb-2">
+        Category <span class="text-accent">*</span>
+      </label>
+      <select
+        id="type"
+        [(ngModel)]="form().type"
+        name="type"
+        [disabled]="loading()"
+        class="w-full p-3 text-[15px] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface disabled:opacity-60 disabled:cursor-not-allowed"
+      >
         <option value="bug">Bug Report</option>
         <option value="feature">Feature Request</option>
         <option value="support">General Support</option>
       </select>
     </div>
 
-    <div class="form-group">
-      <label for="priority">Priority <span class="required">*</span></label>
-      <select id="priority" [(ngModel)]="form().priority" name="priority" [disabled]="loading()">
+    <div class="mb-5">
+      <label for="priority" class="block text-sm font-semibold text-text-secondary mb-2">
+        Priority <span class="text-accent">*</span>
+      </label>
+      <select
+        id="priority"
+        [(ngModel)]="form().priority"
+        name="priority"
+        [disabled]="loading()"
+        class="w-full p-3 text-[15px] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface disabled:opacity-60 disabled:cursor-not-allowed"
+      >
         <option value="low">Low</option>
         <option value="medium">Medium</option>
         <option value="high">High</option>
       </select>
     </div>
 
-    <div class="form-group">
-      <label for="description">Description <span class="required">*</span></label>
+    <div class="mb-5">
+      <label for="description" class="block text-sm font-semibold text-text-secondary mb-2">
+        Description <span class="text-accent">*</span>
+      </label>
       <textarea
         id="description"
         [(ngModel)]="form().description"
@@ -58,10 +79,11 @@
         placeholder="Describe your issue in detail..."
         required
         [disabled]="loading()"
+        class="w-full p-3 text-[15px] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface resize-y min-h-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
       ></textarea>
     </div>
 
-    <button type="submit" class="submit-btn" [disabled]="loading()">
+    <button type="submit" [disabled]="loading()" class="btn-primary w-full py-3.5 text-base rounded-xl">
       @if (loading()) {
         <span class="spinner"></span> Submitting...
       } @else {
