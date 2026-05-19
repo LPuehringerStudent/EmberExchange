@@ -1,6 +1,12 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { PlayerService } from "../services/player-service";
+import { SessionService } from "../services/session-service";
+import { PlayerSettingsService } from "../services/player-settings-service";
+import { StoveService } from "../services/stove-service";
+import { PlayerStatisticsService } from "../services/player-statistics-service";
+import { GloryCustomizationService } from "../services/glory-customization-service";
+import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { hashPassword } from "../utils/password";
@@ -92,6 +98,327 @@ playerRouter.get("/players", async (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+/**
+ * @openapi
+ * /players/{id}/profile:
+ *   patch:
+ *     summary: Update player profile
+ *     description: Updates username, email, and motto for the current player
+ *     tags:
+ *       - Players
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Player ID
+ *         schema:
+ *           type: integer
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               motto:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Username or email already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+playerRouter.patch("/players/:id/profile", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const id = req.params.id;
+    if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "ID must be a valid number" });
+        return;
+    }
+
+    const playerId = Number(id);
+    const { username, email, motto, isPublic } = req.body;
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    const playerService = new PlayerService(unit);
+    let ok = false;
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session || session.playerId !== playerId) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Unauthorized" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (username !== undefined) {
+            const existing = await playerService.getPlayerByUsername(username);
+            if (existing && existing.playerId !== playerId) {
+                res.status(StatusCodes.CONFLICT).json({ error: "Username already exists" });
+                await unit.complete(false);
+                return;
+            }
+            const success = await playerService.updatePlayerUsername(playerId, username);
+            if (!success) {
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update username" });
+                await unit.complete(false);
+                return;
+            }
+        }
+
+        if (email !== undefined) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid email format" });
+                await unit.complete(false);
+                return;
+            }
+            const existing = await playerService.getPlayerByEmail(email);
+            if (existing && existing.playerId !== playerId) {
+                res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
+                await unit.complete(false);
+                return;
+            }
+            const success = await playerService.updatePlayerEmail(playerId, email);
+            if (!success) {
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update email" });
+                await unit.complete(false);
+                return;
+            }
+        }
+
+        if (motto !== undefined) {
+            const success = await playerService.updatePlayerMotto(playerId, motto);
+            if (!success) {
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update motto" });
+                await unit.complete(false);
+                return;
+            }
+        }
+
+        if (isPublic !== undefined) {
+            const success = await playerService.updatePlayerIsPublic(playerId, Boolean(isPublic));
+            if (!success) {
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update privacy setting" });
+                await unit.complete(false);
+                return;
+            }
+        }
+
+        ok = true;
+        res.status(StatusCodes.OK).json({ message: "Profile updated successfully" });
+    } catch (err) {
+        if (isConstraintError(err)) {
+            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
+        } else {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        }
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+/**
+ * @openapi
+ * /players/{id}/settings:
+ *   get:
+ *     summary: Get player notification settings
+ *     description: Returns notification preferences for the player
+ *     tags:
+ *       - Players
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Player ID
+ *         schema:
+ *           type: integer
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Player settings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PlayerSettings'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+playerRouter.get("/players/:id/settings", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const id = req.params.id;
+    if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "ID must be a valid number" });
+        return;
+    }
+
+    const playerId = Number(id);
+    const unit = await Unit.create(true);
+    const sessionService = new SessionService(unit);
+    const settingsService = new PlayerSettingsService(unit);
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session || session.playerId !== playerId) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Unauthorized" });
+            return;
+        }
+
+        const settings = await settingsService.ensureSettings(playerId);
+        res.status(StatusCodes.OK).json(settings);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
+ * /players/{id}/settings:
+ *   patch:
+ *     summary: Update player notification settings
+ *     description: Updates notification preferences for the player
+ *     tags:
+ *       - Players
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Player ID
+ *         schema:
+ *           type: integer
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PlayerSettings'
+ *     responses:
+ *       200:
+ *         description: Settings updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+playerRouter.patch("/players/:id/settings", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const id = req.params.id;
+    if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "ID must be a valid number" });
+        return;
+    }
+
+    const playerId = Number(id);
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    const settingsService = new PlayerSettingsService(unit);
+    let ok = false;
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session || session.playerId !== playerId) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Unauthorized" });
+            await unit.complete(false);
+            return;
+        }
+
+        const success = await settingsService.updateSettings(playerId, req.body);
+        ok = true;
+        if (success) {
+            res.status(StatusCodes.OK).json({ message: "Settings updated successfully" });
+        } else {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "No valid fields to update" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
 playerRouter.get("/players/:id", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerService(unit);
@@ -111,6 +438,274 @@ playerRouter.get("/players/:id", async (req, res) => {
         } else {
             res.status(StatusCodes.OK).json(response);
         }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
+ * /players/lookup/{username}:
+ *   get:
+ *     summary: Look up player by username
+ *     description: Retrieves a player's ID and username by their username
+ *     tags:
+ *       - Players
+ *     parameters:
+ *       - name: username
+ *         in: path
+ *         required: true
+ *         description: Player username
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Player found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 playerId:
+ *                   type: integer
+ *                 username:
+ *                   type: string
+ *       400:
+ *         description: Invalid username
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Player not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+playerRouter.get("/players/lookup/:username", async (req, res) => {
+    const unit = await Unit.create(true);
+    const service = new PlayerService(unit);
+    const username = req.params.username;
+
+    try {
+        if (isNullOrWhiteSpace(username)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Username is required" });
+            return;
+        }
+
+        const player = await service.getPlayerByUsername(username);
+        if (player === null) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+        } else {
+            res.status(StatusCodes.OK).json({ playerId: player.playerId, username: player.username });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
+ * /players/{id}/glory:
+ *   get:
+ *     summary: Get public Hall of Glory profile
+ *     description: Retrieves a sanitized public player profile with statistics and top rarest stoves for the Hall of Glory
+ *     tags:
+ *       - Players
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Player ID
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Public player profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Player not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+async function buildGloryProfile(
+    unit: Unit,
+    playerService: PlayerService,
+    playerId: number
+): Promise<Record<string, unknown> | null> {
+    const stoveService = new StoveService(unit);
+    const statsService = new PlayerStatisticsService(unit);
+    const gloryService = new GloryCustomizationService(unit);
+    const prestigeService = new PlayerPrestigeService(unit);
+
+    const player = await playerService.getInfoByID(playerId);
+    if (!player || player.username === '__shop__') {
+        return null;
+    }
+
+    const stats = await statsService.getByPlayerId(playerId);
+    const customization = await gloryService.getFullCustomization(playerId);
+    const prestige = await prestigeService.getPrestige(playerId);
+    const featuredAchievements = await gloryService.getFeaturedAchievements(playerId);
+
+    let displayStoves: any[];
+    if (customization.showcase.length > 0) {
+        const showcaseStmt = unit.prepare<
+            { stoveId: number; slotIndex: number; name: string; imageUrl: string; rarity: string; heatLevel: number }
+        >(
+            `SELECT gs.stoveId, gs.slotIndex, st.name, st.imageUrl, st.rarity, s.heatLevel
+             FROM GloryShowcase gs
+             JOIN Stove s ON gs.stoveId = s.stoveId
+             JOIN StoveType st ON s.typeId = st.typeId
+             WHERE gs.playerId = @playerId
+             ORDER BY gs.slotIndex`,
+            { playerId }
+        );
+        displayStoves = await showcaseStmt.all();
+    } else {
+        displayStoves = await stoveService.getTopStovesByRarity(playerId, 6);
+    }
+
+    const activeTheme = customization.themes.find(t => t.isActive);
+    const activeTitle = customization.titles.find(t => t.isActive);
+    const activeBanner = customization.banners.find(b => b.isActive);
+
+    return {
+        playerId: player.playerId,
+        username: player.username,
+        motto: player.motto,
+        coins: player.coins,
+        joinedAt: player.joinedAt,
+        isAdmin: player.isAdmin,
+        provider: player.provider,
+        stats,
+        topStoves: displayStoves,
+        prestige: prestige ?? { playerId: player.playerId, totalXP: 0, currentLevel: 1, prestigeCount: 0 },
+        activeTheme: activeTheme ?? null,
+        activeTitle: activeTitle ?? null,
+        activeBanner: activeBanner ?? null,
+        trophies: customization.trophies,
+        visitCount: customization.visitCount,
+        featuredAchievements,
+    };
+}
+
+playerRouter.get("/players/:id/glory", async (req, res) => {
+    const unit = await Unit.create(true);
+    const playerService = new PlayerService(unit);
+    const id = req.params.id;
+
+    try {
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "ID must be a valid number" });
+            return;
+        }
+
+        const player = await playerService.getInfoByID(Number(id));
+        if (!player || player.username === '__shop__') {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+            return;
+        }
+        if (!player.isPublic) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "This profile is private" });
+            return;
+        }
+
+        const profile = await buildGloryProfile(unit, playerService, Number(id));
+        if (!profile) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+            return;
+        }
+        res.status(StatusCodes.OK).json(profile);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
+ * /players/username/{username}/glory:
+ *   get:
+ *     summary: Get public Hall of Glory profile by username
+ *     description: Retrieves a sanitized public player profile by username
+ *     tags:
+ *       - Players
+ *     parameters:
+ *       - name: username
+ *         in: path
+ *         required: true
+ *         description: Player username
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Public player profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       404:
+ *         description: Player not found
+ *       500:
+ *         description: Server error
+ */
+playerRouter.get("/players/username/:username/glory", async (req, res) => {
+    const unit = await Unit.create(true);
+    const playerService = new PlayerService(unit);
+    const username = req.params.username;
+
+    try {
+        if (isNullOrWhiteSpace(username)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Username is required" });
+            return;
+        }
+
+        const player = await playerService.getPlayerByUsername(username);
+        if (!player || player.username === '__shop__') {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+            return;
+        }
+        if (!player.isPublic) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "This profile is private" });
+            return;
+        }
+
+        const profile = await buildGloryProfile(unit, playerService, player.playerId);
+        if (!profile) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+            return;
+        }
+        res.status(StatusCodes.OK).json(profile);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
