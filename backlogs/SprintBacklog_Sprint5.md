@@ -8,16 +8,16 @@
 
 ## Epic 1: Forgery
 
-| Task | Who | Definition of Done                                                                                                                                                                                                                                                                      | Est. Time |
-|------|-----|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|
-| Forgery backend service | | `ForgeryService` accepts 10 stove IDs from the same player; validates ownership; consumes stoves; creates 1 new stove with rarity calculated from input rarity weights; logs result in `CoinTransaction`                                                                                | 1h |
-| Forgery rarity calculation | | Common input → 80% Common / 15% Rare / 5% Epic; Rare input → 50% Rare / 30% Epic / 15% Legendary / 5% Limited; Epic input → 60% Epic / 25% Legendary / 15% Limited; Legendary input → 70% Legendary / 30% Limited; at least 1 rarity tier higher than lowest input with 10% probability | 1.5h |
-| Forgery UI – stove selection | | Grid shows eligible stoves from inventory; player selects 2–5 stoves; selection highlights with count indicator; submit button disabled until 2+ selected                                                                                                                               | 1.5h |
-| Forgery UI – result animation | | Animated fusion sequence (stoves combine into one); result stove displayed with rarity glow; rarity name and sprite shown; "Keep" and "Try Again" buttons                                                                                                                               | 1.5h |
-| Forgery ownership & history | | New stove `Ownership` record created with `acquiredHow = 'craft'`; `PlayerStatistics.totalStovesCrafted` incremented; stove IDs consumed are logged in `EventLog`                                                                                                                       | 1h |
-| Forgery router & tests | | `POST /forgery` endpoint with Swagger docs; returns new stove or error; 403 if stoves not owned; Jest tests cover 2-stove and 5-stove fusions, rarity distribution edge cases                                                                                                           | 1.5h |
+| Task | Who | Definition of Done | Est. Time |
+|------|-----|-------------------|-----------|
+| Forgery backend service | | `ForgeryService` accepts exactly 6 `stoveIds`; validates ownership and same-rarity; rejects Limited/Secret inputs; deletes inputs (with `LootboxDrop` FK cleanup); creates 1 new stove of next rarity tier; inserts `Ownership` with `acquiredHow = 'craft'`; increments `PlayerStatistics.totalStovesCrafted` | 1h |
+| Forgery rarity & collection logic | | Deterministic upgrade: Common→Rare, Rare→Epic, Epic→Legendary, Legendary→Limited; output collection weighted by input mix (e.g. 4 Industrial + 2 Nature = 66.7% / 33.3%); output `heatLevel` = average of inputs mapped into output type's `[minHeat, maxHeat]` range | 1.5h |
+| Forgery UI – stove selection & table | | `/forgery` page with `forging-table.png` centerpiece; 6 hexagonal slots around the table; stove grid below with rarity filter tabs (Common/Rare/Epic/Legendary); click to select/deselect; same-rarity enforcement; auto-filter on first pick; Forge button in center shows target rarity; disabled until exactly 6 same-rarity stoves selected | 2h |
+| Forgery UI – result modal | | Success overlay shows forged stove sprite, name, rarity badge, collection, and heat; "Awesome!" button dismisses; failure overlay shows user-friendly error message with "Try Again" button; inventory auto-refreshes on success | 1h |
+| Forgery router & tests | | `POST /api/forgery` endpoint with Swagger docs; returns `ForgeryResult` (`success` + `newStove` or `error`); 400 for invalid input; Jest tests cover count validation, ownership check, mixed-rarity rejection, Limited/Secret rejection, heat calculation, and tier upgrades (Common→Rare, Epic→Legendary, Legendary→Limited) | 1.5h |
+| Forgery navigation | | "The Forge" card added to main menu Quick Access grid; `/forgery` lazy-loaded route with `authGuard`; back button returns to `/home` | 0.5h |
 
-**Epic Total:** 9h
+**Epic Total:** 7.5h
 
 ---
 
@@ -85,12 +85,12 @@
 
 | Epic | Tasks | Est. Hours | Focus Area |
 |------|-------|------------|------------|
-| Forgery | 6 | 9h | Crafting / Economy |
+| Forgery | 6 | 7.5h | Crafting / Economy |
 | Shop | 6 | 9h | Monetization / Rewards |
 | Social | 6 | 10h | Community |
 | Hall of Glory | 6 | 8h | Player Profile |
 | Settings | 6 | 7h | UX / Account |
-| **TOTAL** | **30 tasks** | **43h** | |
+| **TOTAL** | **30 tasks** | **41.5h** | |
 
 ---
 
@@ -104,7 +104,7 @@
 - [ ] **No Express route shadowing:** Static/path-specific routes registered before parameterized routes
 - [ ] **Frontend:** Responsive layout validated on desktop; no runtime console errors
 - [ ] **Critical user flows verified end-to-end:**
-  - Forgery: select 2+ stoves → fuse → receive new stove with correct rarity
+  - Forgery: select exactly 6 same-rarity stoves → forge → receive new stove of next tier
   - Shop: browse catalog → buy item → inventory updates → claim daily reward → streak increments
   - Social: send friend request → accept → send chat message → receive reply → make direct offer → trade completes
   - Hall of Glory: visit `/glory/:username` → see trophy case, stats, achievements without login
@@ -115,7 +115,7 @@
 
 ## Key Deliverables
 
-1. **Forgery:** Players can sacrifice 2–5 stoves to craft 1 new stove with weighted rarity based on inputs
+1. **Forgery:** Players sacrifice exactly 6 stoves of the same rarity to craft 1 new stove guaranteed to be one rarity tier higher, with collection and heat derived from the inputs
 2. **Shop:** Direct purchase catalog with daily rotating stock + 7-day daily login reward streak system
 3. **Social:** Friend requests, real-time direct chat, and in-chat direct trade offers with atomic settlement
 4. **Hall of Glory:** Public player profile page showcasing rarest stoves, statistics, achievements, and shareable URL
