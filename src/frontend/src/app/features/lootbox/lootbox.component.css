@@ -101,4 +101,26 @@
 }
 #okBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(232,93,4,.42); }
 
+/* ── Lootbox Selector Cards ── */
+.lootbox-select-card {
+  background: var(--surface-bg);
+  border-color: var(--border-color);
+}
+.lootbox-select-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(232,93,4,.12);
+}
+.lootbox-select-card.selected {
+  background: linear-gradient(160deg, var(--surface-bg) 0%, rgba(232,93,4,0.08) 100%);
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px rgba(232,93,4,.15);
+}
+.lootbox-select-card.unselected {
+  opacity: 0.85;
+}
+.lootbox-select-card.unselected:hover {
+  opacity: 1;
+}
+
 @media (max-width: 768px) { #roller { width: 90vw; } }

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, inject, viewChild, ChangeDetector
 import { NgOptimizedImage } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LootBoxHelper, LootItem } from './lootbox-helper';
-import { LootboxService } from '@core/services/lootbox.service';
+import { LootboxService, Lootbox, LootboxType } from '@core/services/lootbox.service';
 import { ListingService } from '@core/services/listing.service';
 import { AuthService } from '@core/services/auth.service';
 import { firstValueFrom } from 'rxjs';
@@ -29,6 +29,11 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   selectedTypeName  = signal<string>('Standard Lootbox');
   returnToInventory = signal<boolean>(false);
 
+  // Selector state
+  availableLootboxes = signal<Lootbox[]>([]);
+  lootboxTypes       = signal<Map<number, LootboxType>>(new Map());
+  isLoading          = signal<boolean>(false);
+
   items: LootItem[] = [];
   finalItem: LootItem | null = null;
   playerId: number | null = null;
@@ -39,6 +44,12 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     { label: 'Golden Stove',   src: '/assets/stove_sprites/epic/golden.png',   rarity: 'epic',      rarityLabel: 'Epic'      },
     { label: 'Dragon Stove',   src: '/assets/stove_sprites/legendary/dragon.png',   rarity: 'legendary', rarityLabel: 'Legendary' },
   ];
+
+  readonly acquisitionLabels: Record<string, string> = {
+    free: 'Free',
+    purchase: 'Purchased',
+    reward: 'Reward'
+  };
 
   private lootBoxHelper = new LootBoxHelper();
   private lootboxApi    = inject(LootboxService);
@@ -56,35 +67,92 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     }
     this.playerId = user.playerId;
 
-    // Read selected lootbox id from query param
+    // Read selected lootbox id from query param (inventory "Open" action)
     const idParam = this.route.snapshot.queryParamMap.get('id');
     if (idParam) {
       this.selectedLootboxId.set(Number(idParam));
       this.returnToInventory.set(true);
     }
 
-    // Sync lootbox count from actual backend state (not cached auth data)
-    try {
-      const lootboxes = await firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(user.playerId));
-      this.lootboxCount.set(lootboxes.length);
-    } catch (err) {
-      console.error('Failed to sync lootbox count:', err);
-      this.lootboxCount.set(user.lootboxCount);
-    }
+    await this.loadLootboxData();
   }
 
   ngAfterViewInit(): void {}
 
-  canOpen(): boolean {
-    return !this.isOpening() && this.lootboxCount() > 0 && this.playerId !== null;
+  // ── Data loading ───────────────────────────────────────────
+
+  async loadLootboxData(): Promise<void> {
+    if (!this.playerId) return;
+    this.isLoading.set(true);
+
+    try {
+      const [lootboxes, listings, types] = await Promise.all([
+        firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId)),
+        firstValueFrom(this.listingApi.getActiveListingsBySellerId(this.playerId)),
+        firstValueFrom(this.lootboxApi.getAllLootboxTypes())
+      ]);
+
+      const typeMap = new Map<number, LootboxType>();
+      for (const t of types) {
+        typeMap.set(t.lootboxTypeId, t);
+      }
+      this.lootboxTypes.set(typeMap);
+
+      const listedLootboxIds = new Set(listings.filter(l => l.lootboxId).map(l => l.lootboxId!));
+      const available = lootboxes.filter(lb => !listedLootboxIds.has(lb.lootboxId));
+      this.availableLootboxes.set(available);
+      this.lootboxCount.set(available.length);
+
+      // Validate pre-selected lootbox from query param
+      const targetId = this.selectedLootboxId();
+      if (targetId !== null) {
+        const found = available.find(lb => lb.lootboxId === targetId);
+        if (!found) {
+          this.resultText.set('Selected lootbox is not available (it may be listed or already opened).');
+          this.showPopup.set(true);
+          this.selectedLootboxId.set(null);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load lootbox data:', err);
+      this.lootboxCount.set(0);
+    } finally {
+      this.isLoading.set(false);
+      this.cdr.detectChanges();
+    }
   }
 
+  // ── Helpers ────────────────────────────────────────────────
+
+  getLootboxTypeName(lootboxTypeId: number): string {
+    return this.lootboxTypes().get(lootboxTypeId)?.name || 'Standard Lootbox';
+  }
+
+  getAcquisitionLabel(how: string): string {
+    return this.acquisitionLabels[how] || how;
+  }
+
+  selectLootbox(lootboxId: number): void {
+    if (this.isOpening()) return;
+    this.selectedLootboxId.set(lootboxId);
+    const box = this.availableLootboxes().find(b => b.lootboxId === lootboxId);
+    if (box) {
+      this.selectedTypeName.set(this.getLootboxTypeName(box.lootboxTypeId));
+    }
+  }
+
+  canOpen(): boolean {
+    return !this.isOpening() && this.lootboxCount() > 0 && this.playerId !== null && this.selectedLootboxId() !== null;
+  }
+
+  // ── Open flow ──────────────────────────────────────────────
+
   async openBox(): Promise<void> {
-    if (this.isOpening() || this.playerId === null) {
+    if (this.isOpening() || this.playerId === null || this.selectedLootboxId() === null) {
       return;
     }
 
-    let lootboxId: number | null = null;
+    // Re-fetch fresh data to validate selection is still valid
     try {
       const [lootboxes, listings, types] = await Promise.all([
         firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId)),
@@ -98,54 +166,41 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       }
 
       const listedLootboxIds = new Set(listings.filter(l => l.lootboxId).map(l => l.lootboxId!));
-      const availableLootboxes = lootboxes.filter(lb => !listedLootboxIds.has(lb.lootboxId));
+      const available = lootboxes.filter(lb => !listedLootboxIds.has(lb.lootboxId));
 
-      // Sync count with actual available lootboxes
-      this.lootboxCount.set(availableLootboxes.length);
+      // Update selector state with fresh data
+      this.availableLootboxes.set(available);
+      this.lootboxCount.set(available.length);
 
-      if (availableLootboxes.length === 0) {
-        if (lootboxes.length > 0) {
-          this.resultText.set('All your lootboxes are listed. Cancel a listing to open them.');
-          this.showPopup.set(true);
-        } else {
-          this.resultText.set('You have no lootboxes available.');
-          this.showPopup.set(true);
-        }
+      if (available.length === 0) {
+        this.selectedLootboxId.set(null);
+        this.resultText.set(lootboxes.length > 0
+          ? 'All your lootboxes are listed. Cancel a listing to open them.'
+          : 'You have no lootboxes available.');
+        this.showPopup.set(true);
         return;
       }
 
       const targetId = this.selectedLootboxId();
-      if (targetId !== null) {
-        const target = availableLootboxes.find(lb => lb.lootboxId === targetId);
-        if (target) {
-          lootboxId = target.lootboxId;
-          this.selectedTypeName.set(typeMap.get(target.lootboxTypeId) || 'Standard Lootbox');
-        } else {
-          this.resultText.set('Selected lootbox is not available (it may be listed or already opened).');
-          this.showPopup.set(true);
-          this.isOpening.set(false);
-          this.playingGif.set(false);
-          return;
-        }
-      } else {
-        lootboxId = availableLootboxes[0].lootboxId;
-        this.selectedTypeName.set(typeMap.get(availableLootboxes[0].lootboxTypeId) || 'Standard Lootbox');
+      const target = available.find(lb => lb.lootboxId === targetId);
+      if (!target) {
+        this.selectedLootboxId.set(null);
+        this.resultText.set('Selected lootbox is not available (it may be listed or already opened).');
+        this.showPopup.set(true);
+        return;
       }
-    } catch (err) {
-      console.error('Failed to fetch lootboxes:', err);
-      this.resultText.set('Failed to open lootbox. Please try again.');
-      this.showPopup.set(true);
-      this.isOpening.set(false);
-      this.playingGif.set(false);
-      return;
-    }
 
-    try {
-      const result = await firstValueFrom(this.lootboxApi.openLootbox(lootboxId, this.playerId));
-      // Lootbox opened successfully
+      this.selectedTypeName.set(typeMap.get(target.lootboxTypeId) || 'Standard Lootbox');
+
+      // Execute open
+      const result = await firstValueFrom(this.lootboxApi.openLootbox(target.lootboxId, this.playerId));
 
       this.lootboxCount.update(count => Math.max(0, count - 1));
       void this.authService.refreshUser();
+
+      // Remove opened lootbox from available list
+      this.availableLootboxes.set(available.filter(lb => lb.lootboxId !== target.lootboxId));
+      this.selectedLootboxId.set(null);
 
       this.isOpening.set(true);
       this.playingGif.set(true);

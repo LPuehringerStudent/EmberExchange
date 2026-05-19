@@ -56,6 +56,9 @@
               Open Lootbox
             }
           </button>
+          @if (selectedLootboxId() === null && !isOpening()) {
+            <p class="text-sm text-text-muted m-0">Select a lootbox below to open it.</p>
+          }
         } @else {
           <div class="inline-flex items-center gap-2 mt-2 px-[18px] py-3 bg-[rgba(232,93,4,0.06)] border border-[rgba(232,93,4,0.18)] rounded-xl text-accent text-sm font-medium" role="status">
             <svg class="w-[18px] h-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
@@ -69,6 +72,57 @@
 
     <!-- ── Divider ── -->
     <div class="h-px bg-gradient-to-r from-transparent via-border to-transparent mx-6 md:mx-12" aria-hidden="true"></div>
+
+    <!-- ── Lootbox Selector ── -->
+    @if (availableLootboxes().length > 0 && !isOpening()) {
+      <div class="px-6 py-6 md:px-12 md:py-8">
+        <h3 class="text-[13px] font-bold text-text-muted uppercase tracking-[1.5px] m-0 mb-4">Select a Lootbox</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" role="list">
+          @for (box of availableLootboxes(); track box.lootboxId) {
+            <button
+              class="lootbox-select-card text-left p-4 rounded-[14px] border-2 transition-all duration-200"
+              [class.selected]="selectedLootboxId() === box.lootboxId"
+              [class.unselected]="selectedLootboxId() !== box.lootboxId"
+              (click)="selectLootbox(box.lootboxId)"
+              role="listitem"
+              [attr.aria-pressed]="selectedLootboxId() === box.lootboxId"
+              [attr.aria-label]="'Lootbox: ' + getLootboxTypeName(box.lootboxTypeId) + ', acquired via ' + getAcquisitionLabel(box.acquiredHow)">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 shrink-0 flex items-center justify-center rounded-xl bg-surface-secondary overflow-hidden">
+                  <img
+                    src="assets/animation/chest-idle.gif"
+                    alt="Lootbox"
+                    class="w-10 h-10 object-contain"
+                    loading="lazy">
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-bold text-text-primary m-0 truncate">{{ getLootboxTypeName(box.lootboxTypeId) }}</p>
+                  <span class="inline-block mt-1 text-[10px] font-semibold text-text-muted uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-secondary">{{ getAcquisitionLabel(box.acquiredHow) }}</span>
+                </div>
+              </div>
+              @if (selectedLootboxId() === box.lootboxId) {
+                <div class="mt-2.5 pt-2.5 border-t border-accent/20 flex items-center gap-1.5 text-xs font-bold text-accent">
+                  <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                  </svg>
+                  Selected
+                </div>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    } @else if (isLoading()) {
+      <div class="px-6 py-8 md:px-12 md:py-10 text-center">
+        <span class="inline-block w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-[spin_0.7s_linear_infinite]"></span>
+        <p class="text-sm text-text-muted mt-2">Loading your lootboxes…</p>
+      </div>
+    }
+
+    <!-- ── Divider ── -->
+    @if (availableLootboxes().length > 0 && !isOpening()) {
+      <div class="h-px bg-gradient-to-r from-transparent via-border to-transparent mx-6 md:mx-12" aria-hidden="true"></div>
+    }
 
     <!-- ── Possible Rewards Banner ── -->
     <div class="px-6 pt-7 pb-8 md:px-12 md:pt-8 md:pb-10">
