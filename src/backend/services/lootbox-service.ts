@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { LootboxRow, LootboxTypeRow, LootboxDropRow } from "../../shared/model";
 import { ListingService } from "./listing-service";
 import { PlayerPrestigeService } from "./player-prestige-service";
+import { AchievementEngine } from "./achievement-engine";
 
 interface DropTable {
     rarity: string;
@@ -51,9 +52,9 @@ export class LootboxService extends ServiceBase {
         return dropTable[0].rarity;
     }
 
-    private async pickStoveTypeByRarity(rarity: string): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string } | null> {
-        const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string }>(
-            "SELECT typeId, name, rarity, imageUrl FROM StoveType WHERE rarity = @rarity",
+    private async pickStoveTypeByRarity(rarity: string): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
+        const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number }>(
+            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE rarity = @rarity AND name NOT LIKE '%Upgraded%'",
             { rarity }
         );
         const rows = await stmt.all();
@@ -61,9 +62,9 @@ export class LootboxService extends ServiceBase {
         return rows[Math.floor(Math.random() * rows.length)];
     }
 
-    private async pickDragonStoveType(): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string } | null> {
-        const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string }>(
-            "SELECT typeId, name, rarity, imageUrl FROM StoveType WHERE LOWER(name) LIKE '%dragon%'",
+    private async pickDragonStoveType(): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
+        const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number }>(
+            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE LOWER(name) LIKE '%dragon%'",
             {}
         );
         const rows = await stmt.all();
@@ -244,7 +245,7 @@ export class LootboxService extends ServiceBase {
         }
 
         // 2. Determine drop
-        let stoveType: { typeId: number; name: string; rarity: string; imageUrl: string } | null = null;
+        let stoveType: { typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null = null;
         if (lootbox.lootboxTypeId === 4) {
             // Dragon Crate: exclusively dragon stoves
             stoveType = await this.pickDragonStoveType();
@@ -255,11 +256,12 @@ export class LootboxService extends ServiceBase {
         }
         if (!stoveType) return [false, null];
 
-        // 3. Create stove
+        // 3. Create stove with randomized heat level
+        const heatLevel = stoveType.minHeat + Math.random() * (stoveType.maxHeat - stoveType.minHeat);
         const stoveStmt = this.unit.prepare<{ stoveId: number }>(
-            `INSERT INTO Stove (typeId, currentOwnerId, mintedAt) 
-             VALUES (@typeId, @playerId, NOW())`,
-            { typeId: stoveType.typeId, playerId }
+            `INSERT INTO Stove (typeId, currentOwnerId, mintedAt, heatLevel) 
+             VALUES (@typeId, @playerId, NOW(), @heatLevel)`,
+            { typeId: stoveType.typeId, playerId, heatLevel }
         );
         await stoveStmt.run();
         const stoveId = await this.unit.getLastRowId();
@@ -289,10 +291,21 @@ export class LootboxService extends ServiceBase {
 
         // Award XP for opening lootbox
         try {
+            await this.unit.savepoint('lootbox_xp');
             const prestigeService = new PlayerPrestigeService(this.unit);
-            await prestigeService.addXP(playerId, 10, 'lootbox_open', 'Opened a lootbox');
+            await prestigeService.addXP(playerId, 100, 'lootbox_open', 'Opened a lootbox');
         } catch {
-            // Ignore XP errors
+            try { await this.unit.rollbackToSavepoint('lootbox_xp'); } catch { /* ignore */ }
+        }
+
+        // Check achievements & cosmetic unlocks
+        try {
+            await this.unit.savepoint('lootbox_achievements');
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkLootboxAchievements(playerId);
+            await engine.checkWealthAchievements(playerId);
+        } catch {
+            try { await this.unit.rollbackToSavepoint('lootbox_achievements'); } catch { /* ignore */ }
         }
 
         return [true, { stoveId, stoveName: stoveType.name, rarity: stoveType.rarity, imageUrl: stoveType.imageUrl, lootboxId }];

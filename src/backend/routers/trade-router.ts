@@ -494,10 +494,23 @@ tradeRouter.post("/trades", async (req, res) => {
             // Award XP to both buyer and seller
             try {
                 const prestigeService = new PlayerPrestigeService(unit);
-                await prestigeService.addXP(buyerId, 25, 'trade', 'Completed a trade (buyer)');
-                await prestigeService.addXP(listing.sellerId, 20, 'trade', 'Completed a trade (seller)');
+                await prestigeService.addXP(buyerId, 250, 'trade', 'Completed a trade (buyer)');
+                await prestigeService.addXP(listing.sellerId, 200, 'trade', 'Completed a trade (seller)');
             } catch {
                 // Ignore XP errors
+            }
+
+            // Check achievements for both parties
+            try {
+                await unit.savepoint('trade_achievements');
+                const { AchievementEngine } = await import("../services/achievement-engine");
+                const engine = new AchievementEngine(unit);
+                await engine.checkTradeAchievements(buyerId);
+                await engine.checkTradeAchievements(listing.sellerId);
+                await engine.checkWealthAchievements(buyerId);
+                await engine.checkWealthAchievements(listing.sellerId);
+            } catch {
+                try { await unit.rollbackToSavepoint('trade_achievements'); } catch { /* ignore */ }
             }
 
             // Notify buyer and seller

@@ -41,6 +41,7 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
 
     try {
         const roomService = new RoomService(unit);
+        const debugPrefix = `[action:${actionType}] player=${meta.playerId} room=${roomId}`;
         const roomPlayerService = new RoomPlayerService(unit);
         const gameStateService = new GameStateService(unit);
         const eventLogService = new EventLogService(unit);
@@ -187,27 +188,35 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
         // Record mini-game sessions when a hand settles (e.g. blackjack)
         const newPhase = (result.newFullState! as Record<string, unknown>).phase as string;
         if (newPhase === "settled") {
-            const miniGameSessionService = new MiniGameSessionService(unit);
-            const gamePlayers = (result.newFullState! as Record<string, unknown>).players as Array<Record<string, unknown>>;
-            const winners = ((result.newFullState! as Record<string, unknown>).winners ?? []) as Array<{ playerId: number; amount: number }>;
-            for (const p of gamePlayers) {
-                const pid = p.playerId as number;
-                const pResult = p.result as string;
-                const payout = winners
-                    .filter(w => w.playerId === pid)
-                    .reduce((sum, w) => sum + w.amount, 0);
-                await miniGameSessionService.create(pid, room.gameType, pResult, payout);
+            try {
+                const miniGameSessionService = new MiniGameSessionService(unit);
+                const gamePlayers = (result.newFullState! as Record<string, unknown>).players as Array<Record<string, unknown>>;
+                const winners = ((result.newFullState! as Record<string, unknown>).winners ?? []) as Array<{ playerId: number; amount: number }>;
+                for (const p of gamePlayers) {
+                    const pid = p.playerId as number;
+                    const pResult = p.result as string;
+                    const payout = winners
+                        .filter(w => w.playerId === pid)
+                        .reduce((sum, w) => sum + w.amount, 0);
+                    await miniGameSessionService.create(pid, room.gameType, pResult, payout);
+                }
+            } catch (err) {
+                console.error("[action] MiniGameSession recording failed (non-fatal):", err);
             }
         }
 
-        await eventLogService.logEvent(
-            roomId,
-            actionType || "unknown",
-            { actionData, expectedVersion },
-            meta.playerId,
-            (payload.sequenceNumber as number | undefined) ?? null,
-            (payload.clientTimestamp as number | undefined) ?? null
-        );
+        try {
+            await eventLogService.logEvent(
+                roomId,
+                actionType || "unknown",
+                { actionData, expectedVersion },
+                meta.playerId,
+                (payload.sequenceNumber as number | undefined) ?? null,
+                (payload.clientTimestamp as number | undefined) ?? null
+            );
+        } catch (err) {
+            console.error("[action] EventLog recording failed (non-fatal):", err);
+        }
 
         // Send personalized views to each player in the room
         const playersInRoom = await roomPlayerService.getPlayersInRoom(roomId);
@@ -240,6 +249,12 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
         }
 
         ok = true;
+    } catch (err) {
+        console.error(`[action:${actionType}] UNHANDLED ERROR in player-action handler:`, err);
+        connectionManager.sendToSocket(socketId, {
+            type: "error",
+            payload: { code: ErrorCode.INVALID_STATE, message: "Internal server error", recoverable: true }
+        });
     } finally {
         await unit.complete(ok);
     }

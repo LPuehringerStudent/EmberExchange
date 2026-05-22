@@ -77,10 +77,24 @@ export class MiniGameSessionService extends ServiceBase {
         // Award XP for winning
         if (success && result.toLowerCase() === 'win') {
             try {
+                await this.unit.savepoint('xp_award');
                 const prestigeService = new PlayerPrestigeService(this.unit);
-                await prestigeService.addXP(playerId, 15, 'mini_game_win', `Won ${gameType}`);
+                await prestigeService.addXP(playerId, 150, 'mini_game_win', `Won ${gameType}`);
             } catch {
-                // Ignore XP errors
+                try { await this.unit.rollbackToSavepoint('xp_award'); } catch { /* ignore */ }
+            }
+        }
+
+        // Check achievements
+        if (success) {
+            try {
+                await this.unit.savepoint('achievements');
+                const { AchievementEngine } = await import("./achievement-engine");
+                const engine = new AchievementEngine(this.unit);
+                await engine.checkMiniGameAchievements(playerId);
+                await engine.checkWealthAchievements(playerId);
+            } catch {
+                try { await this.unit.rollbackToSavepoint('achievements'); } catch { /* ignore */ }
             }
         }
 

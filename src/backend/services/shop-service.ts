@@ -212,12 +212,22 @@ export class ShopService {
         let createdItemId: number | undefined;
 
         if (listing.itemType === "stove") {
+            // Fetch stove type heat range
+            const typeStmt = this.unit.prepare<{ minHeat: number; maxHeat: number }>(
+                "SELECT minHeat, maxHeat FROM StoveType WHERE typeId = @typeId",
+                { typeId: listing.itemId }
+            );
+            const typeRow = await typeStmt.get();
+            const heatLevel = typeRow
+                ? typeRow.minHeat + Math.random() * (typeRow.maxHeat - typeRow.minHeat)
+                : 0.0;
+
             // Create a new stove instance
-            const stoveStmt = this.unit.prepare<{ stoveId: number }, { typeId: number; playerId: number; mintedAt: string }>(
-                `INSERT INTO Stove (typeId, currentOwnerId, mintedAt)
-                 VALUES (@typeId, @playerId, @mintedAt)
+            const stoveStmt = this.unit.prepare<{ stoveId: number }, { typeId: number; playerId: number; mintedAt: string; heatLevel: number }>(
+                `INSERT INTO Stove (typeId, currentOwnerId, mintedAt, heatLevel)
+                 VALUES (@typeId, @playerId, @mintedAt, @heatLevel)
                  RETURNING stoveId`,
-                { typeId: listing.itemId, playerId, mintedAt: new Date().toISOString() }
+                { typeId: listing.itemId, playerId, mintedAt: new Date().toISOString(), heatLevel }
             );
             const stoveRow = await stoveStmt.get();
             if (!stoveRow) {
@@ -464,10 +474,21 @@ export class ShopService {
         // Award XP
         try {
             const prestigeService = new PlayerPrestigeService(this.unit);
-            const xpAmount = 5 * newStreak;
+            const xpAmount = 50 * newStreak;
             await prestigeService.addXP(playerId, xpAmount, 'daily_reward', `Day ${dayIndex} daily reward streak`);
         } catch {
             // Ignore XP errors
+        }
+
+        // Check level-based achievements & cosmetic unlocks
+        try {
+            await this.unit.savepoint('shop_achievements');
+            const { AchievementEngine } = await import("./achievement-engine");
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkLevelAchievements(playerId);
+            await engine.checkWealthAchievements(playerId);
+        } catch {
+            try { await this.unit.rollbackToSavepoint('shop_achievements'); } catch { /* ignore */ }
         }
 
         // Create daily reward notification

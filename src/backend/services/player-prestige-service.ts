@@ -15,11 +15,11 @@ export class PlayerPrestigeService extends ServiceBase {
     }
 
     static xpForLevel(level: number): number {
-        return Math.pow(level - 1, 2) * 100;
+        return Math.pow(level - 1, 2) * 10;
     }
 
     static levelFromXP(xp: number): number {
-        return Math.floor(Math.sqrt(xp / 100)) + 1;
+        return Math.floor(Math.sqrt(xp / 10)) + 1;
     }
 
     async getPrestige(playerId: number): Promise<PrestigeData | null> {
@@ -61,6 +61,17 @@ export class PlayerPrestigeService extends ServiceBase {
             { playerId, newXP, newLevel, updatedAt: new Date().toISOString() }
         ).run();
 
+        // Check level-based achievements & cosmetic unlocks
+        try {
+            await this.unit.savepoint('prestige_achievements');
+            const { AchievementEngine } = await import("./achievement-engine");
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkLevelAchievements(playerId);
+            await engine.checkCosmeticUnlocks(playerId);
+        } catch {
+            try { await this.unit.rollbackToSavepoint('prestige_achievements'); } catch { /* ignore */ }
+        }
+
         return {
             playerId,
             totalXP: newXP,
@@ -88,6 +99,17 @@ export class PlayerPrestigeService extends ServiceBase {
              WHERE playerId = @playerId`,
             { playerId, newPrestigeCount, updatedAt: new Date().toISOString() }
         ).run();
+
+        // Check prestige-related achievements & cosmetic unlocks
+        try {
+            await this.unit.savepoint('prestige_achievements');
+            const { AchievementEngine } = await import("./achievement-engine");
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkLevelAchievements(playerId);
+            await engine.checkWealthAchievements(playerId);
+        } catch {
+            try { await this.unit.rollbackToSavepoint('prestige_achievements'); } catch { /* ignore */ }
+        }
 
         return {
             playerId,
