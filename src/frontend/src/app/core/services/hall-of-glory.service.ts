@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import type { PlayerStatisticsRow as PlayerStatistics } from '@shared/model';
+import type { PlayerStatisticsRow as PlayerStatistics, PlayerAchievement, AchievementDefinition } from '@shared/model';
 
 export interface GloryStove {
   stoveId: number;
@@ -67,6 +67,8 @@ export interface GloryProfile {
   trophies: GloryTrophy[];
   visitCount: number;
   featuredAchievements: string[];
+  achievements: PlayerAchievement[];
+  achievementDefinitions: AchievementDefinition[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -119,6 +121,14 @@ export class HallOfGloryService {
 
   activateBanner(playerId: number, bannerId: number): Observable<{ message: string }> {
     return this.api.post<{ message: string }>('/glory/banner', { playerId, bannerId });
+  }
+
+  prestige(playerId: number): Observable<{ success: boolean; currentLevel: number; prestigeCount: number }> {
+    return this.api.post<{ success: boolean; currentLevel: number; prestigeCount: number }>(`/players/${playerId}/prestige`, {});
+  }
+
+  recordVisit(visitorId: number, profileId: number): Observable<{ message: string }> {
+    return this.api.post<{ message: string }>('/glory/visit', { visitorId, profileId });
   }
 
   // Guestbook

@@ -79,7 +79,12 @@
           </div>
         </div>
       </div>
-      <div class="hero-actions shrink-0">
+      <div class="hero-actions shrink-0 flex flex-col gap-2 items-end">
+        @if (isOwnProfile() && canPrestige()) {
+          <button class="btn-prestige px-4 py-2 bg-gradient-to-br from-[#f59e0b] to-[#d97706] text-white border-none rounded-lg font-bold text-[13px] cursor-pointer shadow-[0_4px_12px_rgba(245,158,11,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(245,158,11,0.5)]" (click)="prestige()">
+            Prestige Now
+          </button>
+        }
         @if (isOwnProfile()) {
           <button class="btn-edit px-4 py-2 bg-transparent text-accent border-[1.5px] border-accent rounded-lg font-semibold text-[13px] cursor-pointer transition-all duration-200 hover:bg-accent hover:text-white" (click)="toggleEditMode()">
             @if (editMode()) {
@@ -89,13 +94,7 @@
             }
           </button>
         }
-        <button class="btn-copy px-5 py-2.5 bg-accent text-white border-none rounded-xl text-[13px] font-semibold cursor-pointer transition-all duration-200 relative overflow-hidden hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(232,93,4,0.35)]" (click)="copyLink()">
-          @if (copied()) {
-            <span>Copied!</span>
-          } @else {
-            <span>Copy Link</span>
-          }
-        </button>
+
       </div>
     </section>
 

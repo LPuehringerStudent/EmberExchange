@@ -436,6 +436,51 @@ gloryRouter.post("/glory/banner", async (req, res) => {
  *       200: { description: Visit count and recent visitors }
  *       500: { description: Server error }
  */
+/**
+ * @openapi
+ * /glory/visit:
+ *   post:
+ *     summary: Record a profile visit
+ *     description: Records that a player visited another player's Hall of Glory profile
+ *     tags:
+ *       - Glory
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [visitorId, profileId]
+ *             properties:
+ *               visitorId: { type: integer }
+ *               profileId: { type: integer }
+ *     responses:
+ *       200: { description: Visit recorded }
+ *       500: { description: Server error }
+ */
+gloryRouter.post("/glory/visit", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new GloryCustomizationService(unit);
+    const { visitorId, profileId } = req.body;
+
+    try {
+        if (typeof visitorId !== "number" || typeof profileId !== "number") {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid parameters" });
+            return;
+        }
+        if (visitorId === profileId) {
+            res.status(StatusCodes.OK).json({ message: "Self-visits are not recorded" });
+            return;
+        }
+        await service.recordVisit(profileId, visitorId);
+        await unit.complete(true);
+        res.status(StatusCodes.OK).json({ message: "Visit recorded" });
+    } catch (err) {
+        await unit.complete(false);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    }
+});
+
 // Visits
 gloryRouter.get("/glory/visits/:playerId", async (req, res) => {
     const unit = await Unit.create(true);

@@ -7,6 +7,8 @@ import { StoveService } from "../services/stove-service";
 import { PlayerStatisticsService } from "../services/player-statistics-service";
 import { GloryCustomizationService } from "../services/glory-customization-service";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
+import { PlayerAchievementService } from "../services/player-achievement-service";
+import { ACHIEVEMENT_DEFINITIONS } from "../services/achievement-engine";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { hashPassword } from "../utils/password";
@@ -576,6 +578,9 @@ async function buildGloryProfile(
     const prestige = await prestigeService.getPrestige(playerId);
     const featuredAchievements = await gloryService.getFeaturedAchievements(playerId);
 
+    const achievementService = new PlayerAchievementService(unit);
+    const achievements = await achievementService.getByPlayerId(playerId);
+
     let displayStoves: any[];
     if (customization.showcase.length > 0) {
         const showcaseStmt = unit.prepare<
@@ -615,6 +620,8 @@ async function buildGloryProfile(
         trophies: customization.trophies,
         visitCount: customization.visitCount,
         featuredAchievements,
+        achievements,
+        achievementDefinitions: ACHIEVEMENT_DEFINITIONS,
     };
 }
 

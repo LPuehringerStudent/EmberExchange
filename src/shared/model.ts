@@ -515,6 +515,13 @@ export interface PlayerAchievementRow extends PlayerAchievement {
     playerAchievementId: number;
 }
 
+export interface AchievementDefinition {
+    achievementId: string;
+    label: string;
+    description: string;
+    category: 'lootbox' | 'trade' | 'mini-game' | 'prestige' | 'wealth' | 'collection' | 'social' | 'general';
+}
+
 // Notification
 export interface Notification {
     playerId: number;

@@ -47,7 +47,7 @@ export class HallOfGloryComponent implements OnInit {
   profile = signal<GloryProfile | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
-  copied = signal(false);
+
   isOwnProfile = signal(false);
   editMode = signal(false);
   guestbook = signal<GloryGuestbookEntry[]>([]);
@@ -72,51 +72,20 @@ export class HallOfGloryComponent implements OnInit {
   animatedActivity = signal(0);
 
   // Computed
+  unlockedAchievementIds = computed<Set<string>>(() => {
+    return new Set(this.profile()?.achievements?.map(a => a.achievementId) ?? []);
+  });
+
   badges = computed<Badge[]>(() => {
     const profile = this.profile();
-    const stats = profile?.stats;
-    if (!stats) return [];
-    const prestigeCount = profile?.prestige?.prestigeCount ?? 0;
-    const joinedAt = profile?.joinedAt ? new Date(profile.joinedAt) : null;
-    const daysSinceJoin = joinedAt ? Math.floor((Date.now() - joinedAt.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-    const hasLegendary = stats.bestDropRarity === 'legendary' || stats.bestDropRarity === 'secret';
-    return [
-      { id: 'first-steps', label: 'First Steps', unlocked: true, description: 'Joined Ember Exchange' },
-      { id: 'trader', label: 'Trader', unlocked: (stats.totalTradesCompleted ?? 0) > 0, description: 'Completed your first trade' },
-      { id: 'collector', label: 'Collector', unlocked: (stats.currentStoveCount ?? 0) >= 10, description: 'Own 10+ stoves' },
-      { id: 'high-roller', label: 'High Roller', unlocked: (stats.luckiestWin ?? 0) >= 10000, description: 'Win 10,000+ coins in one hand' },
-      { id: 'market-shark', label: 'Market Shark', unlocked: (stats.totalSalesRevenue ?? 0) >= 50000, description: 'Earn 50,000+ coins from sales' },
-      { id: 'lootbox-addict', label: 'Lootbox Addict', unlocked: (stats.totalLootboxesOpened ?? 0) >= 50, description: 'Open 50+ lootboxes' },
-      { id: 'big-spender', label: 'Big Spender', unlocked: (stats.totalPurchaseSpending ?? 0) >= 25000, description: 'Spend 25,000+ coins' },
-      { id: 'wealthy', label: 'Wealthy', unlocked: (stats.netWorthEstimate ?? 0) >= 100000, description: 'Reach 100,000+ net worth' },
-      { id: 'gambler', label: 'Gambler', unlocked: (stats.totalMiniGamesPlayed ?? 0) >= 50, description: 'Play 50+ mini-games' },
-      { id: 'merchant', label: 'Merchant', unlocked: (stats.totalListingsCreated ?? 0) >= 20, description: 'Create 20+ listings' },
-      { id: 'dragon-tamer', label: 'Dragon Tamer', unlocked: (stats.totalStovesAcquired ?? 0) >= 50, description: 'Acquire 50+ stoves' },
-      { id: 'mini-game-master', label: 'Mini-Game Master', unlocked: (stats.totalMiniGamesPlayed ?? 0) >= 100, description: 'Play 100+ mini-games' },
-      { id: 'socialite', label: 'Socialite', unlocked: (stats.totalMessagesSent ?? 0) >= 500, description: 'Send 500+ chat messages' },
-      { id: 'ascended', label: 'Ascended', unlocked: prestigeCount >= 1, description: 'Prestige at least once' },
-      { id: 'veteran', label: 'Veteran', unlocked: daysSinceJoin >= 30, description: 'Play for 30+ days' },
-      { id: 'king-of-the-hill', label: 'King of the Hill', unlocked: (stats.highestCoinBalance ?? 0) >= 500000, description: 'Hold 500,000+ coins at once' },
-      { id: 'collector-deluxe', label: 'Collector Deluxe', unlocked: (stats.currentStoveCount ?? 0) >= 50, description: 'Own 50+ stoves' },
-      { id: 'burnout', label: 'Burnout', unlocked: (stats.totalMiniGamesPlayed ?? 0) >= 500, description: 'Play 500+ mini-games' },
-      { id: 'whale', label: 'Whale', unlocked: (stats.totalPurchaseSpending ?? 0) >= 500000, description: 'Spend 500,000+ coins' },
-      { id: 'early-bird', label: 'Early Bird', unlocked: daysSinceJoin >= 1, description: 'Joined Ember Exchange' },
-      { id: 'market-maker', label: 'Market Maker', unlocked: (stats.totalSalesRevenue ?? 0) >= 250000, description: 'Earn 250,000+ coins from sales' },
-      { id: 'immortal', label: 'Immortal', unlocked: prestigeCount >= 5, description: 'Prestige 5 times' },
-      { id: 'centurion', label: 'Centurion', unlocked: (stats.totalLootboxesOpened ?? 0) >= 100, description: 'Open 100+ lootboxes' },
-      { id: 'win-streak', label: 'Win Streak', unlocked: (stats.totalMiniGameWins ?? 0) >= 20, description: 'Win 20+ mini-games' },
-      { id: 'tycoon', label: 'Tycoon', unlocked: (stats.netWorthEstimate ?? 0) >= 500000, description: 'Reach 500,000+ net worth' },
-      { id: 'prestigious', label: 'Prestigious', unlocked: prestigeCount > 0, description: 'Prestige at least once' },
-      { id: 'rare-hunter', label: 'Rare Hunter', unlocked: hasLegendary, description: 'Own a legendary or secret stove' },
-      { id: 'jackpot', label: 'Jackpot!', unlocked: (stats.luckiestWin ?? 0) >= 100000, description: 'Win 100,000+ coins in one hand' },
-      { id: 'trading-empire', label: 'Trading Empire', unlocked: (stats.totalTradesCompleted ?? 0) >= 100, description: 'Complete 100+ trades' },
-      { id: 'net-millionaire', label: 'Net Millionaire', unlocked: (stats.netWorthEstimate ?? 0) >= 1000000, description: 'Reach 1,000,000+ net worth' },
-      { id: 'coin-millionaire', label: 'Coin Millionaire', unlocked: (stats.totalCoinsEarned ?? 0) >= 1000000, description: 'Earn 1,000,000+ coins total' },
-      { id: 'profitable', label: 'Profitable', unlocked: (stats.totalCoinsFromMiniGames ?? 0) >= 10000, description: 'Earn 10,000+ coins from mini-games' },
-      { id: 'active-trader', label: 'Active Trader', unlocked: (stats.totalPurchases ?? 0) >= 10, description: 'Make 10+ purchases' },
-      { id: 'dedicated', label: 'Dedicated', unlocked: daysSinceJoin >= 7, description: 'Play for 7+ days' },
-      { id: 'big-winner', label: 'Big Winner', unlocked: (stats.totalMiniGameWins ?? 0) >= 5, description: 'Win 5+ mini-games' },
-    ];
+    const definitions = profile?.achievementDefinitions ?? [];
+    const unlocked = this.unlockedAchievementIds();
+    return definitions.map(def => ({
+      id: def.achievementId,
+      label: def.label,
+      description: def.description,
+      unlocked: unlocked.has(def.achievementId),
+    }));
   });
 
   statCategories = computed<StatCategory[]>(() => {
@@ -169,14 +138,14 @@ export class HallOfGloryComponent implements OnInit {
     const prestige = this.profile()?.prestige;
     if (!prestige) return 0;
     const nextLevel = prestige.currentLevel + 1;
-    return Math.pow(nextLevel - 1, 2) * 100;
+    return Math.pow(nextLevel - 1, 2) * 10;
   });
 
   xpProgress = computed(() => {
     const prestige = this.profile()?.prestige;
     if (!prestige) return 0;
-    const currentLevelXP = Math.pow(prestige.currentLevel - 1, 2) * 100;
-    const nextLevelXP = Math.pow(prestige.currentLevel, 2) * 100;
+    const currentLevelXP = Math.pow(prestige.currentLevel - 1, 2) * 10;
+    const nextLevelXP = Math.pow(prestige.currentLevel, 2) * 10;
     const levelXP = nextLevelXP - currentLevelXP;
     const currentInLevel = prestige.totalXP - currentLevelXP;
     return Math.min(100, Math.max(0, (currentInLevel / levelXP) * 100));
@@ -258,11 +227,41 @@ export class HallOfGloryComponent implements OnInit {
       this.guestbook.set(guestbookEntries);
       const currentUser = this.authService.getCurrentUser();
       this.isOwnProfile.set(currentUser?.playerId === playerId);
+
+      // Record visit if viewing another player's profile
+      if (currentUser && currentUser.playerId !== playerId) {
+        try {
+          await firstValueFrom(this.gloryService.recordVisit(currentUser.playerId, playerId));
+        } catch {
+          // Ignore visit recording errors
+        }
+      }
     } catch (err) {
       this.error.set('Player not found or unable to load profile.');
       console.error(err);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  canPrestige(): boolean {
+    const prestige = this.profile()?.prestige;
+    return !!prestige && prestige.currentLevel >= 100;
+  }
+
+  async prestige(): Promise<void> {
+    if (!this.isOwnProfile() || !this.canPrestige()) return;
+    const playerId = this.profile()!.playerId;
+    try {
+      const result = await firstValueFrom(this.gloryService.prestige(playerId));
+      if (result.success) {
+        // Reload profile to show updated prestige state
+        const profile = await firstValueFrom(this.gloryService.getGloryProfile(playerId));
+        this.profile.set(profile);
+        this.showLevelUpToast(100, 1); // Show dramatic level reset toast
+      }
+    } catch (err) {
+      console.error('Prestige failed:', err);
     }
   }
 
@@ -461,14 +460,6 @@ export class HallOfGloryComponent implements OnInit {
       }
     };
     requestAnimationFrame(step);
-  }
-
-  copyLink(): void {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 2000);
-    });
   }
 
   formatDate(dateStr: string): string {
