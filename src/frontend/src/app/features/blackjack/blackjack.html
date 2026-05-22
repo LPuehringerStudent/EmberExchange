@@ -176,7 +176,7 @@
           <h2 class="sidebar-title m-0 mb-0.5 text-[0.8rem] font-semibold uppercase tracking-[0.10em] text-[var(--text-muted)]">🏆 Results</h2>
           @if (winners().length > 0) {
             <div class="sidebar-list flex flex-col gap-2">
-              @for (winner of winners(); track winner.playerId) {
+              @for (winner of winners(); track $index) {
                 <div class="sidebar-row sidebar-row--winner flex items-center justify-between px-3.5 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[10px]">
                   <span class="sidebar-row__name text-[0.875rem] font-semibold text-[var(--text-primary)]">{{ getPlayerName(winner.playerId) }}</span>
                   <span class="sidebar-row__amount text-[0.875rem] font-bold text-[var(--orange)] tabular-nums">+{{ winner.amount }}</span>
@@ -195,7 +195,7 @@
         <!-- Player List -->
         <h2 class="sidebar-title m-0 mb-0.5 text-[0.8rem] font-semibold uppercase tracking-[0.10em] text-[var(--text-muted)]">Players</h2>
         <div class="sidebar-list flex flex-col gap-2">
-          @for (player of players(); track player.playerId) {
+          @for (player of players(); track $index) {
             <div class="sidebar-row flex items-center justify-between px-3.5 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[10px]" [class.sidebar-row--active]="player.isCurrentTurn">
               <span class="sidebar-row__name text-[0.875rem] font-semibold text-[var(--text-primary)]">{{ player.name }}</span>
               <span class="sidebar-row__chips text-[0.875rem] font-semibold text-[var(--orange)] tabular-nums">{{ player.chips }}</span>
