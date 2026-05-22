@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosError } from "axios";
 import {
     GitHubCommit,
     GitHubContributor,
@@ -9,6 +9,16 @@ import {
 const OWNER = "LPuehringerStudent";
 const REPO = "EmberExchange";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function handleAxiosError(err: unknown): never {
+    if (err instanceof AxiosError && err.response?.status === 403) {
+        const msg = (err.response.data as { message?: string })?.message || "";
+        if (msg.toLowerCase().includes("rate limit")) {
+            throw new Error("GitHub API rate limit exceeded. Add a GITHUB_API_TOKEN to your .env file and restart the server.");
+        }
+    }
+    throw err;
+}
 
 interface CacheEntry<T> {
     data: T;
@@ -58,10 +68,11 @@ export class GitHubService {
         const cached = this.cache.get<GitHubCommit[]>(cacheKey);
         if (cached) return cached;
 
-        const response = await this.client.get(
-            `/repos/${OWNER}/${REPO}/commits`,
-            { params: { page, per_page: perPage } }
-        );
+        try {
+            const response = await this.client.get(
+                `/repos/${OWNER}/${REPO}/commits`,
+                { params: { page, per_page: perPage } }
+            );
 
         const commits: GitHubCommit[] = response.data.map((c: unknown) => {
             const commit = c as {
@@ -91,8 +102,11 @@ export class GitHubService {
             };
         });
 
-        this.cache.set(cacheKey, commits);
-        return commits;
+            this.cache.set(cacheKey, commits);
+            return commits;
+        } catch (err) {
+            handleAxiosError(err);
+        }
     }
 
     async getContributors(): Promise<GitHubContributor[]> {
@@ -100,9 +114,10 @@ export class GitHubService {
         const cached = this.cache.get<GitHubContributor[]>(cacheKey);
         if (cached) return cached;
 
-        const response = await this.client.get(
-            `/repos/${OWNER}/${REPO}/contributors`
-        );
+        try {
+            const response = await this.client.get(
+                `/repos/${OWNER}/${REPO}/contributors`
+            );
 
         const contributors: GitHubContributor[] = response.data.map(
             (c: unknown) => {
@@ -121,8 +136,11 @@ export class GitHubService {
             }
         );
 
-        this.cache.set(cacheKey, contributors);
-        return contributors;
+            this.cache.set(cacheKey, contributors);
+            return contributors;
+        } catch (err) {
+            handleAxiosError(err);
+        }
     }
 
     async getReleases(): Promise<GitHubRelease[]> {
@@ -130,12 +148,13 @@ export class GitHubService {
         const cached = this.cache.get<GitHubRelease[]>(cacheKey);
         if (cached) return cached;
 
-        const response = await this.client.get(
-            `/repos/${OWNER}/${REPO}/releases`,
-            { params: { per_page: 10 } }
-        );
+        try {
+            const response = await this.client.get(
+                `/repos/${OWNER}/${REPO}/releases`,
+                { params: { per_page: 10 } }
+            );
 
-        const releases: GitHubRelease[] = response.data.map((r: unknown) => {
+            const releases: GitHubRelease[] = response.data.map((r: unknown) => {
             const release = r as {
                 tag_name: string;
                 name: string;
@@ -154,8 +173,11 @@ export class GitHubService {
             };
         });
 
-        this.cache.set(cacheKey, releases);
-        return releases;
+            this.cache.set(cacheKey, releases);
+            return releases;
+        } catch (err) {
+            handleAxiosError(err);
+        }
     }
 
     async getRepoInfo(): Promise<GitHubRepoInfo> {
@@ -163,7 +185,8 @@ export class GitHubService {
         const cached = this.cache.get<GitHubRepoInfo>(cacheKey);
         if (cached) return cached;
 
-        const response = await this.client.get(`/repos/${OWNER}/${REPO}`);
+        try {
+            const response = await this.client.get(`/repos/${OWNER}/${REPO}`);
         const repo = response.data as {
             name: string;
             full_name: string;
@@ -190,7 +213,10 @@ export class GitHubService {
             htmlUrl: repo.html_url,
         };
 
-        this.cache.set(cacheKey, info);
-        return info;
+            this.cache.set(cacheKey, info);
+            return info;
+        } catch (err) {
+            handleAxiosError(err);
+        }
     }
 }

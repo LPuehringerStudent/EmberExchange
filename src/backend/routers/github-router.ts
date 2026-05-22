@@ -119,9 +119,9 @@ githubRouter.get("/github/releases", async (_req, res) => {
         const releases = await service.getReleases();
         res.status(StatusCodes.OK).json(releases);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            error: "Failed to fetch releases from GitHub",
-        });
+        console.error("[GitHub] getReleases error:", err);
+        const message = err instanceof Error ? err.message : "Failed to fetch releases from GitHub";
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: message });
     }
 });
 
@@ -152,8 +152,8 @@ githubRouter.get("/github/repo", async (_req, res) => {
         const info = await service.getRepoInfo();
         res.status(StatusCodes.OK).json(info);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            error: "Failed to fetch repository info from GitHub",
-        });
+        console.error("[GitHub] getRepoInfo error:", err);
+        const message = err instanceof Error ? err.message : "Failed to fetch repository info from GitHub";
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: message });
     }
 });
