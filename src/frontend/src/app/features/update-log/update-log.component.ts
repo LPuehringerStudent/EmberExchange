@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { GithubService } from '../../core/services/github.service';
@@ -15,7 +15,7 @@ type Tab = 'changelog' | 'contributors' | 'releases';
 @Component({
   selector: 'app-update-log',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule],
   templateUrl: './update-log.component.html',
   styleUrls: ['./update-log.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

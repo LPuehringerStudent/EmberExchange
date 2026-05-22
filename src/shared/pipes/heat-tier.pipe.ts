@@ -6,7 +6,7 @@ export function getHeatTier(heatLevel: number): HeatTier {
   if (heatLevel <= 0.07) return 'inferno';
   if (heatLevel <= 0.15) return 'blazing';
   if (heatLevel <= 0.38) return 'glowing';
-  if (heatLevel <= 0.45) return 'smoldering';
+  if (heatLevel <= 0.55) return 'smoldering';
   return 'extinguished';
 }
 

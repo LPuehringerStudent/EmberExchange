@@ -102,7 +102,7 @@
               Most Active Players
             </h3>
             <div class="flex flex-col gap-2">
-              @for (player of topActivityPlayers; track player.playerId; let i = $index) {
+              @for (player of topActivityPlayers; track $index; let i = $index) {
                 <div class="flex items-center gap-3 px-4 py-3.5 bg-surface-secondary rounded-xl transition-all duration-200 hover:bg-accent-glow hover:translate-x-1">
                   <span
                     class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold"
@@ -134,7 +134,7 @@
               Wealthiest Players
             </h3>
             <div class="flex flex-col gap-2">
-              @for (player of topWealthPlayers; track player.playerId; let i = $index) {
+              @for (player of topWealthPlayers; track $index; let i = $index) {
                 <div class="flex items-center gap-3 px-4 py-3.5 bg-surface-secondary rounded-xl transition-all duration-200 hover:bg-accent-glow hover:translate-x-1">
                   <span
                     class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold"
