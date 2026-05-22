@@ -12,8 +12,11 @@ import { Unit } from "../utils/unit";
 import { engineRegistry } from "../game-engines";
 import { clearTurnTimer } from "./turn-timer";
 
+export let wssInstance: WebSocketServer | null = null;
+
 export function setupWebSocketServer(server: http.Server): void {
     const wss = new WebSocketServer({ server, path: "/ws" });
+    wssInstance = wss;
 
     wss.on("connection", async (ws, req) => {
         const parsedUrl = new URL(req.url || "", "http://localhost");

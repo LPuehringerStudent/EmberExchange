@@ -39,7 +39,7 @@ import { forgeryRouter } from "./routers/forgery-router";
 import { friendRouter } from "./routers/friend-router";
 import { tradeOfferRouter } from "./routers/trade-offer-router";
 import { swaggerSpec } from "./swagger";
-import { setupWebSocketServer } from "./websocket";
+import { setupWebSocketServer, wssInstance } from "./websocket";
 import cron from "node-cron";
 import { ShopRotationService } from "./services/shop-rotation-service";
 
@@ -153,6 +153,25 @@ if (require.main === module) {
         });
     });
     setupWebSocketServer(server);
+
+    // Graceful shutdown for SIGTERM/SIGINT; immediate exit for SIGUSR2 (nodemon restart)
+    const gracefulShutdown = (signal: string) => {
+        console.log(`\n🛑 Received ${signal}, shutting down server...`);
+        if (wssInstance) {
+            wssInstance.clients.forEach((ws) => ws.terminate());
+            wssInstance.close();
+        }
+        (server as any).closeAllConnections?.();
+        server.close(() => process.exit(0));
+        setTimeout(() => process.exit(0), 1000);
+    };
+    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+    // Nodemon restart: exit immediately so the port releases before the new process starts
+    process.on("SIGUSR2", () => {
+        console.log("\n🛑 Received SIGUSR2, exiting for restart...");
+        process.exit(0);
+    });
 }
 
 async function initDb(): Promise<void> {
