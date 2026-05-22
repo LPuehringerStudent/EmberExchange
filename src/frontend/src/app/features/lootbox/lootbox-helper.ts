@@ -9,7 +9,8 @@ export class LootBoxHelper {
     { name: 'Common', color: 'rgba(179,229,252,0.45)', weight: 50 },
     { name: 'Rare', color: '#2ecaca', weight: 30 },
     { name: 'Epic', color: '#8e05a6', weight: 15 },
-    { name: 'Legendary', color: '#ffc880', weight: 5 }
+    { name: 'Legendary', color: '#ffc880', weight: 5 },
+    { name: 'Secret', color: '#d946ef', weight: 2 }
   ];
 
   items: LootItem[] = [];

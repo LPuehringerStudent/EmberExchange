@@ -126,23 +126,52 @@
 
     <!-- ── Possible Rewards Banner ── -->
     <div class="px-6 pt-7 pb-8 md:px-12 md:pt-8 md:pb-10">
-      <h3 class="text-[13px] font-bold text-text-muted uppercase tracking-[1.5px] m-0 mb-5">Possible Rewards</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
-        @for (drop of previewDrops; track drop.label) {
-          <div role="listitem" [class]="'reward-card flex flex-col items-center gap-3 px-4 pt-5 pb-4 rounded-[14px] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.09)] reward-card--' + drop.rarity">
-            <div class="relative w-20 h-20 flex items-center justify-center">
-              <img
-                class="object-contain"
-                [ngSrc]="drop.src"
-                [alt]="drop.label"
-                width="80"
-                height="80">
-              <span [class]="'rarity-badge absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-[3px] rounded-[20px] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.12)] ' + drop.rarity">{{ drop.rarityLabel }}</span>
-            </div>
-            <p class="text-[13px] font-bold text-text-primary mt-2.5 m-0">{{ drop.label }}</p>
-          </div>
-        }
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-[13px] font-bold text-text-muted uppercase tracking-[1.5px] m-0">Possible Rewards</h3>
+        <span class="text-[11px] text-text-muted font-medium">{{ getRatesLabel() }}</span>
       </div>
+
+      @if (isDragonCrate()) {
+        <!-- Dragon Crate: shows specific dragon stoves -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
+          @for (drop of dragonDrops; track drop.label) {
+            <div role="listitem" class="reward-card flex flex-col items-center gap-3 px-4 pt-5 pb-4 rounded-[14px] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.09)] reward-card--legendary">
+              <div class="relative w-20 h-20 flex items-center justify-center">
+                <img
+                  class="object-contain"
+                  [ngSrc]="drop.src"
+                  [alt]="drop.label"
+                  width="80"
+                  height="80">
+                <span class="rarity-badge legendary absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-[3px] rounded-[20px] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.12)]">Dragon</span>
+              </div>
+              <p class="text-[13px] font-bold text-text-primary mt-2.5 m-0">{{ drop.label }}</p>
+              <span class="text-[11px] font-bold text-text-muted">{{ getDragonDropRate() }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Standard/Golden/Legendary: show rarity grid -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4" role="list">
+          @for (drop of previewDrops; track drop.label) {
+            <div role="listitem" [class]="'reward-card flex flex-col items-center gap-3 px-4 pt-5 pb-4 rounded-[14px] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.09)] reward-card--' + drop.rarity">
+              <div class="relative w-20 h-20 flex items-center justify-center">
+                <img
+                  class="object-contain"
+                  [ngSrc]="drop.src"
+                  [alt]="drop.label"
+                  width="80"
+                  height="80">
+                <span [class]="'rarity-badge absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-[3px] rounded-[20px] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.12)] ' + drop.rarity">{{ drop.rarityLabel }}</span>
+              </div>
+              <p class="text-[13px] font-bold text-text-primary mt-2.5 m-0">{{ drop.label }}</p>
+              <span class="text-[11px] font-bold text-text-muted">{{ getDropRate(drop.rarity) }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      <p class="text-[11px] text-text-muted mt-4 m-0">Upgraded stoves are forgery-only and cannot be obtained from lootboxes.</p>
     </div>
 
   </div><!-- /main-card -->

@@ -38,6 +38,8 @@
 .reward-card--epic:hover { box-shadow: 0 10px 28px rgba(168,85,247,.22); }
 .reward-card--legendary { border-color: #f59e0b; background: linear-gradient(160deg, var(--surface-bg) 0%, rgba(245,158,11,0.10) 100%); box-shadow: 0 4px 16px rgba(245,158,11,.14); }
 .reward-card--legendary:hover { box-shadow: 0 10px 28px rgba(245,158,11,.22); }
+.reward-card--secret { border-color: #d946ef; background: linear-gradient(160deg, var(--surface-bg) 0%, rgba(217,70,239,0.10) 100%); box-shadow: 0 4px 16px rgba(217,70,239,.14); }
+.reward-card--secret:hover { box-shadow: 0 10px 28px rgba(217,70,239,.22); }
 
 /* ── Rarity Badge colors ── */
 .rarity-badge.common    { background: #94a3b8; color: white; }

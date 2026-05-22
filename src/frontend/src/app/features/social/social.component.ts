@@ -1,5 +1,6 @@
 import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { FriendService, type Friend } from '../../core/services/friend.service';
 import { PlayerService } from '../../core/services/player.service';
@@ -40,6 +41,7 @@ export class SocialComponent implements OnInit, OnDestroy {
   private ws = inject(WebSocketService);
   private auth = inject(AuthService);
   private toast = inject(ToastService);
+  private router = inject(Router);
 
   friends = signal<FriendWithPreview[]>([]);
   pendingRequests = signal<FriendWithUser[]>([]);
@@ -289,6 +291,10 @@ export class SocialComponent implements OnInit, OnDestroy {
       console.error('Failed to decline trade offer:', err);
       this.toast.error('Failed to decline trade offer');
     }
+  }
+
+  viewGlory(friendPlayerId: number): void {
+    this.router.navigate(['/glory', friendPlayerId]);
   }
 
   private async refreshMessages(): Promise<void> {

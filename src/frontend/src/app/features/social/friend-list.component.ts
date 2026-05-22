@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { FriendWithUser } from '@shared/model';
 export type { FriendWithUser };
@@ -73,11 +73,20 @@ export interface FriendWithPreview extends FriendWithUser {
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium text-text-primary truncate">{{ friend.username }}</span>
-                  @if (friend.unreadCount > 0) {
-                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-xs font-bold">
-                      {{ friend.unreadCount }}
-                    </span>
-                  }
+                  <div class="flex items-center gap-1.5">
+                    <button
+                      (click)="$event.stopPropagation(); onViewGlory.emit(getFriendPlayerId(friend))"
+                      class="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[10px] font-semibold hover:bg-accent hover:text-white transition-colors"
+                      title="View Hall of Glory"
+                    >
+                      ✦ Glory
+                    </button>
+                    @if (friend.unreadCount > 0) {
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-xs font-bold">
+                        {{ friend.unreadCount }}
+                      </span>
+                    }
+                  </div>
                 </div>
                 @if (friend.lastMessage) {
                   <p class="text-xs text-text-secondary truncate mt-0.5">{{ friend.lastMessage }}</p>
@@ -135,9 +144,16 @@ export class FriendListComponent {
   pendingRequests = input.required<FriendWithUser[]>();
   selectedFriendId = input<number | null>(null);
   activeTab = input.required<'friends' | 'requests'>();
+  currentPlayerId = input<number>(0);
 
   onSelectFriend = output<FriendWithUser>();
+  onViewGlory = output<number>(); // emits friend playerId
   onAddFriend = output<void>();
   onRespondRequest = output<{ friendId: number; accept: boolean }>();
   onTabChange = output<'friends' | 'requests'>();
+
+  getFriendPlayerId(friend: FriendWithUser): number {
+    const currentId = this.currentPlayerId();
+    return friend.requesterId === currentId ? friend.addresseeId : friend.requesterId;
+  }
 }

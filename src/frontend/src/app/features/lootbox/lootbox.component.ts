@@ -7,6 +7,62 @@ import { ListingService } from '@core/services/listing.service';
 import { AuthService } from '@core/services/auth.service';
 import { firstValueFrom } from 'rxjs';
 
+export interface DropRateEntry {
+  rarity: string;
+  rate: string;
+}
+
+export interface PreviewDrop {
+  label: string;
+  src: string;
+  rarity: string;
+  rarityLabel: string;
+}
+
+export interface DragonDrop {
+  label: string;
+  src: string;
+}
+
+const DROP_RATES: Record<number, DropRateEntry[]> = {
+  1: [ // Standard Lootbox
+    { rarity: 'common', rate: '75%' },
+    { rarity: 'rare', rate: '20%' },
+    { rarity: 'epic', rate: '4%' },
+    { rarity: 'legendary', rate: '1%' },
+    { rarity: 'secret', rate: '0%' },
+  ],
+  2: [ // Golden Lootbox
+    { rarity: 'common', rate: '45%' },
+    { rarity: 'rare', rate: '35%' },
+    { rarity: 'epic', rate: '15%' },
+    { rarity: 'legendary', rate: '4%' },
+    { rarity: 'secret', rate: '1%' },
+  ],
+  3: [ // Legendary Crate
+    { rarity: 'common', rate: '0%' },
+    { rarity: 'rare', rate: '25%' },
+    { rarity: 'epic', rate: '40%' },
+    { rarity: 'legendary', rate: '30%' },
+    { rarity: 'secret', rate: '5%' },
+  ],
+};
+
+const PREVIEW_DROPS: PreviewDrop[] = [
+  { label: 'Rusty Stove',    src: '/assets/stove_sprites/common/rusty.png',    rarity: 'common',    rarityLabel: 'Common'    },
+  { label: 'Bronze Stove',   src: '/assets/stove_sprites/rare/bronze.png',   rarity: 'rare',      rarityLabel: 'Rare'      },
+  { label: 'Golden Stove',   src: '/assets/stove_sprites/epic/golden.png',   rarity: 'epic',      rarityLabel: 'Epic'      },
+  { label: 'Dragon Stove',   src: '/assets/stove_sprites/legendary/dragon.png',   rarity: 'legendary', rarityLabel: 'Legendary' },
+  { label: 'Earthbound Stove', src: '/assets/stove_sprites/secret/earthbound-stove.png', rarity: 'secret', rarityLabel: 'Secret' },
+];
+
+const DRAGON_DROPS: DragonDrop[] = [
+  { label: 'Dragon Stove', src: '/assets/stove_sprites/legendary/dragon.png' },
+  { label: 'Red Dragon Stove', src: '/assets/stove_sprites/legendary/red-dragon-stove.png' },
+  { label: 'White Dragon Stove', src: '/assets/stove_sprites/epic/white-dragon-stove.png' },
+  { label: 'Galactic Dragon Stove', src: '/assets/stove_sprites/secret/galactic-dragon-stove.png' },
+];
+
 @Component({
   selector: 'app-lootbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,12 +94,9 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   finalItem: LootItem | null = null;
   playerId: number | null = null;
 
-  readonly previewDrops = [
-    { label: 'Rusty Stove',    src: '/assets/stove_sprites/common/rusty.png',    rarity: 'common',    rarityLabel: 'Common'    },
-    { label: 'Bronze Stove',   src: '/assets/stove_sprites/rare/bronze.png',   rarity: 'rare',      rarityLabel: 'Rare'      },
-    { label: 'Golden Stove',   src: '/assets/stove_sprites/epic/golden.png',   rarity: 'epic',      rarityLabel: 'Epic'      },
-    { label: 'Dragon Stove',   src: '/assets/stove_sprites/legendary/dragon.png',   rarity: 'legendary', rarityLabel: 'Legendary' },
-  ];
+  readonly previewDrops = PREVIEW_DROPS;
+  readonly dragonDrops  = DRAGON_DROPS;
+  readonly dropRates    = DROP_RATES;
 
   readonly acquisitionLabels: Record<string, string> = {
     free: 'Free',
@@ -111,6 +164,8 @@ export class LootboxComponent implements AfterViewInit, OnInit {
           this.resultText.set('Selected lootbox is not available (it may be listed or already opened).');
           this.showPopup.set(true);
           this.selectedLootboxId.set(null);
+        } else {
+          this.selectedTypeName.set(this.getLootboxTypeName(found.lootboxTypeId));
         }
       }
     } catch (err) {
@@ -126,6 +181,37 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getLootboxTypeName(lootboxTypeId: number): string {
     return this.lootboxTypes().get(lootboxTypeId)?.name || 'Standard Lootbox';
+  }
+
+  getSelectedLootboxTypeId(): number | null {
+    const selectedId = this.selectedLootboxId();
+    if (selectedId === null) return null;
+    const box = this.availableLootboxes().find(b => b.lootboxId === selectedId);
+    return box?.lootboxTypeId ?? null;
+  }
+
+  isDragonCrate(): boolean {
+    return this.getSelectedLootboxTypeId() === 4;
+  }
+
+  getRatesLabel(): string {
+    const typeId = this.getSelectedLootboxTypeId();
+    if (typeId === null) return 'Standard Lootbox rates';
+    const name = this.getLootboxTypeName(typeId);
+    return `${name} rates`;
+  }
+
+  getDropRate(rarity: string): string {
+    const typeId = this.getSelectedLootboxTypeId() ?? 1; // default to Standard
+    if (typeId === 4) return rarity === 'dragon' ? '100%' : '0%';
+    const table = this.dropRates[typeId];
+    if (!table) return '-';
+    const entry = table.find(r => r.rarity === rarity);
+    return entry?.rate ?? '-';
+  }
+
+  getDragonDropRate(): string {
+    return '25%';
   }
 
   getAcquisitionLabel(how: string): string {
