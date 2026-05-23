@@ -41,6 +41,10 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     { achievementId: 'collector', label: 'Collector', description: 'Own 10+ stoves', category: 'collection' },
     { achievementId: 'collector_deluxe', label: 'Collector Deluxe', description: 'Own 50+ stoves', category: 'collection' },
     { achievementId: 'dragon_tamer', label: 'Dragon Tamer', description: 'Acquire 50+ stoves', category: 'collection' },
+    { achievementId: 'dragon_master', label: 'Dragon Master', description: 'Own 5+ Dragon collection stoves', category: 'collection' },
+    { achievementId: 'dragon_hoarder', label: 'Dragon Hoarder', description: 'Own 10+ Dragon collection stoves', category: 'collection' },
+    { achievementId: 'winter_wonderland', label: 'Winter Wonderland', description: 'Own 5+ Winter collection stoves', category: 'collection' },
+    { achievementId: 'frost_collector', label: 'Frost Collector', description: 'Own all Winter collection stoves', category: 'collection' },
     { achievementId: 'rare_hunter', label: 'Rare Hunter', description: 'Own a legendary or secret stove', category: 'collection' },
     // Market
     { achievementId: 'merchant', label: 'Merchant', description: 'Create 20+ listings', category: 'trade' },
@@ -195,6 +199,22 @@ export class AchievementEngine extends ServiceBase {
             { playerId }
         );
         const stoves = (await stovesStmt.get())?.count ?? 0;
+
+        const dragonStmt = this.unit.prepare<{ count: number }>(
+            `SELECT COUNT(DISTINCT s.stoveId)::INTEGER as count FROM Stove s
+             JOIN StoveType st ON s.typeId = st.typeId
+             WHERE s.currentOwnerId = @playerId AND st.collection = 'Dragon'`,
+            { playerId }
+        );
+        const dragonStoves = (await dragonStmt.get())?.count ?? 0;
+
+        const winterStmt = this.unit.prepare<{ count: number }>(
+            `SELECT COUNT(DISTINCT s.stoveId)::INTEGER as count FROM Stove s
+             JOIN StoveType st ON s.typeId = st.typeId
+             WHERE s.currentOwnerId = @playerId AND st.collection = 'Winter'`,
+            { playerId }
+        );
+        const winterStoves = (await winterStmt.get())?.count ?? 0;
         if (stoves >= 10) await this.unlock(playerId, 'collector');
         if (stoves >= 50) await this.unlock(playerId, 'collector_deluxe');
 
@@ -204,6 +224,24 @@ export class AchievementEngine extends ServiceBase {
         );
         const acquired = (await acquiredStmt.get())?.count ?? 0;
         if (acquired >= 50) await this.unlock(playerId, 'dragon_tamer');
+
+        // Collection-specific achievements (dragonStoves / winterStoves already queried above)
+        if (dragonStoves >= 5) await this.unlock(playerId, 'dragon_master');
+        if (dragonStoves >= 10) await this.unlock(playerId, 'dragon_hoarder');
+        if (winterStoves >= 5) await this.unlock(playerId, 'winter_wonderland');
+
+        const winterUniqueStmt = this.unit.prepare<{ count: number; total: number }>(
+            `SELECT COUNT(DISTINCT s.typeId)::INTEGER as count,
+                    (SELECT COUNT(*)::INTEGER FROM StoveType WHERE collection = 'Winter') as total
+             FROM Stove s
+             JOIN StoveType st ON s.typeId = st.typeId
+             WHERE s.currentOwnerId = @playerId AND st.collection = 'Winter'`,
+            { playerId }
+        );
+        const winterUnique = await winterUniqueStmt.get();
+        if (winterUnique && winterUnique.count >= winterUnique.total) {
+            await this.unlock(playerId, 'frost_collector');
+        }
 
         // Legendary/secret ownership
         const rareStmt = this.unit.prepare<{ count: number }>(
@@ -272,12 +310,12 @@ export class AchievementEngine extends ServiceBase {
         );
         const player = await playerStmt.get();
 
-        const statsStmt = this.unit.prepare<{ netWorthEstimate: number }>(
+        const playerStatsStmt = this.unit.prepare<{ netWorthEstimate: number }>(
             "SELECT netWorthEstimate FROM PlayerStatistics WHERE playerId = @playerId",
             { playerId }
         );
-        const stats = await statsStmt.get();
-        const netWorth = stats?.netWorthEstimate ?? 0;
+        const playerStats = await playerStatsStmt.get();
+        const netWorth = playerStats?.netWorthEstimate ?? 0;
 
         const tradesStmt = this.unit.prepare<{ count: number }>(
             `SELECT COUNT(*)::INTEGER as count FROM Trade t
@@ -305,6 +343,22 @@ export class AchievementEngine extends ServiceBase {
         );
         const stoves = (await stovesStmt.get())?.count ?? 0;
 
+        const dragonStmt = this.unit.prepare<{ count: number }>(
+            `SELECT COUNT(DISTINCT s.stoveId)::INTEGER as count FROM Stove s
+             JOIN StoveType st ON s.typeId = st.typeId
+             WHERE s.currentOwnerId = @playerId AND st.collection = 'Dragon'`,
+            { playerId }
+        );
+        const dragonStoves = (await dragonStmt.get())?.count ?? 0;
+
+        const winterStmt = this.unit.prepare<{ count: number }>(
+            `SELECT COUNT(DISTINCT s.stoveId)::INTEGER as count FROM Stove s
+             JOIN StoveType st ON s.typeId = st.typeId
+             WHERE s.currentOwnerId = @playerId AND st.collection = 'Winter'`,
+            { playerId }
+        );
+        const winterStoves = (await winterStmt.get())?.count ?? 0;
+
         // Fetch all catalog items with unlock conditions
         const themesStmt = this.unit.prepare<{ themeId: number; unlockCondition: string | null; unlockValue: number | null; minLevel: number }>(
             "SELECT themeId, unlockCondition, unlockValue, minLevel FROM GloryTheme WHERE unlockCondition IS NOT NULL"
@@ -320,10 +374,12 @@ export class AchievementEngine extends ServiceBase {
         const titles = await titlesStmt.all();
         const banners = await bannersStmt.all();
 
+        const unlockStats = { level, netWorth, trades, lootboxes, games, stoves, prestigeCount, dragonStoves, winterStoves };
+
         // Check themes
         for (const t of themes) {
             if (level < t.minLevel) continue;
-            if (this.meetsCondition(t.unlockCondition, t.unlockValue, { level, netWorth, trades, lootboxes, games, stoves, prestigeCount })) {
+            if (this.meetsCondition(t.unlockCondition, t.unlockValue, unlockStats)) {
                 try { await glorySvc.unlockTheme(playerId, t.themeId); } catch { /* already unlocked */ }
             }
         }
@@ -331,14 +387,14 @@ export class AchievementEngine extends ServiceBase {
         // Check titles
         for (const t of titles) {
             if (level < t.minLevel) continue;
-            if (this.meetsCondition(t.unlockCondition, t.unlockValue, { level, netWorth, trades, lootboxes, games, stoves, prestigeCount })) {
+            if (this.meetsCondition(t.unlockCondition, t.unlockValue, unlockStats)) {
                 try { await glorySvc.unlockTitle(playerId, t.titleId); } catch { /* already unlocked */ }
             }
         }
 
         // Check banners
         for (const b of banners) {
-            if (this.meetsCondition(b.unlockCondition, b.unlockValue, { level, netWorth, trades, lootboxes, games, stoves, prestigeCount })) {
+            if (this.meetsCondition(b.unlockCondition, b.unlockValue, unlockStats)) {
                 try { await glorySvc.unlockBanner(playerId, b.bannerId); } catch { /* already unlocked */ }
             }
         }
@@ -347,7 +403,7 @@ export class AchievementEngine extends ServiceBase {
     private meetsCondition(
         condition: string | null,
         value: number | null,
-        stats: { level: number; netWorth: number; trades: number; lootboxes: number; games: number; stoves: number; prestigeCount: number }
+        stats: { level: number; netWorth: number; trades: number; lootboxes: number; games: number; stoves: number; prestigeCount: number; dragonStoves: number; winterStoves: number }
     ): boolean {
         if (!condition) return true;
         const v = value ?? 0;
@@ -360,6 +416,8 @@ export class AchievementEngine extends ServiceBase {
             case 'stoves': return stats.stoves >= v;
             case 'prestige': return stats.prestigeCount >= v;
             case 'own_stove': return stats.stoves >= 1;
+            case 'own_dragon': return stats.dragonStoves >= v;
+            case 'own_winter': return stats.winterStoves >= v;
             case 'sales_revenue': return stats.netWorth >= v; // approximate
             case 'luckiest_win': return stats.netWorth >= v; // approximate
             default: return false;

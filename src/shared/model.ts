@@ -603,6 +603,19 @@ export interface GitHubRepoInfo {
     htmlUrl: string;
 }
 
+export interface GitHubCommitActivityWeek {
+    week: number;
+    total: number;
+}
+
+export type GitHubLanguages = Record<string, number>;
+
+export interface GitHubCodeFrequencyWeek {
+    week: number;
+    additions: number;
+    deletions: number;
+}
+
 // Forgery (Tradeup)
 export interface ForgeryRequest {
     stoveIds: number[];

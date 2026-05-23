@@ -4,6 +4,9 @@ import {
     GitHubContributor,
     GitHubRelease,
     GitHubRepoInfo,
+    GitHubCommitActivityWeek,
+    GitHubLanguages,
+    GitHubCodeFrequencyWeek,
 } from "../../shared/model";
 
 const OWNER = "LPuehringerStudent";
@@ -215,6 +218,80 @@ export class GitHubService {
 
             this.cache.set(cacheKey, info);
             return info;
+        } catch (err) {
+            handleAxiosError(err);
+        }
+    }
+
+    async getCommitActivity(): Promise<GitHubCommitActivityWeek[]> {
+        const cacheKey = "commit-activity";
+        const cached = this.cache.get<GitHubCommitActivityWeek[]>(cacheKey);
+        if (cached) return cached;
+
+        try {
+            let response = await this.client.get(
+                `/repos/${OWNER}/${REPO}/stats/commit_activity`
+            );
+            // GitHub may return 202 if stats are being computed; retry once after 2s
+            if (response.status === 202) {
+                await new Promise((r) => setTimeout(r, 2000));
+                response = await this.client.get(
+                    `/repos/${OWNER}/${REPO}/stats/commit_activity`
+                );
+            }
+            if (response.status === 202) {
+                return [];
+            }
+            const data = response.data as { week: number; total: number }[];
+            const activity = data.map((w) => ({ week: w.week, total: w.total }));
+            this.cache.set(cacheKey, activity);
+            return activity;
+        } catch (err) {
+            handleAxiosError(err);
+        }
+    }
+
+    async getLanguages(): Promise<GitHubLanguages> {
+        const cacheKey = "languages";
+        const cached = this.cache.get<GitHubLanguages>(cacheKey);
+        if (cached) return cached;
+
+        try {
+            const response = await this.client.get(`/repos/${OWNER}/${REPO}/languages`);
+            const languages = response.data as GitHubLanguages;
+            this.cache.set(cacheKey, languages);
+            return languages;
+        } catch (err) {
+            handleAxiosError(err);
+        }
+    }
+
+    async getCodeFrequency(): Promise<GitHubCodeFrequencyWeek[]> {
+        const cacheKey = "code-frequency";
+        const cached = this.cache.get<GitHubCodeFrequencyWeek[]>(cacheKey);
+        if (cached) return cached;
+
+        try {
+            let response = await this.client.get(
+                `/repos/${OWNER}/${REPO}/stats/code_frequency`
+            );
+            if (response.status === 202) {
+                await new Promise((r) => setTimeout(r, 2000));
+                response = await this.client.get(
+                    `/repos/${OWNER}/${REPO}/stats/code_frequency`
+                );
+            }
+            if (response.status === 202) {
+                return [];
+            }
+            const data = response.data as [number, number, number][];
+            const frequency = data.map((row) => ({
+                week: row[0],
+                additions: row[1],
+                deletions: Math.abs(row[2]),
+            }));
+            this.cache.set(cacheKey, frequency);
+            return frequency;
         } catch (err) {
             handleAxiosError(err);
         }

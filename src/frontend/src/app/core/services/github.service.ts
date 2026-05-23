@@ -6,6 +6,9 @@ import type {
   GitHubContributor,
   GitHubRelease,
   GitHubRepoInfo,
+  GitHubCommitActivityWeek,
+  GitHubLanguages,
+  GitHubCodeFrequencyWeek,
 } from '@shared/model';
 
 @Injectable({ providedIn: 'root' })
@@ -26,5 +29,17 @@ export class GithubService {
 
   getRepoInfo(): Observable<GitHubRepoInfo> {
     return this.api.get<GitHubRepoInfo>('/github/repo');
+  }
+
+  getCommitActivity(): Observable<GitHubCommitActivityWeek[]> {
+    return this.api.get<GitHubCommitActivityWeek[]>('/github/commit-activity');
+  }
+
+  getLanguages(): Observable<GitHubLanguages> {
+    return this.api.get<GitHubLanguages>('/github/languages');
+  }
+
+  getCodeFrequency(): Observable<GitHubCodeFrequencyWeek[]> {
+    return this.api.get<GitHubCodeFrequencyWeek[]>('/github/code-frequency');
   }
 }

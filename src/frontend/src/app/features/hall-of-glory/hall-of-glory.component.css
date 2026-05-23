@@ -371,6 +371,22 @@
   background: linear-gradient(90deg, #00e5ff, #2979ff, #d500f9);
 }
 
+.hero-banner.banner-dragon {
+  background: linear-gradient(135deg, #1a0a00 0%, #2e1a0a 50%, #1f0f00 100%);
+  border-color: #ff4500;
+}
+.hero-banner.banner-dragon::before {
+  background: linear-gradient(90deg, #ff4500, #ff8c00, #ffd700);
+}
+
+.hero-banner.banner-winter {
+  background: linear-gradient(135deg, #0a1a2e 0%, #0f2e4a 50%, #0a1f3a 100%);
+  border-color: #00e5ff;
+}
+.hero-banner.banner-winter::before {
+  background: linear-gradient(90deg, #00e5ff, #80deea, #e1f5fe);
+}
+
 /* =====================================
    Showcase Slot Heat Tiers
 ===================================== */

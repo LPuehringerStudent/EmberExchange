@@ -18,7 +18,9 @@
 .player-banner.banner-fire::before,
 .player-banner.banner-ice::before,
 .player-banner.banner-royal::before,
-.player-banner.banner-celebration::before {
+.player-banner.banner-celebration::before,
+.player-banner.banner-dragon::before,
+.player-banner.banner-winter::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -62,6 +64,16 @@
 .player-banner.banner-celebration::before {
   background: linear-gradient(90deg, #ff00cc, #333399);
   box-shadow: 0 0 8px rgba(255, 0, 204, 0.3);
+}
+
+.player-banner.banner-dragon::before {
+  background: linear-gradient(90deg, #ff4500, #ff8c00, #ffd700);
+  box-shadow: 0 0 8px rgba(255, 69, 0, 0.4);
+}
+
+.player-banner.banner-winter::before {
+  background: linear-gradient(90deg, #00e5ff, #80deea, #e1f5fe);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
 }
 
 @keyframes goldShimmer {

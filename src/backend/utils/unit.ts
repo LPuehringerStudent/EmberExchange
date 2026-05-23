@@ -1217,7 +1217,8 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
             { name: "Standard Lootbox", description: "A standard lootbox with common to legendary items", costCoins: 0, costFree: 1, dailyLimit: null, isAvailable: 1 },
             { name: "Golden Lootbox", description: "Increased odds for rare and epic items", costCoins: 500, costFree: 0, dailyLimit: 100, isAvailable: 1 },
             { name: "Legendary Crate", description: "Guaranteed legendary or limited item", costCoins: 5000, costFree: 0, dailyLimit: 20, isAvailable: 1 },
-            { name: "Dragon Crate", description: "Exclusively contains dragon stoves", costCoins: 2500, costFree: 0, dailyLimit: 5, isAvailable: 1 }
+            { name: "Dragon Crate", description: "Exclusively contains dragon stoves", costCoins: 2500, costFree: 0, dailyLimit: 5, isAvailable: 1 },
+            { name: "Winter Crate", description: "Guaranteed winter-themed stove", costCoins: 1500, costFree: 0, dailyLimit: 10, isAvailable: 1 }
         ];
         
         for (const type of types) {
@@ -1310,14 +1311,31 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
             { name: "Crystal Stove", imageUrl: "/assets/stove_sprites/legendary/crystal.png", rarity: "legendary", lootboxWeight: 3, collection: "Dragon", minHeat: 0.0, maxHeat: 0.45 },
             { name: "One of a Kind", imageUrl: "", rarity: "limited", lootboxWeight: 1, collection: "Special", minHeat: 0.0, maxHeat: 0.40 },
             { name: "Earthbound Stove", imageUrl: "/assets/stove_sprites/secret/earthbound-stove.png", rarity: "secret", lootboxWeight: 1, collection: "Nature", minHeat: 0.0, maxHeat: 0.25 },
-            { name: "Galactic Dragon Stove", imageUrl: "/assets/stove_sprites/secret/galactic-dragon-stove.png", rarity: "secret", lootboxWeight: 1, collection: "Dragon", minHeat: 0.0, maxHeat: 0.20 },
+            { name: "Galactic Dragon Stove", imageUrl: "/assets/stove_sprites/secret/galactic-dragon-stove.png", rarity: "legendary", lootboxWeight: 1, collection: "Dragon", minHeat: 0.0, maxHeat: 0.20 },
             { name: "Magic Stove", imageUrl: "/assets/stove_sprites/legendary/magic-stove.png", rarity: "legendary", lootboxWeight: 5, collection: "Special", minHeat: 0.0, maxHeat: 0.50 },
             { name: "Pinaple Stove", imageUrl: "/assets/stove_sprites/epic/pinaple-stove.png", rarity: "epic", lootboxWeight: 15, collection: "Special", minHeat: 0.0, maxHeat: 0.70 },
-            { name: "Red Dragon Stove", imageUrl: "/assets/stove_sprites/legendary/red-dragon-stove.png", rarity: "legendary", lootboxWeight: 5, collection: "Dragon", minHeat: 0.0, maxHeat: 0.50 },
+            { name: "Red Dragon Stove", imageUrl: "/assets/stove_sprites/legendary/red-dragon-stove.png", rarity: "epic", lootboxWeight: 5, collection: "Dragon", minHeat: 0.0, maxHeat: 0.50 },
             { name: "Upgraded Forest Stove", imageUrl: "/assets/stove_sprites/legendary/upgraded-forest-stove.png", rarity: "legendary", lootboxWeight: 5, collection: "Nature", minHeat: 0.0, maxHeat: 0.55 },
             { name: "Upgraded Steampunk Stove", imageUrl: "/assets/stove_sprites/legendary/upgraded-steampunk-stove.png", rarity: "legendary", lootboxWeight: 5, collection: "Industrial", minHeat: 0.0, maxHeat: 0.55 },
             { name: "White Blue Stove", imageUrl: "/assets/stove_sprites/rare/white-blue-stove.png", rarity: "rare", lootboxWeight: 40, collection: "Nature", minHeat: 0.0, maxHeat: 0.80 },
-            { name: "White Dragon Stove", imageUrl: "/assets/stove_sprites/epic/white-dragon-stove.png", rarity: "epic", lootboxWeight: 15, collection: "Dragon", minHeat: 0.0, maxHeat: 0.70 }
+            { name: "White Dragon Stove", imageUrl: "/assets/stove_sprites/epic/white-dragon-stove.png", rarity: "rare", lootboxWeight: 15, collection: "Dragon", minHeat: 0.0, maxHeat: 0.70 },
+            // Dragon collection expansion
+            { name: "Standard Dragon", imageUrl: "/assets/stove_sprites/new_stoves/standard-dragon.png", rarity: "common", lootboxWeight: 60, collection: "Dragon", minHeat: 0.0, maxHeat: 0.95 },
+            { name: "Dirt Dragon", imageUrl: "/assets/stove_sprites/new_stoves/dirt-dragon.png", rarity: "common", lootboxWeight: 35, collection: "Dragon", minHeat: 0.0, maxHeat: 0.80 },
+            { name: "Green Dragon", imageUrl: "/assets/stove_sprites/new_stoves/green-dragon.png", rarity: "rare", lootboxWeight: 15, collection: "Dragon", minHeat: 0.0, maxHeat: 0.65 },
+            { name: "Black Dragon", imageUrl: "/assets/stove_sprites/new_stoves/black-dragon.png", rarity: "epic", lootboxWeight: 4, collection: "Dragon", minHeat: 0.0, maxHeat: 0.50 },
+            { name: "Celestial Stove", imageUrl: "/assets/stove_sprites/new_stoves/celestial-stove.png", rarity: "legendary", lootboxWeight: 3, collection: "Special", minHeat: 0.0, maxHeat: 0.40 },
+            { name: "Shiny Celestial Dragon", imageUrl: "/assets/stove_sprites/new_stoves/shiny-celestial-dragon.png", rarity: "secret", lootboxWeight: 1, collection: "Dragon", minHeat: 0.0, maxHeat: 0.15 },
+            { name: "Shiny Earthbound Stove", imageUrl: "/assets/stove_sprites/new_stoves/shiny-earthbound-stove.png", rarity: "secret", lootboxWeight: 1, collection: "Nature", minHeat: 0.0, maxHeat: 0.20 },
+            // Winter event stoves
+            { name: "Mistle Stove", imageUrl: "/assets/stove_sprites/winter_stove/mistle_stove.png", rarity: "rare", lootboxWeight: 70, collection: "Winter", minHeat: 0.0, maxHeat: 0.90 },
+            { name: "Pine Stove", imageUrl: "/assets/stove_sprites/winter_stove/pine_stove.png", rarity: "common", lootboxWeight: 70, collection: "Winter", minHeat: 0.0, maxHeat: 0.90 },
+            { name: "Snowman Stove", imageUrl: "/assets/stove_sprites/winter_stove/snowman_stove.png", rarity: "common", lootboxWeight: 65, collection: "Winter", minHeat: 0.0, maxHeat: 0.85 },
+            { name: "Lantern Stove", imageUrl: "/assets/stove_sprites/winter_stove/lantern_stove.png", rarity: "rare", lootboxWeight: 40, collection: "Winter", minHeat: 0.0, maxHeat: 0.80 },
+            { name: "Pinetree Stove", imageUrl: "/assets/stove_sprites/winter_stove/pinetree_stove.png", rarity: "epic", lootboxWeight: 35, collection: "Winter", minHeat: 0.0, maxHeat: 0.75 },
+            { name: "Festival Stove", imageUrl: "/assets/stove_sprites/winter_stove/festival_stove.png", rarity: "secret", lootboxWeight: 15, collection: "Winter", minHeat: 0.0, maxHeat: 0.60 },
+            { name: "Snowgod Stove", imageUrl: "/assets/stove_sprites/winter_stove/snowgod_stove.png", rarity: "epic", lootboxWeight: 4, collection: "Winter", minHeat: 0.0, maxHeat: 0.45 },
+            { name: "Ultimate Snowman Stove", imageUrl: "/assets/stove_sprites/winter_stove/ultimate_snowman_stove.png", rarity: "legendary", lootboxWeight: 3, collection: "Winter", minHeat: 0.0, maxHeat: 0.40 }
         ];
         
         for (const stove of stoves) {
@@ -1569,6 +1587,8 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
             { titleId: 'tycoon', label: 'Tycoon', animation: 'shimmer', unlockCondition: 'net_worth', unlockValue: 500000, minLevel: 30 },
             { titleId: 'prestige', label: 'Prestigious', animation: 'rainbow', unlockCondition: 'prestige', unlockValue: 1, minLevel: 1 },
             { titleId: 'veteran', label: 'Veteran', animation: 'glow', unlockCondition: 'level', unlockValue: 25, minLevel: 25 },
+            { titleId: 'dragon_lord', label: 'Dragon Lord', animation: 'rainbow', unlockCondition: 'own_dragon', unlockValue: 3, minLevel: 1 },
+            { titleId: 'winter_spirit', label: 'Winter Spirit', animation: 'shimmer', unlockCondition: 'own_winter', unlockValue: 3, minLevel: 1 },
         ];
         for (const t of titles) {
             await unit.prepare(
@@ -1588,6 +1608,8 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
             { name: 'Flames', cssClass: 'banner-flames', unlockCondition: 'trades', unlockValue: 10 },
             { name: 'Royal', cssClass: 'banner-royal', unlockCondition: 'level', unlockValue: 60 },
             { name: 'Neon', cssClass: 'banner-neon', unlockCondition: 'games_played', unlockValue: 25 },
+            { name: 'Dragon Scales', cssClass: 'banner-dragon', unlockCondition: 'own_dragon', unlockValue: 3 },
+            { name: 'Winter Frost', cssClass: 'banner-winter', unlockCondition: 'own_winter', unlockValue: 3 },
         ];
         for (const b of banners) {
             await unit.prepare(
@@ -1799,7 +1821,8 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
             { itemType: "stove", itemId: 2, price: 800, stock: 5, rotationDate: null, isFeatured: 0 },
             { itemType: "lootbox", itemId: 1, price: 300, stock: -1, rotationDate: null, isFeatured: 0 },
             { itemType: "lootbox", itemId: 2, price: 600, stock: 20, rotationDate: null, isFeatured: 1 },
-            { itemType: "lootbox", itemId: 4, price: 2500, stock: 10, rotationDate: null, isFeatured: 0 }
+            { itemType: "lootbox", itemId: 4, price: 2500, stock: 10, rotationDate: null, isFeatured: 0 },
+            { itemType: "lootbox", itemId: 5, price: 1500, stock: 15, rotationDate: null, isFeatured: 0 }
         ];
         for (const listing of listings) {
             const stmt = unit.prepare<unknown, { itemType: string; itemId: number; price: number; stock: number; rotationDate: string | null; isFeatured: number; createdAt: string }>(

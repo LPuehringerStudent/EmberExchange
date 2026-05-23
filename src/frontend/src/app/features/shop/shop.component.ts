@@ -242,7 +242,10 @@ export class ShopComponent implements OnInit {
     if (item.itemType === 'lootbox') {
       const name = item.name?.toLowerCase() || '';
       if (name.includes('dragon')) {
-        return 'assets/stove_sprites/legendary/red-dragon-stove.png';
+        return 'assets/animation/dragon-chest-idle-animation.gif';
+      }
+      if (name.includes('winter')) {
+        return 'assets/animation/winter-chest-idle-animation.gif';
       }
       if (name.includes('legendary')) {
         return 'assets/animation/legendary-chest-idle-animation.gif';

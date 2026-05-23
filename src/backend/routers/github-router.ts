@@ -157,3 +157,36 @@ githubRouter.get("/github/repo", async (_req, res) => {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: message });
     }
 });
+
+githubRouter.get("/github/commit-activity", async (_req, res) => {
+    try {
+        const activity = await service.getCommitActivity();
+        res.status(StatusCodes.OK).json(activity);
+    } catch (err) {
+        console.error("[GitHub] getCommitActivity error:", err);
+        const message = err instanceof Error ? err.message : "Failed to fetch commit activity from GitHub";
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: message });
+    }
+});
+
+githubRouter.get("/github/languages", async (_req, res) => {
+    try {
+        const languages = await service.getLanguages();
+        res.status(StatusCodes.OK).json(languages);
+    } catch (err) {
+        console.error("[GitHub] getLanguages error:", err);
+        const message = err instanceof Error ? err.message : "Failed to fetch languages from GitHub";
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: message });
+    }
+});
+
+githubRouter.get("/github/code-frequency", async (_req, res) => {
+    try {
+        const frequency = await service.getCodeFrequency();
+        res.status(StatusCodes.OK).json(frequency);
+    } catch (err) {
+        console.error("[GitHub] getCodeFrequency error:", err);
+        const message = err instanceof Error ? err.message : "Failed to fetch code frequency from GitHub";
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: message });
+    }
+});

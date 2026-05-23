@@ -22,6 +22,8 @@ export interface PreviewDrop {
 export interface DragonDrop {
   label: string;
   src: string;
+  rarity: string;
+  rarityLabel: string;
 }
 
 const DROP_RATES: Record<number, DropRateEntry[]> = {
@@ -46,6 +48,13 @@ const DROP_RATES: Record<number, DropRateEntry[]> = {
     { rarity: 'legendary', rate: '30%' },
     { rarity: 'secret', rate: '5%' },
   ],
+  5: [ // Winter Crate
+    { rarity: 'common', rate: '50%' },
+    { rarity: 'rare', rate: '30%' },
+    { rarity: 'epic', rate: '15%' },
+    { rarity: 'legendary', rate: '5%' },
+    { rarity: 'secret', rate: '0%' },
+  ],
 };
 
 const PREVIEW_DROPS: PreviewDrop[] = [
@@ -57,10 +66,26 @@ const PREVIEW_DROPS: PreviewDrop[] = [
 ];
 
 const DRAGON_DROPS: DragonDrop[] = [
-  { label: 'Dragon Stove', src: '/assets/stove_sprites/legendary/dragon.png' },
-  { label: 'Red Dragon Stove', src: '/assets/stove_sprites/legendary/red-dragon-stove.png' },
-  { label: 'White Dragon Stove', src: '/assets/stove_sprites/epic/white-dragon-stove.png' },
-  { label: 'Galactic Dragon Stove', src: '/assets/stove_sprites/secret/galactic-dragon-stove.png' },
+  { label: 'Dragon Stove',            src: '/assets/stove_sprites/legendary/dragon.png',                   rarity: 'legendary', rarityLabel: 'Legendary' },
+  { label: 'Red Dragon Stove',        src: '/assets/stove_sprites/legendary/red-dragon-stove.png',         rarity: 'epic',      rarityLabel: 'Epic' },
+  { label: 'White Dragon Stove',      src: '/assets/stove_sprites/epic/white-dragon-stove.png',           rarity: 'rare',      rarityLabel: 'Rare' },
+  { label: 'Galactic Dragon Stove',   src: '/assets/stove_sprites/secret/galactic-dragon-stove.png',       rarity: 'legendary', rarityLabel: 'Legendary' },
+  { label: 'Standard Dragon',         src: '/assets/stove_sprites/new_stoves/standard-dragon.png',         rarity: 'common',    rarityLabel: 'Common' },
+  { label: 'Dirt Dragon',             src: '/assets/stove_sprites/new_stoves/dirt-dragon.png',             rarity: 'common',    rarityLabel: 'Common' },
+  { label: 'Green Dragon',            src: '/assets/stove_sprites/new_stoves/green-dragon.png',            rarity: 'rare',      rarityLabel: 'Rare' },
+  { label: 'Black Dragon',            src: '/assets/stove_sprites/new_stoves/black-dragon.png',            rarity: 'epic',      rarityLabel: 'Epic' },
+  { label: 'Shiny Celestial Dragon',  src: '/assets/stove_sprites/new_stoves/shiny-celestial-dragon.png',  rarity: 'secret',    rarityLabel: 'Secret' },
+];
+
+const WINTER_DROPS: DragonDrop[] = [
+  { label: 'Mistle Stove',           src: '/assets/stove_sprites/winter_stove/mistle_stove.png',           rarity: 'rare',      rarityLabel: 'Rare' },
+  { label: 'Pine Stove',             src: '/assets/stove_sprites/winter_stove/pine_stove.png',             rarity: 'common',    rarityLabel: 'Common' },
+  { label: 'Snowman Stove',          src: '/assets/stove_sprites/winter_stove/snowman_stove.png',          rarity: 'common',    rarityLabel: 'Common' },
+  { label: 'Lantern Stove',          src: '/assets/stove_sprites/winter_stove/lantern_stove.png',          rarity: 'rare',      rarityLabel: 'Rare' },
+  { label: 'Pinetree Stove',         src: '/assets/stove_sprites/winter_stove/pinetree_stove.png',         rarity: 'epic',      rarityLabel: 'Epic' },
+  { label: 'Festival Stove',         src: '/assets/stove_sprites/winter_stove/festival_stove.png',         rarity: 'secret',    rarityLabel: 'Secret' },
+  { label: 'Snowgod Stove',          src: '/assets/stove_sprites/winter_stove/snowgod_stove.png',          rarity: 'epic',      rarityLabel: 'Epic' },
+  { label: 'Ultimate Snowman Stove', src: '/assets/stove_sprites/winter_stove/ultimate_snowman_stove.png', rarity: 'legendary', rarityLabel: 'Legendary' },
 ];
 
 @Component({
@@ -96,6 +121,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   readonly previewDrops = PREVIEW_DROPS;
   readonly dragonDrops  = DRAGON_DROPS;
+  readonly winterDrops  = WINTER_DROPS;
   readonly dropRates    = DROP_RATES;
 
   readonly acquisitionLabels: Record<string, string> = {
@@ -194,6 +220,10 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     return this.getSelectedLootboxTypeId() === 4;
   }
 
+  isWinterCrate(): boolean {
+    return this.getSelectedLootboxTypeId() === 5;
+  }
+
   getRatesLabel(): string {
     const typeId = this.getSelectedLootboxTypeId();
     if (typeId === null) return 'Standard Lootbox rates';
@@ -203,7 +233,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getDropRate(rarity: string): string {
     const typeId = this.getSelectedLootboxTypeId() ?? 1; // default to Standard
-    if (typeId === 4) return rarity === 'dragon' ? '100%' : '0%';
+    if (typeId === 4 || typeId === 5) return '100%';
     const table = this.dropRates[typeId];
     if (!table) return '-';
     const entry = table.find(r => r.rarity === rarity);
@@ -211,7 +241,11 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   }
 
   getDragonDropRate(): string {
-    return '25%';
+    return '100%';
+  }
+
+  getWinterDropRate(): string {
+    return '100%';
   }
 
   getAcquisitionLabel(how: string): string {
@@ -220,6 +254,12 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getSelectorChestImage(typeName: string): string {
     const name = typeName.toLowerCase();
+    if (name.includes('dragon')) {
+      return 'assets/animation/dragon-chest-idle-animation.gif';
+    }
+    if (name.includes('winter')) {
+      return 'assets/animation/winter-chest-idle-animation.gif';
+    }
     if (name.includes('legendary')) {
       return 'assets/animation/legendary-chest-idle-animation.gif';
     }
@@ -244,6 +284,12 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getChestImage(): string {
     const typeName = this.selectedTypeName().toLowerCase();
+    if (typeName.includes('dragon')) {
+      return 'assets/animation/dragon-chest-idle-animation.gif';
+    }
+    if (typeName.includes('winter')) {
+      return 'assets/animation/winter-chest-idle-animation.gif';
+    }
     if (typeName.includes('legendary')) {
       return 'assets/animation/legendary-chest-idle-animation.gif';
     }
@@ -255,6 +301,12 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getOpeningImage(): string {
     const typeName = this.selectedTypeName().toLowerCase();
+    if (typeName.includes('dragon')) {
+      return 'assets/animation/dragon-chest-opening-animation.gif';
+    }
+    if (typeName.includes('winter')) {
+      return 'assets/animation/winter-chest-opening-animation.gif';
+    }
     if (typeName.includes('legendary')) {
       return 'assets/animation/legendary-chest-open-animation.gif';
     }

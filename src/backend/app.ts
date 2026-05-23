@@ -177,20 +177,21 @@ if (require.main === module) {
 async function initDb(): Promise<void> {
     let unit: Unit | null = null;
     try {
+        // Phase 1: Create tables in a separate transaction so DDL persists
+        // even if seeding fails later
         unit = await Unit.create(false);
-        
-        // Reset database only when explicitly requested
         if (process.env.RESET_DB === "true") {
             const connection = unit.getConnection();
             await resetDatabase(connection);
         } else {
             await DB.ensureTablesCreated(unit.getConnection());
         }
-        
-        // Insert sample data if tables are empty
+        await unit.complete(true);
+
+        // Phase 2: Seed data in a fresh transaction
+        unit = await Unit.create(false);
         await ensureSampleDataInserted(unit);
         console.log("✅ Database initialized and sample data ready");
-        
         await unit.complete(true);
     } catch (error) {
         console.error("Database initialization failed:", error);

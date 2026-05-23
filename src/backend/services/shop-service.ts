@@ -112,7 +112,23 @@ export class ShopService {
         const lootboxStmt = this.unit.prepare<ShopItemDisplay>(
             `SELECT sl.listingId, sl.itemType, sl.itemId, sl.price, sl.stock,
                     sl.rotationDate, sl.isFeatured, sl.createdAt,
-                    lt.name, 'assets/animation/chest-idle.gif' as imageUrl, 'common' as rarity
+                    lt.name,
+                    CASE lt.lootboxTypeId
+                        WHEN 1 THEN 'assets/animation/chest-idle.gif'
+                        WHEN 2 THEN 'assets/animation/chest-idle-gold.gif'
+                        WHEN 3 THEN 'assets/animation/legendary-chest-idle-animation.gif'
+                        WHEN 4 THEN 'assets/animation/dragon-chest-idle-animation.gif'
+                        WHEN 5 THEN 'assets/animation/winter-chest-idle-animation.gif'
+                        ELSE 'assets/animation/chest-idle.gif'
+                    END as imageUrl,
+                    CASE lt.lootboxTypeId
+                        WHEN 1 THEN 'common'
+                        WHEN 2 THEN 'rare'
+                        WHEN 3 THEN 'epic'
+                        WHEN 4 THEN 'legendary'
+                        WHEN 5 THEN 'epic'
+                        ELSE 'common'
+                    END as rarity
              FROM ShopListing sl
              JOIN LootboxType lt ON sl.itemId = lt.lootboxTypeId
              WHERE sl.itemType = 'lootbox'
@@ -151,7 +167,23 @@ export class ShopService {
         const lootboxStmt = this.unit.prepare<ShopItemDisplay, { listingId: number }>(
             `SELECT sl.listingId, sl.itemType, sl.itemId, sl.price, sl.stock,
                     sl.rotationDate, sl.isFeatured, sl.createdAt,
-                    lt.name, 'assets/animation/chest-idle.gif' as imageUrl, 'common' as rarity
+                    lt.name,
+                    CASE lt.lootboxTypeId
+                        WHEN 1 THEN 'assets/animation/chest-idle.gif'
+                        WHEN 2 THEN 'assets/animation/chest-idle-gold.gif'
+                        WHEN 3 THEN 'assets/animation/legendary-chest-idle-animation.gif'
+                        WHEN 4 THEN 'assets/animation/dragon-chest-idle-animation.gif'
+                        WHEN 5 THEN 'assets/animation/winter-chest-idle-animation.gif'
+                        ELSE 'assets/animation/chest-idle.gif'
+                    END as imageUrl,
+                    CASE lt.lootboxTypeId
+                        WHEN 1 THEN 'common'
+                        WHEN 2 THEN 'rare'
+                        WHEN 3 THEN 'epic'
+                        WHEN 4 THEN 'legendary'
+                        WHEN 5 THEN 'epic'
+                        ELSE 'common'
+                    END as rarity
              FROM ShopListing sl
              JOIN LootboxType lt ON sl.itemId = lt.lootboxTypeId
              WHERE sl.listingId = @listingId AND sl.itemType = 'lootbox'`,

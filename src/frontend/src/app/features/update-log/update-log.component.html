@@ -7,6 +7,7 @@
       <div class="flex-1 h-10 rounded-[10px] skeleton-shimmer"></div>
       <div class="flex-1 h-10 rounded-[10px] skeleton-shimmer"></div>
       <div class="flex-1 h-10 rounded-[10px] skeleton-shimmer"></div>
+      <div class="flex-1 h-10 rounded-[10px] skeleton-shimmer"></div>
     </div>
     <div class="flex flex-col gap-4">
       <div class="h-[160px] rounded-2xl skeleton-shimmer"></div>
@@ -199,6 +200,117 @@
                 <a [href]="release.htmlUrl" target="_blank" rel="noopener" class="text-accent text-[13px] font-semibold no-underline hover:opacity-80 hover:underline transition-all duration-200">
                   View release on GitHub
                 </a>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Insights Tab -->
+    @if (activeTab() === 'insights') {
+      <section>
+        <header class="mb-6">
+          <h2 class="text-lg font-semibold m-0 mb-1 text-text-primary">Insights</h2>
+          <p class="m-0 text-text-muted text-sm">Repository analytics and development trends</p>
+        </header>
+
+        @if (insightsLoading()) {
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="h-24 rounded-2xl skeleton-shimmer"></div>
+            <div class="h-24 rounded-2xl skeleton-shimmer"></div>
+            <div class="h-24 rounded-2xl skeleton-shimmer"></div>
+            <div class="h-24 rounded-2xl skeleton-shimmer"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="h-64 rounded-2xl skeleton-shimmer"></div>
+            <div class="h-64 rounded-2xl skeleton-shimmer"></div>
+          </div>
+          <div class="h-80 rounded-2xl skeleton-shimmer mb-4"></div>
+        } @else {
+          <!-- Stat Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-surface rounded-2xl px-5 py-4 border border-border shadow-[0_4px_16px_var(--shadow-color)]">
+              <div class="text-2xl font-bold text-accent m-0 mb-1">{{ totalCommits() }}</div>
+              <div class="text-xs text-text-muted uppercase tracking-wide font-medium">Total commits</div>
+            </div>
+            <div class="bg-surface rounded-2xl px-5 py-4 border border-border shadow-[0_4px_16px_var(--shadow-color)]">
+              <div class="text-2xl font-bold text-accent m-0 mb-1">{{ avgCommitsPerWeek() }}</div>
+              <div class="text-xs text-text-muted uppercase tracking-wide font-medium">Avg / week</div>
+            </div>
+            <div class="bg-surface rounded-2xl px-5 py-4 border border-border shadow-[0_4px_16px_var(--shadow-color)]">
+              <div class="text-2xl font-bold text-accent m-0 mb-1">{{ activeContributors() }}</div>
+              <div class="text-xs text-text-muted uppercase tracking-wide font-medium">Contributors</div>
+            </div>
+            <div class="bg-surface rounded-2xl px-5 py-4 border border-border shadow-[0_4px_16px_var(--shadow-color)]">
+              <div class="text-2xl font-bold text-accent m-0 mb-1">{{ daysSinceLastCommit() }}</div>
+              <div class="text-xs text-text-muted uppercase tracking-wide font-medium">Days since commit</div>
+            </div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <!-- Commit Activity -->
+            <div class="bg-surface rounded-2xl p-5 border border-border shadow-[0_4px_16px_var(--shadow-color)]">
+              <h3 class="text-sm font-semibold text-text-primary m-0 mb-4">Commit Activity</h3>
+              @if (commitActivityChartConfig(); as config) {
+                <div class="h-56">
+                  <app-chart [config]="config" />
+                </div>
+              } @else {
+                <p class="text-text-muted text-sm py-8 text-center">No activity data available.</p>
+              }
+            </div>
+
+            <!-- Languages -->
+            <div class="bg-surface rounded-2xl p-5 border border-border shadow-[0_4px_16px_var(--shadow-color)]">
+              <h3 class="text-sm font-semibold text-text-primary m-0 mb-4">Languages</h3>
+              @if (languagesChartConfig(); as config) {
+                <div class="h-56">
+                  <app-chart [config]="config" />
+                </div>
+              } @else {
+                <p class="text-text-muted text-sm py-8 text-center">No language data available.</p>
+              }
+            </div>
+          </div>
+
+          <!-- Code Velocity -->
+          <div class="bg-surface rounded-2xl p-5 border border-border shadow-[0_4px_16px_var(--shadow-color)] mb-6">
+            <h3 class="text-sm font-semibold text-text-primary m-0 mb-4">Code Velocity</h3>
+            @if (codeFrequencyChartConfig(); as config) {
+              <div class="h-72">
+                <app-chart [config]="config" />
+              </div>
+            } @else {
+              <p class="text-text-muted text-sm py-8 text-center">No code frequency data available.</p>
+            }
+          </div>
+
+          <!-- Contributor Breakdown -->
+          <div class="bg-surface rounded-2xl p-5 border border-border shadow-[0_4px_16px_var(--shadow-color)]">
+            <h3 class="text-sm font-semibold text-text-primary m-0 mb-4">Contributor Breakdown</h3>
+            @if (contributors().length === 0) {
+              <p class="text-text-muted text-sm py-4 text-center">No contributor data available.</p>
+            } @else {
+              <div class="flex flex-col gap-3">
+                @for (c of contributors(); track c.login) {
+                  <div class="flex items-center gap-3">
+                    <img [src]="c.avatarUrl" [alt]="c.login" class="w-8 h-8 rounded-full border border-border shrink-0" />
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="text-[13px] font-medium text-text-primary truncate">{{ c.login }}</span>
+                        <span class="text-xs text-text-muted shrink-0 ml-2">{{ c.contributions }} commits ({{ contributorPercentage(c) }}%)</span>
+                      </div>
+                      <div class="h-2 bg-surface-secondary rounded-full overflow-hidden">
+                        <div
+                          class="h-full bg-accent rounded-full transition-all duration-500"
+                          [style.width.%]="contributorPercentage(c)"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
             }
           </div>

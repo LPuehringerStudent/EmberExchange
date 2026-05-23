@@ -34,6 +34,13 @@ const DROP_TABLES: Record<number, DropTable[]> = {
     ],
     4: [ // Dragon Crate
         { rarity: 'dragon', weight: 100 }
+    ],
+    5: [ // Winter Crate
+        { rarity: 'common', weight: 50 },
+        { rarity: 'rare', weight: 30 },
+        { rarity: 'epic', weight: 15 },
+        { rarity: 'legendary', weight: 5 },
+        { rarity: 'secret', weight: 0 }
     ]
 };
 
@@ -65,6 +72,16 @@ export class LootboxService extends ServiceBase {
     private async pickDragonStoveType(): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
         const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number }>(
             "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE LOWER(name) LIKE '%dragon%'",
+            {}
+        );
+        const rows = await stmt.all();
+        if (rows.length === 0) return null;
+        return rows[Math.floor(Math.random() * rows.length)];
+    }
+
+    private async pickWinterStoveType(): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
+        const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number }>(
+            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE collection = 'Winter'",
             {}
         );
         const rows = await stmt.all();
@@ -249,6 +266,9 @@ export class LootboxService extends ServiceBase {
         if (lootbox.lootboxTypeId === 4) {
             // Dragon Crate: exclusively dragon stoves
             stoveType = await this.pickDragonStoveType();
+        } else if (lootbox.lootboxTypeId === 5) {
+            // Winter Crate: exclusively winter-themed stoves
+            stoveType = await this.pickWinterStoveType();
         } else {
             const dropTable = DROP_TABLES[lootbox.lootboxTypeId] ?? DROP_TABLES[1];
             const rarity = this.weightedRarity(dropTable);
