@@ -1,6 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { LootboxDropService } from "../services/lootbox-drop-service";
+import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 
@@ -373,7 +374,7 @@ lootboxDropRouter.get("/players/:playerId/lootbox-drops", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.post("/lootbox-drops", async (req, res) => {
+lootboxDropRouter.post("/lootbox-drops", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxDropService(unit);
     let ok = false;

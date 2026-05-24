@@ -21,6 +21,8 @@ export interface Player {
     provider: 'google' | 'github' | null;
     providerId: string | null;
     totpEnabled: boolean;
+    bannedAt: Date | null;
+    banReason: string | null;
 }
 
 export interface PlayerRow extends Player {

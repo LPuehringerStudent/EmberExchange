@@ -116,6 +116,13 @@ authRouter.post("/auth/login", async (req, res) => {
             return;
         }
 
+        // Reject banned players
+        if (player.bannedAt) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Account banned", reason: player.banReason || "No reason provided" });
+            await unit.complete(false);
+            return;
+        }
+
         // Check if 2FA is enabled
         const twoFactorService = new TwoFactorService(unit);
         const totpEnabled = await twoFactorService.isEnabled(player.playerId);
@@ -1135,6 +1142,15 @@ authRouter.post("/auth/2fa/verify", async (req, res) => {
         const result = await twoFactorService.verifyToken(playerId, token);
         if (!result.success) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: result.message });
+            await unit.complete(false);
+            return;
+        }
+
+        // Reject banned players even after 2FA
+        const playerService = new PlayerService(unit);
+        const player = await playerService.getInfoByID(playerId);
+        if (player && player.bannedAt) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Account banned", reason: player.banReason || "No reason provided" });
             await unit.complete(false);
             return;
         }

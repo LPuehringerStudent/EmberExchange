@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { ShopService } from "../services/shop-service";
 import { ShopRotationService } from "../services/shop-rotation-service";
 import { SessionService } from "../services/session-service";
+import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
 
 export const shopRouter = express.Router();
@@ -288,24 +289,10 @@ shopRouter.post("/shop/sell", async (req, res) => {
  *       500:
  *         description: Server error
  */
-shopRouter.post("/shop/rotate", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+shopRouter.post("/shop/rotate", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
         const rotationService = new ShopRotationService(unit);
         const result = await rotationService.rotate();
         await unit.complete(true);
