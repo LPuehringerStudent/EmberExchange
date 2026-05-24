@@ -1,11 +1,10 @@
 const { Client } = require('pg');
 
 const client = new Client({
-  host: 'localhost',
-  port: 5432,
-  database: 'emberexchange',
-  user: 'ember',
-  password: 'ember'
+  connectionString: process.env.DATABASE_URL || 'postgresql://ember:ember@localhost:5432/emberexchange',
+  ssl: process.env.DATABASE_URL?.includes('neon.tech') || process.env.DATABASE_URL?.includes('aws.neon.tech')
+    ? { rejectUnauthorized: false }
+    : false
 });
 
 async function run() {
