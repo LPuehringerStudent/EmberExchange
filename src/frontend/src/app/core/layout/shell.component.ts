@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
+import { NotificationBellComponent } from '../../shared/components/notification-bell.component';
 
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, NotificationBellComponent],
   templateUrl: './shell.component.html',
   styleUrls: ['./shell.component.css']
 })

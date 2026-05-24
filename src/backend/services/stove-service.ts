@@ -36,9 +36,9 @@ export class StoveService extends ServiceBase {
      * @param playerId - The owner's unique ID.
      * @returns An array of StoveRow objects belonging to the player.
      */
-    async getStovesByOwnerId(playerId: number): Promise<(StoveRow & { imageUrl: string })[]> {
-        const stmt = this.unit.prepare<StoveRow & { imageUrl: string }>(
-            `SELECT Stove.*, StoveType.imageUrl
+    async getStovesByOwnerId(playerId: number): Promise<(StoveRow & { imageUrl: string; name: string; rarity: string })[]> {
+        const stmt = this.unit.prepare<StoveRow & { imageUrl: string; name: string; rarity: string }>(
+            `SELECT Stove.*, StoveType.imageUrl, StoveType.name, StoveType.rarity
              FROM Stove
              JOIN StoveType ON Stove.typeId = StoveType.typeId
              WHERE Stove.currentOwnerId = @playerId`,
@@ -68,10 +68,20 @@ export class StoveService extends ServiceBase {
      *          and the second element is the new stove's ID (if successful).
      */
     async createStove(typeId: number, currentOwnerId: number): Promise<[boolean, number]> {
+        // Fetch stove type heat range
+        const typeStmt = this.unit.prepare<{ minHeat: number; maxHeat: number }>(
+            "SELECT minHeat, maxHeat FROM StoveType WHERE typeId = @typeId",
+            { typeId }
+        );
+        const typeRow = await typeStmt.get();
+        const heatLevel = typeRow
+            ? typeRow.minHeat + Math.random() * (typeRow.maxHeat - typeRow.minHeat)
+            : 0.0;
+
         const stmt = this.unit.prepare<StoveRow>(
-            `INSERT INTO Stove (typeId, currentOwnerId, mintedAt) 
-             VALUES (@typeId, @currentOwnerId, NOW())`,
-            { typeId, currentOwnerId }
+            `INSERT INTO Stove (typeId, currentOwnerId, mintedAt, heatLevel) 
+             VALUES (@typeId, @currentOwnerId, NOW(), @heatLevel)`,
+            { typeId, currentOwnerId, heatLevel }
         );
         return await this.executeStmt(stmt);
     }
@@ -117,6 +127,34 @@ export class StoveService extends ServiceBase {
         );
         const result = await stmt.get();
         return result?.count ?? 0;
+    }
+
+    /**
+     * Retrieves the top N rarest stoves owned by a player, sorted by rarity descending.
+     * @param playerId - The owner's unique ID.
+     * @param limit - Maximum number of stoves to return (default 6).
+     * @returns An array of stove objects with type details.
+     */
+    async getTopStovesByRarity(playerId: number, limit: number = 6): Promise<(StoveRow & { imageUrl: string; name: string; rarity: string })[]> {
+        const stmt = this.unit.prepare<StoveRow & { imageUrl: string; name: string; rarity: string }>(
+            `SELECT Stove.*, StoveType.imageUrl, StoveType.name, StoveType.rarity
+             FROM Stove
+             JOIN StoveType ON Stove.typeId = StoveType.typeId
+             WHERE Stove.currentOwnerId = @playerId
+             ORDER BY CASE StoveType.rarity
+               WHEN 'common' THEN 0
+               WHEN 'uncommon' THEN 1
+               WHEN 'rare' THEN 2
+               WHEN 'epic' THEN 3
+               WHEN 'legendary' THEN 4
+               WHEN 'limited' THEN 5
+               WHEN 'secret' THEN 6
+               ELSE -1
+             END DESC
+             LIMIT @limit`,
+            { playerId, limit }
+        );
+        return await stmt.all();
     }
 
     /**

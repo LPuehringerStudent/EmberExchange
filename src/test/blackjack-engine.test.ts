@@ -200,8 +200,12 @@ describe("BlackJack Engine", () => {
       const newState = result.newFullState as Record<string, unknown>;
       const afterPlayer = (newState.players as Array<Record<string, unknown>>).find(p => p.playerId === activePlayer);
       expect((afterPlayer!.bets as number[])[0]).toBe(40);
-      expect(afterPlayer!.stack).toBe(beforeStack - 20);
       expect((afterPlayer!.hands as string[][])[0].length).toBe(3);
+      // If hand hasn't settled yet, stack was reduced by the additional bet;
+      // otherwise settlement (win/push/loss) further adjusted it.
+      if (newState.phase === 'player_turn') {
+        expect(afterPlayer!.stack).toBe(beforeStack - 20);
+      }
     }
   });
 

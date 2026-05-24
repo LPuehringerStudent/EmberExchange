@@ -1,0 +1,578 @@
+/* =====================================
+   Hero Banner
+===================================== */
+.hero-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), #f48c06);
+}
+
+/* =====================================
+   Avatar
+===================================== */
+.avatar-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: var(--accent);
+  border-right-color: var(--accent);
+  animation: ringSpin 2s linear infinite;
+}
+
+@keyframes ringSpin {
+  to { transform: rotate(360deg); }
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), #f48c06);
+  box-shadow: 0 4px 16px rgba(232, 93, 4, 0.3);
+}
+
+/* =====================================
+   Meta Pills
+===================================== */
+.meta-pill.provider {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.meta-pill.admin {
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #333;
+  border: none;
+  font-weight: 600;
+}
+
+/* =====================================
+   Copy Button Shine
+===================================== */
+.btn-copy::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-copy:hover::after {
+  left: 100%;
+}
+
+/* =====================================
+   Trophy Card Rarities & Glow
+===================================== */
+.trophy-card.rarity-common { border-color: #9e9e9e; }
+.trophy-card.rarity-common .trophy-glow { box-shadow: 0 0 20px rgba(158, 158, 158, 0.25); }
+
+.trophy-card.rarity-uncommon { border-color: #4caf50; }
+.trophy-card.rarity-uncommon .trophy-glow { box-shadow: 0 0 20px rgba(76, 175, 80, 0.25); }
+
+.trophy-card.rarity-rare { border-color: #2196f3; }
+.trophy-card.rarity-rare .trophy-glow { box-shadow: 0 0 20px rgba(33, 150, 243, 0.25); }
+
+.trophy-card.rarity-epic { border-color: #9c27b0; }
+.trophy-card.rarity-epic .trophy-glow { box-shadow: 0 0 20px rgba(156, 39, 176, 0.3); }
+
+.trophy-card.rarity-legendary { border-color: #ff9800; }
+.trophy-card.rarity-legendary .trophy-glow { box-shadow: 0 0 24px rgba(255, 152, 0, 0.35); animation: glowPulse 2s ease-in-out infinite; }
+
+.trophy-card.rarity-limited { border-color: #f44336; }
+.trophy-card.rarity-limited .trophy-glow { box-shadow: 0 0 24px rgba(244, 67, 54, 0.35); animation: glowPulse 2s ease-in-out infinite; }
+
+.trophy-card.rarity-secret { border-color: #00bcd4; }
+.trophy-card.rarity-secret .trophy-glow { box-shadow: 0 0 28px rgba(0, 188, 212, 0.4); animation: glowPulse 1.5s ease-in-out infinite; }
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.trophy-card:hover .trophy-glow {
+  opacity: 1;
+}
+
+.trophy-card:hover .trophy-image {
+  transform: scale(1.08);
+}
+
+/* =====================================
+   Rarity Pills
+===================================== */
+.rarity-pill.rarity-common { color: #9e9e9e; }
+.rarity-pill.rarity-uncommon { color: #4caf50; }
+.rarity-pill.rarity-rare { color: #2196f3; }
+.rarity-pill.rarity-epic { color: #9c27b0; }
+.rarity-pill.rarity-legendary { color: #ff9800; }
+.rarity-pill.rarity-limited { color: #f44336; }
+.rarity-pill.rarity-secret { color: #00bcd4; }
+
+/* =====================================
+   Shelf Item Rarities
+===================================== */
+.shelf-item.rarity-common { border-color: #9e9e9e; }
+.shelf-item.rarity-uncommon { border-color: #4caf50; }
+.shelf-item.rarity-rare { border-color: #2196f3; }
+.shelf-item.rarity-epic { border-color: #9c27b0; }
+.shelf-item.rarity-legendary { border-color: #ff9800; box-shadow: 0 0 16px rgba(255, 152, 0, 0.2); }
+.shelf-item.rarity-limited { border-color: #f44336; box-shadow: 0 0 16px rgba(244, 67, 54, 0.2); }
+.shelf-item.rarity-secret { border-color: #00bcd4; box-shadow: 0 0 20px rgba(0, 188, 212, 0.25); }
+
+/* =====================================
+   Badge Cards
+===================================== */
+.badge-card.unlocked {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.badge-card.unlocked:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px var(--accent-glow);
+}
+
+.badge-card:not(.unlocked) {
+  opacity: 0.55;
+}
+
+.badge-card.unlocked .badge-icon {
+  color: var(--accent);
+}
+
+.badge-card:not(.unlocked) .badge-icon {
+  color: var(--text-tertiary);
+}
+
+/* =====================================
+   Featured Achievements
+===================================== */
+.featured-card.unlocked {
+  border-color: var(--accent);
+  opacity: 1;
+}
+
+/* =====================================
+   Badge Pin
+===================================== */
+.badge-pin.pinned {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* =====================================
+   Showcase Picker
+===================================== */
+.showcase-picker-item.showcase-picker-disabled {
+  opacity: 0.35;
+  border-color: var(--accent);
+  position: relative;
+}
+
+.showcase-picker-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  padding: 1px 4px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* =====================================
+   Edit Options
+===================================== */
+.edit-option.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* =====================================
+   Hero Title Base + Animations
+===================================== */
+.hero-title {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--accent), #f48c06);
+  color: white;
+  box-shadow: 0 2px 10px rgba(232, 93, 4, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  vertical-align: middle;
+}
+
+.hero-title.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-title.shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: titleShimmer 2s infinite;
+}
+
+@keyframes titleShimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.hero-title.pulse {
+  animation: titlePulse 2s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(232, 93, 4, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(232, 93, 4, 0.6); }
+}
+
+.hero-title.glow {
+  animation: titleGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+  0%, 100% { text-shadow: 0 0 4px rgba(232, 93, 4, 0.3); }
+  50% { text-shadow: 0 0 12px rgba(232, 93, 4, 0.8); }
+}
+
+.hero-title.rainbow {
+  background: linear-gradient(90deg, #e85d04, #ff9800, #ffd700, #e85d04);
+  background-size: 200% 100%;
+  animation: rainbowShift 3s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  border: none;
+  padding: 3px 12px;
+}
+
+@keyframes rainbowShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* =====================================
+   Themes (applied to .glory-container)
+===================================== */
+.glory-container.theme-ember {
+  /* Default — no override */
+}
+
+.glory-container.theme-midnight {
+  background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%);
+}
+
+.glory-container.theme-gold {
+  background: linear-gradient(180deg, #1a1200 0%, #2a1f00 100%);
+}
+
+.glory-container.theme-forest {
+  background: linear-gradient(180deg, #0a1f0a 0%, #0f2e0f 100%);
+}
+
+.glory-container.theme-cyber {
+  background: linear-gradient(180deg, #0a0a1f 0%, #0f0f2e 100%);
+}
+
+.glory-container.theme-crimson {
+  background: linear-gradient(180deg, #1f0a0a 0%, #2e0f0f 100%);
+}
+
+.glory-container.theme-ocean {
+  background: linear-gradient(180deg, #0a1520 0%, #0f1f2e 100%);
+}
+
+.glory-container.theme-void {
+  background: linear-gradient(180deg, #050505 0%, #0a0a0a 100%);
+}
+
+/* =====================================
+   Banners (applied to .hero-banner)
+===================================== */
+.hero-banner {
+  background: linear-gradient(135deg, var(--surface-bg) 0%, var(--surface-bg-secondary) 100%);
+}
+
+.hero-banner.banner-default {
+  /* Uses default hero-banner background */
+}
+
+.hero-banner.banner-particles {
+  background: linear-gradient(135deg, #0f1f0f 0%, #1a2e1a 100%);
+  border-color: #4caf50;
+}
+.hero-banner.banner-particles::before {
+  background: linear-gradient(90deg, #4caf50, #66bb6a);
+}
+
+.hero-banner.banner-golden {
+  background: linear-gradient(135deg, #3d2e00 0%, #2a1f00 50%, #1a1200 100%);
+  border-color: #d4af37;
+}
+
+.hero-banner.banner-seasonal {
+  background: linear-gradient(135deg, #1f0a15 0%, #1a0f2e 100%);
+  border-color: #e91e63;
+}
+.hero-banner.banner-seasonal::before {
+  background: linear-gradient(90deg, #e91e63, #9c27b0, #2196f3);
+}
+
+.hero-banner.banner-flames {
+  background: linear-gradient(135deg, #2e150a 0%, #1f1200 100%);
+  border-color: #ff5722;
+}
+.hero-banner.banner-flames::before {
+  background: linear-gradient(90deg, #ff5722, #ff9800, #ffeb3b);
+}
+
+.hero-banner.banner-royal {
+  background: linear-gradient(135deg, #1a0a2e 0%, #2e1a4a 50%, #1f0f3a 100%);
+  border-color: #ffd700;
+}
+
+.hero-banner.banner-neon {
+  background: linear-gradient(135deg, #0a0a1f 0%, #0f152e 100%);
+  border-color: #00e5ff;
+}
+.hero-banner.banner-neon::before {
+  background: linear-gradient(90deg, #00e5ff, #2979ff, #d500f9);
+}
+
+.hero-banner.banner-dragon {
+  background: linear-gradient(135deg, #1a0a00 0%, #2e1a0a 50%, #1f0f00 100%);
+  border-color: #ff4500;
+}
+.hero-banner.banner-dragon::before {
+  background: linear-gradient(90deg, #ff4500, #ff8c00, #ffd700);
+}
+
+.hero-banner.banner-winter {
+  background: linear-gradient(135deg, #0a1a2e 0%, #0f2e4a 50%, #0a1f3a 100%);
+  border-color: #00e5ff;
+}
+.hero-banner.banner-winter::before {
+  background: linear-gradient(90deg, #00e5ff, #80deea, #e1f5fe);
+}
+
+/* =====================================
+   Showcase Slot Heat Tiers
+===================================== */
+.showcase-slot-heat.heat-inferno {
+  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 50%, #e85d04 100%);
+  color: #ffffff;
+}
+
+.showcase-slot-heat.heat-blazing {
+  background: linear-gradient(135deg, #ff6b35 0%, #ff4500 50%, #ff2200 100%);
+  color: #ffffff;
+}
+
+.showcase-slot-heat.heat-glowing {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+  color: #451a03;
+}
+
+.showcase-slot-heat.heat-smoldering {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 50%, #7f1d1d 100%);
+  color: #fef2f2;
+}
+
+.showcase-slot-heat.heat-extinguished {
+  background: linear-gradient(135deg, #64748b 0%, #475569 50%, #334155 100%);
+  color: #f1f5f9;
+}
+
+/* =====================================
+   XP Bar Fill
+===================================== */
+.xp-bar-fill {
+  background: linear-gradient(90deg, var(--accent), #f48c06);
+}
+
+/* =====================================
+   Prestige Badge
+===================================== */
+.prestige-badge {
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* =====================================
+   Skeleton Loaders
+===================================== */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skeleton-hero {
+  height: 140px;
+  border-radius: 24px;
+  background: linear-gradient(90deg, var(--surface-bg-secondary) 25%, var(--surface-hover) 50%, var(--surface-bg-secondary) 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-card {
+  height: 140px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, var(--surface-bg-secondary) 25%, var(--surface-hover) 50%, var(--surface-bg-secondary) 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* =====================================
+   XP Toast
+===================================== */
+.xp-toast {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  background: linear-gradient(135deg, var(--accent), #f48c06);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(232, 93, 4, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  animation: toastSlideIn 0.4s ease-out, toastFadeOut 0.4s ease-in 2.6s forwards;
+}
+
+.xp-toast-amount {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.xp-toast-source {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* =====================================
+   Level Up Toast
+===================================== */
+.level-up-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  background: linear-gradient(135deg, #9c27b0, #e85d04);
+  color: white;
+  padding: 24px 40px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(156, 39, 176, 0.4);
+  animation: levelUpPop 0.5s ease-out, levelUpFade 0.5s ease-in 3.5s forwards;
+}
+
+.level-up-icon {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.level-up-text {
+  font-size: 32px;
+  font-weight: 800;
+}
+
+@keyframes toastSlideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes levelUpPop {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+@keyframes levelUpFade {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+}
+
+/* =====================================
+   Responsive
+===================================== */
+@media (max-width: 800px) {
+  .hero-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 28px 24px;
+  }
+
+  .hero-main {
+    flex-direction: column;
+  }
+
+  .hero-meta {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-name-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .xp-bar-wrap {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-name {
+    font-size: 24px;
+  }
+
+  .dash-value {
+    font-size: 22px;
+  }
+}

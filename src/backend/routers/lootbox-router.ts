@@ -53,6 +53,87 @@ lootboxRouter.get("/lootboxes", async (_req, res) => {
 
 /**
  * @openapi
+ * /lootboxes/recent:
+ *   get:
+ *     summary: Get recent lootbox pulls
+ *     description: Retrieves the most recent lootbox openings across all players with stove drop details
+ *     tags:
+ *       - Lootboxes
+ *     parameters:
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Maximum number of results to return
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: List of recent pulls
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   username:
+ *                     type: string
+ *                   itemName:
+ *                     type: string
+ *                   rarity:
+ *                     type: string
+ *                   openedAt:
+ *                     type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+lootboxRouter.get("/lootboxes/recent", async (req, res) => {
+    const unit = await Unit.create(true);
+    const service = new LootboxService(unit);
+
+    try {
+        const limit = req.query.limit ? Number(req.query.limit) : 20;
+        const rows = await service.getRecentPulls(limit);
+
+        // Format relative timestamps on the backend so the frontend stays simple
+        const now = Date.now();
+        const formatted = rows.map(row => {
+            const opened = new Date(row.openedAt).getTime();
+            const diffMs = now - opened;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            let timeAgo: string;
+            if (diffMins < 1) timeAgo = 'now';
+            else if (diffMins < 60) timeAgo = `${diffMins}m`;
+            else if (diffHours < 24) timeAgo = `${diffHours}h`;
+            else timeAgo = `${diffDays}d`;
+
+            return {
+                username: row.username,
+                itemName: row.name,
+                rarity: row.rarity,
+                imageUrl: row.imageUrl,
+                timeAgo
+            };
+        });
+
+        res.status(StatusCodes.OK).json(formatted);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
  * /lootboxes/{id}:
  *   get:
  *     summary: Get lootbox by ID

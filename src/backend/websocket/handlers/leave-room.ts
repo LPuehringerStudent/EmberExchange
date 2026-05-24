@@ -4,6 +4,7 @@ import { GameStateService } from "../../services/game-state-service";
 import { connectionManager } from "../connection-manager";
 import { isValidUUID } from "../validators";
 import { ErrorCode, ServerMessage } from "../../../shared/model";
+import { syncPlayerCoinsFromState } from "../../utils/sync-player-coins";
 
 interface QueuedMessage {
     target: "room";
@@ -33,11 +34,15 @@ export async function handleLeaveRoom(socketId: string, payload: Record<string, 
         const gameStateService = new GameStateService(unit);
 
         const existingPlayer = await roomPlayerService.getPlayerInRoom(roomId, meta.playerId);
+
+        const state = await gameStateService.getState(roomId);
+        if (state) {
+            await syncPlayerCoinsFromState(unit, state.stateBlob as Record<string, unknown>);
+        }
+
         if (existingPlayer) {
             await roomPlayerService.removePlayer(existingPlayer.roomPlayerId);
         }
-
-        const state = await gameStateService.getState(roomId);
         if (state) {
             const playersInRoom = await roomPlayerService.getPlayersInRoom(roomId);
             const baseBlob = (typeof state.stateBlob === "object" && state.stateBlob !== null)
@@ -49,6 +54,8 @@ export async function handleLeaveRoom(socketId: string, payload: Record<string, 
                 players: playersInRoom.map(p => ({
                     playerId: p.playerId,
                     username: p.username,
+                    activeTitle: p.activeTitle,
+                    activeBanner: p.activeBanner,
                     connectionState: p.connectionState,
                     seatIndex: p.seatIndex
                 }))

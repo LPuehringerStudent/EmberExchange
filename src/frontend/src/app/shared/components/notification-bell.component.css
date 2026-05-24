@@ -1,0 +1,131 @@
+/* Bell badge */
+.bell-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+  animation: badgePop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bell-badge.pulse {
+  animation: badgePop 0.35s cubic-bezier(0.22, 1, 0.36, 1), badgePulse 1.5s ease-in-out infinite 0.35s;
+}
+
+/* Bell shake */
+.shaking {
+  animation: bellShake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Dropdown panel */
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 380px;
+  max-height: 480px;
+  background: var(--surface-bg);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px var(--shadow-color), 0 4px 16px rgba(0,0,0,0.08);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: dropdownEnter 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  z-index: 1000;
+}
+
+/* Notification item */
+.notification-item:hover {
+  background: var(--surface-hover);
+  transform: translateX(2px);
+}
+
+.notification-item:hover .notification-delete {
+  opacity: 1;
+}
+
+.notification-item:hover .notification-icon {
+  background: var(--surface-hover);
+}
+
+/* Notification accent bar */
+.notification-accent {
+  position: absolute;
+  left: 6px;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.notification-item.unread .notification-accent {
+  background: var(--accent);
+}
+
+.notification-item.unread .notification-accent.accent-chat_message    { background: #3b82f6; }
+.notification-item.unread .notification-accent.accent-trade_offer     { background: #22c55e; }
+.notification-item.unread .notification-accent.accent-daily_reward    { background: #f59e0b; }
+.notification-item.unread .notification-accent.accent-friend_request  { background: #a855f7; }
+.notification-item.unread .notification-accent.accent-system          { background: var(--accent); }
+
+/* Unread title bold */
+.notification-item.unread .notification-title {
+  font-weight: 700;
+}
+
+/* Delete button */
+.notification-delete:hover {
+  color: var(--danger-text);
+  background: var(--danger-bg);
+}
+
+/* Keyframes */
+@keyframes badgePop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 2px 10px rgba(239, 68, 68, 0.7); }
+}
+
+@keyframes bellShake {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(-15deg); }
+  30% { transform: rotate(15deg); }
+  45% { transform: rotate(-10deg); }
+  60% { transform: rotate(10deg); }
+  75% { transform: rotate(-5deg); }
+  90% { transform: rotate(5deg); }
+  100% { transform: rotate(0); }
+}
+
+@keyframes dropdownEnter {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .dropdown-panel {
+    width: calc(100vw - 32px);
+    right: -8px;
+  }
+}

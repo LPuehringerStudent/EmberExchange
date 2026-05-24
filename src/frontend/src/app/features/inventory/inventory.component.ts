@@ -6,7 +6,8 @@ import { StoveService } from '@core/services/stove.service';
 import { AuthService } from '@core/services/auth.service';
 import { ListingService } from '@core/services/listing.service';
 import { forkJoin, map, of, Subscription, switchMap } from 'rxjs';
-import { ShowedStove, StoveRow, LootboxTypeRow } from '../../../../../shared/model';
+import { ShowedStove, StoveRow, LootboxTypeRow } from '@shared/model';
+import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
 import { LootboxService } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 
@@ -27,7 +28,8 @@ type SellableItem = { stoveId: number; name: string } | { lootboxId: number; nam
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule
+    RouterModule,
+    HeatTierPipe
   ],
   styleUrls: ['./inventory.component.css']
 })
@@ -247,5 +249,26 @@ export class InventoryComponent implements OnInit, OnDestroy {
 
   openBox(): void {
     void this.router.navigate(['/lootboxes']);
+  }
+
+  openLootbox(box: InventoryLootbox): void {
+    void this.router.navigate(['/lootboxes'], { queryParams: { id: box.id } });
+  }
+
+  getLootboxImage(typeName: string): string {
+    const name = typeName.toLowerCase();
+    if (name.includes('dragon')) {
+      return 'assets/animation/dragon-chest-idle-animation.gif';
+    }
+    if (name.includes('winter')) {
+      return 'assets/animation/winter-chest-idle-animation.gif';
+    }
+    if (name.includes('legendary')) {
+      return 'assets/animation/legendary-chest-idle-animation.gif';
+    }
+    if (name.includes('golden')) {
+      return 'assets/animation/chest-idle-gold.gif';
+    }
+    return 'assets/animation/chest-idle.gif';
   }
 }

@@ -23,6 +23,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'shop',
+    loadComponent: () => import('./features/shop/shop.component').then(m => m.ShopComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'games',
     loadComponent: () => import('./features/games/games.component').then(m => m.GamesComponent),
     canActivate: [authGuard]
@@ -40,6 +45,11 @@ export const routes: Routes = [
   {
     path: 'inventory',
     loadComponent: () => import('./features/inventory/inventory.component').then(m => m.InventoryComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'forgery',
+    loadComponent: () => import('./features/forgery/forgery.component').then(m => m.ForgeryComponent),
     canActivate: [authGuard]
   },
   {
@@ -61,8 +71,26 @@ export const routes: Routes = [
     loadComponent: () => import('./features/update-log/update-log.component').then(m => m.UpdateLogComponent)
   },
   {
+    path: 'glory',
+    loadComponent: () => import('./features/hall-of-glory/hall-of-glory.component').then(m => m.HallOfGloryComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'glory/:playerId',
+    loadComponent: () => import('./features/hall-of-glory/hall-of-glory.component').then(m => m.HallOfGloryComponent)
+  },
+  {
+    path: 'glory/user/:username',
+    loadComponent: () => import('./features/hall-of-glory/hall-of-glory.component').then(m => m.HallOfGloryComponent)
+  },
+  {
     path: 'support',
     loadComponent: () => import('./features/support/support.component').then(m => m.SupportComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'social',
+    loadComponent: () => import('./features/social/social.component').then(m => m.SocialComponent),
     canActivate: [authGuard]
   },
   {

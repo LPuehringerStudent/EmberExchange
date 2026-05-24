@@ -8,6 +8,8 @@ import { StatusCodes } from "http-status-codes";
 import crypto from "crypto";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { hashPassword, comparePassword, isHashed } from "../utils/password";
+import { TwoFactorService } from "../services/two-factor-service";
+import { NotificationService } from "../services/notification-service";
 
 export const authRouter = express.Router();
 
@@ -111,6 +113,18 @@ authRouter.post("/auth/login", async (req, res) => {
         if (!passwordValid) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
             await unit.complete(false);
+            return;
+        }
+
+        // Check if 2FA is enabled
+        const twoFactorService = new TwoFactorService(unit);
+        const totpEnabled = await twoFactorService.isEnabled(player.playerId);
+
+        if (totpEnabled) {
+            // Issue a temporary challenge instead of a full session
+            const challengeId = await twoFactorService.createChallenge(player.playerId);
+            await unit.complete(true);
+            res.status(StatusCodes.OK).json({ requires2FA: true, challengeId });
             return;
         }
 
@@ -343,7 +357,7 @@ authRouter.patch("/auth/password", async (req, res) => {
         }
 
         // Verify current password
-        if (player.password !== currentPassword) {
+        if (!player.password || !(await comparePassword(currentPassword, player.password))) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Current password is incorrect" });
             await unit.complete(false);
             return;
@@ -474,6 +488,150 @@ authRouter.delete("/auth/me", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+/**
+ * @openapi
+ * /auth/sessions:
+ *   get:
+ *     summary: List active sessions
+ *     description: Returns all active sessions for the current player
+ *     tags:
+ *       - Authentication
+ *     parameters:
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of active sessions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   sessionId:
+ *                     type: string
+ *                   createdAt:
+ *                     type: string
+ *                   expiresAt:
+ *                     type: string
+ *       401:
+ *         description: Invalid session
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+authRouter.get("/auth/sessions", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const unit = await Unit.create(true);
+    const sessionService = new SessionService(unit);
+    const playerService = new PlayerService(unit);
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            return;
+        }
+
+        const sessions = await sessionService.getSessionsByPlayer(session.playerId);
+        // Sanitize: omit playerId from response
+        const sanitized = sessions.map(s => ({
+            sessionId: s.sessionId,
+            createdAt: s.createdAt,
+            expiresAt: s.expiresAt
+        }));
+        res.status(StatusCodes.OK).json(sanitized);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
+ * /auth/sessions:
+ *   delete:
+ *     summary: Log out all devices
+ *     description: Invalidates all sessions except the current one
+ *     tags:
+ *       - Authentication
+ *     parameters:
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Sessions invalidated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 closed:
+ *                   type: integer
+ *       401:
+ *         description: Invalid session
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+authRouter.delete("/auth/sessions", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    let ok = false;
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        const closed = await sessionService.invalidateAllExcept(session.playerId, sessionId);
+        ok = true;
+        res.status(StatusCodes.OK).json({ message: "All other devices logged out", closed });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
 authRouter.post("/auth/register", async (req, res) => {
     const { username, password, email } = req.body;
     const unit = await Unit.create(false);
@@ -535,6 +693,20 @@ authRouter.post("/auth/register", async (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create player statistics" });
             await unit.complete(false);
             return;
+        }
+
+        // Create welcome notification
+        try {
+            const notificationService = new NotificationService(unit);
+            await notificationService.create(
+                playerId,
+                "system",
+                "Welcome to Ember Exchange!",
+                "Your adventure begins now. Open your first lootbox and start trading!",
+                {}
+            );
+        } catch {
+            // Ignore notification errors
         }
 
         // Create session (auto-login)
@@ -704,5 +876,364 @@ authRouter.post("/auth/logout", async (req, res) => {
     } catch (err) {
         await unit.complete(false);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    }
+});
+
+// ─── 2FA Endpoints ───
+
+/**
+ * @openapi
+ * /auth/2fa/status:
+ *   get:
+ *     summary: Get 2FA status
+ *     tags:
+ *       - Authentication
+ *     parameters:
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 2FA status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 enabled:
+ *                   type: boolean
+ *                 hasBackupCodes:
+ *                   type: boolean
+ */
+authRouter.get("/auth/2fa/status", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const unit = await Unit.create(true);
+    const sessionService = new SessionService(unit);
+    const twoFactorService = new TwoFactorService(unit);
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            return;
+        }
+
+        const enabled = await twoFactorService.isEnabled(session.playerId);
+        res.status(StatusCodes.OK).json({ enabled });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
+ * /auth/2fa/setup:
+ *   post:
+ *     summary: Begin 2FA setup
+ *     tags:
+ *       - Authentication
+ *     parameters:
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: QR code and secret
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 secret:
+ *                   type: string
+ *                 qrCodeDataUrl:
+ *                   type: string
+ */
+authRouter.post("/auth/2fa/setup", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    const playerService = new PlayerService(unit);
+    const twoFactorService = new TwoFactorService(unit);
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        const player = await playerService.getInfoByID(session.playerId);
+        if (!player) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (!player.password) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "OAuth users must set a password before enabling 2FA" });
+            await unit.complete(false);
+            return;
+        }
+
+        const result = await twoFactorService.generateSecret(session.playerId, player.username, player.email);
+        await unit.complete(true);
+        res.status(StatusCodes.OK).json({ secret: result.secret, qrCodeDataUrl: result.qrCodeDataUrl });
+    } catch (err) {
+        await unit.complete(false);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    }
+});
+
+/**
+ * @openapi
+ * /auth/2fa/confirm:
+ *   post:
+ *     summary: Confirm 2FA setup
+ *     tags:
+ *       - Authentication
+ *     parameters:
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 2FA enabled with backup codes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 backupCodes:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ */
+authRouter.post("/auth/2fa/confirm", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const { token } = req.body;
+    if (isNullOrWhiteSpace(token)) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Token is required" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    const twoFactorService = new TwoFactorService(unit);
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        const result = await twoFactorService.confirmSetup(session.playerId, token);
+        if (!result.success) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: result.message });
+            await unit.complete(false);
+            return;
+        }
+
+        await unit.complete(true);
+        res.status(StatusCodes.OK).json({ message: result.message });
+    } catch (err) {
+        await unit.complete(false);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    }
+});
+
+/**
+ * @openapi
+ * /auth/2fa/verify:
+ *   post:
+ *     summary: Verify 2FA code during login
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - challengeId
+ *               - token
+ *             properties:
+ *               challengeId:
+ *                 type: string
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Session created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         description: Invalid challenge or code
+ */
+authRouter.post("/auth/2fa/verify", async (req, res) => {
+    const { challengeId, token } = req.body;
+    if (isNullOrWhiteSpace(challengeId) || isNullOrWhiteSpace(token)) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Challenge ID and token are required" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const twoFactorService = new TwoFactorService(unit);
+    const sessionService = new SessionService(unit);
+    const loginHistoryService = new LoginHistoryService(unit);
+
+    try {
+        const playerId = await twoFactorService.validateChallenge(challengeId);
+        if (!playerId) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired challenge" });
+            await unit.complete(false);
+            return;
+        }
+
+        const result = await twoFactorService.verifyToken(playerId, token);
+        if (!result.success) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: result.message });
+            await unit.complete(false);
+            return;
+        }
+
+        await twoFactorService.consumeChallenge(challengeId);
+
+        const sessionId = crypto.randomUUID();
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+
+        const success = await sessionService.createSession(sessionId, playerId, expiresAt);
+        if (success) {
+            await loginHistoryService.create(playerId, sessionId);
+            await unit.complete(true);
+            res.status(StatusCodes.OK).json({ sessionId, playerId });
+        } else {
+            throw new Error("Failed to create session");
+        }
+    } catch (err) {
+        await unit.complete(false);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    }
+});
+
+/**
+ * @openapi
+ * /auth/2fa:
+ *   delete:
+ *     summary: Disable 2FA
+ *     tags:
+ *       - Authentication
+ *     parameters:
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 2FA disabled
+ */
+authRouter.delete("/auth/2fa", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const { password } = req.body;
+    if (isNullOrWhiteSpace(password)) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Password is required" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    const playerService = new PlayerService(unit);
+    const twoFactorService = new TwoFactorService(unit);
+    let ok = false;
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        const player = await playerService.getInfoByID(session.playerId);
+        if (!player || !player.password) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid credentials" });
+            await unit.complete(false);
+            return;
+        }
+
+        const passwordValid = await comparePassword(password, player.password);
+        if (!passwordValid) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Incorrect password" });
+            await unit.complete(false);
+            return;
+        }
+
+        await twoFactorService.disable(session.playerId);
+        ok = true;
+        res.status(StatusCodes.OK).json({ message: "Two-factor authentication disabled" });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
     }
 });

@@ -11,6 +11,8 @@ export type PokerPhase =
 export interface PokerPlayerState {
   playerId: number;
   username?: string;
+  activeTitle?: { titleId?: string; label: string; animation?: string } | null;
+  activeBanner?: { bannerId?: number; name: string; cssClass?: string } | null;
   hand: Card[];
   stack: number;
   bet: number; // amount committed in current betting round
@@ -67,6 +69,8 @@ export interface PokerStateView {
   players: Array<{
     playerId: number;
     username?: string;
+    activeTitle?: { titleId?: string; label: string; animation?: string } | null;
+    activeBanner?: { bannerId?: number; name: string; cssClass?: string } | null;
     hand: Card[] | ["back", "back"]; // masked for opponents
     handName?: string; // best 5-card hand name (e.g. "Two Pair", "Flush")
     stack: number;

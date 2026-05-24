@@ -25,7 +25,7 @@ export class PokerEngine implements GameEngine {
   maxPlayers = 6;
 
   createInitialState(players: RoomPlayerRow[]): Record<string, unknown> {
-    return this._createHandState(players, 0, STARTING_STACK);
+    return this._createHandState(players, 0, undefined);
   }
 
   resetForNextHand(
@@ -88,10 +88,13 @@ export class PokerEngine implements GameEngine {
     const pokerPlayers: PokerPlayerState[] = players.map((p, i) => ({
       playerId: p.playerId,
       username: p.username,
+      activeTitle: p.activeTitle,
+      activeBanner: p.activeBanner,
       hand: hands[i],
       stack:
         prevState?.players.find((op) => op.playerId === p.playerId)?.stack ??
         fallbackStack ??
+        p.coins ??
         STARTING_STACK,
       bet: 0,
       totalBet: 0,
@@ -503,6 +506,8 @@ export class PokerEngine implements GameEngine {
         return {
           playerId: p.playerId,
           username: p.username,
+          activeTitle: p.activeTitle,
+          activeBanner: p.activeBanner,
           hand: showHand ? p.hand : (["back", "back"] as ["back", "back"]),
           handName,
           stack: p.stack,

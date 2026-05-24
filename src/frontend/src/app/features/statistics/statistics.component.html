@@ -1,16 +1,17 @@
-<div class="statistics-container">
+<div class="max-w-[1400px] mx-auto p-6 min-h-screen text-text-primary">
+
   <!-- Header -->
-  <header class="stats-header">
-    <div class="header-content">
-      <div class="header-title">
-        <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <header class="mb-8">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-3">
+        <svg class="w-8 h-8 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 3v18h18"/>
           <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
         </svg>
-        <h1>Statistics Dashboard</h1>
+        <h1 class="m-0 text-[2rem] font-bold bg-gradient-to-br from-accent to-orange-400 bg-clip-text text-transparent">Statistics Dashboard</h1>
       </div>
-      <button class="back-btn" routerLink="/">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <button class="btn-secondary" routerLink="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-[18px] h-[18px]">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
         Back to Menu
@@ -20,149 +21,156 @@
 
   <!-- Loading State -->
   @if (loading) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading statistics...</p>
+    <div class="flex flex-col items-center justify-center py-20 px-5 text-center">
+      <div class="w-12 h-12 border-4 border-gray-200 border-t-accent rounded-full animate-spin"></div>
+      <p class="mt-4 text-text-muted text-base">Loading statistics...</p>
     </div>
   }
 
   <!-- Error State -->
   @if (error) {
-    <div class="error-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <div class="flex flex-col items-center justify-center py-20 px-5 text-center">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-16 h-16 text-danger-text mb-4">
         <circle cx="12" cy="12" r="10"/>
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      <p>{{error}}</p>
-      <button (click)="loadAllData()">Retry</button>
+      <p class="text-text-muted mb-5">{{error}}</p>
+      <button class="btn-primary" (click)="loadAllData()">Retry</button>
     </div>
   }
 
   <!-- Main Content -->
   @if (!loading && !error) {
-    <main class="stats-content">
+    <main class="flex flex-col gap-8">
+
       <!-- Dashboard Overview Cards -->
-      <section class="dashboard-cards">
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
         @for (stat of dashboardStats; track stat.label) {
-          <div class="dashboard-card">
-            <div class="card-icon" [class]="stat.trend">
+          <div class="flex items-center gap-4 p-6 bg-surface rounded-2xl border border-border shadow-[0_4px_20px_var(--shadow-color)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_var(--shadow-color)]">
+            <div
+              class="flex items-center justify-center w-14 h-14 rounded-[14px] text-white"
+              [class]="stat.trend === 'up' ? 'bg-gradient-to-br from-green-500 to-emerald-400' : stat.trend === 'down' ? 'bg-gradient-to-br from-red-500 to-red-400' : 'bg-gradient-to-br from-gray-400 to-gray-500'"
+            >
               @if (stat.trend === 'up') {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-7 h-7">
                   <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
                   <polyline points="17 6 23 6 23 12"/>
                 </svg>
               }
               @if (stat.trend === 'down') {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-7 h-7">
                   <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
                   <polyline points="17 18 23 18 23 12"/>
                 </svg>
               }
               @if (stat.trend === 'neutral') {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-7 h-7">
                   <line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
               }
             </div>
-            <div class="card-info">
-              <span class="card-label">{{stat.label}}</span>
-              <span class="card-value">{{stat.value}}</span>
+            <div class="flex flex-col gap-1">
+              <span class="text-[13px] text-text-muted font-medium uppercase tracking-wide">{{stat.label}}</span>
+              <span class="text-2xl font-bold text-text-primary">{{stat.value}}</span>
             </div>
           </div>
         }
       </section>
 
       <!-- Two Column Layout -->
-      <div class="stats-grid">
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-6 max-tablet:grid-cols-1">
+
         <!-- Left Column: Player Leaderboards -->
-        <section class="stats-section">
-          <div class="section-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <section class="flex flex-col gap-5">
+          <div class="flex items-center gap-3 pb-4 border-b-2 border-accent-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6 text-accent">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
               <circle cx="9" cy="7" r="4"/>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            <h2>Player Leaderboards</h2>
+            <h2 class="m-0 text-[1.4rem] font-bold text-text-primary">Player Leaderboards</h2>
           </div>
 
           <!-- Top by Activity -->
-          <div class="leaderboard">
-            <h3 class="leaderboard-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="bg-surface rounded-2xl p-5 border border-border shadow-[0_4px_20px_var(--shadow-color)]">
+            <h3 class="flex items-center gap-2.5 m-0 mb-4 text-base font-semibold text-text-secondary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-accent">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
               Most Active Players
             </h3>
-            <div class="leaderboard-list">
-              @for (player of topActivityPlayers; track player.playerId; let i = $index) {
-                <div class="leaderboard-item">
-                  <span class="rank" [class.top-three]="i < 3">{{i + 1}}</span>
-                  <div class="player-info">
-                    <span class="player-name">Player #{{player.playerId}}</span>
-                    <span class="player-score">{{player.totalMiniGamesPlayed}} games</span>
+            <div class="flex flex-col gap-2">
+              @for (player of topActivityPlayers; track $index; let i = $index) {
+                <div class="flex items-center gap-3 px-4 py-3.5 bg-surface-secondary rounded-xl transition-all duration-200 hover:bg-accent-glow hover:translate-x-1">
+                  <span
+                    class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold"
+                    [class]="i < 3 ? 'bg-gradient-to-br from-accent to-orange-400 text-white' : 'bg-border-color text-text-muted'"
+                  >{{i + 1}}</span>
+                  <div class="flex-1 flex flex-col gap-0.5">
+                    <span class="font-semibold text-text-primary text-sm">{{player.username || 'Player #' + player.playerId}}</span>
+                    <span class="text-[13px] text-text-muted">{{player.totalMiniGamesPlayed}} games</span>
                   </div>
-                  <div class="player-stats">
-                    <span class="stat-badge">{{player.totalListingsSold}} sales</span>
+                  <div class="flex gap-2">
+                    <span class="px-2.5 py-1 bg-accent-glow text-accent rounded-[20px] text-xs font-semibold">{{player.totalListingsSold}} sales</span>
                   </div>
                 </div>
               }
               @if (topActivityPlayers.length === 0) {
-                <div class="empty-state">
-                  No player activity data available
-                </div>
+                <div class="text-center py-8 text-text-muted italic bg-surface-secondary rounded-xl">No player activity data available</div>
               }
             </div>
           </div>
 
           <!-- Top by Wealth -->
-          <div class="leaderboard">
-            <h3 class="leaderboard-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="bg-surface rounded-2xl p-5 border border-border shadow-[0_4px_20px_var(--shadow-color)]">
+            <h3 class="flex items-center gap-2.5 m-0 mb-4 text-base font-semibold text-text-secondary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-accent">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="8" x2="12" y2="12"/>
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
               Wealthiest Players
             </h3>
-            <div class="leaderboard-list">
-              @for (player of topWealthPlayers; track player.playerId; let i = $index) {
-                <div class="leaderboard-item">
-                  <span class="rank" [class.top-three]="i < 3">{{i + 1}}</span>
-                  <div class="player-info">
-                    <span class="player-name">Player #{{player.playerId}}</span>
-                    <span class="player-score">{{formatCurrency(player.netWorthEstimate)}}</span>
+            <div class="flex flex-col gap-2">
+              @for (player of topWealthPlayers; track $index; let i = $index) {
+                <div class="flex items-center gap-3 px-4 py-3.5 bg-surface-secondary rounded-xl transition-all duration-200 hover:bg-accent-glow hover:translate-x-1">
+                  <span
+                    class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold"
+                    [class]="i < 3 ? 'bg-gradient-to-br from-accent to-orange-400 text-white' : 'bg-border-color text-text-muted'"
+                  >{{i + 1}}</span>
+                  <div class="flex-1 flex flex-col gap-0.5">
+                    <span class="font-semibold text-text-primary text-sm">{{player.username || 'Player #' + player.playerId}}</span>
+                    <span class="text-[13px] text-text-muted">{{formatCurrency(player.netWorthEstimate)}}</span>
                   </div>
-                  <div class="player-stats">
-                    <span class="stat-badge">{{player.currentStoveCount}} stoves</span>
+                  <div class="flex gap-2">
+                    <span class="px-2.5 py-1 bg-accent-glow text-accent rounded-[20px] text-xs font-semibold">{{player.currentStoveCount}} stoves</span>
                   </div>
                 </div>
               }
               @if (topWealthPlayers.length === 0) {
-                <div class="empty-state">
-                  No wealth data available
-                </div>
+                <div class="text-center py-8 text-text-muted italic bg-surface-secondary rounded-xl">No wealth data available</div>
               }
             </div>
           </div>
         </section>
 
         <!-- Right Column: Market & System Stats -->
-        <section class="stats-section">
-          <div class="section-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <section class="flex flex-col gap-5">
+          <div class="flex items-center gap-3 pb-4 border-b-2 border-accent-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6 text-accent">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
               <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            <h2>Market Overview</h2>
+            <h2 class="m-0 text-[1.4rem] font-bold text-text-primary">Market Overview</h2>
           </div>
 
           <!-- Daily Stats -->
           @if (todayStats) {
-            <div class="stats-card">
-              <h3 class="stats-card-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="bg-surface rounded-2xl p-5 border border-border shadow-[0_4px_20px_var(--shadow-color)]">
+              <h3 class="flex items-center gap-2.5 m-0 mb-5 text-base font-semibold text-text-secondary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-accent">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                   <line x1="16" y1="2" x2="16" y2="6"/>
                   <line x1="8" y1="2" x2="8" y2="6"/>
@@ -170,88 +178,88 @@
                 </svg>
                 Today's Activity
               </h3>
-              <div class="stats-grid-mini">
-                <div class="mini-stat">
-                  <span class="mini-label">Players Online</span>
-                  <span class="mini-value">{{todayStats.uniquePlayersLoggedIn}}</span>
+              <div class="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4">
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
+                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Players Online</span>
+                  <span class="text-lg font-bold text-text-primary">{{todayStats.uniquePlayersLoggedIn}}</span>
                 </div>
-                <div class="mini-stat">
-                  <span class="mini-label">Lootboxes Opened</span>
-                  <span class="mini-value">{{todayStats.lootboxesOpenedToday}}</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
+                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Lootboxes Opened</span>
+                  <span class="text-lg font-bold text-text-primary">{{todayStats.lootboxesOpenedToday}}</span>
                 </div>
-                <div class="mini-stat">
-                  <span class="mini-label">New Listings</span>
-                  <span class="mini-value">{{todayStats.newListingsToday}}</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
+                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">New Listings</span>
+                  <span class="text-lg font-bold text-text-primary">{{todayStats.newListingsToday}}</span>
                 </div>
-                <div class="mini-stat">
-                  <span class="mini-label">Sales Completed</span>
-                  <span class="mini-value">{{todayStats.listingsSoldToday}}</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
+                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Sales Completed</span>
+                  <span class="text-lg font-bold text-text-primary">{{todayStats.listingsSoldToday}}</span>
                 </div>
-                <div class="mini-stat">
-                  <span class="mini-label">Trading Volume</span>
-                  <span class="mini-value">{{formatNumber(todayStats.totalTradingVolume)}}</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
+                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Trading Volume</span>
+                  <span class="text-lg font-bold text-text-primary">{{formatNumber(todayStats.totalTradingVolume)}}</span>
                 </div>
-                <div class="mini-stat">
-                  <span class="mini-label">Avg Sale Price</span>
-                  <span class="mini-value">{{formatNumber(todayStats.averageSalePriceToday)}}</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
+                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Avg Sale Price</span>
+                  <span class="text-lg font-bold text-text-primary">{{formatNumber(todayStats.averageSalePriceToday)}}</span>
                 </div>
               </div>
             </div>
           }
 
           <!-- Market Summary -->
-          <div class="stats-card">
-            <h3 class="stats-card-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="bg-surface rounded-2xl p-5 border border-border shadow-[0_4px_20px_var(--shadow-color)]">
+            <h3 class="flex items-center gap-2.5 m-0 mb-5 text-base font-semibold text-text-secondary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-accent">
                 <line x1="12" y1="1" x2="12" y2="23"/>
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
               </svg>
               Market Summary (7 Days)
             </h3>
-            <div class="summary-stats">
-              <div class="summary-item">
-                <div class="summary-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-3.5 p-3.5 bg-surface-secondary rounded-xl transition-all duration-200 hover:bg-accent-glow">
+                <div class="flex items-center justify-center w-11 h-11 bg-accent-light rounded-xl">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5 text-accent">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                   </svg>
                 </div>
-                <div class="summary-info">
-                  <span class="summary-value">{{formatNumber(dailySummary.totalLootboxes)}}</span>
-                  <span class="summary-label">Lootboxes Opened</span>
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-lg font-bold text-text-primary">{{formatNumber(dailySummary.totalLootboxes)}}</span>
+                  <span class="text-xs text-text-muted">Lootboxes Opened</span>
                 </div>
               </div>
-              <div class="summary-item">
-                <div class="summary-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <div class="flex items-center gap-3.5 p-3.5 bg-surface-secondary rounded-xl transition-all duration-200 hover:bg-accent-glow">
+                <div class="flex items-center justify-center w-11 h-11 bg-accent-light rounded-xl">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5 text-accent">
                     <circle cx="9" cy="21" r="1"/>
                     <circle cx="20" cy="21" r="1"/>
                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                   </svg>
                 </div>
-                <div class="summary-info">
-                  <span class="summary-value">{{dailySummary.totalSales}}</span>
-                  <span class="summary-label">Total Sales</span>
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-lg font-bold text-text-primary">{{dailySummary.totalSales}}</span>
+                  <span class="text-xs text-text-muted">Total Sales</span>
                 </div>
               </div>
-              <div class="summary-item">
-                <div class="summary-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <div class="flex items-center gap-3.5 p-3.5 bg-surface-secondary rounded-xl transition-all duration-200 hover:bg-accent-glow">
+                <div class="flex items-center justify-center w-11 h-11 bg-accent-light rounded-xl">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5 text-accent">
                     <line x1="12" y1="1" x2="12" y2="23"/>
                     <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                   </svg>
                 </div>
-                <div class="summary-info">
-                  <span class="summary-value">{{formatNumber(dailySummary.totalVolume)}}</span>
-                  <span class="summary-label">Trading Volume</span>
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-lg font-bold text-text-primary">{{formatNumber(dailySummary.totalVolume)}}</span>
+                  <span class="text-xs text-text-muted">Trading Volume</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Stove Type Statistics -->
-          <div class="stats-card">
-            <h3 class="stats-card-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="bg-surface rounded-2xl p-5 border border-border shadow-[0_4px_20px_var(--shadow-color)]">
+            <h3 class="flex items-center gap-2.5 m-0 mb-5 text-base font-semibold text-text-secondary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-accent">
                 <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
                 <rect x="9" y="9" width="6" height="6"/>
                 <line x1="9" y1="1" x2="9" y2="4"/>
@@ -265,26 +273,30 @@
               </svg>
               Stove Type Distribution
             </h3>
-            <div class="stove-list">
+            <div class="flex flex-col gap-3">
               @for (stove of stoveTypeStats.slice(0, 5); track stove.stoveTypeId) {
-                <div class="stove-item">
-                  <div class="stove-info">
-                    <span class="stove-type">Type #{{stove.stoveTypeId}}</span>
-                    <div class="stove-bar-container">
-                      <div class="stove-bar" [style.width.%]="stove.percentOfTotalSupply"></div>
+                <div class="flex items-center justify-between gap-4 p-3 bg-surface-secondary rounded-xl">
+                  <div class="flex-1 flex flex-col gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-semibold text-text-primary text-sm">{{stove.name || 'Type #' + stove.stoveTypeId}}</span>
+                      <span
+                        class="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-[10px]"
+                        [class]="'stove-rarity-' + (stove.rarity || 'common').toLowerCase()"
+                      >{{stove.rarity || 'Common'}}</span>
+                    </div>
+                    <div class="h-2 bg-border-color rounded overflow-hidden">
+                      <div class="h-full rounded bg-gradient-to-r from-accent to-orange-400 transition-[width] duration-500" [style.width.%]="stove.percentOfTotalSupply"></div>
                     </div>
                   </div>
-                  <div class="stove-numbers">
-                    <span class="stove-total">{{stove.totalMinted}} minted</span>
-                    <span class="stove-volume">{{formatNumber(stove.totalVolumeTraded)}} traded</span>
-                    <span class="stove-percent">{{stove.percentOfTotalSupply.toFixed(1)}}%</span>
+                  <div class="flex flex-col items-end gap-0.5 shrink-0">
+                    <span class="text-xs text-text-muted">{{stove.totalMinted}} minted</span>
+                    <span class="text-xs text-text-muted">{{formatNumber(stove.totalVolumeTraded)}} volume</span>
+                    <span class="text-base font-bold text-accent">{{stove.percentOfTotalSupply.toFixed(1)}}%</span>
                   </div>
                 </div>
               }
               @if (stoveTypeStats.length === 0) {
-                <div class="empty-state">
-                  No stove type data available
-                </div>
+                <div class="text-center py-8 text-text-muted italic bg-surface-secondary rounded-xl">No stove type data available</div>
               }
             </div>
           </div>

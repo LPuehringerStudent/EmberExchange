@@ -1,6 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { TradeService } from "../services/trade-service";
+import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { ListingService } from "../services/listing-service";
 import { OwnershipService } from "../services/ownership-service";
 import { StoveService } from "../services/stove-service";
@@ -8,6 +9,7 @@ import { LootboxService } from "../services/lootbox-service";
 import { PriceHistoryService } from "../services/price-history-service";
 import { PlayerService } from "../services/player-service";
 import { CoinTransactionService } from "../services/coin-transaction-service";
+import { NotificationService } from "../services/notification-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 
@@ -489,6 +491,49 @@ tradeRouter.post("/trades", async (req, res) => {
         const [success, id] = await tradeService.createTrade(listingId, buyerId);
 
         if (success) {
+            // Award XP to both buyer and seller
+            try {
+                const prestigeService = new PlayerPrestigeService(unit);
+                await prestigeService.addXP(buyerId, 250, 'trade', 'Completed a trade (buyer)');
+                await prestigeService.addXP(listing.sellerId, 200, 'trade', 'Completed a trade (seller)');
+            } catch {
+                // Ignore XP errors
+            }
+
+            // Check achievements for both parties
+            try {
+                await unit.savepoint('trade_achievements');
+                const { AchievementEngine } = await import("../services/achievement-engine");
+                const engine = new AchievementEngine(unit);
+                await engine.checkTradeAchievements(buyerId);
+                await engine.checkTradeAchievements(listing.sellerId);
+                await engine.checkWealthAchievements(buyerId);
+                await engine.checkWealthAchievements(listing.sellerId);
+            } catch {
+                try { await unit.rollbackToSavepoint('trade_achievements'); } catch { /* ignore */ }
+            }
+
+            // Notify buyer and seller
+            try {
+                const notificationService = new NotificationService(unit);
+                await notificationService.create(
+                    buyerId,
+                    "trade_offer",
+                    "Trade completed",
+                    `You purchased ${itemDescription} for ${listing.price} coal`,
+                    { tradeId: id, listingId, price: listing.price }
+                );
+                await notificationService.create(
+                    listing.sellerId,
+                    "trade_offer",
+                    "Item sold",
+                    `Your ${itemDescription} sold for ${listing.price} coal`,
+                    { tradeId: id, listingId, price: listing.price }
+                );
+            } catch {
+                // Ignore notification errors
+            }
+
             ok = true;
             res.status(StatusCodes.CREATED).json({ tradeId: id, message: "Trade executed successfully" });
         } else {

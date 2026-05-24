@@ -2,7 +2,7 @@ import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { PlayerStatisticsRow, PlayerRow } from "../../shared/model";
 
-const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'limited'];
+const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'limited', 'secret'];
 
 export class PlayerStatisticsService extends ServiceBase {
     constructor(unit: Unit) {
@@ -19,24 +19,24 @@ export class PlayerStatisticsService extends ServiceBase {
      */
     private async calculatePlayerStats(playerId: number): Promise<PlayerStatisticsRow | null> {
         const player = await this.getPlayer(playerId);
-        if (!player) return null;
+        if (!player || player.username === '__shop__') return null;
 
         // Count lootboxes opened
         const lootboxStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*) as count FROM Lootbox WHERE playerId = @playerId",
+            "SELECT COUNT(*)::INTEGER as count FROM Lootbox WHERE playerId = @playerId",
             { playerId }
         );
         const lootboxesOpened = (await lootboxStmt.get())?.count ?? 0;
 
         // Count listings created and sold
         const listingsCreatedStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*) as count FROM Listing WHERE sellerId = @playerId",
+            "SELECT COUNT(*)::INTEGER as count FROM Listing WHERE sellerId = @playerId",
             { playerId }
         );
         const listingsCreated = (await listingsCreatedStmt.get())?.count ?? 0;
 
         const listingsSoldStmt = this.unit.prepare<{ count: number, revenue: number }>(
-            `SELECT COUNT(*) as count, COALESCE(SUM(l.price), 0) as revenue 
+            `SELECT COUNT(*)::INTEGER as count, COALESCE(SUM(l.price)::INTEGER, 0) as revenue 
              FROM Listing l
              JOIN Trade t ON l.listingId = t.listingId
              WHERE l.sellerId = @playerId AND l.status = 'sold'`,
@@ -48,7 +48,7 @@ export class PlayerStatisticsService extends ServiceBase {
 
         // Count purchases made
         const purchasesStmt = this.unit.prepare<{ count: number, spent: number }>(
-            `SELECT COUNT(*) as count, COALESCE(SUM(l.price), 0) as spent
+            `SELECT COUNT(*)::INTEGER as count, COALESCE(SUM(l.price)::INTEGER, 0) as spent
              FROM Trade t
              JOIN Listing l ON t.listingId = l.listingId
              WHERE t.buyerId = @playerId`,
@@ -60,21 +60,21 @@ export class PlayerStatisticsService extends ServiceBase {
 
         // Count mini games played
         const gamesStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*) as count FROM MiniGameSession WHERE playerId = @playerId",
+            "SELECT COUNT(*)::INTEGER as count FROM MiniGameSession WHERE playerId = @playerId",
             { playerId }
         );
         const miniGamesPlayed = (await gamesStmt.get())?.count ?? 0;
 
         // Count stoves currently owned
         const stovesStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*) as count FROM Stove WHERE currentOwnerId = @playerId",
+            "SELECT COUNT(*)::INTEGER as count FROM Stove WHERE currentOwnerId = @playerId",
             { playerId }
         );
         const stovesOwned = (await stovesStmt.get())?.count ?? 0;
 
         // Total logins from LoginHistory
         const loginsStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*) as count FROM LoginHistory WHERE playerId = @playerId",
+            "SELECT COUNT(*)::INTEGER as count FROM LoginHistory WHERE playerId = @playerId",
             { playerId }
         );
         const totalLogins = (await loginsStmt.get())?.count ?? 0;
@@ -107,6 +107,7 @@ export class PlayerStatisticsService extends ServiceBase {
                WHEN 'epic' THEN 3
                WHEN 'legendary' THEN 4
                WHEN 'limited' THEN 5
+               WHEN 'secret' THEN 6
                ELSE -1
              END DESC
              LIMIT 1`,
@@ -117,9 +118,13 @@ export class PlayerStatisticsService extends ServiceBase {
 
         // Calculate net worth (coins + value of owned stoves)
         const stoveValueStmt = this.unit.prepare<{ value: number }>(
-            `SELECT COALESCE(SUM(COALESCE(ph.salePrice, 500)), 0) as value
+            `SELECT COALESCE(SUM(COALESCE(ph.salePrice, 500)), 0)::INTEGER as value
              FROM Stove s
-             LEFT JOIN PriceHistory ph ON s.typeId = ph.typeId
+             LEFT JOIN (
+                 SELECT DISTINCT ON (typeId) typeId, salePrice
+                 FROM PriceHistory
+                 ORDER BY typeId, saleDate DESC
+             ) ph ON s.typeId = ph.typeId
              WHERE s.currentOwnerId = @playerId`,
             { playerId }
         );
@@ -132,6 +137,7 @@ export class PlayerStatisticsService extends ServiceBase {
         return {
             statId: playerId,
             playerId: player.playerId,
+            username: player.username,
             totalLogins: totalLogins,
             lastLoginAt: new Date(),
             totalSessionMinutes: 0,
@@ -168,6 +174,7 @@ export class PlayerStatisticsService extends ServiceBase {
             totalStovesAcquired: lootboxesOpened + purchasesMade,
             totalStovesSold: listingsSold,
             totalStovesTraded: 0,
+            totalStovesCrafted: 0,
             rarestStoveOwned: null,
             highestCoinBalance: player.coins,
             lowestCoinBalance: player.coins,
@@ -196,21 +203,21 @@ export class PlayerStatisticsService extends ServiceBase {
                 p.playerId,
                 p.coins,
                 p.username,
-                (SELECT COUNT(*) FROM Lootbox l WHERE l.playerId = p.playerId) as lootboxesOpened,
-                (SELECT COUNT(*) FROM Listing lc WHERE lc.sellerId = p.playerId) as listingsCreated,
-                (SELECT COUNT(*) FROM Listing ls JOIN Trade t ON ls.listingId = t.listingId WHERE ls.sellerId = p.playerId AND ls.status = 'sold') as listingsSold,
-                (SELECT COALESCE(SUM(ls2.price), 0) FROM Listing ls2 JOIN Trade t2 ON ls2.listingId = t2.listingId WHERE ls2.sellerId = p.playerId AND ls2.status = 'sold') as salesRevenue,
-                (SELECT COUNT(*) FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE t3.buyerId = p.playerId) as purchasesMade,
-                (SELECT COALESCE(SUM(l4.price), 0) FROM Trade t4 JOIN Listing l4 ON t4.listingId = l4.listingId WHERE t4.buyerId = p.playerId) as purchaseSpending,
-                (SELECT COUNT(*) FROM MiniGameSession mgs WHERE mgs.playerId = p.playerId) as miniGamesPlayed,
-                (SELECT COUNT(*) FROM Stove s WHERE s.currentOwnerId = p.playerId) as stovesOwned,
-                (SELECT COALESCE(SUM(COALESCE(ph.salePrice, 500)), 0) FROM Stove s2 LEFT JOIN PriceHistory ph ON s2.typeId = ph.typeId WHERE s2.currentOwnerId = p.playerId) as stoveValue,
-                (SELECT COUNT(*) FROM LoginHistory lh WHERE lh.playerId = p.playerId) as totalLogins,
-                (SELECT COALESCE(SUM(amount), 0) FROM CoinTransaction ct WHERE ct.playerId = p.playerId AND ct.amount > 0) as totalCoinsEarned,
-                (SELECT COALESCE(SUM(ABS(amount)), 0) FROM CoinTransaction ct WHERE ct.playerId = p.playerId AND ct.amount < 0) as totalCoinsSpent,
+                (SELECT COUNT(*)::INTEGER FROM Lootbox l WHERE l.playerId = p.playerId) as lootboxesOpened,
+                (SELECT COUNT(*)::INTEGER FROM Listing lc WHERE lc.sellerId = p.playerId) as listingsCreated,
+                (SELECT COUNT(*)::INTEGER FROM Listing ls JOIN Trade t ON ls.listingId = t.listingId WHERE ls.sellerId = p.playerId AND ls.status = 'sold') as listingsSold,
+                (SELECT COALESCE(SUM(ls2.price)::INTEGER, 0) FROM Listing ls2 JOIN Trade t2 ON ls2.listingId = t2.listingId WHERE ls2.sellerId = p.playerId AND ls2.status = 'sold') as salesRevenue,
+                (SELECT COUNT(*)::INTEGER FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE t3.buyerId = p.playerId) as purchasesMade,
+                (SELECT COALESCE(SUM(l4.price)::INTEGER, 0) FROM Trade t4 JOIN Listing l4 ON t4.listingId = l4.listingId WHERE t4.buyerId = p.playerId) as purchaseSpending,
+                (SELECT COUNT(*)::INTEGER FROM MiniGameSession mgs WHERE mgs.playerId = p.playerId) as miniGamesPlayed,
+                (SELECT COUNT(*)::INTEGER FROM Stove s WHERE s.currentOwnerId = p.playerId) as stovesOwned,
+                (SELECT COALESCE(SUM(COALESCE(ph.salePrice, 500)), 0)::INTEGER FROM Stove s2 LEFT JOIN (SELECT DISTINCT ON (typeId) typeId, salePrice FROM PriceHistory ORDER BY typeId, saleDate DESC) ph ON s2.typeId = ph.typeId WHERE s2.currentOwnerId = p.playerId) as stoveValue,
+                (SELECT COUNT(*)::INTEGER FROM LoginHistory lh WHERE lh.playerId = p.playerId) as totalLogins,
+                (SELECT COALESCE(SUM(amount)::INTEGER, 0) FROM CoinTransaction ct WHERE ct.playerId = p.playerId AND ct.amount > 0) as totalCoinsEarned,
+                (SELECT COALESCE(SUM(ABS(amount))::INTEGER, 0) FROM CoinTransaction ct WHERE ct.playerId = p.playerId AND ct.amount < 0) as totalCoinsSpent,
                 (SELECT st.rarity FROM LootboxDrop ld JOIN Lootbox lb ON ld.lootboxId = lb.lootboxId JOIN Stove sv ON ld.stoveId = sv.stoveId JOIN StoveType st ON sv.typeId = st.typeId WHERE lb.playerId = p.playerId ORDER BY CASE st.rarity WHEN 'common' THEN 0 WHEN 'uncommon' THEN 1 WHEN 'rare' THEN 2 WHEN 'epic' THEN 3 WHEN 'legendary' THEN 4 WHEN 'limited' THEN 5 ELSE -1 END DESC LIMIT 1) as bestDropRarity
             FROM Player p
-            WHERE p.isAdmin = 0
+            WHERE p.isAdmin = 0 AND p.username != '__shop__'
         `;
         
         const stmt = this.unit.prepare<any>(sql);
@@ -223,6 +230,7 @@ export class PlayerStatisticsService extends ServiceBase {
             return {
                 statId: r.playerId,
                 playerId: r.playerId,
+                username: r.username,
                 totalLogins: r.totalLogins ?? 0,
                 lastLoginAt: new Date(),
                 totalSessionMinutes: 0,
@@ -243,7 +251,7 @@ export class PlayerStatisticsService extends ServiceBase {
                 averageListingPrice: r.listingsCreated > 0 ? r.salesRevenue / r.listingsCreated : 0,
                 averageSalePrice: r.listingsSold > 0 ? r.salesRevenue / r.listingsSold : 0,
                 fastestSaleMinutes: null,
-                totalTradesCompleted: r.listingsSold + r.purchasesMade,
+                totalTradesCompleted: (r.listingsSold ?? 0) + (r.purchasesMade ?? 0),
                 totalMiniGamesPlayed: r.miniGamesPlayed,
                 totalMiniGameWins: 0,
                 totalMiniGameLosses: 0,
@@ -256,9 +264,10 @@ export class PlayerStatisticsService extends ServiceBase {
                 totalGlobalMessages: 0,
                 totalPrivateMessages: 0,
                 currentStoveCount: r.stovesOwned,
-                totalStovesAcquired: r.lootboxesOpened + r.purchasesMade,
+                totalStovesAcquired: (r.lootboxesOpened ?? 0) + (r.purchasesMade ?? 0),
                 totalStovesSold: r.listingsSold,
                 totalStovesTraded: 0,
+                totalStovesCrafted: 0,
                 rarestStoveOwned: null,
                 highestCoinBalance: r.coins,
                 lowestCoinBalance: r.coins,
@@ -279,10 +288,18 @@ export class PlayerStatisticsService extends ServiceBase {
     }
 
     /**
-     * Gets top players by market activity score.
+     * Gets top players by game activity (mini-games played).
      */
     async getTopByActivity(limit: number): Promise<PlayerStatisticsRow[]> {
-        return (await this.getAll()).slice(0, limit);
+        return (await this.getAll())
+            .sort((a, b) => {
+                // Primary: games played descending
+                const gamesDiff = (b.totalMiniGamesPlayed ?? 0) - (a.totalMiniGamesPlayed ?? 0);
+                if (gamesDiff !== 0) return gamesDiff;
+                // Tie-breaker: market activity score descending
+                return (b.marketActivityScore ?? 0) - (a.marketActivityScore ?? 0);
+            })
+            .slice(0, limit);
     }
 
     /**

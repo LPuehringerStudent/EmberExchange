@@ -1,195 +1,197 @@
-<div class="profile-layout">
+<div class="p-10 px-5 max-w-[1000px] mx-auto flex flex-col gap-6 bg-body min-h-screen">
 
   <!-- Loading State -->
   @if (loading()) {
-    <div class="empty-state">
-      <div class="spinner"></div>
+    <div class="flex flex-col items-center justify-center py-24 px-5 text-text-secondary text-center">
+      <div class="w-12 h-12 border-4 border-accent/20 border-t-accent rounded-full animate-spin mb-4"></div>
       <p>Loading profile...</p>
     </div>
   }
 
   @if (!loading() && user()) {
     <!-- Header Card -->
-    <div class="profile-card header-card">
-      <div class="avatar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <div class="bg-surface rounded-[20px] p-7 shadow-[0_20px_50px_rgba(232,93,4,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_60px_rgba(232,93,4,0.12)] flex items-center gap-6 flex-wrap">
+      <div class="w-[90px] h-[90px] rounded-full bg-gradient-to-br from-accent to-orange-500 flex items-center justify-center text-white shrink-0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-11 h-11">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
       </div>
-      <div class="header-info">
-        <h1>{{ user()?.username }}</h1>
-        <p class="email">{{ user()?.email }}</p>
-        <div class="badges">
-          <span class="badge" [class.admin]="user()?.isAdmin">
+      <div class="flex-1">
+        <h1 class="m-0 mb-1.5 text-[26px] text-text-primary font-bold">{{ user()?.username }}</h1>
+        <p class="m-0 mb-3 text-[15px] text-text-secondary">{{ user()?.email }}</p>
+        <div class="flex gap-2 flex-wrap">
+          <span
+            class="px-3 py-1.5 rounded-[20px] text-xs font-bold uppercase tracking-wide"
+            [class]="user()?.isAdmin ? 'bg-gradient-to-br from-accent to-orange-500 text-white' : 'bg-surface-secondary text-text-secondary border border-border'"
+          >
             {{ user()?.isAdmin ? 'Admin' : 'Player' }}
           </span>
-          <span class="badge provider">
+          <span class="px-3 py-1.5 rounded-[20px] text-xs font-bold uppercase tracking-wide bg-surface-secondary text-text-secondary border border-border">
             {{ providerLabel(user()?.provider || null) }}
           </span>
         </div>
       </div>
-      <div class="join-date">
-        <span>Joined</span>
-        <strong>{{ formatDate(user()?.joinedAt || null) }}</strong>
+      <div class="flex flex-col items-end gap-1 ml-auto max-mobile:items-start max-mobile:ml-0">
+        <span class="text-xs text-text-secondary uppercase tracking-wide">Joined</span>
+        <strong class="text-sm text-text-primary font-semibold">{{ formatDate(user()?.joinedAt || null) }}</strong>
       </div>
     </div>
 
     <!-- Wallet Card -->
-    <div class="profile-card wallet-card">
-      <div class="wallet-item">
-        <div class="wallet-icon coal">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <div class="bg-surface rounded-[20px] p-7 shadow-[0_20px_50px_rgba(232,93,4,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_60px_rgba(232,93,4,0.12)] flex items-center gap-6 flex-wrap max-mobile:flex-col max-mobile:items-start">
+      <div class="flex items-center gap-3.5 flex-1 min-w-[160px]">
+        <div class="w-12 h-12 rounded-[14px] flex items-center justify-center bg-accent/10 text-accent">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6">
             <circle cx="12" cy="12" r="10"/>
             <path d="M9 12h6M12 9v6"/>
           </svg>
         </div>
-        <div class="wallet-text">
-          <span class="label">Coins</span>
-          <span class="value">{{ formatNumber(user()?.coins) }} Coal</span>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Coins</span>
+          <span class="text-xl text-text-primary font-bold">{{ formatNumber(user()?.coins) }} Coal</span>
         </div>
       </div>
-      <div class="wallet-divider"></div>
-      <div class="wallet-item">
-        <div class="wallet-icon lootbox">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="w-px h-[50px] bg-border max-mobile:hidden"></div>
+      <div class="flex items-center gap-3.5 flex-1 min-w-[160px]">
+        <div class="w-12 h-12 rounded-[14px] flex items-center justify-center bg-blue-500/10 text-blue-500">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
             <line x1="3" y1="9" x2="21" y2="9"/>
             <line x1="9" y1="21" x2="9" y2="9"/>
           </svg>
         </div>
-        <div class="wallet-text">
-          <span class="label">Lootboxes</span>
-          <span class="value">{{ formatNumber(user()?.lootboxCount) }}</span>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Lootboxes</span>
+          <span class="text-xl text-text-primary font-bold">{{ formatNumber(user()?.lootboxCount) }}</span>
         </div>
       </div>
-      <div class="wallet-divider"></div>
-      <div class="wallet-actions">
-        <button class="btn-secondary" routerLink="/settings/account">Edit Profile</button>
+      <div class="ml-auto max-mobile:ml-0 max-mobile:w-full">
+        <button class="btn-secondary max-mobile:w-full" routerLink="/settings/account">Edit Profile</button>
       </div>
     </div>
 
     <!-- Statistics -->
-    <div class="profile-card stats-card">
-      <div class="stats-header">
-        <h2>Statistics</h2>
+    <div class="bg-surface rounded-[20px] p-7 shadow-[0_20px_50px_rgba(232,93,4,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_60px_rgba(232,93,4,0.12)]">
+      <div class="flex items-center justify-between gap-3 mb-5 flex-wrap">
+        <h2 class="m-0 text-xl text-text-primary font-bold">Statistics</h2>
         @if (statsError()) {
-          <span class="stats-error">{{ statsError() }}</span>
+          <span class="text-[13px] text-danger">{{ statsError() }}</span>
         }
       </div>
 
       @if (stats()) {
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+          <div class="flex items-center gap-3.5 p-[18px] bg-surface-secondary rounded-[14px] border border-border transition-all duration-200 hover:bg-surface-hover hover:-translate-y-0.5">
+            <div class="w-[42px] h-[42px] rounded-xl bg-body flex items-center justify-center text-accent shadow-sm shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5">
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
                 <polyline points="10 17 15 12 10 7"/>
                 <line x1="15" y1="12" x2="3" y2="12"/>
               </svg>
             </div>
-            <div class="stat-text">
-              <span class="stat-label">Total Logins</span>
-              <span class="stat-value">{{ formatNumber(stats()?.totalLogins) }}</span>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Total Logins</span>
+              <span class="text-[17px] text-text-primary font-bold">{{ formatNumber(stats()?.totalLogins) }}</span>
             </div>
           </div>
 
-          <div class="stat-item">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="flex items-center gap-3.5 p-[18px] bg-surface-secondary rounded-[14px] border border-border transition-all duration-200 hover:bg-surface-hover hover:-translate-y-0.5">
+            <div class="w-[42px] h-[42px] rounded-xl bg-body flex items-center justify-center text-accent shadow-sm shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5">
                 <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
                 <circle cx="12" cy="5" r="2"/>
               </svg>
             </div>
-            <div class="stat-text">
-              <span class="stat-label">Stoves Collected</span>
-              <span class="stat-value">{{ formatNumber(stats()?.totalStovesFromLootboxes) }}</span>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Stoves Collected</span>
+              <span class="text-[17px] text-text-primary font-bold">{{ formatNumber(stats()?.totalStovesFromLootboxes) }}</span>
             </div>
           </div>
 
-          <div class="stat-item">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="flex items-center gap-3.5 p-[18px] bg-surface-secondary rounded-[14px] border border-border transition-all duration-200 hover:bg-surface-hover hover:-translate-y-0.5">
+            <div class="w-[42px] h-[42px] rounded-xl bg-body flex items-center justify-center text-accent shadow-sm shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5">
                 <path d="M3 3h18v18H3z"/>
                 <path d="M3 9h18M9 21V9"/>
               </svg>
             </div>
-            <div class="stat-text">
-              <span class="stat-label">Listings Created</span>
-              <span class="stat-value">{{ formatNumber(stats()?.totalListingsCreated) }}</span>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Listings Created</span>
+              <span class="text-[17px] text-text-primary font-bold">{{ formatNumber(stats()?.totalListingsCreated) }}</span>
             </div>
           </div>
 
-          <div class="stat-item">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="flex items-center gap-3.5 p-[18px] bg-surface-secondary rounded-[14px] border border-border transition-all duration-200 hover:bg-surface-hover hover:-translate-y-0.5">
+            <div class="w-[42px] h-[42px] rounded-xl bg-body flex items-center justify-center text-accent shadow-sm shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </div>
-            <div class="stat-text">
-              <span class="stat-label">Listings Sold</span>
-              <span class="stat-value">{{ formatNumber(stats()?.totalListingsSold) }}</span>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Listings Sold</span>
+              <span class="text-[17px] text-text-primary font-bold">{{ formatNumber(stats()?.totalListingsSold) }}</span>
             </div>
           </div>
 
-          <div class="stat-item">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="flex items-center gap-3.5 p-[18px] bg-surface-secondary rounded-[14px] border border-border transition-all duration-200 hover:bg-surface-hover hover:-translate-y-0.5">
+            <div class="w-[42px] h-[42px] rounded-xl bg-body flex items-center justify-center text-accent shadow-sm shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5">
                 <circle cx="9" cy="21" r="1"/>
                 <circle cx="20" cy="21" r="1"/>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
               </svg>
             </div>
-            <div class="stat-text">
-              <span class="stat-label">Purchases Made</span>
-              <span class="stat-value">{{ formatNumber(stats()?.totalPurchases) }}</span>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Purchases Made</span>
+              <span class="text-[17px] text-text-primary font-bold">{{ formatNumber(stats()?.totalPurchases) }}</span>
             </div>
           </div>
 
-          <div class="stat-item">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="flex items-center gap-3.5 p-[18px] bg-surface-secondary rounded-[14px] border border-border transition-all duration-200 hover:bg-surface-hover hover:-translate-y-0.5">
+            <div class="w-[42px] h-[42px] rounded-xl bg-body flex items-center justify-center text-accent shadow-sm shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5">
                 <line x1="12" y1="1" x2="12" y2="23"/>
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
               </svg>
             </div>
-            <div class="stat-text">
-              <span class="stat-label">Sales Revenue</span>
-              <span class="stat-value">{{ formatNumber(stats()?.totalSalesRevenue) }} Coal</span>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Sales Revenue</span>
+              <span class="text-[17px] text-text-primary font-bold">{{ formatNumber(stats()?.totalSalesRevenue) }} Coal</span>
             </div>
           </div>
 
-          <div class="stat-item">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="flex items-center gap-3.5 p-[18px] bg-surface-secondary rounded-[14px] border border-border transition-all duration-200 hover:bg-surface-hover hover:-translate-y-0.5">
+            <div class="w-[42px] h-[42px] rounded-xl bg-body flex items-center justify-center text-accent shadow-sm shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
             </div>
-            <div class="stat-text">
-              <span class="stat-label">Best Drop Rarity</span>
-              <span class="stat-value">{{ stats()?.bestDropRarity || 'None' }}</span>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Best Drop Rarity</span>
+              <span class="text-[17px] text-text-primary font-bold">{{ stats()?.bestDropRarity || 'None' }}</span>
             </div>
           </div>
 
-          <div class="stat-item">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="flex items-center gap-3.5 p-[18px] bg-surface-secondary rounded-[14px] border border-border transition-all duration-200 hover:bg-surface-hover hover:-translate-y-0.5">
+            <div class="w-[42px] h-[42px] rounded-xl bg-body flex items-center justify-center text-accent shadow-sm shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5.5 h-5.5">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                 <line x1="16" y1="2" x2="16" y2="6"/>
                 <line x1="8" y1="2" x2="8" y2="6"/>
                 <line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
             </div>
-            <div class="stat-text">
-              <span class="stat-label">Lootboxes Opened</span>
-              <span class="stat-value">{{ formatNumber(stats()?.totalLootboxesOpened) }}</span>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Lootboxes Opened</span>
+              <span class="text-[17px] text-text-primary font-bold">{{ formatNumber(stats()?.totalLootboxesOpened) }}</span>
             </div>
           </div>
         </div>
       } @else {
-        <div class="stats-empty">
-          <p>No statistics available yet.</p>
-          <span>Start playing to build your profile!</span>
+        <div class="text-center py-10 px-5 text-text-secondary">
+          <p class="m-0 mb-1.5 text-base font-semibold text-text-primary">No statistics available yet.</p>
+          <span class="text-sm text-text-secondary">Start playing to build your profile!</span>
         </div>
       }
     </div>

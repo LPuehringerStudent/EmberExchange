@@ -21,18 +21,18 @@ export class DailyStatisticsService extends ServiceBase {
     private async calculateTodayStats(): Promise<DailyStatisticsRow> {
         const sql = `
             SELECT
-                (SELECT COUNT(*) FROM Lootbox WHERE openedAt::date = CURRENT_DATE) as lootboxesOpened,
-                (SELECT COUNT(*) FROM Listing WHERE listedAt::date = CURRENT_DATE) as newListings,
-                (SELECT COUNT(*) FROM Trade t JOIN Listing l ON t.listingId = l.listingId WHERE t.executedAt::date = CURRENT_DATE) as salesToday,
-                (SELECT COALESCE(SUM(l2.price), 0) FROM Trade t2 JOIN Listing l2 ON t2.listingId = l2.listingId WHERE t2.executedAt::date = CURRENT_DATE) as tradingVolume,
-                (SELECT COALESCE(AVG(l3.price), 0) FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE t3.executedAt::date = CURRENT_DATE) as avgSalePrice,
-                (SELECT COUNT(*) FROM MiniGameSession WHERE finishedAt::date = CURRENT_DATE) as gamesToday,
-                (SELECT COUNT(*) FROM ChatMessage WHERE sentAt::date = CURRENT_DATE) as messagesToday,
-                (SELECT COUNT(*) FROM Player WHERE joinedAt::date = CURRENT_DATE) as newPlayers,
-                (SELECT COUNT(DISTINCT playerId) FROM LoginHistory WHERE loggedInAt::date = CURRENT_DATE) as activePlayers,
-                (SELECT COUNT(*) FROM LoginHistory WHERE loggedInAt::date = CURRENT_DATE) as totalSessions,
-                (SELECT COALESCE(SUM(coins), 0) FROM Player) as totalCoins,
-                (SELECT COUNT(*) FROM Stove) as totalStoves
+                (SELECT COUNT(*)::INTEGER FROM Lootbox WHERE SUBSTRING(openedAt, 1, 10) = CURRENT_DATE::TEXT) as lootboxesOpened,
+                (SELECT COUNT(*)::INTEGER FROM Listing WHERE SUBSTRING(listedAt, 1, 10) = CURRENT_DATE::TEXT) as newListings,
+                (SELECT COUNT(*)::INTEGER FROM Trade t JOIN Listing l ON t.listingId = l.listingId WHERE SUBSTRING(t.executedAt, 1, 10) = CURRENT_DATE::TEXT) as salesToday,
+                (SELECT COALESCE(SUM(l2.price)::INTEGER, 0) FROM Trade t2 JOIN Listing l2 ON t2.listingId = l2.listingId WHERE SUBSTRING(t2.executedAt, 1, 10) = CURRENT_DATE::TEXT) as tradingVolume,
+                (SELECT COALESCE(AVG(l3.price)::INTEGER, 0) FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE SUBSTRING(t3.executedAt, 1, 10) = CURRENT_DATE::TEXT) as avgSalePrice,
+                (SELECT COUNT(*)::INTEGER FROM MiniGameSession WHERE SUBSTRING(finishedAt, 1, 10) = CURRENT_DATE::TEXT) as gamesToday,
+                (SELECT COUNT(*)::INTEGER FROM ChatMessage WHERE SUBSTRING(sentAt, 1, 10) = CURRENT_DATE::TEXT) as messagesToday,
+                (SELECT COUNT(*)::INTEGER FROM Player WHERE SUBSTRING(joinedAt, 1, 10) = CURRENT_DATE::TEXT) as newPlayers,
+                (SELECT COUNT(DISTINCT playerId)::INTEGER FROM LoginHistory WHERE SUBSTRING(loggedInAt, 1, 10) = CURRENT_DATE::TEXT) as activePlayers,
+                (SELECT COUNT(*)::INTEGER FROM LoginHistory WHERE SUBSTRING(loggedInAt, 1, 10) = CURRENT_DATE::TEXT) as totalSessions,
+                (SELECT COALESCE(SUM(coins)::INTEGER, 0) FROM Player) as totalCoins,
+                (SELECT COUNT(*)::INTEGER FROM Stove) as totalStoves
         `;
 
         const stmt = this.unit.prepare<any>(sql);

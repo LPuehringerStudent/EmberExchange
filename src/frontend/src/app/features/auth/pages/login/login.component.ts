@@ -18,6 +18,8 @@ export class LoginComponent implements OnInit {
   rememberMe = signal(false);
   googleEnabled = signal(false);
   githubEnabled = signal(false);
+  show2FA = signal(false);
+  twoFACode = signal('');
 
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -26,6 +28,10 @@ export class LoginComponent implements OnInit {
     email: new FormControl('', [Validators.required]),
     password: new FormControl('', [Validators.required]),
     rememberMe: new FormControl(false)
+  });
+
+  twoFAForm = new FormGroup({
+    code: new FormControl('', [Validators.required, Validators.pattern(/^\d{6}$/)])
   });
 
   async ngOnInit(): Promise<void> {
@@ -47,10 +53,8 @@ export class LoginComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    // Reset error message
     this.errorMessage.set('');
 
-    // Validation
     if (this.loginForm.invalid) {
       this.errorMessage.set('Please fill in all fields');
       return;
@@ -61,21 +65,52 @@ export class LoginComponent implements OnInit {
     const { email, password, rememberMe } = this.loginForm.value;
 
     try {
-      // Call auth service to login
-      await this.authService.login(
+      const result = await this.authService.login(
         email!,
         password!,
         rememberMe ?? false
       );
 
-      // Navigate to main page on success
-      this.router.navigate(['/']);
+      if ('requires2FA' in result) {
+        this.show2FA.set(true);
+        this.rememberMe.set(rememberMe ?? false);
+      } else {
+        this.router.navigate(['/']);
+      }
     } catch (err) {
-      // Display error message
       this.errorMessage.set(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  async onVerify2FA(): Promise<void> {
+    this.errorMessage.set('');
+
+    if (this.twoFAForm.invalid) {
+      this.errorMessage.set('Please enter a valid 6-digit code');
+      return;
+    }
+
+    this.isLoading.set(true);
+
+    try {
+      await this.authService.verify2FA(
+        this.twoFAForm.value.code!,
+        this.rememberMe()
+      );
+      this.router.navigate(['/']);
+    } catch (err) {
+      this.errorMessage.set(err instanceof Error ? err.message : 'Invalid code. Please try again.');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  cancel2FA(): void {
+    this.show2FA.set(false);
+    this.twoFAForm.reset();
+    this.authService.cancel2FA();
   }
 
   togglePassword(): void {

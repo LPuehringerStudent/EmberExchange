@@ -6,6 +6,7 @@ import { handleLeaveRoom } from "./handlers/leave-room";
 import { handlePlayerAction } from "./handlers/player-action";
 import { handleRequestSync } from "./handlers/request-sync";
 import { handleStartGame } from "./handlers/start-game";
+import { handleChatMessage } from "./handlers/chat-message";
 
 export async function handleMessage(socketId: string, data: unknown): Promise<void> {
     const msg = data as Partial<ClientMessage> & Record<string, unknown>;
@@ -54,6 +55,9 @@ export async function handleMessage(socketId: string, data: unknown): Promise<vo
                 break;
             case "start_game":
                 await handleStartGame(socketId, (msg.payload as Record<string, unknown>) || {});
+                break;
+            case "chat_message":
+                await handleChatMessage(socketId, (msg.payload as Record<string, unknown>) || {});
                 break;
             default:
                 sendError(socketId, ErrorCode.INVALID_STATE, `Unknown message type: ${type}`);

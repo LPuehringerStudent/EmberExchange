@@ -59,6 +59,7 @@ const sampleLootboxDrop = {
 const sampleStoveType = {
   typeId: 2,
   name: 'Ember Stove',
+  rarity: 'common',
   imageUrl: '/assets/stove_sprites/ember.png',
 };
 

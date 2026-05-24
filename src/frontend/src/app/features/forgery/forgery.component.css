@@ -1,0 +1,199 @@
+/* ─── Page ─── */
+.forgery-page {
+  --orange: #e85d04;
+  --orange-light: #f48c3c;
+  --gold: #c8881a;
+  --bg-page: var(--body-bg, #faf6f1);
+  --bg-card: var(--surface-bg, #ffffff);
+  --bg-sidebar: var(--surface-bg-secondary, #f3ebe0);
+  --border: var(--border-color, #e4d0ba);
+  --text-primary: var(--text-primary, #2d2a26);
+  --text-muted: var(--text-muted, #8a7e72);
+}
+
+/* ─── Table Section ─── */
+.forgery-table-wrap {
+  position: relative;
+}
+
+.forgery-table-img {
+  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.25));
+  transition: filter 0.3s ease;
+}
+
+.forgery-table-glow {
+  background: radial-gradient(circle at center, rgba(232, 93, 4, 0.15) 0%, transparent 70%);
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(1.05); }
+}
+
+/* ─── Slots ─── */
+.forge-slot {
+  width: clamp(56px, 12vw, 84px);
+  height: clamp(72px, 15vw, 108px);
+  z-index: 5;
+  transition: transform 0.2s ease;
+}
+
+.forge-slot:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.forge-slot--filled .forge-slot__content {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  transition: box-shadow 0.2s ease;
+}
+
+.forge-slot--empty .forge-slot__placeholder {
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+}
+
+.forge-slot--empty:hover .forge-slot__placeholder {
+  border-color: var(--orange);
+  background: var(--bg-card);
+}
+
+.forge-slot__remove {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.forge-slot:hover .forge-slot__remove {
+  opacity: 1;
+}
+
+/* ─── Forge Button ─── */
+.forge-btn {
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-light) 100%);
+  box-shadow: 0 6px 24px rgba(232, 93, 4, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.forge-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--orange-light) 0%, #f09340 100%);
+  box-shadow: 0 8px 32px rgba(232, 93, 4, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.forge-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Sparkle effect on active forge button */
+.forge-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--orange), var(--gold), var(--orange));
+  background-size: 200% 200%;
+  opacity: 0;
+  z-index: -1;
+  filter: blur(8px);
+  animation: forge-glow 2s ease-in-out infinite;
+  transition: opacity 0.3s ease;
+}
+
+.forge-btn:not(:disabled)::before {
+  opacity: 0.5;
+}
+
+@keyframes forge-glow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ─── Rarity Tabs ─── */
+.rarity-tab.active {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Stove Cards ─── */
+.stove-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.stove-card--selected {
+  border-color: var(--orange) !important;
+  box-shadow: 0 0 0 2px rgba(232, 93, 4, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stove-card:hover:not(.cursor-not-allowed) {
+  border-color: var(--orange);
+}
+
+/* ─── Result Overlay ─── */
+.result-overlay {
+  animation: fade-in 0.3s ease;
+}
+
+.result-panel {
+  animation: panel-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.success-animation {
+  animation: success-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.failure-animation {
+  animation: panel-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes panel-in {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes success-pop {
+  0% { opacity: 0; transform: scale(0.8); }
+  60% { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Dark Mode ─── */
+:host-context(body.theme-dark) .forgery-page {
+  --bg-page: #1a1a1a;
+  --bg-card: #2a2a2a;
+  --bg-sidebar: #333333;
+  --border: #444444;
+  --text-primary: #f0f0f0;
+  --text-muted: #888888;
+}
+
+:host-context(body.theme-dark) .forge-slot--empty .forge-slot__placeholder {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:host-context(body.theme-dark) .forgery-table-img {
+  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.5)) brightness(0.9);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .forge-slot {
+    width: 48px;
+    height: 64px;
+  }
+
+  .forge-slot__overlay span {
+    font-size: 8px;
+  }
+
+  .forge-btn {
+    padding: 10px 20px;
+    font-size: 11px;
+  }
+}

@@ -31,7 +31,7 @@ const sampleStove = {
   mintedAt: '2026-01-01',
 };
 
-const sampleStoveWithImage = { ...sampleStove, imageUrl: '/assets/stove_sprites/stove2.png' };
+const sampleStoveWithImage = { ...sampleStove, imageUrl: '/assets/stove_sprites/stove2.png', name: 'Rusty Stove', rarity: 'common' };
 
 // ---------------------------------------------------------------------------
 // Tests

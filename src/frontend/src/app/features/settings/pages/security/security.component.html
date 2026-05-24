@@ -1,78 +1,162 @@
-<!-- security.component.html -->
 <div class="settings-section">
   <h1>Security</h1>
-  <p class="subtitle">Manage your account security settings</p>
+  <p class="subtitle">Manage your active sessions and account security</p>
 
-  <div class="security-list">
-    <div class="security-card" (click)="toggleTwoFactor()">
-      <div class="icon"></div>
-      <div class="security-info">
-        <span class="security-title">Two-Factor Authentication</span>
-        <span class="security-desc">Add an extra layer of security</span>
-      </div>
-      <div class="toggle" [class.active]="twoFactorEnabled()">
-        <div class="toggle-circle"></div>
-      </div>
+  @if (passwordSuccess()) {
+    <div class="alert alert-success">{{ passwordSuccess() }}</div>
+  }
+  @if (passwordError()) {
+    <div class="alert alert-error">{{ passwordError() }}</div>
+  }
+
+  <h3 class="text-lg font-semibold text-text-primary mb-4">Change Password</h3>
+  <div class="form-grid" [formGroup]="passwordForm">
+    <div class="input-group">
+      <label>Current Password</label>
+      <input type="password" formControlName="currentPassword" placeholder="••••••••">
     </div>
 
-    <div class="security-card" (click)="toggleLoginAlerts()">
-      <div class="icon"></div>
-      <div class="security-info">
-        <span class="security-title">Login Alerts</span>
-        <span class="security-desc">Get notified of new sign-ins</span>
-      </div>
-      <div class="toggle" [class.active]="loginAlerts()">
-        <div class="toggle-circle"></div>
-      </div>
+    <div class="input-group">
+      <label>New Password</label>
+      <input type="password" formControlName="newPassword" placeholder="••••••••">
     </div>
 
-    <div class="security-card" (click)="toggleTrustedDevices()">
-      <div class="icon"></div>
-      <div class="security-info">
-        <span class="security-title">Trusted Devices</span>
-        <span class="security-desc">Skip 2FA on known devices</span>
-      </div>
-      <div class="toggle" [class.active]="trustedDevices()">
-        <div class="toggle-circle"></div>
-      </div>
+    <div class="input-group">
+      <label>Confirm New Password</label>
+      <input type="password" formControlName="confirmPassword" placeholder="••••••••">
     </div>
   </div>
 
-  <div class="danger-zone">
-    <h3>Danger Zone</h3>
-    <p>Once you delete your account, there is no going back. Please be certain.</p>
-    <button class="btn-danger" (click)="openDeleteModal()">Delete Account</button>
-  </div>
+  <button class="btn-danger" (click)="updatePassword()" [disabled]="passwordLoading()">
+    {{ passwordLoading() ? 'Updating...' : 'Update Password' }}
+  </button>
 </div>
 
-<!-- Delete Account Modal -->
-@if (showDeleteModal()) {
-  <div class="modal-overlay" (click)="closeDeleteModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <h2>Delete Account</h2>
-      <p>This action cannot be undone. This will permanently delete your account and remove all your data.</p>
+<div class="settings-section">
+  <h1>Two-Factor Authentication</h1>
+  <p class="subtitle">Add an extra layer of security to your account</p>
 
-      <div class="confirm-input">
-        <label>Please type <strong>DELETE</strong> to confirm:</label>
-        <input
-          type="text"
-          [formControl]="deleteConfirmText"
-          placeholder="Type DELETE here">
+  @if (twoFASuccess()) {
+    <div class="alert alert-success">{{ twoFASuccess() }}</div>
+  }
+  @if (twoFAError()) {
+    <div class="alert alert-error">{{ twoFAError() }}</div>
+  }
+
+  @if (!twoFASetupMode()) {
+    @if (isOAuthUser()) {
+      <div class="flex items-center gap-3 p-4 rounded-xl mb-5 bg-surface-secondary border border-border text-text-secondary font-medium">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6 shrink-0">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>2FA is unavailable for OAuth accounts. Set a password first to enable 2FA.</span>
       </div>
-
-      @if (deleteError()) {
-        <div class="alert alert-error">{{ deleteError() }}</div>
-      }
-
-      <div class="modal-actions">
-        <button class="btn-secondary" (click)="closeDeleteModal()">Cancel</button>
-        <button
-          class="btn-danger"
-          (click)="confirmDeleteAccount()"
-          [disabled]="deleteLoading()">
-          {{ deleteLoading() ? 'Deleting...' : 'Delete Account' }}
+    } @else if (twoFAEnabled()) {
+      <div class="flex items-center gap-3 p-4 rounded-xl mb-5 bg-green-50 border border-green-500 text-green-700 font-medium">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6 shrink-0">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+        <span>Two-factor authentication is enabled</span>
+      </div>
+      <div class="flex flex-col gap-3 max-w-[400px]">
+        <label class="text-text-secondary text-sm">Confirm your password to disable 2FA</label>
+        <input
+          type="password"
+          [ngModel]="twoFADisablePassword()"
+          (ngModelChange)="twoFADisablePassword.set($event)"
+          placeholder="Current password"
+          class="px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary text-sm focus:outline-none focus:border-accent"
+        />
+        <button class="btn-danger" (click)="disable2FA()" [disabled]="twoFALoading()">
+          {{ twoFALoading() ? 'Working...' : 'Disable 2FA' }}
         </button>
       </div>
+    } @else {
+      <div class="flex items-center gap-3 p-4 rounded-xl mb-5 bg-surface-secondary border border-border text-text-secondary font-medium">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6 shrink-0">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>Two-factor authentication is not enabled</span>
+      </div>
+      <button class="btn-primary" (click)="start2FASetup()" [disabled]="twoFALoading()">
+        {{ twoFALoading() ? 'Loading...' : 'Enable 2FA' }}
+      </button>
+    }
+  } @else {
+    <div class="text-center">
+      <p class="text-text-secondary mb-4">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+      <img [src]="twoFAQrCode()" alt="2FA QR Code" class="max-w-[200px] mx-auto rounded-lg border-2 border-border my-4" />
+
+      <div class="my-4 p-3 rounded-lg bg-surface-secondary">
+        <label class="block text-sm text-text-secondary mb-2">Or enter this secret key manually:</label>
+        <code class="block font-mono text-base break-all text-text-primary bg-body px-3 py-2 rounded-md">{{ twoFASecret() }}</code>
+      </div>
+
+      <div class="mt-5">
+        <label class="block mb-2 text-text-secondary">Enter the 6-digit code from your app to confirm</label>
+        <input
+          type="text"
+          [ngModel]="twoFAVerifyCode()"
+          (ngModelChange)="twoFAVerifyCode.set($event)"
+          placeholder="000000"
+          maxlength="6"
+          inputmode="numeric"
+          class="w-full max-w-[200px] px-3 py-2.5 text-xl text-center tracking-[4px] border border-border rounded-lg bg-surface text-text-primary mb-4 focus:outline-none focus:border-accent"
+        />
+        <div class="flex gap-3 justify-center flex-wrap">
+          <button class="btn-primary" (click)="confirm2FASetup()" [disabled]="twoFALoading()">
+            {{ twoFALoading() ? 'Verifying...' : 'Confirm & Enable' }}
+          </button>
+          <button class="btn-secondary" (click)="cancel2FASetup()">Cancel</button>
+        </div>
+      </div>
     </div>
+  }
+</div>
+
+<div class="settings-section">
+  <h1>Active Sessions</h1>
+  <p class="subtitle">View and manage your active sessions</p>
+
+  @if (logoutAllSuccess()) {
+    <div class="alert alert-success">{{ logoutAllSuccess() }}</div>
+  }
+  @if (logoutAllError()) {
+    <div class="alert alert-error">{{ logoutAllError() }}</div>
+  }
+
+  <div class="mt-5">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="m-0 text-lg text-text-primary font-semibold">Sessions</h3>
+      <button class="btn-danger" (click)="logoutAllDevices()" [disabled]="loading()">
+        {{ loading() ? 'Working...' : 'Log out all devices' }}
+      </button>
+    </div>
+
+    @if (sessions().length === 0) {
+      <p class="text-text-tertiary italic py-5">No active sessions found.</p>
+    } @else {
+      <div class="flex flex-col gap-3">
+        @for (session of sessions(); track session.sessionId) {
+          <div
+            class="flex items-center justify-between p-4 rounded-xl bg-surface-secondary border border-border transition-all duration-200"
+            [class.bg-highlight-bg]="session.isCurrent"
+            [class.border-accent]="session.isCurrent"
+          >
+            <div class="flex items-center gap-2.5">
+              <span class="font-mono text-sm text-text-secondary">{{ session.sessionId.slice(0, 8) }}...</span>
+              @if (session.isCurrent) {
+                <span class="bg-accent text-white text-[11px] px-2 py-0.5 rounded-md font-semibold">Current</span>
+              }
+            </div>
+            <div class="flex flex-col gap-1 text-right text-xs text-text-muted">
+              <span>Created: {{ session.createdAt | date:'short' }}</span>
+              <span>Expires: {{ session.expiresAt | date:'short' }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
   </div>
-}
+</div>

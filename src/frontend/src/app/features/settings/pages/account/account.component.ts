@@ -7,28 +7,25 @@ import { AuthService } from '@core/services/auth.service';
   selector: 'app-account',
   imports: [ReactiveFormsModule],
   templateUrl: './account.component.html',
-  styleUrls: ['../../settings.component.css', './account.component.css'],
+  styleUrls: ['../../settings.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountComponent implements OnInit {
   username = signal<string>('');
   originalEmail = '';
+  playerId = signal<number>(0);
 
-  emailForm = new FormGroup({
-    email: new FormControl('', [Validators.required, Validators.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)])
+  profileForm = new FormGroup({
+    username: new FormControl('', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]),
+    email: new FormControl('', [Validators.required, Validators.email]),
+    motto: new FormControl('', [Validators.maxLength(100)])
   });
-
-  passwordForm = new FormGroup({
-    currentPassword: new FormControl(''),
-    newPassword: new FormControl(''),
-    confirmPassword: new FormControl('')
-  });
+  isPublic = signal<boolean>(true);
 
   loading = signal<boolean>(false);
-  emailSuccess = signal<string>('');
-  emailError = signal<string>('');
-  passwordSuccess = signal<string>('');
-  passwordError = signal<string>('');
+  profileSuccess = signal<string>('');
+  profileError = signal<string>('');
+  usernameError = signal<string>('');
 
   private _authService = inject(AuthService);
   private _router = inject(Router);
@@ -38,91 +35,62 @@ export class AccountComponent implements OnInit {
     if (user) {
       this.username.set(user.username);
       this.originalEmail = user.email;
-      this.emailForm.setValue({ email: user.email });
+      this.playerId.set(user.playerId);
+      this.profileForm.setValue({
+        username: user.username,
+        email: user.email,
+        motto: (user as unknown as Record<string, string>)['motto'] || ''
+      });
+      this.isPublic.set((user as unknown as Record<string, boolean>)['isPublic'] ?? true);
     } else {
-      this._router.navigate(['/login']);
+      void this._router.navigate(['/login']);
     }
   }
 
-  async saveChanges(): Promise<void> {
-    this.emailSuccess.set('');
-    this.emailError.set('');
+  async saveProfile(): Promise<void> {
+    this.profileSuccess.set('');
+    this.profileError.set('');
+    this.usernameError.set('');
 
-    if (this.emailForm.invalid) {
-      if (this.emailForm.get('email')?.hasError('required')) {
-        this.emailError.set('Email is required');
-      } else {
-        this.emailError.set('Please enter a valid email address');
-      }
+    if (this.profileForm.invalid) {
+      const usernameCtrl = this.profileForm.get('username');
+      if (usernameCtrl?.hasError('required')) this.usernameError.set('Username is required');
+      else if (usernameCtrl?.hasError('minlength')) this.usernameError.set('Username must be at least 3 characters');
+      else if (usernameCtrl?.hasError('maxlength')) this.usernameError.set('Username must be at most 30 characters');
       return;
     }
 
-    const newEmail = this.emailForm.value.email!.trim();
+    const values = this.profileForm.value;
+    const newUsername = values.username!.trim();
+    const newEmail = values.email!.trim();
+    const newMotto = (values.motto || '').trim();
 
-    if (newEmail === this.originalEmail) {
-      this.emailError.set('No changes to save');
+    const payload: { username?: string; email?: string; motto?: string; isPublic?: boolean } = {};
+    if (newUsername !== this.username()) payload.username = newUsername;
+    if (newEmail !== this.originalEmail) payload.email = newEmail;
+    const currentMotto = (this._authService.getCurrentUser() as unknown as Record<string, string>)?.['motto'] || '';
+    if (newMotto !== currentMotto) payload.motto = newMotto;
+    const currentIsPublic = (this._authService.getCurrentUser() as unknown as Record<string, boolean>)?.['isPublic'] ?? true;
+    if (this.isPublic() !== currentIsPublic) payload.isPublic = this.isPublic();
+
+    if (Object.keys(payload).length === 0) {
+      this.profileError.set('No changes to save');
       return;
     }
 
     this.loading.set(true);
 
     try {
-      const sessionId = this._authService.getSessionId();
-      if (!sessionId) {
-        this.emailError.set('Not authenticated');
-        return;
-      }
-
-      await this._authService.updateEmail(sessionId, newEmail);
-      this.emailSuccess.set('Email updated successfully');
-      this.originalEmail = newEmail;
-      await this._authService.refreshUser();
+      await this._authService.updateProfile(this.playerId(), payload);
+      this.profileSuccess.set('Profile updated successfully');
+      if (payload.username) this.username.set(newUsername);
+      if (payload.email) this.originalEmail = newEmail;
     } catch (err) {
-      this.emailError.set(err instanceof Error ? err.message : 'Failed to update email');
+      this.profileError.set(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       this.loading.set(false);
     }
   }
 
-  async updatePassword(): Promise<void> {
-    this.passwordSuccess.set('');
-    this.passwordError.set('');
 
-    const current = this.passwordForm.value.currentPassword || '';
-    const newPass = this.passwordForm.value.newPassword || '';
-    const confirm = this.passwordForm.value.confirmPassword || '';
-
-    if (!current || !newPass || !confirm) {
-      this.passwordError.set('All password fields are required');
-      return;
-    }
-
-    if (newPass.length < 6) {
-      this.passwordError.set('New password must be at least 6 characters');
-      return;
-    }
-
-    if (newPass !== confirm) {
-      this.passwordError.set('New passwords do not match');
-      return;
-    }
-
-    this.loading.set(true);
-
-    try {
-      const sessionId = this._authService.getSessionId();
-      if (!sessionId) {
-        this.passwordError.set('Not authenticated');
-        return;
-      }
-
-      await this._authService.updatePassword(sessionId, current, newPass);
-      this.passwordSuccess.set('Password updated successfully');
-      this.passwordForm.reset({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (err) {
-      this.passwordError.set(err instanceof Error ? err.message : 'Failed to update password');
-    } finally {
-      this.loading.set(false);
-    }
-  }
 }
