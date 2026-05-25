@@ -21,6 +21,9 @@ table(Player) {
     coins: INTEGER «DEFAULT 0»
     lootboxCount: INTEGER «DEFAULT 0»
     isAdmin: INTEGER «DEFAULT 0»
+    isPublic: INTEGER «DEFAULT 1»
+    bannedAt: TEXT «NULLABLE»
+    banReason: TEXT «NULLABLE»
     joinedAt: TEXT «NOT NULL»
     provider: TEXT «NULLABLE google|github»
     providerId: TEXT «NULLABLE UNIQUE»
@@ -32,6 +35,9 @@ table(StoveType) {
     imageUrl: TEXT «NOT NULL»
     rarity: TEXT «NOT NULL common|rare|epic|legendary|limited|secret»
     lootboxWeight: INTEGER «NOT NULL»
+    collection: TEXT «DEFAULT 'Industrial'»
+    minHeat: REAL «DEFAULT 0.0»
+    maxHeat: REAL «DEFAULT 1.0»
 }
 
 table(Stove) {
@@ -39,6 +45,7 @@ table(Stove) {
     foreign_key(typeId): INTEGER «NOT NULL»
     foreign_key(currentOwnerId): INTEGER «NOT NULL»
     mintedAt: TEXT «NOT NULL»
+    heatLevel: REAL «DEFAULT 0.0»
 }
 
 table(LootboxType) {
@@ -126,7 +133,7 @@ table(CoinTransaction) {
     primary_key(transactionId): SERIAL
     foreign_key(playerId): INTEGER «NOT NULL»
     amount: INTEGER «NOT NULL»
-    type: TEXT «NOT NULL trade_in|trade_out|mini_game|listing_sale|listing_purchase|admin_adjust»
+    type: TEXT «NOT NULL trade_in|trade_out|mini_game|listing_sale|listing_purchase|admin_adjust|daily_reward|shop_purchase|shop_sale|forgery»
     description: TEXT «NULLABLE»
     createdAt: TEXT «NOT NULL»
 }
@@ -333,6 +340,181 @@ table(PlayerSettings) {
     notifyDailyReward: INTEGER «DEFAULT 1»
 }
 
+
+table(ShopListing) {
+    primary_key(listingId): SERIAL
+    itemType: TEXT «NOT NULL stove|lootbox»
+    itemId: INTEGER «NOT NULL»
+    price: INTEGER «NOT NULL»
+    stock: INTEGER «DEFAULT -1»
+    rotationDate: TEXT «NULLABLE»
+    isFeatured: INTEGER «DEFAULT 0»
+    createdAt: TEXT «NOT NULL»
+}
+
+table(ShopPurchase) {
+    primary_key(purchaseId): SERIAL
+    foreign_key(listingId): INTEGER «NOT NULL»
+    foreign_key(playerId): INTEGER «NOT NULL»
+    quantity: INTEGER «DEFAULT 1»
+    purchasedAt: TEXT «NOT NULL»
+}
+
+table(PlayerDailyReward) {
+    foreign_key(playerId): INTEGER «PRIMARY KEY»
+    lastClaimAt: TEXT «NULLABLE»
+    streakCount: INTEGER «DEFAULT 0»
+}
+
+table(PlayerPrestige) {
+    foreign_key(playerId): INTEGER «PRIMARY KEY»
+    totalXP: INTEGER «DEFAULT 0»
+    currentLevel: INTEGER «DEFAULT 1»
+    prestigeCount: INTEGER «DEFAULT 0»
+    updatedAt: TIMESTAMPTZ «DEFAULT NOW()»
+}
+
+table(PrestigeLog) {
+    primary_key(logId): SERIAL
+    foreign_key(playerId): INTEGER «NOT NULL»
+    source: TEXT «NOT NULL»
+    xpAmount: INTEGER «NOT NULL»
+    description: TEXT «NULLABLE»
+    createdAt: TIMESTAMPTZ «DEFAULT NOW()»
+}
+
+table(PlayerAchievement) {
+    primary_key(playerAchievementId): SERIAL
+    foreign_key(playerId): INTEGER «NOT NULL»
+    achievementId: TEXT «NOT NULL»
+    progress: INTEGER «DEFAULT 0»
+    target: INTEGER «DEFAULT 1»
+    unlockedAt: TIMESTAMPTZ «NULLABLE»
+    unique(playerId, achievementId)
+}
+
+table(GloryTheme) {
+    primary_key(themeId): SERIAL
+    name: TEXT «NOT NULL»
+    cssClass: TEXT «NOT NULL»
+    unlockCondition: TEXT «NULLABLE»
+    unlockValue: INTEGER «NULLABLE»
+    minLevel: INTEGER «DEFAULT 1»
+}
+
+table(PlayerGloryTheme) {
+    foreign_key(playerId): INTEGER «NOT NULL»
+    foreign_key(themeId): INTEGER «NOT NULL»
+    unlockedAt: TIMESTAMPTZ «DEFAULT NOW()»
+    isActive: INTEGER «DEFAULT 0»
+    PRIMARY KEY (playerId, themeId)
+}
+
+table(GloryTitle) {
+    primary_key(titleId): TEXT
+    label: TEXT «NOT NULL»
+    animation: TEXT «DEFAULT 'none'»
+    unlockCondition: TEXT «NULLABLE»
+    unlockValue: INTEGER «NULLABLE»
+    minLevel: INTEGER «DEFAULT 1»
+}
+
+table(PlayerGloryTitle) {
+    foreign_key(playerId): INTEGER «NOT NULL»
+    foreign_key(titleId): TEXT «NOT NULL»
+    unlockedAt: TIMESTAMPTZ «DEFAULT NOW()»
+    isActive: INTEGER «DEFAULT 0»
+    PRIMARY KEY (playerId, titleId)
+}
+
+table(GloryBanner) {
+    primary_key(bannerId): SERIAL
+    name: TEXT «NOT NULL»
+    cssClass: TEXT «NOT NULL»
+    unlockCondition: TEXT «NULLABLE»
+    unlockValue: INTEGER «NULLABLE»
+}
+
+table(PlayerGloryBanner) {
+    foreign_key(playerId): INTEGER «NOT NULL»
+    foreign_key(bannerId): INTEGER «NOT NULL»
+    unlockedAt: TIMESTAMPTZ «DEFAULT NOW()»
+    isActive: INTEGER «DEFAULT 0»
+    PRIMARY KEY (playerId, bannerId)
+}
+
+table(GloryVisit) {
+    foreign_key(visitorPlayerId): INTEGER «NOT NULL»
+    foreign_key(visitedPlayerId): INTEGER «NOT NULL»
+    visitedAt: TIMESTAMPTZ «DEFAULT NOW()»
+    unique(visitorPlayerId, visitedPlayerId, visitedAt)
+}
+
+table(GloryShowcase) {
+    foreign_key(playerId): INTEGER «NOT NULL»
+    slotIndex: INTEGER «NOT NULL 0..5»
+    foreign_key(stoveId): INTEGER «NOT NULL»
+    pinnedAt: TIMESTAMPTZ «DEFAULT NOW()»
+    PRIMARY KEY (playerId, slotIndex)
+}
+
+table(GloryFeaturedAchievement) {
+    foreign_key(playerId): INTEGER «NOT NULL»
+    achievementId: TEXT «NOT NULL»
+    slotIndex: INTEGER «NOT NULL 0..5»
+    PRIMARY KEY (playerId, achievementId)
+}
+
+table(GloryGuestbook) {
+    primary_key(entryId): SERIAL
+    foreign_key(playerId): INTEGER «NOT NULL»
+    foreign_key(authorId): INTEGER «NOT NULL»
+    message: TEXT «NOT NULL max 200 chars»
+    postedAt: TIMESTAMPTZ «DEFAULT NOW()»
+}
+
+table(GloryTrophy) {
+    primary_key(trophyId): TEXT
+    name: TEXT «NOT NULL»
+    description: TEXT «NOT NULL»
+    iconUrl: TEXT «NULLABLE»
+    season: TEXT «NULLABLE»
+    eventName: TEXT «NULLABLE»
+    rarity: TEXT «DEFAULT 'common' common|rare|epic|legendary|limited|secret»
+}
+
+table(PlayerGloryTrophy) {
+    foreign_key(playerId): INTEGER «NOT NULL»
+    foreign_key(trophyId): TEXT «NOT NULL»
+    awardedAt: TIMESTAMPTZ «DEFAULT NOW()»
+    PRIMARY KEY (playerId, trophyId)
+}
+
+table(TwoFactorChallenge) {
+    primary_key(challengeId): TEXT
+    foreign_key(playerId): INTEGER «NOT NULL»
+    createdAt: TEXT «NOT NULL»
+    expiresAt: TEXT «NOT NULL»
+}
+
+table(TwoFactorBackupCode) {
+    primary_key(codeId): SERIAL
+    foreign_key(playerId): INTEGER «NOT NULL»
+    codeHash: TEXT «NOT NULL»
+    usedAt: TEXT «NULLABLE»
+}
+
+table(Notification) {
+    primary_key(notificationId): SERIAL
+    foreign_key(playerId): INTEGER «NOT NULL»
+    type: TEXT «NOT NULL friend_request|chat_message|trade_offer|daily_reward|system»
+    title: TEXT «NOT NULL»
+    message: TEXT «NOT NULL»
+    data: JSONB «DEFAULT '{}'»
+    isRead: INTEGER «DEFAULT 0»
+    createdAt: TIMESTAMPTZ «DEFAULT NOW()»
+}
+
 ' Relationships
 Player "1" -- "0..*" Lootbox : opens
 Player "1" -- "0..*" Listing : sells
@@ -352,6 +534,30 @@ Player "1" -- "0..*" SupportTicket : reports
 Player "1" -- "0..1" PlayerSettings : has
 Player "1" -- "0..*" Friend : requests
 Player "1" -- "0..*" Friend : receives
+Player "1" -- "0..1" PlayerDailyReward : has
+Player "1" -- "0..1" PlayerPrestige : has
+Player "1" -- "0..*" PrestigeLog : has
+Player "1" -- "0..*" PlayerAchievement : has
+Player "1" -- "0..*" Notification : receives
+Player "1" -- "0..*" TwoFactorChallenge : has
+Player "1" -- "0..*" TwoFactorBackupCode : has
+Player "1" -- "0..*" ShopPurchase : makes
+Player "1" -- "0..*" GloryVisit : visits
+Player "1" -- "0..*" GloryGuestbook : owns
+Player "1" -- "0..*" GloryGuestbook : writes
+Player "1" -- "0..*" GloryShowcase : showcases
+Player "1" -- "0..*" GloryFeaturedAchievement : features
+Player "1" -- "0..*" PlayerGloryTheme : owns
+Player "1" -- "0..*" PlayerGloryTitle : owns
+Player "1" -- "0..*" PlayerGloryBanner : owns
+Player "1" -- "0..*" PlayerGloryTrophy : owns
+
+ShopListing "1" -- "0..*" ShopPurchase : purchased
+GloryTheme "1" -- "0..*" PlayerGloryTheme : unlocked
+GloryTitle "1" -- "0..*" PlayerGloryTitle : unlocked
+GloryBanner "1" -- "0..*" PlayerGloryBanner : unlocked
+GloryTrophy "1" -- "0..*" PlayerGloryTrophy : awarded
+Stove "1" -- "0..*" GloryShowcase : displayed
 
 LootboxType "1" -- "0..*" Lootbox : defines
 
