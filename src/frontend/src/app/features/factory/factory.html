@@ -1,0 +1,103 @@
+<section class="factory-section" aria-label="Factory">
+  <div class="factory-header">
+    <h2 class="factory-title">Factory</h2>
+    <div class="factory-stats">
+      <span class="stat payout-stat">
+        <span class="stat-label">Next payout</span>
+        <span class="stat-value">{{ formatPayoutTime() }}</span>
+      </span>
+      <span class="stat">
+        <span class="stat-label">Total earned</span>
+        <span class="stat-value">{{ totalCoal().toFixed(1) }} coal</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="factory-grid">
+    @for (slot of slots(); track $index; let idx = $index) {
+      <div class="slot"
+           [class.premium]="idx < 2"
+           [class.empty]="slot.state === 'empty'"
+           [class.occupied]="slot.state !== 'empty'"
+           (click)="onSlotClick(idx)"
+           (keydown)="onSlotKeydown($event, idx)"
+           role="button"
+           tabindex="0"
+           [attr.aria-label]="slot.state === 'empty' ? 'Empty slot ' + (idx + 1) : slot.stove!.stoveName + ', ' + slot.stove!.rarity">
+
+        @if (hasRightPipe(idx)) {
+          <div class="pipe pipe-right" aria-hidden="true"></div>
+        }
+        @if (hasLeftPipe(idx)) {
+          <div class="pipe pipe-left" aria-hidden="true"></div>
+        }
+        @if (hasBottomPipe(idx)) {
+          <div class="pipe pipe-bottom" aria-hidden="true"></div>
+        }
+        @if (hasTopPipe(idx)) {
+          <div class="pipe pipe-top" aria-hidden="true"></div>
+        }
+
+        @if (slot.state === 'empty') {
+          <div class="slot-placeholder">
+            <span class="placeholder-icon">+</span>
+            @if (idx < 2) {
+              <span class="premium-label">Legendary / Secret</span>
+            }
+          </div>
+        }
+
+        @if (selectedSlotIndex() === idx) {
+          <div class="stove-popup" (click)="$event.stopPropagation()">
+            <div class="popup-header">
+              <span class="popup-title">Select Stove</span>
+              <button class="popup-close" (click)="closePopup()" aria-label="Close">×</button>
+            </div>
+            <div class="popup-list">
+              @if (availableForSlot(idx).length === 0) {
+                <div class="popup-empty">No stoves available</div>
+              }
+              @for (item of availableForSlot(idx); track item.stoveId) {
+                <button class="popup-item" (click)="placeStove(idx, item)">
+                  <img [ngSrc]="item.imageUrl" [alt]="item.stoveName" width="32" height="32" class="popup-thumb">
+                  <div class="popup-info">
+                    <span class="popup-name">{{ item.stoveName }}</span>
+                    <span class="popup-rarity" [class]="item.rarity.toLowerCase()">{{ item.rarity }}</span>
+                  </div>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (slot.state !== 'empty' && slot.stove) {
+          <div class="stove-container">
+            <div class="glow" [class]="'glow-' + slot.stove.rarity.toLowerCase()"></div>
+            <img [ngSrc]="slot.stove.imageUrl" [alt]="slot.stove.stoveName" width="80" height="80" class="stove-image">
+
+            @if (slot.state === 'building') {
+              <div class="build-overlay">
+                <img src="assets/hammer.png" alt="" class="hammer-spin" width="40" height="40">
+                <span class="build-timer">{{ formatBuildTime(slot) }}</span>
+              </div>
+            }
+
+            @if (slot.state === 'active') {
+              <div class="coal-badge">
+                <span class="coal-icon">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9 12h6M12 9v6"/>
+                  </svg>
+                </span>
+                <span class="coal-value">{{ slot.coalGenerated.toFixed(1) }}</span>
+              </div>
+            }
+
+            <span class="stove-label">{{ slot.stove.stoveName }}</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>
