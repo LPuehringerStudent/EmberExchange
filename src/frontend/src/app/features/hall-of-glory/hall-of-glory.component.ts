@@ -23,6 +23,7 @@ interface Badge {
   description: string;
   rewardCoins?: number;
   rewardXP?: number;
+  tier: string;
 }
 
 interface StatCategory {
@@ -89,6 +90,7 @@ export class HallOfGloryComponent implements OnInit {
       unlocked: unlocked.has(def.achievementId),
       rewardCoins: def.rewardCoins,
       rewardXP: def.rewardXP,
+      tier: def.tier,
     }));
   });
 

@@ -43,12 +43,13 @@ describe('AchievementEngine', () => {
             expect(uniqueIds.size).toBe(ids.length);
         });
 
-        it('every achievement has rewardCoins and rewardXP', () => {
+        it('every achievement has rewardCoins, rewardXP, and tier', () => {
             for (const def of ACHIEVEMENT_DEFINITIONS) {
                 expect(typeof def.rewardCoins).toBe('number');
                 expect(typeof def.rewardXP).toBe('number');
                 expect(def.rewardCoins).toBeGreaterThanOrEqual(0);
                 expect(def.rewardXP).toBeGreaterThanOrEqual(0);
+                expect(['common', 'uncommon', 'rare', 'epic', 'legendary', 'secret']).toContain(def.tier);
             }
         });
     });
@@ -311,6 +312,100 @@ describe('AchievementEngine', () => {
             );
             expect(coinUpdateCall).toBeDefined();
             expect(coinUpdateCall[1]).toMatchObject({ amount: 5000, playerId: 1 });
+        });
+    });
+
+    describe('checkForgeAchievements', () => {
+        it('unlocks first_forge and legendary_forge on legendary result', async () => {
+            const unit = mockUnitSequence([
+                mockStmt({ count: 1 }), // forged count
+                mockStmt(null), // getPrestige
+                mockStmt(null), // player coins
+                mockStmt(null), // stats
+                mockStmt(null, []), // trades
+                mockStmt(null, []), // lootboxes
+                mockStmt(null, []), // games
+                mockStmt(null, []), // stoves
+                mockStmt(null, []), // themes
+                mockStmt(null, []), // titles
+                mockStmt(null, []), // banners
+            ]);
+            const engine = new AchievementEngine(unit);
+
+            await engine.checkForgeAchievements(1, 'legendary', 0.97);
+
+            expect(unit.prepare).toHaveBeenCalled();
+        });
+
+        it('unlocks perfect_forge on 95%+ heat', async () => {
+            const unit = mockUnitSequence([
+                mockStmt({ count: 5 }), // forged count
+                mockStmt(null), // getPrestige
+                mockStmt(null), // player coins
+                mockStmt(null), // stats
+                mockStmt(null, []), // trades
+                mockStmt(null, []), // lootboxes
+                mockStmt(null, []), // games
+                mockStmt(null, []), // stoves
+                mockStmt(null, []), // themes
+                mockStmt(null, []), // titles
+                mockStmt(null, []), // banners
+            ]);
+            const engine = new AchievementEngine(unit);
+
+            await engine.checkForgeAchievements(1, 'rare', 0.96);
+
+            expect(unit.prepare).toHaveBeenCalled();
+        });
+    });
+
+    describe('checkShopAchievements', () => {
+        it('unlocks first_purchase and streak_master', async () => {
+            const unit = mockUnitSequence([
+                mockStmt({ count: 1, total: 100 }), // shop purchases
+                mockStmt({ streakCount: 7 }), // daily streak
+                mockStmt(null), // getPrestige
+                mockStmt(null), // player coins
+                mockStmt(null), // stats
+                mockStmt(null, []), // trades
+                mockStmt(null, []), // lootboxes
+                mockStmt(null, []), // games
+                mockStmt(null, []), // stoves
+                mockStmt(null, []), // themes
+                mockStmt(null, []), // titles
+                mockStmt(null, []), // banners
+            ]);
+            const engine = new AchievementEngine(unit);
+
+            await engine.checkShopAchievements(1);
+
+            expect(unit.prepare).toHaveBeenCalled();
+        });
+    });
+
+    describe('checkSocialAchievements', () => {
+        it('unlocks first_friend and popular', async () => {
+            const unit = mockUnitSequence([
+                mockStmt({ count: 1 }), // friends
+                mockStmt({ count: 0 }), // messages
+                mockStmt({ count: 0 }), // trade offers
+                mockStmt({ count: 10 }), // visits
+                mockStmt(null), // getPrestige
+                mockStmt(null), // player coins
+                mockStmt(null), // stats
+                mockStmt(null, []), // trades
+                mockStmt(null, []), // lootboxes
+                mockStmt(null, []), // games
+                mockStmt(null, []), // stoves
+                mockStmt(null, []), // themes
+                mockStmt(null, []), // titles
+                mockStmt(null, []), // banners
+            ]);
+            const engine = new AchievementEngine(unit);
+
+            await engine.checkSocialAchievements(1);
+
+            expect(unit.prepare).toHaveBeenCalled();
         });
     });
 });

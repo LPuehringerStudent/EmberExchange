@@ -576,3 +576,85 @@
     font-size: 22px;
   }
 }
+
+/* =====================================
+   Achievement Tier Styles
+===================================== */
+
+.badge-card.tier-epic {
+  border-color: #9c27b0;
+  box-shadow: 0 4px 16px rgba(156, 39, 176, 0.2);
+}
+
+.badge-card.tier-legendary {
+  border-color: #ff9800;
+  box-shadow: 0 4px 20px rgba(255, 152, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-card.tier-legendary::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 215, 0, 0.1) 50%,
+    transparent 70%
+  );
+  animation: legendaryShimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes legendaryShimmer {
+  0% { transform: translateX(-100%) rotate(0deg); }
+  100% { transform: translateX(100%) rotate(0deg); }
+}
+
+.badge-card.tier-secret {
+  border-color: #00bcd4;
+  box-shadow: 0 4px 24px rgba(0, 188, 212, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-card.tier-secret::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(0, 188, 212, 0.15) 50%,
+    transparent 70%
+  );
+  animation: secretShimmer 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes secretShimmer {
+  0% { transform: translateX(-100%) rotate(0deg); }
+  100% { transform: translateX(100%) rotate(0deg); }
+}
+
+.badge-card.tier-legendary.unlocked .badge-icon svg {
+  stroke: #ff9800;
+  filter: drop-shadow(0 0 4px rgba(255, 152, 0, 0.6));
+}
+
+.badge-card.tier-secret.unlocked .badge-icon svg {
+  stroke: #00bcd4;
+  filter: drop-shadow(0 0 6px rgba(0, 188, 212, 0.8));
+}
+
+.badge-card.tier-epic.unlocked .badge-icon svg {
+  stroke: #9c27b0;
+  filter: drop-shadow(0 0 3px rgba(156, 39, 176, 0.5));
+}

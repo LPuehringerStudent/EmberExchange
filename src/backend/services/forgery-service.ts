@@ -150,6 +150,15 @@ export class ForgeryService extends ServiceBase {
         );
         await statsStmt.run();
 
+        // Check forge achievements
+        try {
+            const { AchievementEngine } = await import("./achievement-engine");
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkForgeAchievements(playerId, outputRarity, clampedHeat);
+        } catch {
+            // Ignore achievement errors
+        }
+
         const newStove: ForgedStove = {
             stoveId: newStoveId,
             typeId: outputType.typeId,

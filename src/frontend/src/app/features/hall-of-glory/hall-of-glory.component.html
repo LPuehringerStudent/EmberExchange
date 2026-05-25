@@ -361,7 +361,7 @@
       </div>
       <div class="badges-grid grid grid-cols-4 gap-3.5 max-md:grid-cols-2">
         @for (badge of badges(); track badge.id) {
-          <div class="badge-card bg-surface rounded-2xl py-5 px-3.5 text-center border border-border shadow-[0_4px_12px_var(--shadow-color)] transition-all duration-300 relative" [class.unlocked]="badge.unlocked">
+          <div class="badge-card bg-surface rounded-2xl py-5 px-3.5 text-center border border-border shadow-[0_4px_12px_var(--shadow-color)] transition-all duration-300 relative" [class.unlocked]="badge.unlocked" [class.tier-legendary]="badge.tier === 'legendary'" [class.tier-secret]="badge.tier === 'secret'" [class.tier-epic]="badge.tier === 'epic'">
             <div class="badge-icon w-10 h-10 mx-auto mb-2.5 flex items-center justify-center">
               @if (badge.unlocked) {
                 <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

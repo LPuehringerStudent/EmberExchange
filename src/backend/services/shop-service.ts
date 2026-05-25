@@ -320,6 +320,15 @@ export class ShopService {
             // Ignore notification errors
         }
 
+        // Check shop achievements
+        try {
+            const { AchievementEngine } = await import("./achievement-engine");
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkShopAchievements(playerId);
+        } catch {
+            // Ignore achievement errors
+        }
+
         return { success: true, itemId: createdItemId };
     }
 
