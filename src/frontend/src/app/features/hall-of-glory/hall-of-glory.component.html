@@ -376,6 +376,12 @@
             </div>
             <span class="badge-label block text-[13px] font-semibold text-text-primary mb-0.5">{{ badge.label }}</span>
             <span class="badge-desc block text-[11px] text-text-muted leading-tight">{{ badge.description }}</span>
+            @if (badge.rewardCoins || badge.rewardXP) {
+              <span class="badge-rewards block text-[10px] text-accent font-semibold mt-1">
+                @if (badge.rewardCoins) { 💰 {{ badge.rewardCoins.toLocaleString() }} }
+                @if (badge.rewardXP) { ⭐ {{ badge.rewardXP.toLocaleString() }} XP }
+              </span>
+            }
             @if (!badge.unlocked) {
               <span class="badge-locked-text absolute top-2.5 right-2.5 text-[9px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] bg-surface-secondary px-2 py-0.5 rounded-md">Locked</span>
             }

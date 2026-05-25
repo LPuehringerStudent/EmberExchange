@@ -3,55 +3,56 @@ import { Unit } from "../utils/unit";
 import { PlayerAchievementService } from "./player-achievement-service";
 import { GloryCustomizationService } from "./glory-customization-service";
 import { PlayerPrestigeService } from "./player-prestige-service";
+import { NotificationService } from "./notification-service";
 import type { AchievementDefinition } from "../../shared/model";
 
 export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     // Lootbox
-    { achievementId: 'first_drop', label: 'First Drop', description: 'Open your first lootbox', category: 'lootbox' },
-    { achievementId: 'lootbox_addict', label: 'Lootbox Addict', description: 'Open 50+ lootboxes', category: 'lootbox' },
-    { achievementId: 'centurion', label: 'Centurion', description: 'Open 100+ lootboxes', category: 'lootbox' },
+    { achievementId: 'first_drop', label: 'First Drop', description: 'Open your first lootbox', category: 'lootbox', rewardCoins: 50, rewardXP: 10 },
+    { achievementId: 'lootbox_addict', label: 'Lootbox Addict', description: 'Open 50+ lootboxes', category: 'lootbox', rewardCoins: 200, rewardXP: 50 },
+    { achievementId: 'centurion', label: 'Centurion', description: 'Open 100+ lootboxes', category: 'lootbox', rewardCoins: 500, rewardXP: 100 },
     // Trade
-    { achievementId: 'trader', label: 'Trader', description: 'Complete your first trade', category: 'trade' },
-    { achievementId: 'trading_empire', label: 'Trading Empire', description: 'Complete 100+ trades', category: 'trade' },
-    { achievementId: 'active_trader', label: 'Active Trader', description: 'Make 10+ purchases', category: 'trade' },
+    { achievementId: 'trader', label: 'Trader', description: 'Complete your first trade', category: 'trade', rewardCoins: 100, rewardXP: 25 },
+    { achievementId: 'trading_empire', label: 'Trading Empire', description: 'Complete 100+ trades', category: 'trade', rewardCoins: 1000, rewardXP: 200 },
+    { achievementId: 'active_trader', label: 'Active Trader', description: 'Make 10+ purchases', category: 'trade', rewardCoins: 300, rewardXP: 75 },
     // Mini-game
-    { achievementId: 'big_winner', label: 'Big Winner', description: 'Win 5+ mini-games', category: 'mini-game' },
-    { achievementId: 'win_streak', label: 'Win Streak', description: 'Win 20+ mini-games', category: 'mini-game' },
-    { achievementId: 'gambler', label: 'Gambler', description: 'Play 50+ mini-games', category: 'mini-game' },
-    { achievementId: 'mini_game_master', label: 'Mini-Game Master', description: 'Play 100+ mini-games', category: 'mini-game' },
-    { achievementId: 'burnout', label: 'Burnout', description: 'Play 500+ mini-games', category: 'mini-game' },
-    { achievementId: 'profitable', label: 'Profitable', description: 'Earn 10,000+ coins from mini-games', category: 'mini-game' },
-    { achievementId: 'high_roller', label: 'High Roller', description: 'Win 10,000+ coins in one hand', category: 'mini-game' },
-    { achievementId: 'jackpot', label: 'Jackpot!', description: 'Win 100,000+ coins in one hand', category: 'mini-game' },
+    { achievementId: 'big_winner', label: 'Big Winner', description: 'Win 5+ mini-games', category: 'mini-game', rewardCoins: 100, rewardXP: 25 },
+    { achievementId: 'win_streak', label: 'Win Streak', description: 'Win 20+ mini-games', category: 'mini-game', rewardCoins: 300, rewardXP: 75 },
+    { achievementId: 'gambler', label: 'Gambler', description: 'Play 50+ mini-games', category: 'mini-game', rewardCoins: 200, rewardXP: 50 },
+    { achievementId: 'mini_game_master', label: 'Mini-Game Master', description: 'Play 100+ mini-games', category: 'mini-game', rewardCoins: 500, rewardXP: 100 },
+    { achievementId: 'burnout', label: 'Burnout', description: 'Play 500+ mini-games', category: 'mini-game', rewardCoins: 2000, rewardXP: 300 },
+    { achievementId: 'profitable', label: 'Profitable', description: 'Earn 10,000+ coins from mini-games', category: 'mini-game', rewardCoins: 500, rewardXP: 100 },
+    { achievementId: 'high_roller', label: 'High Roller', description: 'Win 10,000+ coins in one hand', category: 'mini-game', rewardCoins: 1000, rewardXP: 150 },
+    { achievementId: 'jackpot', label: 'Jackpot!', description: 'Win 100,000+ coins in one hand', category: 'mini-game', rewardCoins: 5000, rewardXP: 500 },
     // Prestige / Level
-    { achievementId: 'first_steps', label: 'First Steps', description: 'Reach level 10', category: 'prestige' },
-    { achievementId: 'veteran', label: 'Veteran', description: 'Reach level 25', category: 'prestige' },
-    { achievementId: 'ascended', label: 'Ascended', description: 'Prestige at least once', category: 'prestige' },
-    { achievementId: 'prestigious', label: 'Prestigious', description: 'Prestige at least once', category: 'prestige' },
-    { achievementId: 'immortal', label: 'Immortal', description: 'Prestige 5 times', category: 'prestige' },
+    { achievementId: 'first_steps', label: 'First Steps', description: 'Reach level 10', category: 'prestige', rewardCoins: 200, rewardXP: 50 },
+    { achievementId: 'veteran', label: 'Veteran', description: 'Reach level 25', category: 'prestige', rewardCoins: 500, rewardXP: 100 },
+    { achievementId: 'ascended', label: 'Ascended', description: 'Prestige at least once', category: 'prestige', rewardCoins: 1000, rewardXP: 250 },
+    { achievementId: 'prestigious', label: 'Prestigious', description: 'Prestige at least once', category: 'prestige', rewardCoins: 1000, rewardXP: 250 },
+    { achievementId: 'immortal', label: 'Immortal', description: 'Prestige 5 times', category: 'prestige', rewardCoins: 5000, rewardXP: 1000 },
     // Wealth
-    { achievementId: 'king_of_the_hill', label: 'King of the Hill', description: 'Hold 500,000+ coins at once', category: 'wealth' },
-    { achievementId: 'wealthy', label: 'Wealthy', description: 'Reach 100,000+ net worth', category: 'wealth' },
-    { achievementId: 'tycoon', label: 'Tycoon', description: 'Reach 500,000+ net worth', category: 'wealth' },
-    { achievementId: 'net_millionaire', label: 'Net Millionaire', description: 'Reach 1,000,000+ net worth', category: 'wealth' },
-    { achievementId: 'coin_millionaire', label: 'Coin Millionaire', description: 'Earn 1,000,000+ coins total', category: 'wealth' },
-    { achievementId: 'early_bird', label: 'Early Bird', description: 'Play for 1+ days', category: 'wealth' },
-    { achievementId: 'dedicated', label: 'Dedicated', description: 'Play for 7+ days', category: 'wealth' },
+    { achievementId: 'king_of_the_hill', label: 'King of the Hill', description: 'Hold 500,000+ coins at once', category: 'wealth', rewardCoins: 2000, rewardXP: 300 },
+    { achievementId: 'wealthy', label: 'Wealthy', description: 'Reach 100,000+ net worth', category: 'wealth', rewardCoins: 500, rewardXP: 100 },
+    { achievementId: 'tycoon', label: 'Tycoon', description: 'Reach 500,000+ net worth', category: 'wealth', rewardCoins: 1500, rewardXP: 250 },
+    { achievementId: 'net_millionaire', label: 'Net Millionaire', description: 'Reach 1,000,000+ net worth', category: 'wealth', rewardCoins: 3000, rewardXP: 500 },
+    { achievementId: 'coin_millionaire', label: 'Coin Millionaire', description: 'Earn 1,000,000+ coins total', category: 'wealth', rewardCoins: 5000, rewardXP: 750 },
+    { achievementId: 'early_bird', label: 'Early Bird', description: 'Play for 1+ days', category: 'wealth', rewardCoins: 50, rewardXP: 10 },
+    { achievementId: 'dedicated', label: 'Dedicated', description: 'Play for 7+ days', category: 'wealth', rewardCoins: 200, rewardXP: 50 },
     // Collection
-    { achievementId: 'collector', label: 'Collector', description: 'Own 10+ stoves', category: 'collection' },
-    { achievementId: 'collector_deluxe', label: 'Collector Deluxe', description: 'Own 50+ stoves', category: 'collection' },
-    { achievementId: 'dragon_tamer', label: 'Dragon Tamer', description: 'Acquire 50+ stoves', category: 'collection' },
-    { achievementId: 'dragon_master', label: 'Dragon Master', description: 'Own 5+ Dragon collection stoves', category: 'collection' },
-    { achievementId: 'dragon_hoarder', label: 'Dragon Hoarder', description: 'Own 10+ Dragon collection stoves', category: 'collection' },
-    { achievementId: 'winter_wonderland', label: 'Winter Wonderland', description: 'Own 5+ Winter collection stoves', category: 'collection' },
-    { achievementId: 'frost_collector', label: 'Frost Collector', description: 'Own all Winter collection stoves', category: 'collection' },
-    { achievementId: 'rare_hunter', label: 'Rare Hunter', description: 'Own a legendary or secret stove', category: 'collection' },
+    { achievementId: 'collector', label: 'Collector', description: 'Own 10+ stoves', category: 'collection', rewardCoins: 100, rewardXP: 25 },
+    { achievementId: 'collector_deluxe', label: 'Collector Deluxe', description: 'Own 50+ stoves', category: 'collection', rewardCoins: 500, rewardXP: 100 },
+    { achievementId: 'dragon_tamer', label: 'Dragon Tamer', description: 'Acquire 50+ stoves', category: 'collection', rewardCoins: 300, rewardXP: 75 },
+    { achievementId: 'dragon_master', label: 'Dragon Master', description: 'Own 5+ Dragon collection stoves', category: 'collection', rewardCoins: 500, rewardXP: 100 },
+    { achievementId: 'dragon_hoarder', label: 'Dragon Hoarder', description: 'Own 10+ Dragon collection stoves', category: 'collection', rewardCoins: 1000, rewardXP: 200 },
+    { achievementId: 'winter_wonderland', label: 'Winter Wonderland', description: 'Own 5+ Winter collection stoves', category: 'collection', rewardCoins: 500, rewardXP: 100 },
+    { achievementId: 'frost_collector', label: 'Frost Collector', description: 'Own all Winter collection stoves', category: 'collection', rewardCoins: 2000, rewardXP: 300 },
+    { achievementId: 'rare_hunter', label: 'Rare Hunter', description: 'Own a legendary or secret stove', category: 'collection', rewardCoins: 500, rewardXP: 100 },
     // Market
-    { achievementId: 'merchant', label: 'Merchant', description: 'Create 20+ listings', category: 'trade' },
-    { achievementId: 'market_shark', label: 'Market Shark', description: 'Earn 50,000+ coins from sales', category: 'trade' },
-    { achievementId: 'market_maker', label: 'Market Maker', description: 'Earn 250,000+ coins from sales', category: 'trade' },
-    { achievementId: 'big_spender', label: 'Big Spender', description: 'Spend 25,000+ coins', category: 'wealth' },
-    { achievementId: 'whale', label: 'Whale', description: 'Spend 500,000+ coins', category: 'wealth' },
+    { achievementId: 'merchant', label: 'Merchant', description: 'Create 20+ listings', category: 'trade', rewardCoins: 200, rewardXP: 50 },
+    { achievementId: 'market_shark', label: 'Market Shark', description: 'Earn 50,000+ coins from sales', category: 'trade', rewardCoins: 1000, rewardXP: 200 },
+    { achievementId: 'market_maker', label: 'Market Maker', description: 'Earn 250,000+ coins from sales', category: 'trade', rewardCoins: 3000, rewardXP: 500 },
+    { achievementId: 'big_spender', label: 'Big Spender', description: 'Spend 25,000+ coins', category: 'wealth', rewardCoins: 200, rewardXP: 50 },
+    { achievementId: 'whale', label: 'Whale', description: 'Spend 500,000+ coins', category: 'wealth', rewardCoins: 2000, rewardXP: 300 },
 ];
 
 export class AchievementEngine extends ServiceBase {
@@ -61,12 +62,41 @@ export class AchievementEngine extends ServiceBase {
 
     // ── Generic unlock helpers ─────────────────────────────────
 
-    private async unlock(playerId: number, achievementId: string): Promise<void> {
+    private async unlock(playerId: number, achievementId: string): Promise<{ fresh: boolean; rewards?: { coins: number; xp: number } }> {
         const svc = new PlayerAchievementService(this.unit);
+        const def = ACHIEVEMENT_DEFINITIONS.find(d => d.achievementId === achievementId);
         try {
-            await svc.unlock(playerId, achievementId);
+            const [wasUnlocked] = await svc.unlock(playerId, achievementId);
+            if (wasUnlocked && def) {
+                // Grant rewards
+                if (def.rewardCoins) {
+                    await this.unit.prepare(
+                        `UPDATE Player SET coins = coins + @amount WHERE playerId = @playerId`,
+                        { amount: def.rewardCoins, playerId }
+                    ).run();
+                }
+                if (def.rewardXP) {
+                    const prestigeSvc = new PlayerPrestigeService(this.unit);
+                    await prestigeSvc.addXP(playerId, def.rewardXP, 'achievement', `Unlocked: ${def.label}`);
+                }
+                // Send notification
+                const notifSvc = new NotificationService(this.unit);
+                const rewardParts: string[] = [];
+                if (def.rewardCoins) rewardParts.push(`${def.rewardCoins.toLocaleString()} coins`);
+                if (def.rewardXP) rewardParts.push(`${def.rewardXP.toLocaleString()} XP`);
+                const rewardText = rewardParts.length > 0 ? ` Reward: ${rewardParts.join(' + ')}.` : '';
+                await notifSvc.create(
+                    playerId,
+                    'system',
+                    `Achievement Unlocked: ${def.label}`,
+                    `${def.description}.${rewardText}`,
+                    { achievementId, rewardCoins: def.rewardCoins ?? 0, rewardXP: def.rewardXP ?? 0 }
+                );
+                return { fresh: true, rewards: { coins: def.rewardCoins ?? 0, xp: def.rewardXP ?? 0 } };
+            }
+            return { fresh: wasUnlocked };
         } catch {
-            // Ignore duplicate/unlock errors
+            return { fresh: false };
         }
     }
 

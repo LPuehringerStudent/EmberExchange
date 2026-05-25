@@ -42,6 +42,15 @@ describe('AchievementEngine', () => {
             const uniqueIds = new Set(ids);
             expect(uniqueIds.size).toBe(ids.length);
         });
+
+        it('every achievement has rewardCoins and rewardXP', () => {
+            for (const def of ACHIEVEMENT_DEFINITIONS) {
+                expect(typeof def.rewardCoins).toBe('number');
+                expect(typeof def.rewardXP).toBe('number');
+                expect(def.rewardCoins).toBeGreaterThanOrEqual(0);
+                expect(def.rewardXP).toBeGreaterThanOrEqual(0);
+            }
+        });
     });
 
     describe('checkLootboxAchievements', () => {
@@ -239,6 +248,69 @@ describe('AchievementEngine', () => {
             await engine.checkWealthAchievements(1);
 
             expect(unit.prepare).toHaveBeenCalled();
+        });
+    });
+
+    describe('achievement rewards', () => {
+        it('grants coins and XP on fresh unlock', async () => {
+            // fresh unlock: no existing row → INSERT path
+            const stmts = [
+                mockStmt(null), // existing check (no row)
+                mockStmt({ changes: 1 }), // INSERT PlayerAchievement
+                { get: jest.fn().mockResolvedValue(null), all: jest.fn().mockResolvedValue([]), run: jest.fn().mockResolvedValue({ changes: 1 }) }, // UPDATE Player coins
+                mockStmt(null), // getPrestige for addXP
+                mockStmt({ changes: 1 }), // INSERT PrestigeLog
+                mockStmt({ changes: 1 }), // UPDATE PlayerPrestige
+                mockStmt({ changes: 1 }), // INSERT Notification
+            ];
+            const unit = mockUnitSequence(stmts);
+            const engine = new AchievementEngine(unit);
+
+            await (engine as any).unlock(1, 'first_drop');
+
+            // Should update coins
+            const coinUpdateCall = (unit.prepare as jest.Mock).mock.calls.find(
+                (call: any[]) => call[0]?.includes?.('UPDATE Player SET coins = coins +')
+            );
+            expect(coinUpdateCall).toBeDefined();
+            expect(coinUpdateCall[1]).toMatchObject({ amount: 50, playerId: 1 });
+        });
+
+        it('does not grant rewards when already unlocked', async () => {
+            // already unlocked: existing row with unlockedAt → returns [false, id]
+            const stmts = [
+                mockStmt({ playerAchievementId: 5, unlockedAt: '2026-01-01' }), // existing check
+            ];
+            const unit = mockUnitSequence(stmts);
+            const engine = new AchievementEngine(unit);
+
+            const result = await (engine as any).unlock(1, 'first_drop');
+
+            expect(result.fresh).toBe(false);
+            // Only 1 prepare call (the existing check), no coin/XP/notification calls
+            expect((unit.prepare as jest.Mock).mock.calls.length).toBe(1);
+        });
+
+        it('grants correct reward amounts for high-tier achievements', async () => {
+            const stmts = [
+                mockStmt(null), // existing check
+                mockStmt({ changes: 1 }), // INSERT PlayerAchievement
+                { get: jest.fn().mockResolvedValue(null), all: jest.fn().mockResolvedValue([]), run: jest.fn().mockResolvedValue({ changes: 1 }) }, // UPDATE Player coins
+                mockStmt(null), // getPrestige
+                mockStmt({ changes: 1 }), // INSERT PrestigeLog
+                mockStmt({ changes: 1 }), // UPDATE PlayerPrestige
+                mockStmt({ changes: 1 }), // INSERT Notification
+            ];
+            const unit = mockUnitSequence(stmts);
+            const engine = new AchievementEngine(unit);
+
+            await (engine as any).unlock(1, 'jackpot');
+
+            const coinUpdateCall = (unit.prepare as jest.Mock).mock.calls.find(
+                (call: any[]) => call[0]?.includes?.('UPDATE Player SET coins = coins +')
+            );
+            expect(coinUpdateCall).toBeDefined();
+            expect(coinUpdateCall[1]).toMatchObject({ amount: 5000, playerId: 1 });
         });
     });
 });

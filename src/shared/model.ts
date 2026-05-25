@@ -522,6 +522,8 @@ export interface AchievementDefinition {
     label: string;
     description: string;
     category: 'lootbox' | 'trade' | 'mini-game' | 'prestige' | 'wealth' | 'collection' | 'social' | 'general';
+    rewardCoins?: number;
+    rewardXP?: number;
 }
 
 // Notification
