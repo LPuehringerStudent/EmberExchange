@@ -110,6 +110,12 @@ export class ForgeryService extends ServiceBase {
         );
         await cleanupLootboxDropStmt.run();
 
+        const cleanupListingStmt = this.unit.prepare(
+            `DELETE FROM Listing WHERE stoveId IN (${placeholders})`,
+            params
+        );
+        await cleanupListingStmt.run();
+
         // Delete input stoves
         const deleteStmt = this.unit.prepare(
             `DELETE FROM Stove WHERE stoveId IN (${placeholders})`,
