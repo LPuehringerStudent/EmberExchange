@@ -124,6 +124,36 @@
       <div class="h-px bg-gradient-to-r from-transparent via-border to-transparent mx-6 md:mx-12" aria-hidden="true"></div>
     }
 
+    <!-- ── Pity Progress Banner ── -->
+    @if (getPityForSelected(); as pity) {
+      <div class="px-6 pt-5 md:px-12 md:pt-6">
+        <div class="flex flex-col gap-2 p-4 rounded-xl bg-[rgba(232,93,4,0.05)] border border-[rgba(232,93,4,0.15)]">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-text-muted uppercase tracking-wide">Pity Counter</span>
+            <span class="text-[11px] text-text-muted">{{ pity.opens }} opens since last epic+</span>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-text-secondary">Guaranteed Epic</span>
+              <span [class.text-accent]="pity.opens >= pity.epicThreshold - 5" [class.font-bold]="pity.opens >= pity.epicThreshold - 5">{{ pity.opens }} / {{ pity.epicThreshold }}</span>
+            </div>
+            <div class="h-2 rounded-full bg-surface-secondary overflow-hidden">
+              <div class="h-full rounded-full bg-gradient-to-r from-[#e85d04] to-[#f48c06] transition-all duration-500" [style.width.%]="(pity.opens / pity.epicThreshold) * 100"></div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-text-secondary">Guaranteed Legendary</span>
+              <span [class.text-accent]="pity.opens >= pity.legendaryThreshold - 5" [class.font-bold]="pity.opens >= pity.legendaryThreshold - 5">{{ pity.opens }} / {{ pity.legendaryThreshold }}</span>
+            </div>
+            <div class="h-2 rounded-full bg-surface-secondary overflow-hidden">
+              <div class="h-full rounded-full bg-gradient-to-r from-[#f59e0b] to-[#fbbf24] transition-all duration-500" [style.width.%]="(pity.opens / pity.legendaryThreshold) * 100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- ── Possible Rewards Banner ── -->
     <div class="px-6 pt-7 pb-8 md:px-12 md:pt-8 md:pb-10">
       <div class="flex items-center justify-between mb-5">

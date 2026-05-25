@@ -5,6 +5,7 @@ import { LootBoxHelper, LootItem } from './lootbox-helper';
 import { LootboxService, Lootbox, LootboxType } from '@core/services/lootbox.service';
 import { ListingService } from '@core/services/listing.service';
 import { AuthService } from '@core/services/auth.service';
+import { PityService, PityProgress } from '@core/services/pity.service';
 import { firstValueFrom } from 'rxjs';
 
 export interface DropRateEntry {
@@ -122,6 +123,9 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   lootboxTypes       = signal<Map<number, LootboxType>>(new Map());
   isLoading          = signal<boolean>(false);
 
+  // Pity state
+  pityCounters = signal<Record<number, PityProgress>>({});
+
   items: LootItem[] = [];
   finalItem: LootItem | null = null;
   playerId: number | null = null;
@@ -140,6 +144,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   private lootBoxHelper = new LootBoxHelper();
   private lootboxApi    = inject(LootboxService);
   private listingApi    = inject(ListingService);
+  private pityApi       = inject(PityService);
   private cdr           = inject(ChangeDetectorRef);
   private authService   = inject(AuthService);
   private router        = inject(Router);
@@ -161,6 +166,22 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     }
 
     await this.loadLootboxData();
+    await this.loadPityData();
+  }
+
+  async loadPityData(): Promise<void> {
+    try {
+      const counters = await firstValueFrom(this.pityApi.getPityCounters());
+      this.pityCounters.set({
+        1: counters.standard,
+        2: counters.golden,
+        3: counters.legendary,
+        4: counters.dragon,
+        5: counters.winter,
+      });
+    } catch (err) {
+      console.error('Failed to load pity data:', err);
+    }
   }
 
   ngAfterViewInit(): void {}
@@ -274,6 +295,11 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     if (box) {
       this.selectedTypeName.set(this.getLootboxTypeName(box.lootboxTypeId));
     }
+  }
+
+  getPityForSelected(): PityProgress | undefined {
+    const typeId = this.getSelectedLootboxTypeId() ?? 1;
+    return this.pityCounters()[typeId];
   }
 
   canOpen(): boolean {

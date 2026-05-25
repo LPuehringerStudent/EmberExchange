@@ -40,6 +40,7 @@ import { friendRouter } from "./routers/friend-router";
 import { tradeOfferRouter } from "./routers/trade-offer-router";
 import { adminRouter } from "./routers/admin-router";
 import { sparksRouter } from "./routers/sparks-router";
+import { pityRouter } from "./routers/pity-router";
 import { swaggerSpec } from "./swagger";
 import { setupWebSocketServer, wssInstance } from "./websocket";
 import cron from "node-cron";
@@ -93,6 +94,7 @@ app.use("/api", friendRouter);
 app.use("/api", tradeOfferRouter);
 app.use("/api", adminRouter);
 app.use("/api", sparksRouter);
+app.use("/api", pityRouter);
 
 // Static files (frontend) - serve Angular build output
 app.use(express.static(path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser")));

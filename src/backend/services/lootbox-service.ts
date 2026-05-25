@@ -4,6 +4,7 @@ import { LootboxRow, LootboxTypeRow, LootboxDropRow } from "../../shared/model";
 import { ListingService } from "./listing-service";
 import { PlayerPrestigeService } from "./player-prestige-service";
 import { AchievementEngine } from "./achievement-engine";
+import { PityService } from "./pity-service";
 
 interface DropTable {
     rarity: string;
@@ -267,7 +268,15 @@ export class LootboxService extends ServiceBase {
 
         // 2. Determine drop
         const dropTable = DROP_TABLES[lootbox.lootboxTypeId] ?? DROP_TABLES[1];
-        const rarity = this.weightedRarity(dropTable);
+        let rarity = this.weightedRarity(dropTable);
+
+        // 2b. Check pity system
+        const pityService = new PityService(this.unit);
+        const guaranteedRarity = await pityService.checkPity(playerId, lootbox.lootboxTypeId, rarity);
+        if (guaranteedRarity) {
+            rarity = guaranteedRarity;
+        }
+
         let stoveType: { typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null = null;
         if (lootbox.lootboxTypeId === 4) {
             // Dragon Crate: dragon stoves of the rolled rarity
@@ -279,6 +288,15 @@ export class LootboxService extends ServiceBase {
             stoveType = await this.pickStoveTypeByRarity(rarity);
         }
         if (!stoveType) return [false, null];
+
+        // 2c. Update pity counter
+        const rarityPriority: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3, limited: 4, secret: 5 };
+        if ((rarityPriority[rarity.toLowerCase()] ?? 0) >= 2) {
+            // Epic or better — reset counter
+            await pityService.resetCounter(playerId, lootbox.lootboxTypeId);
+        } else {
+            await pityService.incrementCounter(playerId, lootbox.lootboxTypeId);
+        }
 
         // 3. Create stove with randomized heat level
         const heatLevel = stoveType.minHeat + Math.random() * (stoveType.maxHeat - stoveType.minHeat);

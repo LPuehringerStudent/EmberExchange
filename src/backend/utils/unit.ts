@@ -639,6 +639,17 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerPity (
+                playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
+                standardOpens INTEGER NOT NULL DEFAULT 0,
+                goldenOpens INTEGER NOT NULL DEFAULT 0,
+                legendaryOpens INTEGER NOT NULL DEFAULT 0,
+                dragonOpens INTEGER NOT NULL DEFAULT 0,
+                winterOpens INTEGER NOT NULL DEFAULT 0
+            )
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS PlayerStatistics (
                 statId SERIAL PRIMARY KEY,
                 playerId INTEGER NOT NULL UNIQUE REFERENCES Player(playerId),
