@@ -51,12 +51,18 @@ export class ChatMessageService {
     return this.api.get<ChatMessage[]>(`/chat-messages/conversation/${player1Id}/${player2Id}`);
   }
 
+  getConversationPaginated(player1Id: number, player2Id: number, limit = 20, offset = 0): Observable<ChatMessage[]> {
+    return this.api.get<ChatMessage[]>(`/chat-messages/conversation/${player1Id}/${player2Id}?limit=${limit}&offset=${offset}`);
+  }
+
   sendChatMessage(
     senderId: number,
     content: string,
-    receiverId?: number
+    receiverId?: number,
+    messageType: 'text' | 'trade_offer' = 'text',
+    data: Record<string, unknown> = {}
   ): Observable<CreateChatMessageResponse> {
-    const body: Record<string, unknown> = { senderId, content };
+    const body: Record<string, unknown> = { senderId, content, messageType, data };
     if (receiverId !== undefined) body["receiverId"] = receiverId;
     return this.api.post<CreateChatMessageResponse>('/chat-messages', body);
   }

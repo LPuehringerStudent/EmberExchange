@@ -103,6 +103,8 @@ export async function handleJoinRoom(socketId: string, payload: Record<string, u
             players: playersInRoom.map(p => ({
                 playerId: p.playerId,
                 username: p.username,
+                activeTitle: p.activeTitle,
+                activeBanner: p.activeBanner,
                 connectionState: p.connectionState,
                 seatIndex: p.seatIndex
             }))

@@ -31,4 +31,21 @@ export class SessionService extends ServiceBase {
         );
         return (await stmt.run()).changes === 1;
     }
+
+    async getSessionsByPlayer(playerId: number): Promise<SessionRow[]> {
+        const stmt = this.unit.prepare<SessionRow>(
+            "SELECT * FROM Session WHERE playerId = @playerId AND isActive = 1 ORDER BY createdAt DESC",
+            { playerId }
+        );
+        return await stmt.all();
+    }
+
+    async invalidateAllExcept(playerId: number, keepSessionId: string): Promise<number> {
+        const stmt = this.unit.prepare(
+            "UPDATE Session SET isActive = 0 WHERE playerId = @playerId AND sessionId != @keepSessionId AND isActive = 1",
+            { playerId, keepSessionId }
+        );
+        const result = await stmt.run();
+        return result.changes ?? 0;
+    }
 }

@@ -33,7 +33,7 @@ export class StoveTypeService extends ServiceBase {
 
     /**
      * Retrieves stove types by rarity.
-     * @param rarity - The rarity level to filter by ("common" | "rare" | "epic" | "legendary" | "limited").
+     * @param rarity - The rarity level to filter by ("common" | "rare" | "epic" | "legendary" | "limited" | "secret").
      * @returns An array of StoveTypeRow objects with the specified rarity.
      */
     async getStoveTypesByRarity(rarity: Rarity): Promise<StoveTypeRow[]> {
@@ -48,7 +48,7 @@ export class StoveTypeService extends ServiceBase {
      * Creates a new stove type.
      * @param name - The unique name for the stove type.
      * @param imageUrl - URL to the stove's image.
-     * @param rarity - The rarity level ("common" | "rare" | "epic" | "legendary" | "limited").
+     * @param rarity - The rarity level ("common" | "rare" | "epic" | "legendary" | "limited" | "secret").
      * @param lootboxWeight - Weight used for lootbox drop probability calculation.
      * @returns A tuple where the first element indicates success,
      *          and the second element is the new stove type's ID (if successful).

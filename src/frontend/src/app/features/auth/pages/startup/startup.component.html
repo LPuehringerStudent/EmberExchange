@@ -1,6 +1,6 @@
-<div class="startup-container">
+<div class="min-h-screen flex items-center justify-center relative overflow-hidden p-6 bg-gradient-to-br from-[#1a0f0a] via-[#2d1b14] to-[#1a0f0a]">
   <!-- Animated Fire Background -->
-  <div class="fire-bg">
+  <div class="absolute inset-0 pointer-events-none overflow-hidden">
     <div class="flame flame-1"></div>
     <div class="flame flame-2"></div>
     <div class="flame flame-3"></div>
@@ -11,9 +11,9 @@
   </div>
 
   <!-- Landing Card -->
-  <div class="startup-card">
-    <div class="startup-header">
-      <div class="stove-icon">
+  <div class="relative z-10 w-full max-w-[420px] bg-surface/95 backdrop-blur-lg rounded-[20px] p-12 text-center border-2 border-accent/30 shadow-[0_20px_60px_rgba(0,0,0,0.4),0_0_0_1px_rgba(232,93,4,0.1),inset_0_1px_0_rgba(255,255,255,0.2)]">
+    <div class="mb-8">
+      <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-accent to-[#f48c06] rounded-[20px] flex items-center justify-center shadow-[0_8px_30px_rgba(232,93,4,0.4)]">
         <span>
           <img
             class="pixel-icon"
@@ -22,13 +22,13 @@
           />
         </span>
       </div>
-      <h1>Ember Exchange</h1>
-      <p>Forge your legacy in the hottest marketplace</p>
+      <h1 class="text-[1.75rem] font-bold m-0 mb-2 bg-gradient-to-br from-accent to-[#d35400] bg-clip-text text-transparent">Ember Exchange</h1>
+      <p class="m-0 text-text-secondary text-[0.95rem]">Forge your legacy in the hottest marketplace</p>
     </div>
 
-    <div class="startup-actions">
-      <button type="button" class="login-btn" (click)="goToLogin()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <div class="flex flex-col gap-5">
+      <button type="button" class="flex items-center justify-center gap-2.5 px-6 py-4 bg-gradient-to-br from-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(232,93,4,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(232,93,4,0.5)] active:translate-y-0" (click)="goToLogin()">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
           <polyline points="10 17 15 12 10 7"/>
           <line x1="15" y1="12" x2="3" y2="12"/>
@@ -36,15 +36,15 @@
         <span>Login</span>
       </button>
 
-      <div class="register-link">
+      <div class="text-text-secondary text-sm">
         <span>New here?</span>
-        <a routerLink="/register">Create an account</a>
+        <a routerLink="/register" class="text-accent no-underline font-semibold ml-1 hover:underline">Create an account</a>
       </div>
     </div>
   </div>
 
   <!-- Decorative Forge Elements -->
-  <div class="forge-elements">
+  <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-[30px] opacity-30 pointer-events-none">
     <div class="coal coal-1"></div>
     <div class="coal coal-2"></div>
     <div class="coal coal-3"></div>

@@ -1,0 +1,57 @@
+<div class="settings-section">
+  <h1>Notifications</h1>
+  <p class="subtitle">Choose what you want to be notified about</p>
+
+  @if (success()) {
+    <div class="alert alert-success">{{ success() }}</div>
+  }
+  @if (error()) {
+    <div class="alert alert-error">{{ error() }}</div>
+  }
+
+  <div class="flex flex-col gap-4 my-6">
+    <div class="toggle-card" (click)="friendRequests.update(v => !v)">
+      <div class="toggle-info">
+        <span class="toggle-title">Friend Requests</span>
+        <span class="toggle-desc">Get notified when someone sends you a friend request</span>
+      </div>
+      <div class="toggle" [class.active]="friendRequests()">
+        <div class="toggle-circle"></div>
+      </div>
+    </div>
+
+    <div class="toggle-card" (click)="chatMessages.update(v => !v)">
+      <div class="toggle-info">
+        <span class="toggle-title">Chat Messages</span>
+        <span class="toggle-desc">Get notified when you receive a new message</span>
+      </div>
+      <div class="toggle" [class.active]="chatMessages()">
+        <div class="toggle-circle"></div>
+      </div>
+    </div>
+
+    <div class="toggle-card" (click)="tradeOffers.update(v => !v)">
+      <div class="toggle-info">
+        <span class="toggle-title">Trade Offers</span>
+        <span class="toggle-desc">Get notified about new trade offers</span>
+      </div>
+      <div class="toggle" [class.active]="tradeOffers()">
+        <div class="toggle-circle"></div>
+      </div>
+    </div>
+
+    <div class="toggle-card" (click)="dailyReward.update(v => !v)">
+      <div class="toggle-info">
+        <span class="toggle-title">Daily Reward Reminder</span>
+        <span class="toggle-desc">Remind me when my daily reward is available</span>
+      </div>
+      <div class="toggle" [class.active]="dailyReward()">
+        <div class="toggle-circle"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-primary" (click)="save()" [disabled]="loading()">
+    {{ loading() ? 'Saving...' : 'Save Preferences' }}
+  </button>
+</div>

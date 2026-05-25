@@ -2,6 +2,7 @@ import { Component, ElementRef, viewChild, AfterViewInit, OnDestroy, OnInit, sig
 import { RouterModule } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { OwnershipService } from '@core/services/ownership.service';
+import { LootboxService, RecentPull } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 
 interface Game {
@@ -10,13 +11,7 @@ interface Game {
   reward: number;
 }
 
-interface RecentPull {
-  username: string;
-  itemName: string;
-  stoveIcon: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  timeAgo: string;
-}
+
 
 @Component({
   selector: 'app-main-menu',
@@ -39,36 +34,31 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
   stoveCount = signal<number>(0);
   lootboxCount = signal<number>(0);
 
-  games: Game[] = [
-    { name: 'Dummy', icon: '⚠', reward: 50 },
-    { name: 'Dummy', icon: '⚠', reward: 75 },
-    { name: 'Dummy', icon: '⚠', reward: 100 },
-    { name: 'Dummy', icon: '⚠', reward: 150 },
-    { name: 'Dummy', icon: '⚠', reward: 200 },
-    { name: 'Dummy', icon: '⚠', reward: 250 },
-    { name: 'Dummy', icon: '⚠', reward: 300 },
-    { name: 'Dummy', icon: '⚠', reward: 400 },
-    { name: 'Dummy', icon: '⚠', reward: 500 },
-    { name: 'Dummy', icon: '⚠', reward: 750 }
+  // Mini-games available in the platform
+  games = [
+    { title: 'Poker', route: '/games/poker/lobby', players: '2-8', tag: 'Multiplayer' },
+    { title: 'Blackjack', route: '/games/blackjack/lobby', players: '1-7', tag: 'Gambling' }
   ];
 
-  recentPulls: RecentPull[] = [
-    { username: 'PlayerTwo', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'legendary', timeAgo: '2m' },
-    { username: 'PlayerThree', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'epic', timeAgo: '5m' },
-    { username: 'PlayerFour', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'rare', timeAgo: '10m' },
-    { username: 'PlayerFive', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'common', timeAgo: '15m' },
-    { username: 'PlayerSix', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'epic', timeAgo: '20m' },
-    { username: 'PlayerSeven', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'legendary', timeAgo: '30m' },
-    { username: 'PlayerEight', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'rare', timeAgo: '45m' },
-    { username: 'PlayerNine', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'common', timeAgo: '1h' },
-    { username: 'PlayerTen', itemName: 'Dummy Stove', stoveIcon: '♨', rarity: 'epic', timeAgo: '2h' }
-  ];
+  recentPulls = signal<RecentPull[]>([]);
 
   private authService = inject(AuthService);
   private ownershipService = inject(OwnershipService);
+  private lootboxService = inject(LootboxService);
 
   ngOnInit(): void {
     this.loadUserData();
+    this.loadRecentPulls();
+  }
+
+  private async loadRecentPulls(): Promise<void> {
+    try {
+      const pulls = await firstValueFrom(this.lootboxService.getRecentPulls(20));
+      this.recentPulls.set(pulls);
+    } catch (err) {
+      console.error('Failed to load recent pulls:', err);
+      this.recentPulls.set([]);
+    }
   }
 
   ngAfterViewInit() {

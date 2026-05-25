@@ -1,0 +1,47 @@
+<div class="h-[calc(100vh-64px)] flex">
+  <!-- Left sidebar: Friend list -->
+  <div class="w-[320px] shrink-0 h-full">
+    <app-friend-list
+      [friends]="friends()"
+      [pendingRequests]="pendingRequests()"
+      [selectedFriendId]="selectedFriend()?.friendId ?? null"
+      [activeTab]="activeTab()"
+      [currentPlayerId]="currentPlayerId()"
+      (onSelectFriend)="selectFriend($event)"
+      (onViewGlory)="viewGlory($event)"
+      (onAddFriend)="showAddFriendModal.set(true)"
+      (onRespondRequest)="respondToRequest($event.friendId, $event.accept)"
+      (onTabChange)="activeTab.set($event)"
+    />
+  </div>
+
+  <!-- Right panel: Chat thread -->
+  <div class="flex-1 h-full">
+    <app-chat-thread
+      [friend]="selectedFriend()"
+      [messages]="messages()"
+      [currentPlayerId]="currentPlayerId()"
+      (onSendMessage)="sendMessage($event)"
+      (onMakeOffer)="showTradeOfferModal.set(true)"
+      (onAcceptOffer)="acceptTradeOffer($event)"
+      (onDeclineOffer)="declineTradeOffer($event)"
+    />
+  </div>
+</div>
+
+<!-- Add Friend Modal -->
+@if (showAddFriendModal()) {
+  <app-add-friend-modal
+    (onClose)="showAddFriendModal.set(false)"
+    (onSendRequest)="addFriend($event)"
+  />
+}
+
+<!-- Trade Offer Modal -->
+@if (showTradeOfferModal()) {
+  <app-trade-offer-modal
+    [items]="tradeItems()"
+    (onClose)="showTradeOfferModal.set(false)"
+    (onSubmit)="makeTradeOffer($event)"
+  />
+}

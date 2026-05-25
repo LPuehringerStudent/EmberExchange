@@ -131,7 +131,7 @@ stoveTypeRouter.get("/stove-types/:id", async (req, res) => {
  *         description: Rarity level
  *         schema:
  *           type: string
- *           enum: [common, rare, epic, legendary, limited]
+ *           enum: [common, rare, epic, legendary, limited, secret]
  *     responses:
  *       200:
  *         description: List of stove types with specified rarity
@@ -160,7 +160,7 @@ stoveTypeRouter.get("/stove-types/rarity/:rarity", async (req, res) => {
     const rarity = req.params.rarity;
 
     try {
-        const validRarities: Rarity[] = [Rarity.COMMON, Rarity.RARE, Rarity.EPIC, Rarity.LEGENDARY, Rarity.LIMITED];
+        const validRarities: Rarity[] = [Rarity.COMMON, Rarity.RARE, Rarity.EPIC, Rarity.LEGENDARY, Rarity.LIMITED, Rarity.SECRET];
         if (!validRarities.includes(rarity as Rarity)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid rarity" });
             return;
@@ -205,7 +205,7 @@ stoveTypeRouter.get("/stove-types/rarity/:rarity", async (req, res) => {
  *                 example: "/images/stoves/golden-dragon.png"
  *               rarity:
  *                 type: string
- *                 enum: [common, rare, epic, legendary, limited]
+ *                 enum: [common, rare, epic, legendary, limited, secret]
  *                 description: Rarity level
  *                 example: "legendary"
  *               lootboxWeight:
@@ -254,7 +254,7 @@ stoveTypeRouter.post("/stove-types", async (req, res) => {
             return;
         }
 
-        const validRarities: Rarity[] = [Rarity.COMMON, Rarity.RARE, Rarity.EPIC, Rarity.LEGENDARY, Rarity.LIMITED];
+        const validRarities: Rarity[] = [Rarity.COMMON, Rarity.RARE, Rarity.EPIC, Rarity.LEGENDARY, Rarity.LIMITED, Rarity.SECRET];
         if (!validRarities.includes(rarity as Rarity)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid rarity" });
             return;

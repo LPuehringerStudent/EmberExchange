@@ -1,6 +1,6 @@
-<div class="register-container">
+<div class="min-h-screen flex items-center justify-center relative overflow-hidden p-6 bg-gradient-to-br from-[#1a0f0a] via-[#2d1b14] to-[#1a0f0a]">
   <!-- Animated Fire Background -->
-  <div class="fire-bg">
+  <div class="absolute inset-0 pointer-events-none overflow-hidden">
     <div class="flame flame-1"></div>
     <div class="flame flame-2"></div>
     <div class="flame flame-3"></div>
@@ -15,19 +15,24 @@
   <div class="forge-glow"></div>
 
   <!-- Register Card -->
-  <div class="register-card">
+  <div class="relative z-10 w-full max-w-[480px] bg-surface/95 backdrop-blur-lg rounded-3xl p-10 border-2 border-accent/25 shadow-[0_25px_80px_rgba(0,0,0,0.5),0_0_0_1px_rgba(232,93,4,0.15),inset_0_1px_0_rgba(255,255,255,0.3)]">
     <!-- Header with Anvil Icon -->
-    <div class="register-header">
-      <div class="anvil-icon">
+    <div class="text-center mb-8">
+      <div class="w-[90px] h-[90px] mx-auto mb-5 bg-gradient-to-br from-[#4a4a4a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl flex items-center justify-center relative shadow-[0_12px_40px_rgba(0,0,0,0.4),inset_0_2px_0_rgba(255,255,255,0.1)] border-[3px] border-accent">
         <div class="forge-sparks">
           <span></span>
           <span></span>
           <span></span>
           <span></span>
         </div>
+        <svg class="w-[45px] h-[45px] text-accent relative z-[2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
       </div>
-      <h1>Join Ember Exchange</h1>
-      <p>Start your imperium of stoves!</p>
+      <h1 class="text-[1.85rem] font-bold m-0 mb-2.5 bg-gradient-to-br from-accent via-[#f48c06] to-[#ffba08] bg-clip-text text-transparent">Join Ember Exchange</h1>
+      <p class="m-0 text-text-secondary">Start your imperium of stoves!</p>
     </div>
 
     <!-- Progress Steps -->
@@ -50,8 +55,8 @@
 
     <!-- Success Message -->
     @if (successMessage()) {
-      <div class="success-alert">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="flex items-center gap-3 px-[18px] py-3.5 rounded-xl bg-green-500/10 border border-green-500/30 text-green-600 text-[0.95rem] mb-5 animate-slide-down">
+        <svg class="w-[22px] h-[22px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
           <polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
@@ -61,8 +66,8 @@
 
     <!-- Error Message -->
     @if (errorMessage()) {
-      <div class="error-alert">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="flex items-center gap-3 px-[18px] py-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-[0.95rem] mb-5 animate-shake">
+        <svg class="w-[22px] h-[22px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
           <line x1="12" y1="8" x2="12" y2="12"/>
           <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -73,10 +78,10 @@
 
     <!-- Step 1: Identity -->
     @if (currentStep() === 1) {
-      <form (ngSubmit)="nextStep()" class="register-form">
-        <div class="form-group">
-          <label for="username">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <form (ngSubmit)="nextStep()" class="flex flex-col gap-5">
+        <div class="flex flex-col gap-2">
+          <label for="username" class="flex items-center gap-2 text-sm font-semibold text-text-primary uppercase tracking-wide">
+            <svg class="w-[18px] h-[18px] text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
@@ -90,13 +95,14 @@
             name="username"
             placeholder="Enter your username"
             maxlength="30"
+            class="w-full px-4 py-3.5 border-2 border-border rounded-xl text-base transition-all duration-200 bg-input-bg focus:outline-none focus:border-accent focus:bg-surface focus:shadow-[0_0_0_4px_rgba(232,93,4,0.1)] placeholder:text-text-tertiary"
           />
-          <span class="input-hint">This is how you will be seen</span>
+          <span class="text-[0.8rem] text-text-tertiary mt-0.5">This is how you will be seen</span>
         </div>
 
-        <div class="form-group">
-          <label for="email">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="flex flex-col gap-2">
+          <label for="email" class="flex items-center gap-2 text-sm font-semibold text-text-primary uppercase tracking-wide">
+            <svg class="w-[18px] h-[18px] text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
               <polyline points="22,6 12,13 2,6"/>
             </svg>
@@ -109,12 +115,13 @@
             (ngModelChange)="email.set($event)"
             name="email"
             placeholder="gru.dru@minions.com"
+            class="w-full px-4 py-3.5 border-2 border-border rounded-xl text-base transition-all duration-200 bg-input-bg focus:outline-none focus:border-accent focus:bg-surface focus:shadow-[0_0_0_4px_rgba(232,93,4,0.1)] placeholder:text-text-tertiary"
           />
         </div>
 
-        <button type="submit" class="register-btn primary">
+        <button type="submit" class="flex items-center justify-center gap-2.5 px-6 py-4 bg-gradient-to-br from-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(232,93,4,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(232,93,4,0.5)] active:translate-y-0">
           <span>Continue to register</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="5" y1="12" x2="19" y2="12"/>
             <polyline points="12 5 19 12 12 19"/>
           </svg>
@@ -124,16 +131,16 @@
 
     <!-- Step 2: Security -->
     @if (currentStep() === 2) {
-      <form (ngSubmit)="nextStep()" class="register-form">
-        <div class="form-group">
-          <label for="password">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <form (ngSubmit)="nextStep()" class="flex flex-col gap-5">
+        <div class="flex flex-col gap-2">
+          <label for="password" class="flex items-center gap-2 text-sm font-semibold text-text-primary uppercase tracking-wide">
+            <svg class="w-[18px] h-[18px] text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
             Create password
           </label>
-          <div class="password-input-wrapper">
+          <div class="relative">
             <input
               [type]="showPassword() ? 'text' : 'password'"
               id="password"
@@ -142,19 +149,20 @@
               name="password"
               placeholder="Create a strong password"
               minlength="8"
+              class="w-full px-4 py-3.5 pr-[50px] border-2 border-border rounded-xl text-base transition-all duration-200 bg-input-bg focus:outline-none focus:border-accent focus:bg-surface focus:shadow-[0_0_0_4px_rgba(232,93,4,0.1)] placeholder:text-text-tertiary"
             />
             <button
               type="button"
-              class="toggle-password"
+              class="auth-password-toggle"
               (click)="togglePassword('password')"
             >
               @if (showPassword()) {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                   <circle cx="12" cy="12" r="3"/>
                 </svg>
               } @else {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
                   <line x1="1" y1="1" x2="23" y2="23"/>
                 </svg>
@@ -163,27 +171,27 @@
           </div>
 
           <!-- Password Strength Meter -->
-          <div class="strength-meter">
-            <div class="strength-bars">
+          <div class="mt-2.5 flex flex-col gap-1.5">
+            <div class="flex gap-1 h-1.5">
               @for (i of [0, 1, 2, 3, 4]; track i) {
-                <div class="strength-bar" [class.active]="passwordStrength() > i" [style.background-color]="passwordStrength() > i ? strengthColor() : '#e9ecef'"></div>
+                <div class="strength-bar flex-1 rounded-[3px] transition-all duration-300" [class.active]="passwordStrength() > i" [style.background-color]="passwordStrength() > i ? strengthColor() : '#e9ecef'"></div>
               }
             </div>
-            <span class="strength-label" [style.color]="strengthColor()">
+            <span class="text-[0.8rem] font-semibold uppercase tracking-wide transition-colors duration-300" [style.color]="strengthColor()">
               {{ strengthLabel() }}
             </span>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="confirmPassword">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="flex flex-col gap-2">
+          <label for="confirmPassword" class="flex items-center gap-2 text-sm font-semibold text-text-primary uppercase tracking-wide">
+            <svg class="w-[18px] h-[18px] text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               <path d="M9 12l2 2 4-4"/>
             </svg>
             Confirm Password
           </label>
-          <div class="password-input-wrapper">
+          <div class="relative">
             <input
               [type]="showConfirmPassword() ? 'text' : 'password'"
               id="confirmPassword"
@@ -191,19 +199,20 @@
               (ngModelChange)="confirmPassword.set($event)"
               name="confirmPassword"
               placeholder="Match the password"
+              class="w-full px-4 py-3.5 pr-[50px] border-2 border-border rounded-xl text-base transition-all duration-200 bg-input-bg focus:outline-none focus:border-accent focus:bg-surface focus:shadow-[0_0_0_4px_rgba(232,93,4,0.1)] placeholder:text-text-tertiary"
             />
             <button
               type="button"
-              class="toggle-password"
+              class="auth-password-toggle"
               (click)="togglePassword('confirm')"
             >
               @if (showConfirmPassword()) {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                   <circle cx="12" cy="12" r="3"/>
                 </svg>
               } @else {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
                   <line x1="1" y1="1" x2="23" y2="23"/>
                 </svg>
@@ -212,18 +221,18 @@
           </div>
         </div>
 
-        <div class="form-actions">
-          <button type="button" class="register-btn secondary" (click)="prevStep()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="flex gap-3 mt-2.5">
+          <button type="button" class="flex items-center justify-center gap-2.5 px-5 py-4 bg-surface-secondary text-text-secondary rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 border-none hover:bg-surface-secondary hover:-translate-y-0.5 flex-[0_0_auto]" (click)="prevStep()">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="19" y1="12" x2="5" y2="12"/>
               <polyline points="12 19 5 12 12 5"/>
             </svg>
             <span>Back</span>
           </button>
 
-          <button type="submit" class="register-btn primary">
+          <button type="submit" class="flex-1 flex items-center justify-center gap-2.5 px-6 py-4 bg-gradient-to-br from-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(232,93,4,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(232,93,4,0.5)] active:translate-y-0">
             <span>Continue</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="5" y1="12" x2="19" y2="12"/>
               <polyline points="12 5 19 12 12 19"/>
             </svg>
@@ -233,10 +242,10 @@
     }
 
     @if (currentStep() === 3) {
-      <form (ngSubmit)="onSubmit()" class="register-form">
-        <div class="forge-covenant">
-          <h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <form (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+        <div class="bg-gradient-to-br from-accent/5 to-[#f48c06]/5 border-2 border-accent/20 rounded-2xl p-6 mb-2.5">
+          <h3 class="flex items-center gap-2.5 m-0 mb-4 text-[1.1rem] text-accent">
+            <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
               <line x1="16" y1="13" x2="8" y2="13"/>
@@ -245,37 +254,37 @@
             </svg>
             Terms and Conditions
           </h3>
-          <div class="covenant-text">
-            <p>You will follow these rules:</p>
-            <ul>
-              <li>Respect the community</li>
-              <li>Keep playing fair</li>
-              <li>No copying from this website</li>
+          <div class="text-text-secondary text-[0.9rem] leading-relaxed mb-5">
+            <p class="m-0 mb-2.5">You will follow these rules:</p>
+            <ul class="m-0 pl-5">
+              <li class="mb-1.5">Respect the community</li>
+              <li class="mb-1.5">Keep playing fair</li>
+              <li class="mb-1.5">No copying from this website</li>
             </ul>
           </div>
 
-          <label class="checkbox-wrapper covenant-checkbox">
+          <label class="auth-checkbox-wrapper mt-2.5">
             <input type="checkbox" [ngModel]="acceptedTerms()" (ngModelChange)="acceptedTerms.set($event)" name="acceptedTerms" />
-            <span class="checkmark"></span>
-            <span class="label-text">I accept the terms and conditions!</span>
+            <span class="auth-checkmark"></span>
+            <span class="text-[0.9rem] text-text-primary font-medium">I accept the terms and conditions!</span>
           </label>
         </div>
 
-        <div class="form-actions">
-          <button type="button" class="register-btn secondary" (click)="prevStep()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="flex gap-3 mt-2.5">
+          <button type="button" class="flex items-center justify-center gap-2.5 px-5 py-4 bg-surface-secondary text-text-secondary rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 border-none hover:bg-surface-secondary hover:-translate-y-0.5 flex-[0_0_auto]" (click)="prevStep()">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="19" y1="12" x2="5" y2="12"/>
               <polyline points="12 19 5 12 12 5"/>
             </svg>
             <span>Back</span>
           </button>
 
-          <button type="submit" class="register-btn ignite" [disabled]="isLoading()">
+          <button type="submit" class="flex-1 flex items-center justify-center gap-2.5 px-6 py-4 bg-gradient-to-br from-[#dc3545] via-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_20px_rgba(220,53,69,0.4)] hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgba(220,53,69,0.5)] active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:animate-none animate-ignite-pulse" [disabled]="isLoading()">
             @if (isLoading()) {
-              <div class="btn-spinner"></div>
+              <div class="auth-spinner"></div>
               <span>Creating Account</span>
             } @else {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
               <span>Register</span>
@@ -286,36 +295,36 @@
     }
 
     <!-- Divider -->
-    <div class="divider">
+    <div class="auth-divider my-7">
       <span>or join with</span>
     </div>
 
     <!-- Social Register -->
-    <div class="social-register">
-      <button type="button" class="social-btn google">
-        <svg viewBox="0 0 24 24">
+    <div class="flex gap-3 justify-center">
+      <button type="button" class="flex items-center justify-center w-[52px] h-[52px] border-2 border-border rounded-[14px] bg-surface cursor-pointer transition-all duration-200 hover:border-accent hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(0,0,0,0.1)]">
+        <svg class="w-[26px] h-[26px]" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
       </button>
-      <button type="button" class="social-btn github">
-        <svg viewBox="0 0 24 24" fill="currentColor">
+      <button type="button" class="flex items-center justify-center w-[52px] h-[52px] border-2 border-border rounded-[14px] bg-surface cursor-pointer transition-all duration-200 hover:border-accent hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(0,0,0,0.1)]">
+        <svg class="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
         </svg>
       </button>
     </div>
 
     <!-- Login Link -->
-    <div class="login-link">
+    <div class="text-center mt-7 pt-6 border-t border-border text-text-secondary text-[0.95rem]">
       <span>Already have an account?</span>
-      <a routerLink="/login"> Lock in now!</a>
+      <a routerLink="/login" class="text-accent no-underline font-semibold ml-1.5 transition-all duration-200 hover:underline hover:text-[#d35400]">Lock in now!</a>
     </div>
   </div>
 
   <!-- Decorative Elements -->
-  <div class="forge-elements">
+  <div class="absolute bottom-[30px] left-1/2 -translate-x-1/2 flex gap-10 opacity-25 pointer-events-none">
     <div class="tool hammer"></div>
     <div class="tool tongs"></div>
     <div class="coal-pile">

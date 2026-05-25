@@ -1,4 +1,4 @@
-import { PlayerService } from '../../backend/services/player-service';
+﻿import { PlayerService } from '../../backend/services/player-service';
 import { Unit } from '../../backend/utils/unit';
 
 // ---------------------------------------------------------------------------
@@ -297,7 +297,7 @@ describe('PlayerService', () => {
 
       expect(result).toBe(true);
       // prepare should be called many times for cascade deletes
-      expect(unit.prepare).toHaveBeenCalledTimes(expect.any(Number));
+      expect(unit.prepare).toHaveBeenCalled();
     });
 
     it('returns false when player does not exist', async () => {
@@ -336,6 +336,56 @@ describe('PlayerService', () => {
       const result = await service.getPlayerByOAuth('github', 'unknown-id');
 
       expect(result).toBeNull();
+    });
+  });
+
+  // --- updatePlayerUsername -----------------------------------------------
+
+  describe('updatePlayerUsername', () => {
+    it('updates username when unique', async () => {
+      const getStmt = mockStmt(null);
+      const runStmt = mockStmt(null, [], { changes: 1 });
+      let callCount = 0;
+      const unit = {
+        prepare: jest.fn().mockImplementation(() => {
+          callCount++;
+          return callCount === 1 ? getStmt : runStmt;
+        }),
+      } as unknown as Unit;
+      const service = new PlayerService(unit);
+
+      const result = await service.updatePlayerUsername(1, 'newname');
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when username is taken by another player', async () => {
+      const getStmt = mockStmt({ playerId: 2, username: 'taken' });
+      const unit = mockUnit(getStmt);
+      const service = new PlayerService(unit);
+
+      const result = await service.updatePlayerUsername(1, 'taken');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  // --- updatePlayerMotto ----------------------------------------------------
+
+  describe('updatePlayerMotto', () => {
+    it('updates motto and truncates to 100 chars', async () => {
+      const runStmt = mockStmt(null, [], { changes: 1 });
+      const unit = mockUnit(runStmt);
+      const service = new PlayerService(unit);
+
+      const longMotto = 'a'.repeat(200);
+      const result = await service.updatePlayerMotto(1, longMotto);
+
+      expect(result).toBe(true);
+      expect(unit.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE Player SET motto'),
+        expect.objectContaining({ motto: 'a'.repeat(100) })
+      );
     });
   });
 

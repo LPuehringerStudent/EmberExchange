@@ -5,9 +5,10 @@ import type {
   LootboxRow as Lootbox,
   LootboxTypeRow as LootboxType,
   LootboxDropRow as LootboxDrop,
+  RecentPull,
 } from '@shared/model';
 
-export type { Lootbox, LootboxType, LootboxDrop };
+export type { Lootbox, LootboxType, LootboxDrop, RecentPull };
 
 export interface CreateLootboxResponse {
   lootboxId: number;
@@ -48,6 +49,10 @@ export class LootboxService {
   // Lootbox endpoints
   getAllLootboxes(): Observable<Lootbox[]> {
     return this.api.get<Lootbox[]>('/lootboxes');
+  }
+
+  getRecentPulls(limit = 20): Observable<RecentPull[]> {
+    return this.api.get<RecentPull[]>(`/lootboxes/recent?limit=${limit}`);
   }
 
   getLootboxById(id: number): Observable<Lootbox> {

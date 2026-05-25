@@ -22,14 +22,41 @@ export class RoomPlayerService extends ServiceBase {
     }
 
     async getPlayersInRoom(roomId: string): Promise<RoomPlayerRow[]> {
-        const stmt = this.unit.prepare<RoomPlayerRow, { roomId: string }>(
-            `SELECT rp.*, p.username
+        interface RawRow extends RoomPlayerRow {
+            titleId: string | null;
+            titleLabel: string | null;
+            titleAnimation: string | null;
+            bannerId: number | null;
+            bannerName: string | null;
+            bannerCssClass: string | null;
+        }
+        const stmt = this.unit.prepare<RawRow, { roomId: string }>(
+            `SELECT rp.*, p.username, p.coins,
+              t.titleId, t.label as titleLabel, t.animation as titleAnimation,
+              b.bannerId, b.name as bannerName, b.cssClass as bannerCssClass
              FROM RoomPlayer rp
              JOIN Player p ON rp.playerId = p.playerId
+             LEFT JOIN PlayerGloryTitle pgt ON p.playerId = pgt.playerId AND pgt.isActive = 1
+             LEFT JOIN GloryTitle t ON pgt.titleId = t.titleId
+             LEFT JOIN PlayerGloryBanner pgb ON p.playerId = pgb.playerId AND pgb.isActive = 1
+             LEFT JOIN GloryBanner b ON pgb.bannerId = b.bannerId
              WHERE rp.roomId = @roomId`,
             { roomId }
         );
-        return stmt.all();
+        const rows = await stmt.all();
+        return rows.map(r => ({
+            ...r,
+            activeTitle: r.titleId ? {
+                titleId: r.titleId,
+                label: r.titleLabel,
+                animation: r.titleAnimation,
+            } : null,
+            activeBanner: r.bannerId ? {
+                bannerId: r.bannerId,
+                name: r.bannerName,
+                cssClass: r.bannerCssClass,
+            } : null,
+        })) as RoomPlayerRow[];
     }
 
     async getPlayerInRoom(roomId: string, playerId: number): Promise<RoomPlayerRow | null> {

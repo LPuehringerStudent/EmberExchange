@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { ListingService } from "../services/listing-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { PlayerPrestigeService } from "../services/player-prestige-service";
 
 export const listingRouter = express.Router();
 
@@ -452,6 +453,14 @@ listingRouter.post("/listings", async (req, res) => {
         if (success) {
             ok = true;
             res.status(StatusCodes.CREATED).json({ listingId: id, message: "Listing created successfully" });
+
+            // Award XP for creating a listing
+            try {
+                const prestigeService = new PlayerPrestigeService(unit);
+                await prestigeService.addXP(sellerId, 75, 'listing_created', 'Created a marketplace listing');
+            } catch {
+                // Ignore XP errors
+            }
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create listing" });
         }

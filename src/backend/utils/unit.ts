@@ -4,27 +4,40 @@ import { hashPassword } from "./password";
 const COLUMN_MAP: Record<string, string> = {
     "acquiredat": "acquiredAt",
     "acquiredhow": "acquiredHow",
+    "achievementid": "achievementId",
+    "authorid": "authorId",
+    "awardedat": "awardedAt",
     "actualdroprate": "actualDropRate",
+    "activeplayers": "activePlayers",
     "alltimehighprice": "allTimeHighPrice",
     "alltimelowprice": "allTimeLowPrice",
     "amount": "amount",
     "averagelistingprice": "averageListingPrice",
+    "avgprice": "avgPrice",
     "averagelistingpricetoday": "averageListingPriceToday",
     "averageplayernetworth": "averagePlayerNetWorth",
     "averagesaleprice": "averageSalePrice",
     "averagesalepricetoday": "averageSalePriceToday",
     "averagesessionminutes": "averageSessionMinutes",
+    "avgsaleprice": "avgSalePrice",
+    "bannerid": "bannerId",
     "averagetimetosellhours": "averageTimeToSellHours",
     "bestdroprarity": "bestDropRarity",
     "buyerid": "buyerId",
     "coinpayout": "coinPayout",
     "coins": "coins",
+    "collection": "collection",
+    "minheat": "minHeat",
+    "maxheat": "maxHeat",
+    "heatlevel": "heatLevel",
+    "totalstovescrafted": "totalStovesCrafted",
     "coinsspentonlootboxestoday": "coinsSpentOnLootboxesToday",
     "content": "content",
     "costcoins": "costCoins",
     "costfree": "costFree",
     "createdat": "createdAt",
     "currenthighestprice": "currentHighestPrice",
+    "currentlevel": "currentLevel",
     "currentlowestprice": "currentLowestPrice",
     "currentownerid": "currentOwnerId",
     "currentstovecount": "currentStoveCount",
@@ -32,32 +45,49 @@ const COLUMN_MAP: Record<string, string> = {
     "currentlyowned": "currentlyOwned",
     "dailylimit": "dailyLimit",
     "date": "date",
+    "cssclass": "cssClass",
     "demandtrend": "demandTrend",
     "description": "description",
     "dropid": "dropId",
     "email": "email",
+    "entryid": "entryId",
+    "eventname": "eventName",
+    "addresseeid": "addresseeId",
     "executedat": "executedAt",
     "expiresat": "expiresAt",
     "fastestsaleminutes": "fastestSaleMinutes",
     "favoritegametype": "favoriteGameType",
+    "friendid": "friendId",
+    "requesterid": "requesterId",
     "finishedat": "finishedAt",
+    "gamestoday": "gamesToday",
     "gametype": "gameType",
     "highestcoinbalance": "highestCoinBalance",
+    "highestsaleprice": "highestSalePrice",
+    "iconurl": "iconUrl",
     "historyid": "historyId",
     "houseprofit": "houseProfit",
     "imageurl": "imageUrl",
     "isactive": "isActive",
     "isadmin": "isAdmin",
+    "ispublic": "isPublic",
     "isavailable": "isAvailable",
     "isread": "isRead",
+    "itemid": "itemId",
+    "itemtype": "itemType",
+    "lastclaimat": "lastClaimAt",
     "joinedat": "joinedAt",
     "lastloginat": "lastLoginAt",
     "lastsaleprice": "lastSalePrice",
+    "lastprice": "lastPrice",
     "listedat": "listedAt",
     "listedpercent": "listedPercent",
     "listingid": "listingId",
+    "listingscreated": "listingsCreated",
     "listingscancelledtoday": "listingsCancelledToday",
+    "listingssold": "listingsSold",
     "listingssoldtoday": "listingsSoldToday",
+    "lootboxesopened": "lootboxesOpened",
     "loggedinat": "loggedInAt",
     "loginhistoryid": "loginHistoryId",
     "longestsessionminutes": "longestSessionMinutes",
@@ -68,23 +98,36 @@ const COLUMN_MAP: Record<string, string> = {
     "lootboxesopenedtoday": "lootboxesOpenedToday",
     "lootboxespurchasedtoday": "lootboxesPurchasedToday",
     "lowestcoinbalance": "lowestCoinBalance",
+    "lowestsaleprice": "lowestSalePrice",
     "luckiestwin": "luckiestWin",
     "marketactivityscore": "marketActivityScore",
     "medianplayernetworth": "medianPlayerNetWorth",
     "messageid": "messageId",
+    "messagetype": "messageType",
     "messagessenttoday": "messagesSentToday",
+    "minigamesplayed": "miniGamesPlayed",
     "minigamesplayedtoday": "miniGamesPlayedToday",
+    "minlevel": "minLevel",
+    "minprice": "minPrice",
     "mintedat": "mintedAt",
+    "newlistings": "newListings",
     "name": "name",
     "networthestimate": "netWorthEstimate",
     "newlistingstoday": "newListingsToday",
+    "notificationid": "notificationId",
+    "newplayers": "newPlayers",
     "newplayersjoined": "newPlayersJoined",
     "openedat": "openedAt",
     "ownershipid": "ownershipId",
+    "pinnedat": "pinnedAt",
+    "postedat": "postedAt",
+    "prestigecount": "prestigeCount",
     "password": "password",
     "percentoftotalsupply": "percentOfTotalSupply",
     "playerid": "playerId",
     "price": "price",
+    "purchaseid": "purchaseId",
+    "purchasedat": "purchasedAt",
     "pricechangepercent": "priceChangePercent",
     "pricehistory30d": "priceHistory30d",
     "pricehistory7d": "priceHistory7d",
@@ -95,11 +138,14 @@ const COLUMN_MAP: Record<string, string> = {
     "rareststoveowned": "rarestStoveOwned",
     "rarity": "rarity",
     "rarityrank": "rarityRank",
+    "rotationdate": "rotationDate",
     "receiverid": "receiverId",
     "roomid": "roomId",
     "roomplayerid": "roomPlayerId",
     "maxplayers": "maxPlayers",
+    "maxprice": "maxPrice",
     "connectionstate": "connectionState",
+    "messagestoday": "messagesToday",
     "seatindex": "seatIndex",
     "stateblob": "stateBlob",
     "eventid": "eventId",
@@ -111,17 +157,29 @@ const COLUMN_MAP: Record<string, string> = {
     "saleprice": "salePrice",
     "saleslast30days": "salesLast30Days",
     "saleslast7days": "salesLast7Days",
+    "salesrevenue": "salesRevenue",
+    "salestoday": "salesToday",
     "sellthroughrate": "sellThroughRate",
     "sellerid": "sellerId",
     "sellername": "sellerName",
     "senderid": "senderId",
+    "slotindex": "slotIndex",
     "sentat": "sentAt",
     "sessionid": "sessionId",
+    "streakcount": "streakCount",
     "statid": "statId",
     "status": "status",
     "stoveid": "stoveId",
+    "themeid": "themeId",
+    "titleid": "titleId",
+    "titlelabel": "titleLabel",
+    "titleanimation": "titleAnimation",
+    "bannername": "bannerName",
+    "bannercssclass": "bannerCssClass",
+    "stovevalue": "stoveValue",
     "stovename": "stoveName",
     "stovetypeid": "stoveTypeId",
+    "stovesowned": "stovesOwned",
     "totalcoinpayoutstoday": "totalCoinPayoutsToday",
     "totalcoinsearned": "totalCoinsEarned",
     "totalcoinsfromminigames": "totalCoinsFromMiniGames",
@@ -129,10 +187,12 @@ const COLUMN_MAP: Record<string, string> = {
     "totalcoinslostinminigames": "totalCoinsLostInMiniGames",
     "totalcoinsspent": "totalCoinsSpent",
     "totalcoinsspentonlootboxes": "totalCoinsSpentOnLootboxes",
+    "totalcoins": "totalCoins",
     "totaldroppedfromlootboxes": "totalDroppedFromLootboxes",
     "totalglobalmessages": "totalGlobalMessages",
     "totallistingscancelled": "totalListingsCancelled",
     "totallistingscreated": "totalListingsCreated",
+    "totalstoves": "totalStoves",
     "totallistingsexpired": "totalListingsExpired",
     "totallistingssold": "totalListingsSold",
     "totallogins": "totalLogins",
@@ -160,16 +220,28 @@ const COLUMN_MAP: Record<string, string> = {
     "totaltradescompleted": "totalTradesCompleted",
     "totaltradingvolume": "totalTradingVolume",
     "totalvolumetraded": "totalVolumeTraded",
+    "totalxp": "totalXP",
+    "tradingvolume": "tradingVolume",
     "tradeid": "tradeId",
     "transactionid": "transactionId",
+    "trophyid": "trophyId",
     "type": "type",
+    "totpsecret": "totpSecret",
+    "totpenabled": "totpEnabled",
     "typeid": "typeId",
+    "unlockedat": "unlockedAt",
+    "unlockcondition": "unlockCondition",
+    "unlockvalue": "unlockValue",
     "uniquechatterstoday": "uniqueChattersToday",
     "uniqueplayersloggedin": "uniquePlayersLoggedIn",
     "updatedat": "updatedAt",
     "username": "username",
+    "visitedat": "visitedAt",
+    "visitedplayerid": "visitedPlayerId",
+    "visitorplayerid": "visitorPlayerId",
     "viewscount": "viewsCount",
-    "wealthgapratio": "wealthGapRatio"
+    "wealthgapratio": "wealthGapRatio",
+    "xpamount": "xpAmount"
 };
 
 function transformRow<T>(row: Record<string, unknown>): T {
@@ -268,9 +340,11 @@ export class DB {
                 username TEXT NOT NULL UNIQUE,
                 password TEXT,
                 email TEXT NOT NULL UNIQUE,
+                motto TEXT NOT NULL DEFAULT '',
                 coins INTEGER NOT NULL DEFAULT 0,
                 lootboxCount INTEGER NOT NULL DEFAULT 0,
                 isAdmin INTEGER NOT NULL DEFAULT 0,
+                isPublic INTEGER NOT NULL DEFAULT 1,
                 joinedAt TEXT NOT NULL,
                 provider TEXT CHECK (provider IN ('google', 'github')),
                 providerId TEXT UNIQUE
@@ -278,12 +352,19 @@ export class DB {
         `);
 
         await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS isPublic INTEGER NOT NULL DEFAULT 1
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS StoveType (
                 typeId SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
                 imageUrl TEXT NOT NULL,
-                rarity TEXT NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary', 'limited')),
-                lootboxWeight INTEGER NOT NULL
+                rarity TEXT NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary', 'limited', 'secret')),
+                lootboxWeight INTEGER NOT NULL,
+                collection TEXT NOT NULL DEFAULT 'Industrial',
+                minHeat REAL NOT NULL DEFAULT 0.0,
+                maxHeat REAL NOT NULL DEFAULT 1.0
             )
         `);
 
@@ -292,7 +373,8 @@ export class DB {
                 stoveId SERIAL PRIMARY KEY,
                 typeId INTEGER NOT NULL REFERENCES StoveType(typeId),
                 currentOwnerId INTEGER NOT NULL REFERENCES Player(playerId),
-                mintedAt TEXT NOT NULL
+                mintedAt TEXT NOT NULL,
+                heatLevel REAL NOT NULL DEFAULT 0.0
             )
         `);
 
@@ -314,7 +396,7 @@ export class DB {
                 lootboxTypeId INTEGER NOT NULL REFERENCES LootboxType(lootboxTypeId),
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 openedAt TEXT,
-                acquiredHow TEXT NOT NULL CHECK (acquiredHow IN ('free', 'purchase', 'reward'))
+                acquiredHow TEXT NOT NULL CHECK (acquiredHow IN ('free', 'purchase', 'reward', 'shop', 'daily_reward'))
             )
         `);
 
@@ -399,7 +481,7 @@ export class DB {
                 stoveId INTEGER NOT NULL REFERENCES Stove(stoveId),
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 acquiredAt TEXT NOT NULL,
-                acquiredHow TEXT NOT NULL CHECK (acquiredHow IN ('lootbox', 'trade', 'mini-game'))
+                acquiredHow TEXT NOT NULL CHECK (acquiredHow IN ('lootbox', 'trade', 'mini-game', 'shop', 'craft'))
             )
         `);
 
@@ -417,11 +499,91 @@ export class DB {
                 transactionId SERIAL PRIMARY KEY,
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 amount INTEGER NOT NULL,
-                type TEXT NOT NULL CHECK (type IN ('trade_in', 'trade_out', 'mini_game', 'listing_sale', 'listing_purchase', 'admin_adjust')),
+                type TEXT NOT NULL CHECK (type IN ('trade_in', 'trade_out', 'mini_game', 'listing_sale', 'listing_purchase', 'admin_adjust', 'daily_reward', 'shop_purchase', 'shop_sale', 'forgery')),
                 description TEXT,
                 createdAt TEXT NOT NULL
             )
         `);
+
+        // Migrate existing tables to add new constraint values
+        try {
+            await connection.query(`
+                ALTER TABLE Lootbox
+                DROP CONSTRAINT IF EXISTS lootbox_acquiredhow_check,
+                ADD CONSTRAINT lootbox_acquiredhow_check
+                CHECK (acquiredHow IN ('free', 'purchase', 'reward', 'shop', 'daily_reward'))
+            `);
+        } catch {
+            // Constraint may already be correct or table doesn't exist yet
+        }
+        try {
+            await connection.query(`
+                ALTER TABLE Ownership
+                DROP CONSTRAINT IF EXISTS ownership_acquiredhow_check,
+                ADD CONSTRAINT ownership_acquiredhow_check
+                CHECK (acquiredHow IN ('lootbox', 'trade', 'mini-game', 'shop', 'craft'))
+            `);
+        } catch {
+            // Constraint may already be correct or table doesn't exist yet
+        }
+        try {
+            await connection.query(`
+                ALTER TABLE CoinTransaction
+                DROP CONSTRAINT IF EXISTS cointransaction_type_check,
+                ADD CONSTRAINT cointransaction_type_check
+                CHECK (type IN ('trade_in', 'trade_out', 'mini_game', 'listing_sale', 'listing_purchase', 'admin_adjust', 'daily_reward', 'shop_purchase', 'shop_sale', 'forgery'))
+            `);
+        } catch {
+            // Constraint may already be correct or table doesn't exist yet
+        }
+        try {
+            await connection.query(`
+                ALTER TABLE StoveType
+                ADD COLUMN IF NOT EXISTS collection TEXT NOT NULL DEFAULT 'Industrial',
+                ADD COLUMN IF NOT EXISTS minHeat REAL NOT NULL DEFAULT 0.0,
+                ADD COLUMN IF NOT EXISTS maxHeat REAL NOT NULL DEFAULT 1.0
+            `);
+        } catch {
+            // Columns may already exist
+        }
+        try {
+            await connection.query(`
+                ALTER TABLE Stove
+                ADD COLUMN IF NOT EXISTS heatLevel REAL NOT NULL DEFAULT 0.0
+            `);
+        } catch {
+            // Column may already exist
+        }
+        // Randomize heatLevel for existing stoves that still have the default 0.0
+        try {
+            const stovesToUpdate = await connection.query<
+                { stoveId: number; minHeat: number; maxHeat: number }
+            >(`
+                SELECT s.stoveId, st.minHeat, st.maxHeat
+                FROM Stove s
+                JOIN StoveType st ON s.typeId = st.typeId
+                WHERE s.heatLevel = 0.0
+            `);
+            for (const row of stovesToUpdate.rows) {
+                const min = row.minHeat ?? 0.0;
+                const max = row.maxHeat ?? 1.0;
+                const randomizedHeat = min + Math.random() * (max - min);
+                await connection.query(
+                    `UPDATE Stove SET heatLevel = $1 WHERE stoveId = $2`,
+                    [randomizedHeat, row.stoveId]
+                );
+            }
+        } catch {
+            // Migration may have already run or no stoves to update
+        }
+        try {
+            await connection.query(`
+                ALTER TABLE PlayerStatistics
+                ADD COLUMN IF NOT EXISTS totalStovesCrafted INTEGER NOT NULL DEFAULT 0
+            `);
+        } catch {
+            // Column may already exist
+        }
 
         await connection.query(`
             CREATE TABLE IF NOT EXISTS ChatMessage (
@@ -432,6 +594,33 @@ export class DB {
                 sentAt TEXT NOT NULL,
                 isRead INTEGER NOT NULL DEFAULT 0
             )
+        `);
+
+        // Migrate existing ChatMessage tables to add new columns
+        try {
+            await connection.query(`ALTER TABLE ChatMessage ADD COLUMN IF NOT EXISTS messageType TEXT NOT NULL DEFAULT 'text' CHECK (messageType IN ('text', 'trade_offer'))`);
+        } catch {
+            // Column may already exist
+        }
+        try {
+            await connection.query(`ALTER TABLE ChatMessage ADD COLUMN IF NOT EXISTS data JSONB NOT NULL DEFAULT '{}'`);
+        } catch {
+            // Column may already exist
+        }
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS Friend (
+                friendId SERIAL PRIMARY KEY,
+                requesterId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
+                addresseeId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
+                status TEXT NOT NULL CHECK (status IN ('pending', 'accepted', 'blocked')),
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE(requesterId, addresseeId)
+            )
+        `);
+
+        await connection.query(`
+            CREATE INDEX IF NOT EXISTS idx_friend_addressee ON Friend(addresseeId, status)
         `);
 
         await connection.query(`
@@ -446,7 +635,7 @@ export class DB {
                 totalLootboxesPurchased INTEGER NOT NULL DEFAULT 0,
                 totalLootboxesFree INTEGER NOT NULL DEFAULT 0,
                 totalCoinsSpentOnLootboxes INTEGER NOT NULL DEFAULT 0,
-                bestDropRarity TEXT CHECK (bestDropRarity IN ('common', 'rare', 'epic', 'legendary', 'limited')),
+                bestDropRarity TEXT CHECK (bestDropRarity IN ('common', 'rare', 'epic', 'legendary', 'limited', 'secret')),
                 totalStovesFromLootboxes INTEGER NOT NULL DEFAULT 0,
                 totalListingsCreated INTEGER NOT NULL DEFAULT 0,
                 totalListingsSold INTEGER NOT NULL DEFAULT 0,
@@ -474,7 +663,7 @@ export class DB {
                 totalStovesAcquired INTEGER NOT NULL DEFAULT 0,
                 totalStovesSold INTEGER NOT NULL DEFAULT 0,
                 totalStovesTraded INTEGER NOT NULL DEFAULT 0,
-                rarestStoveOwned TEXT CHECK (rarestStoveOwned IN ('common', 'rare', 'epic', 'legendary', 'limited')),
+                rarestStoveOwned TEXT CHECK (rarestStoveOwned IN ('common', 'rare', 'epic', 'legendary', 'limited', 'secret')),
                 highestCoinBalance INTEGER NOT NULL DEFAULT 0,
                 lowestCoinBalance INTEGER NOT NULL DEFAULT 0,
                 totalCoinsEarned INTEGER NOT NULL DEFAULT 0,
@@ -649,6 +838,243 @@ export class DB {
                 notifiedAt TIMESTAMPTZ
             )
         `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerSettings (
+                playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
+                notifyFriendRequests INTEGER NOT NULL DEFAULT 1,
+                notifyChatMessages INTEGER NOT NULL DEFAULT 1,
+                notifyTradeOffers INTEGER NOT NULL DEFAULT 1,
+                notifyDailyReward INTEGER NOT NULL DEFAULT 1
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS TwoFactorChallenge (
+                challengeId TEXT PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                createdAt TEXT NOT NULL,
+                expiresAt TEXT NOT NULL
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS TwoFactorBackupCode (
+                codeId SERIAL PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                codeHash TEXT NOT NULL,
+                usedAt TEXT
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS ShopListing (
+                listingId SERIAL PRIMARY KEY,
+                itemType TEXT NOT NULL CHECK (itemType IN ('stove', 'lootbox')),
+                itemId INTEGER NOT NULL,
+                price INTEGER NOT NULL,
+                stock INTEGER NOT NULL DEFAULT -1,
+                rotationDate TEXT,
+                isFeatured INTEGER NOT NULL DEFAULT 0,
+                createdAt TEXT NOT NULL
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS ShopPurchase (
+                purchaseId SERIAL PRIMARY KEY,
+                listingId INTEGER NOT NULL REFERENCES ShopListing(listingId),
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                quantity INTEGER NOT NULL DEFAULT 1,
+                purchasedAt TEXT NOT NULL
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerDailyReward (
+                playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
+                lastClaimAt TEXT,
+                streakCount INTEGER NOT NULL DEFAULT 0
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS Notification (
+                notificationId SERIAL PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
+                type TEXT NOT NULL CHECK (type IN ('friend_request', 'chat_message', 'trade_offer', 'daily_reward', 'system')),
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                data JSONB NOT NULL DEFAULT '{}',
+                isRead INTEGER NOT NULL DEFAULT 0,
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
+            CREATE INDEX IF NOT EXISTS idx_notification_player_unread ON Notification(playerId, isRead)
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerPrestige (
+                playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
+                totalXP INTEGER NOT NULL DEFAULT 0,
+                currentLevel INTEGER NOT NULL DEFAULT 1,
+                prestigeCount INTEGER NOT NULL DEFAULT 0,
+                updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PrestigeLog (
+                logId SERIAL PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                source TEXT NOT NULL,
+                xpAmount INTEGER NOT NULL,
+                description TEXT,
+                createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS GloryShowcase (
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                slotIndex INTEGER NOT NULL CHECK (slotIndex >= 0 AND slotIndex <= 5),
+                stoveId INTEGER NOT NULL REFERENCES Stove(stoveId),
+                pinnedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (playerId, slotIndex)
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS GloryFeaturedAchievement (
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                achievementId TEXT NOT NULL,
+                slotIndex INTEGER NOT NULL CHECK (slotIndex >= 0 AND slotIndex <= 5),
+                PRIMARY KEY (playerId, achievementId)
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerAchievement (
+                playerAchievementId SERIAL PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
+                achievementId TEXT NOT NULL,
+                progress INTEGER NOT NULL DEFAULT 0,
+                target INTEGER NOT NULL DEFAULT 1,
+                unlockedAt TIMESTAMPTZ,
+                UNIQUE (playerId, achievementId)
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS GloryTheme (
+                themeId SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                cssClass TEXT NOT NULL,
+                unlockCondition TEXT,
+                unlockValue INTEGER,
+                minLevel INTEGER NOT NULL DEFAULT 1
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerGloryTheme (
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                themeId INTEGER NOT NULL REFERENCES GloryTheme(themeId),
+                unlockedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                isActive INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (playerId, themeId)
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS GloryTitle (
+                titleId TEXT PRIMARY KEY,
+                label TEXT NOT NULL,
+                animation TEXT NOT NULL DEFAULT 'none',
+                unlockCondition TEXT,
+                unlockValue INTEGER,
+                minLevel INTEGER NOT NULL DEFAULT 1
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerGloryTitle (
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                titleId TEXT NOT NULL REFERENCES GloryTitle(titleId),
+                unlockedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                isActive INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (playerId, titleId)
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS GloryBanner (
+                bannerId SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                cssClass TEXT NOT NULL,
+                unlockCondition TEXT,
+                unlockValue INTEGER
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerGloryBanner (
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                bannerId INTEGER NOT NULL REFERENCES GloryBanner(bannerId),
+                unlockedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                isActive INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (playerId, bannerId)
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS GloryVisit (
+                visitorPlayerId INTEGER NOT NULL REFERENCES Player(playerId),
+                visitedPlayerId INTEGER NOT NULL REFERENCES Player(playerId),
+                visitedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (visitorPlayerId, visitedPlayerId, visitedAt)
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS GloryGuestbook (
+                entryId SERIAL PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                authorId INTEGER NOT NULL REFERENCES Player(playerId),
+                message TEXT NOT NULL CHECK (LENGTH(message) <= 200),
+                postedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS GloryTrophy (
+                trophyId TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL,
+                iconUrl TEXT,
+                season TEXT,
+                eventName TEXT,
+                rarity TEXT NOT NULL DEFAULT 'common' CHECK (rarity IN ('common', 'rare', 'epic', 'legendary', 'limited', 'secret'))
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerGloryTrophy (
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                trophyId TEXT NOT NULL REFERENCES GloryTrophy(trophyId),
+                awardedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (playerId, trophyId)
+            )
+        `);
+
+        // Add 2FA columns to Player if they don't exist (idempotent migration)
+        await connection.query(`
+            ALTER TABLE Player
+            ADD COLUMN IF NOT EXISTS totpSecret TEXT,
+            ADD COLUMN IF NOT EXISTS totpEnabled INTEGER NOT NULL DEFAULT 0
+        `).catch(() => {});
     }
 }
 
@@ -687,6 +1113,18 @@ export class Unit {
         const result = await this.client.query<{ id: number }>("SELECT lastval() as id");
         const id = result.rows[0]?.id ?? 0;
         return typeof id === "string" ? parseInt(id, 10) : id;
+    }
+
+    public async savepoint(name: string): Promise<void> {
+        if (this.inTransaction) {
+            await this.client.query(`SAVEPOINT ${name}`);
+        }
+    }
+
+    public async rollbackToSavepoint(name: string): Promise<void> {
+        if (this.inTransaction) {
+            await this.client.query(`ROLLBACK TO SAVEPOINT ${name}`);
+        }
     }
 
     public async complete(commit: boolean | null = null): Promise<void> {
@@ -732,10 +1170,27 @@ export async function resetDatabase(connection: PoolClient): Promise<void> {
         DROP TABLE IF EXISTS StoveType CASCADE;
         DROP TABLE IF EXISTS Game CASCADE;
         DROP TABLE IF EXISTS SupportTicket CASCADE;
+        DROP TABLE IF EXISTS ShopPurchase CASCADE;
+        DROP TABLE IF EXISTS ShopListing CASCADE;
         DROP TABLE IF EXISTS EventLog CASCADE;
         DROP TABLE IF EXISTS GameState CASCADE;
         DROP TABLE IF EXISTS RoomPlayer CASCADE;
         DROP TABLE IF EXISTS Room CASCADE;
+        DROP TABLE IF EXISTS PlayerGloryTrophy CASCADE;
+        DROP TABLE IF EXISTS GloryTrophy CASCADE;
+        DROP TABLE IF EXISTS GloryGuestbook CASCADE;
+        DROP TABLE IF EXISTS GloryVisit CASCADE;
+        DROP TABLE IF EXISTS PlayerGloryBanner CASCADE;
+        DROP TABLE IF EXISTS GloryBanner CASCADE;
+        DROP TABLE IF EXISTS PlayerGloryTitle CASCADE;
+        DROP TABLE IF EXISTS GloryTitle CASCADE;
+        DROP TABLE IF EXISTS PlayerGloryTheme CASCADE;
+        DROP TABLE IF EXISTS GloryTheme CASCADE;
+        DROP TABLE IF EXISTS GloryFeaturedAchievement CASCADE;
+        DROP TABLE IF EXISTS PlayerAchievement CASCADE;
+        DROP TABLE IF EXISTS GloryShowcase CASCADE;
+        DROP TABLE IF EXISTS PrestigeLog CASCADE;
+        DROP TABLE IF EXISTS PlayerPrestige CASCADE;
         DROP TABLE IF EXISTS Game CASCADE;
         DROP TABLE IF EXISTS Player CASCADE
     `);
@@ -759,18 +1214,20 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
 
     async function insertLootboxTypes(): Promise<void> {
         const types = [
-            { name: "Standard Lootbox", description: "A standard lootbox with common to legendary items", costCoins: 0, costFree: 1, isAvailable: 1 },
-            { name: "Premium Lootbox", description: "Higher chance for rare and above items", costCoins: 500, costFree: 0, isAvailable: 1 },
-            { name: "Legendary Crate", description: "Guaranteed legendary or limited item", costCoins: 5000, costFree: 0, isAvailable: 1 }
+            { name: "Standard Lootbox", description: "A standard lootbox with common to legendary items", costCoins: 0, costFree: 1, dailyLimit: null, isAvailable: 1 },
+            { name: "Golden Lootbox", description: "Increased odds for rare and epic items", costCoins: 500, costFree: 0, dailyLimit: 100, isAvailable: 1 },
+            { name: "Legendary Crate", description: "Guaranteed legendary or limited item", costCoins: 5000, costFree: 0, dailyLimit: 20, isAvailable: 1 },
+            { name: "Dragon Crate", description: "Exclusively contains dragon stoves", costCoins: 2500, costFree: 0, dailyLimit: 5, isAvailable: 1 },
+            { name: "Winter Crate", description: "Guaranteed winter-themed stove", costCoins: 1500, costFree: 0, dailyLimit: 10, isAvailable: 1 }
         ];
         
         for (const type of types) {
             const stmt = unit.prepare<
                 unknown,
-                { name: string; description: string; costCoins: number; costFree: number; isAvailable: number }
+                { name: string; description: string; costCoins: number; costFree: number; dailyLimit: number | null; isAvailable: number }
             >(
-                `insert into LootboxType (name, description, costCoins, costFree, isAvailable) 
-                 values (@name, @description, @costCoins, @costFree, @isAvailable)`,
+                `insert into LootboxType (name, description, costCoins, costFree, dailyLimit, isAvailable) 
+                 values (@name, @description, @costCoins, @costFree, @dailyLimit, @isAvailable)`,
                 type
             );
             await stmt.run();
@@ -780,7 +1237,7 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
 
     async function insertPlayers(): Promise<void> {
         const players = [
-            { username: "admin", password: "admin123", email: "admin@emberexchange.com", coins: 999999, lootboxCount: 100, isAdmin: 1 },
+            { username: "admin", password: "321admin", email: "admin@emberexchange.com", coins: 999999, lootboxCount: 100, isAdmin: 1 },
             { username: "player1", password: "pass123", email: "player1@example.com", coins: 5000, lootboxCount: 10, isAdmin: 0 },
             { username: "player2", password: "pass456", email: "player2@example.com", coins: 3500, lootboxCount: 10, isAdmin: 0 },
             { username: "trader_joe", password: "trade789", email: "trader@example.com", coins: 10000, lootboxCount: 10, isAdmin: 0 },
@@ -791,15 +1248,37 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
             const hashedPassword = await hashPassword(player.password);
             const stmt = unit.prepare<
                 unknown,
-                { username: string; password: string; email: string; coins: number; lootboxCount: number; isAdmin: number; joinedAt: string }
+                { username: string; password: string; email: string; motto: string; coins: number; lootboxCount: number; isAdmin: number; joinedAt: string }
             >(
-                `insert into Player (username, password, email, coins, lootboxCount, isAdmin, joinedAt)
-                 values (@username, @password, @email, @coins, @lootboxCount, @isAdmin, @joinedAt)`,
-                { ...player, password: hashedPassword, joinedAt: new Date().toISOString() }
+                `insert into Player (username, password, email, motto, coins, lootboxCount, isAdmin, joinedAt)
+                 values (@username, @password, @email, @motto, @coins, @lootboxCount, @isAdmin, @joinedAt)`,
+                { ...player, password: hashedPassword, motto: '', joinedAt: new Date().toISOString() }
             );
             await stmt.run();
         }
         console.log("✅ Players inserted");
+    }
+
+    async function insertPlayerSettings(): Promise<void> {
+        const settings = [
+            { playerId: 1, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
+            { playerId: 2, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
+            { playerId: 3, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
+            { playerId: 4, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
+            { playerId: 5, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 }
+        ];
+        for (const setting of settings) {
+            const stmt = unit.prepare<
+                unknown,
+                { playerId: number; notifyFriendRequests: number; notifyChatMessages: number; notifyTradeOffers: number; notifyDailyReward: number }
+            >(
+                `insert into PlayerSettings (playerId, notifyFriendRequests, notifyChatMessages, notifyTradeOffers, notifyDailyReward)
+                 values (@playerId, @notifyFriendRequests, @notifyChatMessages, @notifyTradeOffers, @notifyDailyReward)`,
+                setting
+            );
+            await stmt.run();
+        }
+        console.log("✅ PlayerSettings inserted");
     }
 
     async function insertPlayerLootboxes(): Promise<void> {
@@ -822,24 +1301,50 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
 
     async function insertStoveTypes(): Promise<void> {
         const stoves = [
-            { name: "Rusty Stove", imageUrl: "/assets/stove_sprites/rusty.png", rarity: "common", lootboxWeight: 100 },
-            { name: "Standard Stove", imageUrl: "/assets/stove_sprites/standard.png", rarity: "common", lootboxWeight: 80 },
-            { name: "Bronze Stove", imageUrl: "/assets/stove_sprites/bronze.png", rarity: "rare", lootboxWeight: 50 },
-            { name: "Forest Stove", imageUrl: "/assets/stove_sprites/forest.png", rarity: "rare", lootboxWeight: 40 },
-            { name: "Golden Stove", imageUrl: "/assets/stove_sprites/golden.png", rarity: "epic", lootboxWeight: 20 },
-            { name: "Steampunk Stove", imageUrl: "/assets/stove_sprites/steampunk.png", rarity: "epic", lootboxWeight: 15 },
-            { name: "Dragon Stove", imageUrl: "/assets/stove_sprites/dragon.png", rarity: "legendary", lootboxWeight: 5 },
-            { name: "Crystal Stove", imageUrl: "/assets/stove_sprites/crystal.png", rarity: "legendary", lootboxWeight: 3 },
-            { name: "One of a Kind", imageUrl: "", rarity: "limited", lootboxWeight: 1 }
+            { name: "Rusty Stove", imageUrl: "/assets/stove_sprites/common/rusty.png", rarity: "common", lootboxWeight: 100, collection: "Industrial", minHeat: 0.0, maxHeat: 1.0 },
+            { name: "Standard Stove", imageUrl: "/assets/stove_sprites/common/standard.png", rarity: "common", lootboxWeight: 80, collection: "Industrial", minHeat: 0.0, maxHeat: 0.9 },
+            { name: "Bronze Stove", imageUrl: "/assets/stove_sprites/rare/bronze.png", rarity: "rare", lootboxWeight: 50, collection: "Industrial", minHeat: 0.0, maxHeat: 0.85 },
+            { name: "Forest Stove", imageUrl: "/assets/stove_sprites/rare/forest.png", rarity: "rare", lootboxWeight: 40, collection: "Nature", minHeat: 0.0, maxHeat: 0.85 },
+            { name: "Golden Stove", imageUrl: "/assets/stove_sprites/epic/golden.png", rarity: "epic", lootboxWeight: 20, collection: "Nature", minHeat: 0.0, maxHeat: 0.70 },
+            { name: "Steampunk Stove", imageUrl: "/assets/stove_sprites/epic/steampunk.png", rarity: "epic", lootboxWeight: 15, collection: "Industrial", minHeat: 0.0, maxHeat: 0.75 },
+            { name: "Dragon Stove", imageUrl: "/assets/stove_sprites/legendary/dragon.png", rarity: "legendary", lootboxWeight: 5, collection: "Dragon", minHeat: 0.0, maxHeat: 0.55 },
+            { name: "Crystal Stove", imageUrl: "/assets/stove_sprites/legendary/crystal.png", rarity: "legendary", lootboxWeight: 3, collection: "Dragon", minHeat: 0.0, maxHeat: 0.45 },
+            { name: "One of a Kind", imageUrl: "", rarity: "limited", lootboxWeight: 1, collection: "Special", minHeat: 0.0, maxHeat: 0.40 },
+            { name: "Earthbound Stove", imageUrl: "/assets/stove_sprites/secret/earthbound-stove.png", rarity: "secret", lootboxWeight: 1, collection: "Nature", minHeat: 0.0, maxHeat: 0.25 },
+            { name: "Galactic Dragon Stove", imageUrl: "/assets/stove_sprites/secret/galactic-dragon-stove.png", rarity: "legendary", lootboxWeight: 1, collection: "Dragon", minHeat: 0.0, maxHeat: 0.20 },
+            { name: "Magic Stove", imageUrl: "/assets/stove_sprites/legendary/magic-stove.png", rarity: "legendary", lootboxWeight: 5, collection: "Special", minHeat: 0.0, maxHeat: 0.50 },
+            { name: "Pinaple Stove", imageUrl: "/assets/stove_sprites/epic/pinaple-stove.png", rarity: "epic", lootboxWeight: 15, collection: "Special", minHeat: 0.0, maxHeat: 0.70 },
+            { name: "Red Dragon Stove", imageUrl: "/assets/stove_sprites/legendary/red-dragon-stove.png", rarity: "epic", lootboxWeight: 5, collection: "Dragon", minHeat: 0.0, maxHeat: 0.50 },
+            { name: "Upgraded Forest Stove", imageUrl: "/assets/stove_sprites/legendary/upgraded-forest-stove.png", rarity: "legendary", lootboxWeight: 5, collection: "Nature", minHeat: 0.0, maxHeat: 0.55 },
+            { name: "Upgraded Steampunk Stove", imageUrl: "/assets/stove_sprites/legendary/upgraded-steampunk-stove.png", rarity: "legendary", lootboxWeight: 5, collection: "Industrial", minHeat: 0.0, maxHeat: 0.55 },
+            { name: "White Blue Stove", imageUrl: "/assets/stove_sprites/rare/white-blue-stove.png", rarity: "rare", lootboxWeight: 40, collection: "Nature", minHeat: 0.0, maxHeat: 0.80 },
+            { name: "White Dragon Stove", imageUrl: "/assets/stove_sprites/epic/white-dragon-stove.png", rarity: "rare", lootboxWeight: 15, collection: "Dragon", minHeat: 0.0, maxHeat: 0.70 },
+            // Dragon collection expansion
+            { name: "Standard Dragon", imageUrl: "/assets/stove_sprites/new_stoves/standard-dragon.png", rarity: "common", lootboxWeight: 60, collection: "Dragon", minHeat: 0.0, maxHeat: 0.95 },
+            { name: "Dirt Dragon", imageUrl: "/assets/stove_sprites/new_stoves/dirt-dragon.png", rarity: "common", lootboxWeight: 35, collection: "Dragon", minHeat: 0.0, maxHeat: 0.80 },
+            { name: "Green Dragon", imageUrl: "/assets/stove_sprites/new_stoves/green-dragon.png", rarity: "rare", lootboxWeight: 15, collection: "Dragon", minHeat: 0.0, maxHeat: 0.65 },
+            { name: "Black Dragon", imageUrl: "/assets/stove_sprites/new_stoves/black-dragon.png", rarity: "epic", lootboxWeight: 4, collection: "Dragon", minHeat: 0.0, maxHeat: 0.50 },
+            { name: "Celestial Stove", imageUrl: "/assets/stove_sprites/new_stoves/celestial-stove.png", rarity: "legendary", lootboxWeight: 3, collection: "Special", minHeat: 0.0, maxHeat: 0.40 },
+            { name: "Shiny Celestial Dragon", imageUrl: "/assets/stove_sprites/new_stoves/shiny-celestial-dragon.png", rarity: "secret", lootboxWeight: 1, collection: "Dragon", minHeat: 0.0, maxHeat: 0.15 },
+            { name: "Shiny Earthbound Stove", imageUrl: "/assets/stove_sprites/new_stoves/shiny-earthbound-stove.png", rarity: "secret", lootboxWeight: 1, collection: "Nature", minHeat: 0.0, maxHeat: 0.20 },
+            // Winter event stoves
+            { name: "Mistle Stove", imageUrl: "/assets/stove_sprites/winter_stove/mistle_stove.png", rarity: "rare", lootboxWeight: 70, collection: "Winter", minHeat: 0.0, maxHeat: 0.90 },
+            { name: "Pine Stove", imageUrl: "/assets/stove_sprites/winter_stove/pine_stove.png", rarity: "common", lootboxWeight: 70, collection: "Winter", minHeat: 0.0, maxHeat: 0.90 },
+            { name: "Snowman Stove", imageUrl: "/assets/stove_sprites/winter_stove/snowman_stove.png", rarity: "common", lootboxWeight: 65, collection: "Winter", minHeat: 0.0, maxHeat: 0.85 },
+            { name: "Lantern Stove", imageUrl: "/assets/stove_sprites/winter_stove/lantern_stove.png", rarity: "rare", lootboxWeight: 40, collection: "Winter", minHeat: 0.0, maxHeat: 0.80 },
+            { name: "Pinetree Stove", imageUrl: "/assets/stove_sprites/winter_stove/pinetree_stove.png", rarity: "epic", lootboxWeight: 35, collection: "Winter", minHeat: 0.0, maxHeat: 0.75 },
+            { name: "Festival Stove", imageUrl: "/assets/stove_sprites/winter_stove/festival_stove.png", rarity: "secret", lootboxWeight: 15, collection: "Winter", minHeat: 0.0, maxHeat: 0.60 },
+            { name: "Snowgod Stove", imageUrl: "/assets/stove_sprites/winter_stove/snowgod_stove.png", rarity: "epic", lootboxWeight: 4, collection: "Winter", minHeat: 0.0, maxHeat: 0.45 },
+            { name: "Ultimate Snowman Stove", imageUrl: "/assets/stove_sprites/winter_stove/ultimate_snowman_stove.png", rarity: "legendary", lootboxWeight: 3, collection: "Winter", minHeat: 0.0, maxHeat: 0.40 }
         ];
         
         for (const stove of stoves) {
             const stmt = unit.prepare<
                 unknown,
-                { name: string; imageUrl: string; rarity: string; lootboxWeight: number }
+                { name: string; imageUrl: string; rarity: string; lootboxWeight: number; collection: string; minHeat: number; maxHeat: number }
             >(
-                `insert into StoveType (name, imageUrl, rarity, lootboxWeight) 
-                 values (@name, @imageUrl, @rarity, @lootboxWeight)`,
+                `insert into StoveType (name, imageUrl, rarity, lootboxWeight, collection, minHeat, maxHeat) 
+                 values (@name, @imageUrl, @rarity, @lootboxWeight, @collection, @minHeat, @maxHeat)`,
                 stove
             );
             await stmt.run();
@@ -849,21 +1354,21 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
 
     async function insertStoves(): Promise<void> {
         const stoves = [
-            { typeId: 1, currentOwnerId: 2, mintedAt: new Date(Date.now() - 86400000 * 5).toISOString() },
-            { typeId: 2, currentOwnerId: 2, mintedAt: new Date(Date.now() - 86400000 * 3).toISOString() },
-            { typeId: 3, currentOwnerId: 2, mintedAt: new Date(Date.now() - 86400000 * 1).toISOString() },
-            { typeId: 4, currentOwnerId: 3, mintedAt: new Date(Date.now() - 86400000 * 2).toISOString() },
-            { typeId: 5, currentOwnerId: 4, mintedAt: new Date(Date.now() - 86400000 * 1).toISOString() },
-            { typeId: 7, currentOwnerId: 5, mintedAt: new Date().toISOString() }
+            { typeId: 1, currentOwnerId: 2, mintedAt: new Date(Date.now() - 86400000 * 5).toISOString(), heatLevel: 0.35 },
+            { typeId: 2, currentOwnerId: 2, mintedAt: new Date(Date.now() - 86400000 * 3).toISOString(), heatLevel: 0.12 },
+            { typeId: 3, currentOwnerId: 2, mintedAt: new Date(Date.now() - 86400000 * 1).toISOString(), heatLevel: 0.42 },
+            { typeId: 4, currentOwnerId: 3, mintedAt: new Date(Date.now() - 86400000 * 2).toISOString(), heatLevel: 0.28 },
+            { typeId: 5, currentOwnerId: 4, mintedAt: new Date(Date.now() - 86400000 * 1).toISOString(), heatLevel: 0.15 },
+            { typeId: 7, currentOwnerId: 5, mintedAt: new Date().toISOString(), heatLevel: 0.08 }
         ];
         
         for (const stove of stoves) {
             const stmt = unit.prepare<
                 unknown,
-                { typeId: number; currentOwnerId: number; mintedAt: string }
+                { typeId: number; currentOwnerId: number; mintedAt: string; heatLevel: number }
             >(
-                `insert into Stove (typeId, currentOwnerId, mintedAt) 
-                 values (@typeId, @currentOwnerId, @mintedAt)`,
+                `insert into Stove (typeId, currentOwnerId, mintedAt, heatLevel) 
+                 values (@typeId, @currentOwnerId, @mintedAt, @heatLevel)`,
                 stove
             );
             await stmt.run();
@@ -1049,6 +1554,133 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
         console.log("✅ ChatMessages inserted");
     }
 
+    async function insertGloryCatalogs(): Promise<void> {
+        // Themes
+        const themes = [
+            { name: 'Ember', cssClass: 'theme-ember', unlockCondition: null, unlockValue: null, minLevel: 1 },
+            { name: 'Midnight', cssClass: 'theme-midnight', unlockCondition: 'level', unlockValue: 10, minLevel: 10 },
+            { name: 'Gold Hoarder', cssClass: 'theme-gold', unlockCondition: 'net_worth', unlockValue: 100000, minLevel: 25 },
+            { name: 'Forest', cssClass: 'theme-forest', unlockCondition: 'own_stove', unlockValue: null, minLevel: 15 },
+            { name: 'Cyber', cssClass: 'theme-cyber', unlockCondition: 'level', unlockValue: 50, minLevel: 50 },
+            { name: 'Crimson', cssClass: 'theme-crimson', unlockCondition: 'trades', unlockValue: 25, minLevel: 5 },
+            { name: 'Ocean', cssClass: 'theme-ocean', unlockCondition: 'lootboxes', unlockValue: 100, minLevel: 8 },
+            { name: 'Void', cssClass: 'theme-void', unlockCondition: 'level', unlockValue: 75, minLevel: 75 },
+        ];
+        for (const t of themes) {
+            await unit.prepare(
+                `INSERT INTO GloryTheme (name, cssClass, unlockCondition, unlockValue, minLevel)
+                 VALUES (@name, @cssClass, @unlockCondition, @unlockValue, @minLevel)
+                 ON CONFLICT DO NOTHING`,
+                t
+            ).run();
+        }
+
+        // Titles
+        const titles = [
+            { titleId: 'novice', label: 'Novice', animation: 'none', unlockCondition: null, unlockValue: null, minLevel: 1 },
+            { titleId: 'trader', label: 'Trader', animation: 'shimmer', unlockCondition: 'trades', unlockValue: 1, minLevel: 1 },
+            { titleId: 'collector', label: 'Collector', animation: 'pulse', unlockCondition: 'stoves', unlockValue: 10, minLevel: 5 },
+            { titleId: 'high_roller', label: 'High Roller', animation: 'glow', unlockCondition: 'luckiest_win', unlockValue: 10000, minLevel: 10 },
+            { titleId: 'market_shark', label: 'Market Shark', animation: 'shimmer', unlockCondition: 'sales_revenue', unlockValue: 50000, minLevel: 15 },
+            { titleId: 'legend', label: 'Legend', animation: 'rainbow', unlockCondition: 'level', unlockValue: 100, minLevel: 100 },
+            { titleId: 'gambler', label: 'Gambler', animation: 'pulse', unlockCondition: 'games_played', unlockValue: 50, minLevel: 8 },
+            { titleId: 'tycoon', label: 'Tycoon', animation: 'shimmer', unlockCondition: 'net_worth', unlockValue: 500000, minLevel: 30 },
+            { titleId: 'prestige', label: 'Prestigious', animation: 'rainbow', unlockCondition: 'prestige', unlockValue: 1, minLevel: 1 },
+            { titleId: 'veteran', label: 'Veteran', animation: 'glow', unlockCondition: 'level', unlockValue: 25, minLevel: 25 },
+            { titleId: 'dragon_lord', label: 'Dragon Lord', animation: 'rainbow', unlockCondition: 'own_dragon', unlockValue: 3, minLevel: 1 },
+            { titleId: 'winter_spirit', label: 'Winter Spirit', animation: 'shimmer', unlockCondition: 'own_winter', unlockValue: 3, minLevel: 1 },
+        ];
+        for (const t of titles) {
+            await unit.prepare(
+                `INSERT INTO GloryTitle (titleId, label, animation, unlockCondition, unlockValue, minLevel)
+                 VALUES (@titleId, @label, @animation, @unlockCondition, @unlockValue, @minLevel)
+                 ON CONFLICT DO NOTHING`,
+                t
+            ).run();
+        }
+
+        // Banners
+        const banners = [
+            { name: 'Default', cssClass: 'banner-default', unlockCondition: null, unlockValue: null },
+            { name: 'Particles', cssClass: 'banner-particles', unlockCondition: 'level', unlockValue: 20 },
+            { name: 'Golden', cssClass: 'banner-golden', unlockCondition: 'net_worth', unlockValue: 50000 },
+            { name: 'Seasonal', cssClass: 'banner-seasonal', unlockCondition: 'level', unlockValue: 40 },
+            { name: 'Flames', cssClass: 'banner-flames', unlockCondition: 'trades', unlockValue: 10 },
+            { name: 'Royal', cssClass: 'banner-royal', unlockCondition: 'level', unlockValue: 60 },
+            { name: 'Neon', cssClass: 'banner-neon', unlockCondition: 'games_played', unlockValue: 25 },
+            { name: 'Dragon Scales', cssClass: 'banner-dragon', unlockCondition: 'own_dragon', unlockValue: 3 },
+            { name: 'Winter Frost', cssClass: 'banner-winter', unlockCondition: 'own_winter', unlockValue: 3 },
+        ];
+        for (const b of banners) {
+            await unit.prepare(
+                `INSERT INTO GloryBanner (name, cssClass, unlockCondition, unlockValue)
+                 VALUES (@name, @cssClass, @unlockCondition, @unlockValue)
+                 ON CONFLICT DO NOTHING`,
+                b
+            ).run();
+        }
+
+        // Trophies
+        const trophies = [
+            { trophyId: 'beta_tester', name: 'Beta Tester', description: 'Played during the beta period', iconUrl: '', season: 'Beta', eventName: 'Beta Launch', rarity: 'limited' },
+            { trophyId: 'first_trade', name: 'First Trade', description: 'Completed your first marketplace trade', iconUrl: '', season: null, eventName: null, rarity: 'common' },
+            { trophyId: 'sprint_champion', name: 'Sprint Champion', description: 'Won a seasonal tournament', iconUrl: '', season: 'S1', eventName: 'Spring Tournament', rarity: 'legendary' },
+            { trophyId: 'centurion', name: 'Centurion', description: 'Opened 100 lootboxes', iconUrl: '', season: null, eventName: null, rarity: 'rare' },
+            { trophyId: 'millionaire', name: 'Millionaire', description: 'Reached 1,000,000 net worth', iconUrl: '', season: null, eventName: null, rarity: 'epic' },
+        ];
+        for (const t of trophies) {
+            await unit.prepare(
+                `INSERT INTO GloryTrophy (trophyId, name, description, iconUrl, season, eventName, rarity)
+                 VALUES (@trophyId, @name, @description, @iconUrl, @season, @eventName, @rarity)
+                 ON CONFLICT DO NOTHING`,
+                t
+            ).run();
+        }
+
+        console.log("✅ Glory catalogs inserted");
+    }
+
+    async function insertPlayerPrestigeAndDefaults(): Promise<void> {
+        const now = new Date().toISOString();
+        // Initialize PlayerPrestige for all existing players
+        const playersStmt = unit.prepare<{ playerId: number }>(`SELECT playerId FROM Player WHERE username != '__shop__'`);
+        const players = await playersStmt.all();
+        for (const p of players) {
+            await unit.prepare(
+                `INSERT INTO PlayerPrestige (playerId, totalXP, currentLevel, prestigeCount, updatedAt)
+                 VALUES (@playerId, 0, 1, 0, @updatedAt)
+                 ON CONFLICT DO NOTHING`,
+                { playerId: p.playerId, updatedAt: now }
+            ).run();
+
+            // Unlock default theme, title, banner for each player
+            await unit.prepare(
+                `INSERT INTO PlayerGloryTheme (playerId, themeId, unlockedAt, isActive)
+                 SELECT @playerId, themeId, @updatedAt, CASE WHEN themeId = 1 THEN 1 ELSE 0 END
+                 FROM GloryTheme WHERE name = 'Ember'
+                 ON CONFLICT DO NOTHING`,
+                { playerId: p.playerId, updatedAt: now }
+            ).run();
+
+            await unit.prepare(
+                `INSERT INTO PlayerGloryTitle (playerId, titleId, unlockedAt, isActive)
+                 SELECT @playerId, titleId, @updatedAt, CASE WHEN titleId = 'novice' THEN 1 ELSE 0 END
+                 FROM GloryTitle WHERE titleId = 'novice'
+                 ON CONFLICT DO NOTHING`,
+                { playerId: p.playerId, updatedAt: now }
+            ).run();
+
+            await unit.prepare(
+                `INSERT INTO PlayerGloryBanner (playerId, bannerId, unlockedAt, isActive)
+                 SELECT @playerId, bannerId, @updatedAt, CASE WHEN bannerId = 1 THEN 1 ELSE 0 END
+                 FROM GloryBanner WHERE name = 'Default'
+                 ON CONFLICT DO NOTHING`,
+                { playerId: p.playerId, updatedAt: now }
+            ).run();
+        }
+        console.log("✅ PlayerPrestige and default cosmetics inserted");
+    }
+
     async function insertPlayerStatistics(): Promise<void> {
         const now = new Date().toISOString();
         const stats = [
@@ -1183,6 +1815,26 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
         console.log("✅ Games inserted");
     }
 
+    async function insertShopListings(): Promise<void> {
+        const listings = [
+            { itemType: "stove", itemId: 1, price: 500, stock: 10, rotationDate: null, isFeatured: 1 },
+            { itemType: "stove", itemId: 2, price: 800, stock: 5, rotationDate: null, isFeatured: 0 },
+            { itemType: "lootbox", itemId: 1, price: 300, stock: -1, rotationDate: null, isFeatured: 0 },
+            { itemType: "lootbox", itemId: 2, price: 600, stock: 20, rotationDate: null, isFeatured: 1 },
+            { itemType: "lootbox", itemId: 4, price: 2500, stock: 10, rotationDate: null, isFeatured: 0 },
+            { itemType: "lootbox", itemId: 5, price: 1500, stock: 15, rotationDate: null, isFeatured: 0 }
+        ];
+        for (const listing of listings) {
+            const stmt = unit.prepare<unknown, { itemType: string; itemId: number; price: number; stock: number; rotationDate: string | null; isFeatured: number; createdAt: string }>(
+                `INSERT INTO ShopListing (itemType, itemId, price, stock, rotationDate, isFeatured, createdAt)
+                 VALUES (@itemType, @itemId, @price, @stock, @rotationDate, @isFeatured, @createdAt)`,
+                { ...listing, createdAt: new Date().toISOString() }
+            );
+            await stmt.run();
+        }
+        console.log("✅ Shop listings inserted");
+    }
+
     if (!(await alreadyPresent())) {
         await insertGames();
         await insertLootboxTypes();
@@ -1200,10 +1852,54 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
         await insertChatMessages();
         await insertLoginHistory();
         await insertCoinTransactions();
+        await insertGloryCatalogs();
+        await insertPlayerPrestigeAndDefaults();
         await insertPlayerStatistics();
         await insertDailyStatistics();
         await insertStoveTypeStatistics();
+        await insertShopListings();
         return "inserted";
     }
+
+    // Always ensure shop listings exist (independent of player sample data)
+    const shopCheck = unit.prepare<{ cnt: number }>(`SELECT COUNT(*) as cnt FROM ShopListing`);
+    const shopResult = await shopCheck.get();
+    const shopCount = typeof shopResult?.cnt === 'string' ? parseInt(shopResult.cnt, 10) : (shopResult?.cnt ?? 0);
+    if (shopCount === 0) {
+        await insertShopListings();
+    }
+
+    // Always ensure glory catalogs exist
+    const themeCheck = unit.prepare<{ cnt: number }>(`SELECT COUNT(*) as cnt FROM GloryTheme`);
+    const themeResult = await themeCheck.get();
+    const themeCount = typeof themeResult?.cnt === 'string' ? parseInt(themeResult.cnt, 10) : (themeResult?.cnt ?? 0);
+    if (themeCount === 0) {
+        await insertGloryCatalogs();
+    }
+
+    // Always ensure PlayerPrestige and default cosmetics exist for all players
+    const prestigeCheck = unit.prepare<{ cnt: number }>(`SELECT COUNT(*) as cnt FROM PlayerPrestige`);
+    const prestigeResult = await prestigeCheck.get();
+    const prestigeCount = typeof prestigeResult?.cnt === 'string' ? parseInt(prestigeResult.cnt, 10) : (prestigeResult?.cnt ?? 0);
+    if (prestigeCount === 0) {
+        await insertPlayerPrestigeAndDefaults();
+    }
+
+    // Ensure shop NPC exists for item buyback
+    try {
+        const npcCheck = unit.prepare<{ cnt: number }>(`SELECT COUNT(*) as cnt FROM Player WHERE username = '__shop__'`);
+        const npcResult = await npcCheck.get();
+        const npcCount = typeof npcResult?.cnt === 'string' ? parseInt(npcResult.cnt, 10) : (npcResult?.cnt ?? 0);
+        if (npcCount === 0) {
+            await unit.prepare(
+                `INSERT INTO Player (username, password, email, motto, coins, lootboxCount, isAdmin, joinedAt)
+                 VALUES ('__shop__', '', 'shop@emberexchange.com', 'The shop', 0, 0, 0, @joinedAt)`,
+                { joinedAt: new Date().toISOString() }
+            ).run();
+        }
+    } catch {
+        // Ignore errors if Player table doesn't exist yet
+    }
+
     return "skipped";
 }

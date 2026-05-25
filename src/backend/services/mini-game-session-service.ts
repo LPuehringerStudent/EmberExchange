@@ -1,6 +1,7 @@
 import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { MiniGameSessionRow } from "../../shared/model";
+import { PlayerPrestigeService } from "./player-prestige-service";
 
 export class MiniGameSessionService extends ServiceBase {
     constructor(unit: Unit) {
@@ -71,7 +72,33 @@ export class MiniGameSessionService extends ServiceBase {
              VALUES (@playerId, @gameType, @result, @coinPayout, NOW())`,
             { playerId, gameType, result, coinPayout }
         );
-        return await this.executeStmt(stmt);
+        const [success, id] = await this.executeStmt(stmt);
+
+        // Award XP for winning
+        if (success && result.toLowerCase() === 'win') {
+            try {
+                await this.unit.savepoint('xp_award');
+                const prestigeService = new PlayerPrestigeService(this.unit);
+                await prestigeService.addXP(playerId, 150, 'mini_game_win', `Won ${gameType}`);
+            } catch {
+                try { await this.unit.rollbackToSavepoint('xp_award'); } catch { /* ignore */ }
+            }
+        }
+
+        // Check achievements
+        if (success) {
+            try {
+                await this.unit.savepoint('achievements');
+                const { AchievementEngine } = await import("./achievement-engine");
+                const engine = new AchievementEngine(this.unit);
+                await engine.checkMiniGameAchievements(playerId);
+                await engine.checkWealthAchievements(playerId);
+            } catch {
+                try { await this.unit.rollbackToSavepoint('achievements'); } catch { /* ignore */ }
+            }
+        }
+
+        return [success, id];
     }
 
     /**

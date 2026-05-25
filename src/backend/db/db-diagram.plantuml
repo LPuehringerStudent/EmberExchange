@@ -10,172 +10,327 @@ skinparam class {
     BorderColor Black
 }
 
-title EmberExchange Database Schema
+title EmberExchange Database Schema (PostgreSQL)
 
 table(Player) {
-    primary_key(playerId): INTEGER
-    username: TEXT
-    coins: INTEGER
-    lootboxCount: INTEGER
-    isAdmin: BOOLEAN
-    joinedAt: TIMESTAMP
-}
-
-table(LootboxType) {
-    primary_key(lootboxTypeId): INTEGER
-    name: TEXT
-    description: TEXT
-    costCoins: INTEGER
-    costFree: BOOLEAN
-    dailyLimit: INTEGER «NULL for unlimited»
-    isAvailable: BOOLEAN
-}
-
-table(Lootbox) {
-    primary_key(lootboxId): INTEGER
-    foreign_key(lootboxTypeId): INTEGER
-    foreign_key(playerId): INTEGER
-    openedAt: TIMESTAMP
-    acquiredHow: TEXT «free|purchase|reward»
-}
-
-table(LootboxDrop) {
-    primary_key(dropId): INTEGER
-    foreign_key(lootboxId): INTEGER
-    foreign_key(stoveId): INTEGER
-}
-
-table(Stove) {
-    primary_key(stoveId): INTEGER
-    foreign_key(typeId): INTEGER
-    foreign_key(currentOwnerId): INTEGER
-    mintedAt: TIMESTAMP
+    primary_key(playerId): SERIAL
+    username: TEXT «UNIQUE NOT NULL»
+    password: TEXT «NULLABLE»
+    email: TEXT «UNIQUE NOT NULL»
+    motto: TEXT «DEFAULT ''»
+    coins: INTEGER «DEFAULT 0»
+    lootboxCount: INTEGER «DEFAULT 0»
+    isAdmin: INTEGER «DEFAULT 0»
+    joinedAt: TEXT «NOT NULL»
+    provider: TEXT «NULLABLE google|github»
+    providerId: TEXT «NULLABLE UNIQUE»
 }
 
 table(StoveType) {
-    primary_key(typeId): INTEGER
-    name: TEXT
-    imageUrl: TEXT
-    rarity: TEXT «common|rare|epic|legendary|limited»
-    lootboxWeight: INTEGER
+    primary_key(typeId): SERIAL
+    name: TEXT «NOT NULL»
+    imageUrl: TEXT «NOT NULL»
+    rarity: TEXT «NOT NULL common|rare|epic|legendary|limited|secret»
+    lootboxWeight: INTEGER «NOT NULL»
+}
+
+table(Stove) {
+    primary_key(stoveId): SERIAL
+    foreign_key(typeId): INTEGER «NOT NULL»
+    foreign_key(currentOwnerId): INTEGER «NOT NULL»
+    mintedAt: TEXT «NOT NULL»
+}
+
+table(LootboxType) {
+    primary_key(lootboxTypeId): SERIAL
+    name: TEXT «NOT NULL»
+    description: TEXT «NULLABLE»
+    costCoins: INTEGER «DEFAULT 0»
+    costFree: INTEGER «DEFAULT 1»
+    dailyLimit: INTEGER «NULL for unlimited»
+    isAvailable: INTEGER «DEFAULT 1»
+}
+
+table(Lootbox) {
+    primary_key(lootboxId): SERIAL
+    foreign_key(lootboxTypeId): INTEGER «NOT NULL»
+    foreign_key(playerId): INTEGER «NOT NULL»
+    openedAt: TEXT «NULLABLE»
+    acquiredHow: TEXT «NOT NULL free|purchase|reward»
+}
+
+table(LootboxDrop) {
+    primary_key(dropId): SERIAL
+    foreign_key(lootboxId): INTEGER «NOT NULL UNIQUE»
+    foreign_key(stoveId): INTEGER «NOT NULL UNIQUE»
 }
 
 table(Listing) {
-    primary_key(listingId): INTEGER
-    foreign_key(sellerId): INTEGER
-    foreign_key(stoveId): INTEGER
-    price: INTEGER
-    listedAt: TIMESTAMP
-    status: TEXT «active|cancelled|sold»
+    primary_key(listingId): SERIAL
+    foreign_key(sellerId): INTEGER «NOT NULL»
+    foreign_key(stoveId): INTEGER «NULLABLE»
+    foreign_key(lootboxId): INTEGER «NULLABLE»
+    price: INTEGER «NOT NULL >=1»
+    listedAt: TEXT «NOT NULL»
+    status: TEXT «DEFAULT 'active' active|cancelled|sold»
+    CHECK: (stoveId IS NOT NULL) OR (lootboxId IS NOT NULL)
 }
 
 table(Trade) {
-    primary_key(tradeId): INTEGER
-    foreign_key(listingId): INTEGER
-    foreign_key(buyerId): INTEGER
-    executedAt: TIMESTAMP
+    primary_key(tradeId): SERIAL
+    foreign_key(listingId): INTEGER «NOT NULL UNIQUE»
+    foreign_key(buyerId): INTEGER «NOT NULL»
+    executedAt: TEXT «NOT NULL»
 }
 
 table(MiniGameSession) {
-    primary_key(sessionId): INTEGER
-    foreign_key(playerId): INTEGER
-    gameType: TEXT
-    result: TEXT
-    coinPayout: INTEGER
-    finishedAt: TIMESTAMP
+    primary_key(sessionId): SERIAL
+    foreign_key(playerId): INTEGER «NOT NULL»
+    gameType: TEXT «NOT NULL»
+    result: TEXT «NOT NULL»
+    coinPayout: INTEGER «DEFAULT 0»
+    finishedAt: TEXT «NOT NULL»
+}
+
+table(Session) {
+    primary_key(sessionId): TEXT
+    foreign_key(playerId): INTEGER «NOT NULL»
+    createdAt: TEXT «NOT NULL»
+    expiresAt: TEXT «NOT NULL»
+    isActive: INTEGER «DEFAULT 1»
 }
 
 table(PriceHistory) {
-    primary_key(historyId): INTEGER
-    foreign_key(typeId): INTEGER
-    salePrice: INTEGER
-    saleDate: TIMESTAMP
+    primary_key(historyId): SERIAL
+    foreign_key(typeId): INTEGER «NOT NULL»
+    salePrice: INTEGER «NOT NULL»
+    saleDate: TEXT «NOT NULL»
 }
 
 table(Ownership) {
-    primary_key(ownershipId): INTEGER
-    foreign_key(stoveId): INTEGER
-    foreign_key(playerId): INTEGER
-    acquiredAt: TIMESTAMP
-    acquiredHow: TEXT «lootbox|trade|mini-game»
-}
-
-table(ChatMessage) {
-    primary_key(messageId): INTEGER
-    foreign_key(senderId): INTEGER
-    foreign_key(receiverId): INTEGER «NULL for global»
-    content: TEXT
-    sentAt: TIMESTAMP
-    isRead: BOOLEAN
-}
-
-table(PlayerStatistics) {
-    primary_key(statId): INTEGER
-    foreign_key(playerId): INTEGER «UNIQUE»
-    totalLogins: INTEGER
-    lastLoginAt: TIMESTAMP
-    totalSessionMinutes: INTEGER
-    totalLootboxesOpened: INTEGER
-    totalListingsCreated: INTEGER
-    totalListingsSold: INTEGER
-    totalPurchases: INTEGER
-    totalSalesRevenue: INTEGER
-    totalMiniGamesPlayed: INTEGER
-    totalMessagesSent: INTEGER
-    currentStoveCount: INTEGER
-    highestCoinBalance: INTEGER
-    netWorthEstimate: INTEGER
-    marketActivityScore: INTEGER
-    updatedAt: TIMESTAMP
+    primary_key(ownershipId): SERIAL
+    foreign_key(stoveId): INTEGER «NOT NULL»
+    foreign_key(playerId): INTEGER «NOT NULL»
+    acquiredAt: TEXT «NOT NULL»
+    acquiredHow: TEXT «NOT NULL lootbox|trade|mini-game»
 }
 
 table(LoginHistory) {
-    primary_key(loginHistoryId): INTEGER
-    foreign_key(playerId): INTEGER
-    loggedInAt: TIMESTAMP
+    primary_key(loginHistoryId): SERIAL
+    foreign_key(playerId): INTEGER «NOT NULL»
+    loggedInAt: TEXT «NOT NULL»
     sessionId: TEXT «NULLABLE»
 }
 
 table(CoinTransaction) {
-    primary_key(transactionId): INTEGER
-    foreign_key(playerId): INTEGER
-    amount: INTEGER
-    type: TEXT «trade_in|trade_out|mini_game|listing_sale|listing_purchase|admin_adjust»
+    primary_key(transactionId): SERIAL
+    foreign_key(playerId): INTEGER «NOT NULL»
+    amount: INTEGER «NOT NULL»
+    type: TEXT «NOT NULL trade_in|trade_out|mini_game|listing_sale|listing_purchase|admin_adjust»
     description: TEXT «NULLABLE»
-    createdAt: TIMESTAMP
+    createdAt: TEXT «NOT NULL»
+}
+
+table(ChatMessage) {
+    primary_key(messageId): SERIAL
+    foreign_key(senderId): INTEGER «NOT NULL»
+    foreign_key(receiverId): INTEGER «NULL for global»
+    content: TEXT «NOT NULL»
+    sentAt: TEXT «NOT NULL»
+    isRead: INTEGER «DEFAULT 0»
+    messageType: TEXT «DEFAULT 'text'»
+    data: JSONB «DEFAULT '{}'»
+}
+
+table(Friend) {
+    primary_key(friendId): SERIAL
+    foreign_key(requesterId): INTEGER «NOT NULL»
+    foreign_key(addresseeId): INTEGER «NOT NULL»
+    status: TEXT «CHECK pending|accepted|blocked»
+    createdAt: TIMESTAMPTZ «DEFAULT NOW()»
+    unique(requesterId, addresseeId)
+}
+
+table(PlayerStatistics) {
+    primary_key(statId): SERIAL
+    foreign_key(playerId): INTEGER «UNIQUE NOT NULL»
+    totalLogins: INTEGER «DEFAULT 0»
+    lastLoginAt: TEXT
+    totalSessionMinutes: INTEGER «DEFAULT 0»
+    longestSessionMinutes: INTEGER «DEFAULT 0»
+    totalLootboxesOpened: INTEGER «DEFAULT 0»
+    totalLootboxesPurchased: INTEGER «DEFAULT 0»
+    totalLootboxesFree: INTEGER «DEFAULT 0»
+    totalCoinsSpentOnLootboxes: INTEGER «DEFAULT 0»
+    bestDropRarity: TEXT «common|rare|epic|legendary|limited|secret»
+    totalStovesFromLootboxes: INTEGER «DEFAULT 0»
+    totalListingsCreated: INTEGER «DEFAULT 0»
+    totalListingsSold: INTEGER «DEFAULT 0»
+    totalListingsCancelled: INTEGER «DEFAULT 0»
+    totalListingsExpired: INTEGER «DEFAULT 0»
+    totalPurchases: INTEGER «DEFAULT 0»
+    totalSalesRevenue: INTEGER «DEFAULT 0»
+    totalPurchaseSpending: INTEGER «DEFAULT 0»
+    averageListingPrice: INTEGER «DEFAULT 0»
+    averageSalePrice: INTEGER «DEFAULT 0»
+    fastestSaleMinutes: INTEGER
+    totalTradesCompleted: INTEGER «DEFAULT 0»
+    totalMiniGamesPlayed: INTEGER «DEFAULT 0»
+    totalMiniGameWins: INTEGER «DEFAULT 0»
+    totalMiniGameLosses: INTEGER «DEFAULT 0»
+    totalCoinsFromMiniGames: INTEGER «DEFAULT 0»
+    totalCoinsLostInMiniGames: INTEGER «DEFAULT 0»
+    favoriteGameType: TEXT
+    luckiestWin: INTEGER «DEFAULT 0»
+    totalMessagesSent: INTEGER «DEFAULT 0»
+    totalMessagesReceived: INTEGER «DEFAULT 0»
+    totalGlobalMessages: INTEGER «DEFAULT 0»
+    totalPrivateMessages: INTEGER «DEFAULT 0»
+    currentStoveCount: INTEGER «DEFAULT 0»
+    totalStovesAcquired: INTEGER «DEFAULT 0»
+    totalStovesSold: INTEGER «DEFAULT 0»
+    totalStovesTraded: INTEGER «DEFAULT 0»
+    rarestStoveOwned: TEXT «common|rare|epic|legendary|limited|secret»
+    highestCoinBalance: INTEGER «DEFAULT 0»
+    lowestCoinBalance: INTEGER «DEFAULT 0»
+    totalCoinsEarned: INTEGER «DEFAULT 0»
+    totalCoinsSpent: INTEGER «DEFAULT 0»
+    netWorthEstimate: INTEGER «DEFAULT 0»
+    marketActivityScore: INTEGER «DEFAULT 0»
+    updatedAt: TEXT «NOT NULL»
 }
 
 table(DailyStatistics) {
-    primary_key(statId): INTEGER
-    date: DATE «UNIQUE»
-    uniquePlayersLoggedIn: INTEGER
-    newPlayersJoined: INTEGER
-    totalSessions: INTEGER
-    lootboxesOpenedToday: INTEGER
-    listingsSoldToday: INTEGER
-    totalTradingVolume: INTEGER
-    miniGamesPlayedToday: INTEGER
-    messagesSentToday: INTEGER
-    totalCoinsInCirculation: INTEGER
-    averagePlayerNetWorth: INTEGER
-    createdAt: TIMESTAMP
+    primary_key(statId): SERIAL
+    date: TEXT «UNIQUE NOT NULL»
+    uniquePlayersLoggedIn: INTEGER «DEFAULT 0»
+    newPlayersJoined: INTEGER «DEFAULT 0»
+    totalSessions: INTEGER «DEFAULT 0»
+    averageSessionMinutes: INTEGER «DEFAULT 0»
+    lootboxesOpenedToday: INTEGER «DEFAULT 0»
+    lootboxesPurchasedToday: INTEGER «DEFAULT 0»
+    coinsSpentOnLootboxesToday: INTEGER «DEFAULT 0»
+    newListingsToday: INTEGER «DEFAULT 0»
+    listingsSoldToday: INTEGER «DEFAULT 0»
+    listingsCancelledToday: INTEGER «DEFAULT 0»
+    averageListingPriceToday: INTEGER «DEFAULT 0»
+    averageSalePriceToday: INTEGER «DEFAULT 0»
+    totalTradingVolume: INTEGER «DEFAULT 0»
+    priceChangePercent: REAL «DEFAULT 0»
+    miniGamesPlayedToday: INTEGER «DEFAULT 0»
+    totalCoinPayoutsToday: INTEGER «DEFAULT 0»
+    houseProfit: INTEGER «DEFAULT 0»
+    messagesSentToday: INTEGER «DEFAULT 0»
+    uniqueChattersToday: INTEGER «DEFAULT 0»
+    totalCoinsInCirculation: INTEGER «DEFAULT 0»
+    totalStovesInExistence: INTEGER «DEFAULT 0»
+    averagePlayerNetWorth: INTEGER «DEFAULT 0»
+    medianPlayerNetWorth: INTEGER «DEFAULT 0»
+    wealthGapRatio: REAL «DEFAULT 0»
+    averageTimeToSellHours: REAL «DEFAULT 0»
+    sellThroughRate: REAL «DEFAULT 0»
+    createdAt: TEXT «NOT NULL»
 }
 
 table(StoveTypeStatistics) {
-    primary_key(statId): INTEGER
-    foreign_key(stoveTypeId): INTEGER «UNIQUE»
-    totalMinted: INTEGER
-    currentlyOwned: INTEGER
-    currentlyListed: INTEGER
+    primary_key(statId): SERIAL
+    foreign_key(stoveTypeId): INTEGER «UNIQUE NOT NULL»
+    totalMinted: INTEGER «DEFAULT 0»
+    currentlyOwned: INTEGER «DEFAULT 0»
+    currentlyListed: INTEGER «DEFAULT 0»
+    listedPercent: REAL «DEFAULT 0»
     currentLowestPrice: INTEGER
     currentHighestPrice: INTEGER
-    averageSalePrice: INTEGER
-    totalSales: INTEGER
-    viewsCount: INTEGER
-    rarityRank: INTEGER
-    priceTrend7d: REAL
-    demandTrend: TEXT «increasing|stable|decreasing»
-    updatedAt: TIMESTAMP
+    averageListingPrice: INTEGER «DEFAULT 0»
+    lastSalePrice: INTEGER
+    averageSalePrice: INTEGER «DEFAULT 0»
+    priceHistory7d: TEXT «DEFAULT '[]'»
+    priceHistory30d: TEXT «DEFAULT '[]'»
+    allTimeHighPrice: INTEGER
+    allTimeLowPrice: INTEGER
+    totalSales: INTEGER «DEFAULT 0»
+    salesLast7Days: INTEGER «DEFAULT 0»
+    salesLast30Days: INTEGER «DEFAULT 0»
+    viewsCount: INTEGER «DEFAULT 0»
+    totalDroppedFromLootboxes: INTEGER «DEFAULT 0»
+    actualDropRate: REAL «DEFAULT 0»
+    percentOfTotalSupply: REAL «DEFAULT 0»
+    rarityRank: INTEGER «DEFAULT 0»
+    priceTrend7d: REAL «DEFAULT 0»
+    priceTrend30d: REAL «DEFAULT 0»
+    demandTrend: TEXT «DEFAULT 'stable' increasing|stable|decreasing»
+    updatedAt: TEXT «NOT NULL»
+}
+
+table(Game) {
+    primary_key(gameId): SERIAL
+    name: TEXT «NOT NULL»
+    slug: TEXT «UNIQUE NOT NULL»
+    gameType: TEXT «UNIQUE NOT NULL»
+    minPlayers: INTEGER «NOT NULL»
+    maxPlayers: INTEGER «NOT NULL»
+    ruleset: TEXT «NOT NULL»
+    description: TEXT «NULLABLE»
+    genre: TEXT «DEFAULT ''»
+    tags: JSONB «DEFAULT '[]'»
+    isActive: INTEGER «DEFAULT 1»
+}
+
+table(Room) {
+    primary_key(roomId): UUID «DEFAULT gen_random_uuid()»
+    status: TEXT «DEFAULT 'waiting' waiting|active|finished»
+    maxPlayers: INTEGER «NOT NULL > 1»
+    gameType: TEXT «NOT NULL DEFAULT 'unknown'»
+    settings: JSONB «DEFAULT '{}'»
+    createdAt: TIMESTAMPTZ «DEFAULT NOW()»
+    updatedAt: TIMESTAMPTZ «DEFAULT NOW()»
+}
+
+table(RoomPlayer) {
+    primary_key(roomPlayerId): UUID «DEFAULT gen_random_uuid()»
+    foreign_key(roomId): UUID «NOT NULL CASCADE»
+    foreign_key(playerId): INTEGER «NOT NULL»
+    connectionState: TEXT «DEFAULT 'connected' connected|disconnected|away»
+    seatIndex: INTEGER «NOT NULL»
+    disconnectedAt: TIMESTAMPTZ
+    UNIQUE: (roomId, seatIndex)
+}
+
+table(GameState) {
+    primary_key(roomId): UUID
+    stateBlob: JSONB «NOT NULL»
+    version: INTEGER «DEFAULT 0»
+    updatedAt: TIMESTAMPTZ «DEFAULT NOW()»
+}
+
+table(EventLog) {
+    primary_key(eventId): UUID «DEFAULT gen_random_uuid()»
+    foreign_key(roomId): UUID «NOT NULL»
+    foreign_key(playerId): INTEGER «NULLABLE»
+    type: TEXT «NOT NULL»
+    payload: JSONB «NOT NULL»
+    sequenceNumber: INTEGER
+    clientTimestamp: BIGINT
+    serverTimestamp: TIMESTAMPTZ «DEFAULT NOW()»
+}
+
+table(SupportTicket) {
+    primary_key(ticketId): SERIAL
+    foreign_key(reporterId): INTEGER «NOT NULL»
+    title: TEXT «NOT NULL»
+    description: TEXT «NOT NULL»
+    type: TEXT «NOT NULL bug|feature|support»
+    priority: TEXT «NOT NULL high|medium|low»
+    createdAt: TIMESTAMPTZ «DEFAULT NOW()»
+    notifiedAt: TIMESTAMPTZ
+}
+
+table(PlayerSettings) {
+    foreign_key(playerId): INTEGER «PRIMARY KEY»
+    notifyFriendRequests: INTEGER «DEFAULT 1»
+    notifyChatMessages: INTEGER «DEFAULT 1»
+    notifyTradeOffers: INTEGER «DEFAULT 1»
+    notifyDailyReward: INTEGER «DEFAULT 1»
 }
 
 ' Relationships
@@ -186,10 +341,23 @@ Player "1" -- "0..*" MiniGameSession : plays
 Player "1" -- "0..*" Ownership : has history
 Player "1" -- "0..*" ChatMessage : sends
 Player "1" -- "0..*" ChatMessage : receives
+Player "1" -- "0..*" Session : has
+Player "1" -- "0..*" LoginHistory : has
+Player "1" -- "0..*" CoinTransaction : has
+Player "1" -- "0..1" PlayerStatistics : has
+Player "1" -- "0..*" DailyStatistics : contributes to
+Player "1" -- "0..*" RoomPlayer : joins
+Player "1" -- "0..*" EventLog : triggers
+Player "1" -- "0..*" SupportTicket : reports
+Player "1" -- "0..1" PlayerSettings : has
+Player "1" -- "0..*" Friend : requests
+Player "1" -- "0..*" Friend : receives
 
 LootboxType "1" -- "0..*" Lootbox : defines
 
 Lootbox "1" -- "1" LootboxDrop : contains
+Lootbox "1" -- "0..1" Listing : listed as
+
 LootboxDrop "1" -- "1" Stove : drops
 
 Stove "1" -- "0..*" Listing : listed as
@@ -199,13 +367,14 @@ Stove "1" -- "0..*" PriceHistory : has price record
 
 StoveType "1" -- "0..*" Stove : instantiated
 StoveType "1" -- "0..*" PriceHistory : tracked
+StoveType "1" -- "0..1" StoveTypeStatistics : has
 
 Listing "1" -- "0..1" Trade : results in
 
-Player "1" -- "0..*" LoginHistory : has
-Player "1" -- "0..*" CoinTransaction : has
-Player "1" -- "0..1" PlayerStatistics : has
-Player "1" -- "0..*" DailyStatistics : contributes to
-StoveType "1" -- "0..1" StoveTypeStatistics : has
+Game "1" -- "0..*" Room : played in
+
+Room "1" -- "0..*" RoomPlayer : has
+Room "1" -- "0..1" GameState : stores
+Room "1" -- "0..*" EventLog : logs
 
 @enduml

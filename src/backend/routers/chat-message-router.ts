@@ -1,6 +1,8 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { ChatMessageService } from "../services/chat-message-service";
+import { NotificationService } from "../services/notification-service";
+import { connectionManager } from "../websocket/connection-manager";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 
@@ -372,6 +374,8 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", async
     const service = new ChatMessageService(unit);
     const player1Id = req.params.player1Id;
     const player2Id = req.params.player2Id;
+    const limit = Math.min(Number(req.query.limit) || 20, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
         if (isNullOrWhiteSpace(player1Id) || isNaN(Number(player1Id))) {
@@ -383,7 +387,7 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", async
             return;
         }
 
-        const response = await service.getConversation(Number(player1Id), Number(player2Id));
+        const response = await service.getConversationPaginated(Number(player1Id), Number(player2Id), limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -452,7 +456,7 @@ chatMessageRouter.post("/chat-messages", async (req, res) => {
     let ok = false;
 
     try {
-        const { senderId, receiverId, content } = req.body;
+        const { senderId, receiverId, content, messageType, data } = req.body;
 
         if (typeof senderId !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "senderId is required" });
@@ -464,11 +468,43 @@ chatMessageRouter.post("/chat-messages", async (req, res) => {
             return;
         }
 
-        const [success, id] = await service.create(senderId, receiverId ?? null, content);
+        const msgType: 'text' | 'trade_offer' = messageType === 'trade_offer' ? 'trade_offer' : 'text';
+        const msgData: Record<string, unknown> = typeof data === 'object' && data !== null ? data : {};
+
+        const [success, id] = await service.create(senderId, receiverId ?? null, content, msgType, msgData);
 
         if (success) {
+            // Push to recipient if online
+            let pushed = false;
+            if (receiverId && typeof receiverId === "number") {
+                pushed = connectionManager.sendToPlayerGlobal(receiverId, {
+                    type: "chat_message",
+                    payload: {
+                        messageId: id,
+                        senderId,
+                        receiverId,
+                        content,
+                        sentAt: new Date().toISOString(),
+                        isRead: false,
+                        messageType: msgType,
+                        data: msgData
+                    }
+                });
+
+                // If offline, create notification
+                if (!pushed) {
+                    const notificationService = new NotificationService(unit);
+                    await notificationService.create(
+                        receiverId,
+                        "chat_message",
+                        "New message",
+                        content.length > 60 ? content.slice(0, 60) + "..." : content,
+                        { senderId, messageId: id }
+                    );
+                }
+            }
             ok = true;
-            res.status(StatusCodes.CREATED).json({ messageId: id, senderId, receiverId: receiverId ?? null });
+            res.status(StatusCodes.CREATED).json({ messageId: id, senderId, receiverId: receiverId ?? null, messageType: msgType });
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to send message" });
         }

@@ -3,11 +3,13 @@ import { RoomService } from "../../services/room-service";
 import { RoomPlayerService } from "../../services/room-player-service";
 import { GameStateService } from "../../services/game-state-service";
 import { EventLogService } from "../../services/event-log-service";
+import { MiniGameSessionService } from "../../services/mini-game-session-service";
 import { connectionManager } from "../connection-manager";
 import { isValidUUID } from "../validators";
 import { ErrorCode } from "../../../shared/model";
 import { engineRegistry } from "../../game-engines";
 import { startTurnTimer, clearTurnTimer } from "../turn-timer";
+import { syncPlayerCoinsFromState } from "../../utils/sync-player-coins";
 
 export async function handlePlayerAction(socketId: string, payload: Record<string, unknown>): Promise<void> {
     const roomId = payload.roomId;
@@ -39,6 +41,7 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
 
     try {
         const roomService = new RoomService(unit);
+        const debugPrefix = `[action:${actionType}] player=${meta.playerId} room=${roomId}`;
         const roomPlayerService = new RoomPlayerService(unit);
         const gameStateService = new GameStateService(unit);
         const eventLogService = new EventLogService(unit);
@@ -113,6 +116,11 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
                 return;
             }
 
+            const syncedIds = await syncPlayerCoinsFromState(unit, newState as Record<string, unknown>);
+            if (syncedIds.length === 0 && (newState as Record<string, unknown>).players) {
+                console.error("[coins] next_hand: zero players synced despite players array present");
+            }
+
             await eventLogService.logEvent(
                 roomId,
                 "next_hand",
@@ -172,14 +180,43 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
             return;
         }
 
-        await eventLogService.logEvent(
-            roomId,
-            actionType || "unknown",
-            { actionData, expectedVersion },
-            meta.playerId,
-            (payload.sequenceNumber as number | undefined) ?? null,
-            (payload.clientTimestamp as number | undefined) ?? null
-        );
+        const syncedIds = await syncPlayerCoinsFromState(unit, result.newFullState!);
+        if (syncedIds.length === 0 && result.newFullState!.players) {
+            console.error("[coins] processAction: zero players synced despite players array present");
+        }
+
+        // Record mini-game sessions when a hand settles (e.g. blackjack)
+        const newPhase = (result.newFullState! as Record<string, unknown>).phase as string;
+        if (newPhase === "settled") {
+            try {
+                const miniGameSessionService = new MiniGameSessionService(unit);
+                const gamePlayers = (result.newFullState! as Record<string, unknown>).players as Array<Record<string, unknown>>;
+                const winners = ((result.newFullState! as Record<string, unknown>).winners ?? []) as Array<{ playerId: number; amount: number }>;
+                for (const p of gamePlayers) {
+                    const pid = p.playerId as number;
+                    const pResult = p.result as string;
+                    const payout = winners
+                        .filter(w => w.playerId === pid)
+                        .reduce((sum, w) => sum + w.amount, 0);
+                    await miniGameSessionService.create(pid, room.gameType, pResult, payout);
+                }
+            } catch (err) {
+                console.error("[action] MiniGameSession recording failed (non-fatal):", err);
+            }
+        }
+
+        try {
+            await eventLogService.logEvent(
+                roomId,
+                actionType || "unknown",
+                { actionData, expectedVersion },
+                meta.playerId,
+                (payload.sequenceNumber as number | undefined) ?? null,
+                (payload.clientTimestamp as number | undefined) ?? null
+            );
+        } catch (err) {
+            console.error("[action] EventLog recording failed (non-fatal):", err);
+        }
 
         // Send personalized views to each player in the room
         const playersInRoom = await roomPlayerService.getPlayersInRoom(roomId);
@@ -212,6 +249,12 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
         }
 
         ok = true;
+    } catch (err) {
+        console.error(`[action:${actionType}] UNHANDLED ERROR in player-action handler:`, err);
+        connectionManager.sendToSocket(socketId, {
+            type: "error",
+            payload: { code: ErrorCode.INVALID_STATE, message: "Internal server error", recoverable: true }
+        });
     } finally {
         await unit.complete(ok);
     }

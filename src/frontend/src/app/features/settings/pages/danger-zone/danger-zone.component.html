@@ -1,0 +1,45 @@
+<div class="settings-section border-danger-border">
+  <h1 class="text-danger-text">Danger Zone</h1>
+  <p class="subtitle">Irreversible and destructive actions</p>
+
+  <div class="flex items-center justify-between p-6 bg-danger-bg rounded-xl mt-5 gap-5 flex-wrap">
+    <div>
+      <h3 class="m-0 mb-2 text-danger-text text-lg">Delete Account</h3>
+      <p class="m-0 text-danger-text-secondary text-sm leading-relaxed">Once you delete your account, there is no going back. This will permanently delete your account, all your stoves, listings, and game history.</p>
+    </div>
+    <button class="btn-danger shrink-0" (click)="openDeleteModal()">Delete Account</button>
+  </div>
+</div>
+
+@if (showDeleteModal()) {
+  <div class="modal-overlay" (click)="closeDeleteModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h2 class="text-danger-text mb-3">Delete Account</h2>
+      <p class="text-text-secondary">This action cannot be undone. This will permanently delete your account and remove all your data.</p>
+
+      <div class="my-5">
+        <label class="block mb-2 text-sm text-text-secondary">Please type <strong>{{ getExpectedConfirmation() }}</strong> to confirm:</label>
+        <input
+          type="text"
+          [formControl]="deleteConfirmText"
+          placeholder="Type your username here"
+          class="w-full px-3.5 py-3 rounded-xl border border-border bg-input-bg text-text-primary text-sm focus:outline-none focus:border-accent box-border"
+        />
+      </div>
+
+      @if (deleteError()) {
+        <div class="alert alert-error">{{ deleteError() }}</div>
+      }
+
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+        <button
+          class="btn-danger"
+          (click)="confirmDeleteAccount()"
+          [disabled]="deleteLoading()">
+          {{ deleteLoading() ? 'Deleting...' : 'Delete Account' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

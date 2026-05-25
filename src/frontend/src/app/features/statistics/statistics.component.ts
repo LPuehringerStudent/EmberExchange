@@ -61,7 +61,7 @@ export class StatisticsComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    console.log('Loading statistics data...');
+    // Loading statistics data
 
     // Build the list of promises to fetch
     const promises: Promise<any>[] = [
@@ -85,7 +85,7 @@ export class StatisticsComponent implements OnInit {
     // Handle results
     if (results[0].status === 'fulfilled') {
       this.playerStats = results[0].value;
-      console.log('Player stats loaded:', this.playerStats.length);
+      // Player stats loaded
     } else {
       console.error('Failed to load player stats:', results[0].reason);
       this.playerStats = [];
@@ -93,7 +93,7 @@ export class StatisticsComponent implements OnInit {
 
     if (results[1].status === 'fulfilled') {
       this.topActivityPlayers = results[1].value;
-      console.log('Top activity loaded:', this.topActivityPlayers.length);
+      // Top activity loaded
     } else {
       console.error('Failed to load top activity:', results[1].reason);
       this.topActivityPlayers = [];
@@ -101,7 +101,7 @@ export class StatisticsComponent implements OnInit {
 
     if (results[2].status === 'fulfilled') {
       this.topWealthPlayers = results[2].value;
-      console.log('Top wealth loaded:', this.topWealthPlayers.length);
+      // Top wealth loaded
     } else {
       console.error('Failed to load top wealth:', results[2].reason);
       this.topWealthPlayers = [];
@@ -109,7 +109,7 @@ export class StatisticsComponent implements OnInit {
 
     if (results[3].status === 'fulfilled') {
       this.todayStats = results[3].value;
-      console.log('Today stats loaded:', this.todayStats);
+      // Today stats loaded
     } else {
       console.error('Failed to load today stats:', results[3].reason);
       this.todayStats = null;
@@ -117,7 +117,7 @@ export class StatisticsComponent implements OnInit {
 
     if (results[4].status === 'fulfilled') {
       this.dailySummary = results[4].value;
-      console.log('Daily summary loaded:', this.dailySummary);
+      // Daily summary loaded
     } else {
       console.error('Failed to load daily summary:', results[4].reason);
       this.dailySummary = { totalLootboxes: 0, totalSales: 0, totalVolume: 0, avgPlayers: 0 };
@@ -125,7 +125,7 @@ export class StatisticsComponent implements OnInit {
 
     if (results[5].status === 'fulfilled') {
       this.stoveTypeStats = results[5].value;
-      console.log('Stove type stats loaded:', this.stoveTypeStats.length);
+      // Stove type stats loaded
     } else {
       console.error('Failed to load stove type stats:', results[5].reason);
       this.stoveTypeStats = [];
@@ -133,7 +133,7 @@ export class StatisticsComponent implements OnInit {
 
     if (results[6].status === 'fulfilled') {
       this.marketSummary = results[6].value;
-      console.log('Market summary loaded:', this.marketSummary);
+      // Market summary loaded
     } else {
       console.error('Failed to load market summary:', results[6].reason);
       this.marketSummary = { totalStoves: 0, totalListed: 0, totalSales: 0, avgListedPercent: 0 };
@@ -143,7 +143,7 @@ export class StatisticsComponent implements OnInit {
     if (this.currentUserId !== null && results[7]) {
       if (results[7].status === 'fulfilled') {
         this.myStats = results[7].value;
-        console.log('My stats loaded:', this.myStats);
+        // My stats loaded
       } else {
         console.error('Failed to load my stats:', results[7].reason);
         this.myStats = null;

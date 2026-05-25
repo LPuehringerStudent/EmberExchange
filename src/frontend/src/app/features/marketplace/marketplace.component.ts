@@ -1,16 +1,18 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '@core/services/auth.service';
 import { ListingService, Listing } from '@core/services/listing.service';
 import { TradeService } from '@core/services/trade.service';
 import { StoveService, StoveType, Stove } from '@core/services/stove.service';
 import { LootboxService, LootboxType } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
+import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
 
 @Component({
   selector: 'app-marketplace',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule],
+  imports: [RouterModule, CommonModule, HeatTierPipe],
   templateUrl: './marketplace.component.html',
   styleUrls: ['./marketplace.component.css'],
 })
@@ -159,6 +161,14 @@ export class MarketplaceComponent implements OnInit {
     }
     // Lootboxes shown as 'common' rarity style by default
     return 'common';
+  }
+
+  getHeatLevel(listing: Listing): number | null {
+    if (listing.stoveId) {
+      const stove = this.stoves().get(listing.stoveId);
+      return stove?.heatLevel ?? null;
+    }
+    return null;
   }
 
   getImageUrl(listing: Listing): string {
