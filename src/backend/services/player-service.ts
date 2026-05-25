@@ -97,6 +97,21 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
+     * Updates the sparks balance of a player.
+     * @param id - The player's unique ID.
+     * @param sparks - The new sparks amount to set.
+     * @returns True if exactly one player was updated, false otherwise.
+     */
+    async updatePlayerSparks(id: number, sparks: number): Promise<boolean> {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET sparks = @sparks WHERE playerId = @id",
+            { id, sparks }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
+    }
+
+    /**
      * Deletes a player from the database.
      * Deletes all related records first to avoid foreign key constraint errors.
      * @param id - The player's unique ID.

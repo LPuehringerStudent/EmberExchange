@@ -14,6 +14,7 @@ export interface Player {
     email: string;
     motto: string;
     coins: number;
+    sparks: number;
     lootboxCount: number;
     isAdmin: boolean;
     isPublic: boolean;

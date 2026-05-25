@@ -33,14 +33,18 @@ const DROP_TABLES: Record<number, DropTable[]> = {
         { rarity: 'secret', weight: 5 }
     ],
     4: [ // Dragon Crate
-        { rarity: 'dragon', weight: 100 }
+        { rarity: 'common', weight: 30 },
+        { rarity: 'rare', weight: 30 },
+        { rarity: 'epic', weight: 25 },
+        { rarity: 'legendary', weight: 12 },
+        { rarity: 'secret', weight: 3 }
     ],
     5: [ // Winter Crate
-        { rarity: 'common', weight: 50 },
+        { rarity: 'common', weight: 49 },
         { rarity: 'rare', weight: 30 },
         { rarity: 'epic', weight: 15 },
         { rarity: 'legendary', weight: 5 },
-        { rarity: 'secret', weight: 0 }
+        { rarity: 'secret', weight: 1 }
     ]
 };
 
@@ -69,20 +73,20 @@ export class LootboxService extends ServiceBase {
         return rows[Math.floor(Math.random() * rows.length)];
     }
 
-    private async pickDragonStoveType(): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
+    private async pickDragonStoveTypeByRarity(rarity: string): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
         const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number }>(
-            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE LOWER(name) LIKE '%dragon%'",
-            {}
+            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE LOWER(name) LIKE '%dragon%' AND rarity = @rarity AND name NOT LIKE '%Upgraded%'",
+            { rarity }
         );
         const rows = await stmt.all();
         if (rows.length === 0) return null;
         return rows[Math.floor(Math.random() * rows.length)];
     }
 
-    private async pickWinterStoveType(): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
+    private async pickWinterStoveTypeByRarity(rarity: string): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
         const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number }>(
-            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE collection = 'Winter'",
-            {}
+            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE collection = 'Winter' AND rarity = @rarity",
+            { rarity }
         );
         const rows = await stmt.all();
         if (rows.length === 0) return null;
@@ -262,16 +266,16 @@ export class LootboxService extends ServiceBase {
         }
 
         // 2. Determine drop
+        const dropTable = DROP_TABLES[lootbox.lootboxTypeId] ?? DROP_TABLES[1];
+        const rarity = this.weightedRarity(dropTable);
         let stoveType: { typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null = null;
         if (lootbox.lootboxTypeId === 4) {
-            // Dragon Crate: exclusively dragon stoves
-            stoveType = await this.pickDragonStoveType();
+            // Dragon Crate: dragon stoves of the rolled rarity
+            stoveType = await this.pickDragonStoveTypeByRarity(rarity);
         } else if (lootbox.lootboxTypeId === 5) {
-            // Winter Crate: exclusively winter-themed stoves
-            stoveType = await this.pickWinterStoveType();
+            // Winter Crate: winter-themed stoves of the rolled rarity
+            stoveType = await this.pickWinterStoveTypeByRarity(rarity);
         } else {
-            const dropTable = DROP_TABLES[lootbox.lootboxTypeId] ?? DROP_TABLES[1];
-            const rarity = this.weightedRarity(dropTable);
             stoveType = await this.pickStoveTypeByRarity(rarity);
         }
         if (!stoveType) return [false, null];

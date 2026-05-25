@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { StoveService } from '@core/services/stove.service';
 import { AuthService } from '@core/services/auth.service';
 import { ListingService } from '@core/services/listing.service';
+import { SparksService } from '@core/services/sparks.service';
 import { forkJoin, map, of, Subscription, switchMap } from 'rxjs';
 import { ShowedStove, StoveRow, LootboxTypeRow } from '@shared/model';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
@@ -56,12 +57,20 @@ export class InventoryComponent implements OnInit, OnDestroy {
   sellError: string | null = null;
   sellLoading = false;
 
+  // Salvage modal
+  showSalvageModal = false;
+  salvageStove: ShowedStove | null = null;
+  salvageError: string | null = null;
+  salvageLoading = false;
+  salvageSparks = 0;
+
   private _stove = inject(StoveService);
   private _authService = inject(AuthService);
   private _subscription = new Subscription();
   private router = inject(Router);
   private _lootboxService = inject(LootboxService);
   private _listingService = inject(ListingService);
+  private _sparksService = inject(SparksService);
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
@@ -201,6 +210,51 @@ export class InventoryComponent implements OnInit, OnDestroy {
     this.selectedLootbox = null;
     this.sellPrice = '';
     this.sellError = null;
+  }
+
+  // ── Salvage ───────────────────────────────────────────────
+
+  openSalvageModal(item: ShowedStove): void {
+    this.salvageStove = item;
+    this.salvageError = null;
+    this.salvageLoading = false;
+    // Calculate expected sparks: base * (1 + heat)
+    const baseMap: Record<string, number> = { common: 5, rare: 15, epic: 40, legendary: 100, limited: 150, secret: 250 };
+    const base = baseMap[item.rarity.toLowerCase()] ?? 1;
+    this.salvageSparks = Math.floor(base * (1 + item.heatLevel));
+    this.showSalvageModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeSalvageModal(): void {
+    this.showSalvageModal = false;
+    this.salvageStove = null;
+    this.salvageError = null;
+    this.salvageSparks = 0;
+  }
+
+  async confirmSalvage(): Promise<void> {
+    if (!this.salvageStove) return;
+    this.salvageLoading = true;
+    this.salvageError = null;
+    try {
+      const result = await firstValueFrom(this._sparksService.salvageStove(this.salvageStove.stoveId));
+      if (result.success) {
+        await this._authService.refreshUser();
+        this.closeSalvageModal();
+        if (this.playerId !== null) {
+          this.loadItems(this.playerId);
+          this.loadMyListings(this.playerId);
+        }
+      } else {
+        this.salvageError = result.error || 'Failed to salvage stove';
+      }
+    } catch (err: any) {
+      this.salvageError = err?.error?.error || 'Failed to salvage stove. Please try again.';
+    } finally {
+      this.salvageLoading = false;
+      this.cdr.markForCheck();
+    }
   }
 
   getSellModalTitle(): string {

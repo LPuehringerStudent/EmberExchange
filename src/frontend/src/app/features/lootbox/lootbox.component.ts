@@ -50,17 +50,17 @@ const DROP_RATES: Record<number, DropRateEntry[]> = {
   ],
   4: [ // Dragon Crate
     { rarity: 'common', rate: '30%' },
-    { rarity: 'rare', rate: '35%' },
+    { rarity: 'rare', rate: '30%' },
     { rarity: 'epic', rate: '25%' },
-    { rarity: 'legendary', rate: '10%' },
-    { rarity: 'secret', rate: '0%' },
+    { rarity: 'legendary', rate: '12%' },
+    { rarity: 'secret', rate: '3%' },
   ],
   5: [ // Winter Crate
-    { rarity: 'common', rate: '50%' },
+    { rarity: 'common', rate: '49%' },
     { rarity: 'rare', rate: '30%' },
     { rarity: 'epic', rate: '15%' },
     { rarity: 'legendary', rate: '5%' },
-    { rarity: 'secret', rate: '0%' },
+    { rarity: 'secret', rate: '1%' },
   ],
 };
 

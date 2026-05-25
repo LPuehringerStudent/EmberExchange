@@ -344,6 +344,7 @@ export class DB {
                 email TEXT NOT NULL UNIQUE,
                 motto TEXT NOT NULL DEFAULT '',
                 coins INTEGER NOT NULL DEFAULT 0,
+                sparks INTEGER NOT NULL DEFAULT 0,
                 lootboxCount INTEGER NOT NULL DEFAULT 0,
                 isAdmin INTEGER NOT NULL DEFAULT 0,
                 isPublic INTEGER NOT NULL DEFAULT 1,
@@ -355,6 +356,10 @@ export class DB {
 
         await connection.query(`
             ALTER TABLE Player ADD COLUMN IF NOT EXISTS isPublic INTEGER NOT NULL DEFAULT 1
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS sparks INTEGER NOT NULL DEFAULT 0
         `);
 
         await connection.query(`

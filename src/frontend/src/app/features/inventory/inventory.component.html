@@ -165,6 +165,7 @@
                 <button class="btn-sell w-full px-2.5 py-2.5 rounded-[10px] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" disabled>Listed</button>
               } @else {
                 <button class="btn-sell w-full px-2.5 py-2.5 rounded-[10px] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" (click)="openSellStoveModal(item)">Sell</button>
+                <button class="btn-salvage w-full px-2.5 py-2.5 rounded-[10px] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" (click)="openSalvageModal(item)">Salvage</button>
               }
             </div>
           </div>
@@ -209,6 +210,39 @@
             <span>Listing...</span>
           } @else {
             <span>List for Sale</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Salvage Modal -->
+@if (showSalvageModal) {
+  <div class="modal-overlay bg-[rgba(45,52,54,0.6)]" (click)="closeSalvageModal()">
+    <div class="modal-content max-w-[380px] p-7" (click)="$event.stopPropagation()">
+      <h3 class="m-0 mb-1.5 text-lg text-text-primary">Salvage {{ salvageStove?.stoveName }}</h3>
+      <p class="m-0 mb-5 text-sm text-text-secondary">Burn this stove to receive Sparks. This action cannot be undone.</p>
+
+      <div class="flex items-center justify-center gap-2 mb-5 py-4 bg-[rgba(255,87,34,0.08)] border border-[rgba(255,87,34,0.2)] rounded-[10px]">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#ff5722]">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+        <span class="text-[#ff5722] font-bold text-lg">+{{ salvageSparks }} Sparks</span>
+      </div>
+
+      @if (salvageError) {
+        <div class="px-3 py-2.5 bg-red-500/[0.08] border border-red-500/20 rounded-[10px] text-red-500 text-[13px] mb-4">{{ salvageError }}</div>
+      }
+
+      <div class="modal-actions">
+        <button class="btn-secondary flex-1 py-3 rounded-[10px]" (click)="closeSalvageModal()">Cancel</button>
+        <button class="btn-salvage flex-1 py-3 rounded-[10px]" [disabled]="salvageLoading" (click)="confirmSalvage()">
+          @if (salvageLoading) {
+            <span class="w-4 h-4 border-2 border-white/35 border-t-white rounded-full animate-spin"></span>
+            <span>Salvaging...</span>
+          } @else {
+            <span>Salvage</span>
           }
         </button>
       </div>

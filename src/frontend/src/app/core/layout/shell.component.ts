@@ -18,6 +18,7 @@ export class ShellComponent {
   isAdmin = computed(() => this.authService.isAdmin());
   currentUser = computed(() => this.authService.getCurrentUser());
   coins = computed(() => this.authService.getCurrentUser()?.coins ?? 0);
+  sparks = computed(() => this.authService.getCurrentUser()?.sparks ?? 0);
 
   private authService = inject(AuthService);
   private router = inject(Router);

@@ -61,8 +61,8 @@ export class ForgeryService extends ServiceBase {
         const inputRarity = inputs[0].rarity;
         const inputTier = RARITY_ORDER.indexOf(inputRarity);
 
-        if (inputTier < 0 || inputTier >= RARITY_ORDER.length - 2) {
-            return { success: false, error: "Cannot forge Limited or Secret stoves" };
+        if (inputTier < 0 || inputTier >= RARITY_ORDER.length - 3) {
+            return { success: false, error: "Cannot forge Legendary, Limited, or Secret stoves" };
         }
 
         const outputRarity = RARITY_ORDER[inputTier + 1];
