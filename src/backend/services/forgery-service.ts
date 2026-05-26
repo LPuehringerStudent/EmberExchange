@@ -110,6 +110,12 @@ export class ForgeryService extends ServiceBase {
         );
         await cleanupLootboxDropStmt.run();
 
+        const cleanupListingStmt = this.unit.prepare(
+            `DELETE FROM Listing WHERE stoveId IN (${placeholders})`,
+            params
+        );
+        await cleanupListingStmt.run();
+
         // Delete input stoves
         const deleteStmt = this.unit.prepare(
             `DELETE FROM Stove WHERE stoveId IN (${placeholders})`,
@@ -143,6 +149,15 @@ export class ForgeryService extends ServiceBase {
             { playerId }
         );
         await statsStmt.run();
+
+        // Check forge achievements
+        try {
+            const { AchievementEngine } = await import("./achievement-engine");
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkForgeAchievements(playerId, outputRarity, clampedHeat);
+        } catch {
+            // Ignore achievement errors
+        }
 
         const newStove: ForgedStove = {
             stoveId: newStoveId,

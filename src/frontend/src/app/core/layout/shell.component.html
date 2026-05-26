@@ -8,6 +8,9 @@
   <a routerLink="/glory" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Hall of Glory</a>
   <a routerLink="/social" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Social</a>
   <a routerLink="/support" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Support</a>
+  @if (isAdmin()) {
+    <a routerLink="/admin" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-accent font-medium no-underline">Admin Panel</a>
+  }
   @if (!isLoggedIn()) {
     <a routerLink="/" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Login</a>
   } @else {
@@ -75,6 +78,9 @@
             <li class="block py-2.5 px-4 rounded-lg text-sm text-text-primary cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/profile">Profile</li>
             <li class="block py-2.5 px-4 rounded-lg text-sm text-text-primary cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/inventory">Inventory</li>
             <li class="block py-2.5 px-4 rounded-lg text-sm text-text-primary cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/settings">Settings</li>
+            @if (isAdmin()) {
+              <li class="block py-2.5 px-4 rounded-lg text-sm text-accent cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/admin">Admin Panel</li>
+            }
             <li class="my-2 border-none account-menu-divider"></li>
             <li class="block py-2.5 px-4 rounded-lg text-sm text-white cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item logout logoutFR" (click)="logout()">Logout</li>
           </ul>

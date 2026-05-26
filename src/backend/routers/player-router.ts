@@ -651,6 +651,16 @@ playerRouter.get("/players/:id/glory", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             return;
         }
+
+        // Lazy-check social achievements on profile view
+        try {
+            const { AchievementEngine } = await import("../services/achievement-engine");
+            const engine = new AchievementEngine(unit);
+            await engine.checkSocialAchievements(Number(id));
+        } catch {
+            // Ignore achievement check errors
+        }
+
         res.status(StatusCodes.OK).json(profile);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -712,6 +722,16 @@ playerRouter.get("/players/username/:username/glory", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             return;
         }
+
+        // Lazy-check social achievements on profile view
+        try {
+            const { AchievementEngine } = await import("../services/achievement-engine");
+            const engine = new AchievementEngine(unit);
+            await engine.checkSocialAchievements(player.playerId);
+        } catch {
+            // Ignore achievement check errors
+        }
+
         res.status(StatusCodes.OK).json(profile);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

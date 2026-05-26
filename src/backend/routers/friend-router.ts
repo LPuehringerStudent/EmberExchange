@@ -399,3 +399,84 @@ friendRouter.delete("/friends/:id", async (req, res) => {
         await unit.complete(ok);
     }
 });
+
+/**
+ * @openapi
+ * /friends/block:
+ *   post:
+ *     summary: Block a player
+ *     description: Blocks a player from sending friend requests or chat messages
+ *     tags:
+ *       - Friends
+ *     parameters:
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - playerId
+ *             properties:
+ *               playerId:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Player blocked
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Invalid session
+ *       409:
+ *         description: Cannot block yourself
+ *       500:
+ *         description: Server error
+ */
+friendRouter.post("/friends/block", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const { playerId } = req.body;
+    if (typeof playerId !== "number") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "playerId is required" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    const friendService = new FriendService(unit);
+    let ok = false;
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        const [success, friendId] = await friendService.blockPlayer(session.playerId, playerId);
+        if (success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ friendId, message: "Player blocked" });
+        } else {
+            res.status(StatusCodes.CONFLICT).json({ error: "Cannot block yourself" });
+        }
+    } catch (err) {
+        if (isConstraintError(err)) {
+            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
+        } else {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        }
+    } finally {
+        await unit.complete(ok);
+    }
+});

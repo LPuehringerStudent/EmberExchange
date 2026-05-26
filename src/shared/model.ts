@@ -21,6 +21,8 @@ export interface Player {
     provider: 'google' | 'github' | null;
     providerId: string | null;
     totpEnabled: boolean;
+    bannedAt: Date | null;
+    banReason: string | null;
 }
 
 export interface PlayerRow extends Player {
@@ -519,7 +521,10 @@ export interface AchievementDefinition {
     achievementId: string;
     label: string;
     description: string;
-    category: 'lootbox' | 'trade' | 'mini-game' | 'prestige' | 'wealth' | 'collection' | 'social' | 'general';
+    category: 'lootbox' | 'trade' | 'mini-game' | 'prestige' | 'wealth' | 'collection' | 'social' | 'general' | 'forging' | 'shop';
+    rewardCoins?: number;
+    rewardXP?: number;
+    tier: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'secret';
 }
 
 // Notification

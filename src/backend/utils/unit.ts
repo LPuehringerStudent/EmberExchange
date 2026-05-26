@@ -70,6 +70,8 @@ const COLUMN_MAP: Record<string, string> = {
     "imageurl": "imageUrl",
     "isactive": "isActive",
     "isadmin": "isAdmin",
+    "bannedat": "bannedAt",
+    "banreason": "banReason",
     "ispublic": "isPublic",
     "isavailable": "isAvailable",
     "isread": "isRead",
@@ -353,6 +355,14 @@ export class DB {
 
         await connection.query(`
             ALTER TABLE Player ADD COLUMN IF NOT EXISTS isPublic INTEGER NOT NULL DEFAULT 1
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS bannedAt TEXT
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS banReason TEXT
         `);
 
         await connection.query(`

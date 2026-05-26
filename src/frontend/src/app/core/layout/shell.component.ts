@@ -15,6 +15,7 @@ export class ShellComponent {
   sidebarOpen = signal(false);
 
   isLoggedIn = computed(() => this.authService.isLoggedIn());
+  isAdmin = computed(() => this.authService.isAdmin());
   currentUser = computed(() => this.authService.getCurrentUser());
   coins = computed(() => this.authService.getCurrentUser()?.coins ?? 0);
 

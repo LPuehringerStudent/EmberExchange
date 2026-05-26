@@ -48,6 +48,13 @@ const DROP_RATES: Record<number, DropRateEntry[]> = {
     { rarity: 'legendary', rate: '30%' },
     { rarity: 'secret', rate: '5%' },
   ],
+  4: [ // Dragon Crate
+    { rarity: 'common', rate: '30%' },
+    { rarity: 'rare', rate: '35%' },
+    { rarity: 'epic', rate: '25%' },
+    { rarity: 'legendary', rate: '10%' },
+    { rarity: 'secret', rate: '0%' },
+  ],
   5: [ // Winter Crate
     { rarity: 'common', rate: '50%' },
     { rarity: 'rare', rate: '30%' },
@@ -233,19 +240,10 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getDropRate(rarity: string): string {
     const typeId = this.getSelectedLootboxTypeId() ?? 1; // default to Standard
-    if (typeId === 4 || typeId === 5) return '100%';
     const table = this.dropRates[typeId];
     if (!table) return '-';
     const entry = table.find(r => r.rarity === rarity);
     return entry?.rate ?? '-';
-  }
-
-  getDragonDropRate(): string {
-    return '100%';
-  }
-
-  getWinterDropRate(): string {
-    return '100%';
   }
 
   getAcquisitionLabel(how: string): string {

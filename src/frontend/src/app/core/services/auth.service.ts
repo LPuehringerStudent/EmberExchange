@@ -174,6 +174,10 @@ export class AuthService {
     return this.isAuthenticated();
   }
 
+  isAdmin(): boolean {
+    return this.currentUser()?.isAdmin ?? false;
+  }
+
   getSessionId(): string | null {
     return this.sessionId();
   }

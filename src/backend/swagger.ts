@@ -505,6 +505,131 @@ const options: swaggerJsdoc.Options = {
                     },
                     required: ["stoveId", "stoveName", "rarity", "lootboxId", "message"]
                 },
+                ShopItem: {
+                    type: "object",
+                    properties: {
+                        itemId: { type: "integer", description: "Unique shop item ID" },
+                        itemType: { type: "string", enum: ["stove", "lootbox"], description: "Type of item" },
+                        typeId: { type: "integer", description: "Reference to StoveType or LootboxType ID" },
+                        name: { type: "string", description: "Display name" },
+                        price: { type: "integer", description: "Price in coins" },
+                        rarity: { type: "string", description: "Rarity level" },
+                        imageUrl: { type: "string", description: "Image URL" },
+                        stock: { type: "integer", description: "Remaining stock" },
+                        isFeatured: { type: "boolean", description: "Whether item is featured" }
+                    },
+                    required: ["itemId", "itemType", "typeId", "name", "price", "stock"]
+                },
+                DailyRewardStatus: {
+                    type: "object",
+                    properties: {
+                        streak: { type: "integer", description: "Current login streak" },
+                        canClaim: { type: "boolean", description: "Whether daily reward is available" },
+                        nextClaimAt: { type: "string", format: "date-time", nullable: true, description: "Next claim time" },
+                        rewardCoins: { type: "integer", description: "Coins for current day" },
+                        rewardLootbox: { type: "boolean", description: "Whether a lootbox is included" }
+                    },
+                    required: ["streak", "canClaim", "rewardCoins", "rewardLootbox"]
+                },
+                Friend: {
+                    type: "object",
+                    properties: {
+                        friendId: { type: "integer", description: "Friendship ID" },
+                        requesterId: { type: "integer", description: "Player who sent the request" },
+                        addresseeId: { type: "integer", description: "Player who received the request" },
+                        status: { type: "string", enum: ["pending", "accepted", "blocked"], description: "Friendship status" },
+                        createdAt: { type: "string", format: "date-time", description: "When the request was sent" }
+                    },
+                    required: ["friendId", "requesterId", "addresseeId", "status", "createdAt"]
+                },
+                FriendWithUser: {
+                    type: "object",
+                    properties: {
+                        friendId: { type: "integer", description: "Friendship ID" },
+                        playerId: { type: "integer", description: "Friend's player ID" },
+                        username: { type: "string", description: "Friend's username" },
+                        status: { type: "string", enum: ["pending", "accepted", "blocked"], description: "Friendship status" },
+                        createdAt: { type: "string", format: "date-time", description: "When the request was sent" }
+                    },
+                    required: ["friendId", "playerId", "username", "status"]
+                },
+                GloryShowcaseItem: {
+                    type: "object",
+                    properties: {
+                        slotIndex: { type: "integer", description: "Showcase slot position (0-4)" },
+                        stoveId: { type: "integer", description: "Stove ID in showcase" },
+                        name: { type: "string", description: "Stove name" },
+                        rarity: { type: "string", description: "Stove rarity" },
+                        imageUrl: { type: "string", description: "Stove image URL" }
+                    },
+                    required: ["slotIndex", "stoveId", "name", "rarity", "imageUrl"]
+                },
+                GloryTheme: {
+                    type: "object",
+                    properties: {
+                        themeId: { type: "integer", description: "Theme ID" },
+                        name: { type: "string", description: "Theme name" },
+                        primaryColor: { type: "string", description: "Primary color hex" },
+                        secondaryColor: { type: "string", description: "Secondary color hex" },
+                        backgroundUrl: { type: "string", nullable: true, description: "Background image URL" }
+                    },
+                    required: ["themeId", "name", "primaryColor", "secondaryColor"]
+                },
+                GloryTitle: {
+                    type: "object",
+                    properties: {
+                        titleId: { type: "integer", description: "Title ID" },
+                        name: { type: "string", description: "Title text" },
+                        rarity: { type: "string", description: "Title rarity" },
+                        description: { type: "string", description: "How to earn" }
+                    },
+                    required: ["titleId", "name", "rarity"]
+                },
+                GloryBanner: {
+                    type: "object",
+                    properties: {
+                        bannerId: { type: "integer", description: "Banner ID" },
+                        name: { type: "string", description: "Banner name" },
+                        imageUrl: { type: "string", description: "Banner image URL" },
+                        rarity: { type: "string", description: "Banner rarity" }
+                    },
+                    required: ["bannerId", "name", "imageUrl", "rarity"]
+                },
+                GloryGuestbookEntry: {
+                    type: "object",
+                    properties: {
+                        entryId: { type: "integer", description: "Entry ID" },
+                        visitorId: { type: "integer", description: "Visitor player ID" },
+                        visitorUsername: { type: "string", description: "Visitor username" },
+                        message: { type: "string", description: "Guestbook message" },
+                        createdAt: { type: "string", format: "date-time", description: "When posted" }
+                    },
+                    required: ["entryId", "visitorId", "visitorUsername", "message", "createdAt"]
+                },
+                GloryTrophy: {
+                    type: "object",
+                    properties: {
+                        trophyId: { type: "integer", description: "Trophy ID" },
+                        name: { type: "string", description: "Trophy name" },
+                        description: { type: "string", description: "Achievement description" },
+                        rarity: { type: "string", description: "Trophy rarity" },
+                        unlockedAt: { type: "string", format: "date-time", description: "When unlocked" }
+                    },
+                    required: ["trophyId", "name", "description", "rarity", "unlockedAt"]
+                },
+                TradeOffer: {
+                    type: "object",
+                    properties: {
+                        messageId: { type: "integer", description: "Chat message ID" },
+                        senderId: { type: "integer", description: "Offer sender" },
+                        receiverId: { type: "integer", description: "Offer recipient" },
+                        itemType: { type: "string", enum: ["stove", "lootbox"], description: "Item type" },
+                        itemId: { type: "integer", description: "Item ID" },
+                        price: { type: "integer", description: "Offer price" },
+                        status: { type: "string", enum: ["pending", "accepted", "declined"], description: "Offer status" }
+                    },
+                    required: ["messageId", "senderId", "receiverId", "itemType", "itemId", "price", "status"]
+                },
             },
         },
     },
