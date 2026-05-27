@@ -1,103 +1,264 @@
-<section class="factory-section" aria-label="Factory">
-  <div class="factory-header">
-    <h2 class="factory-title">Factory</h2>
-    <div class="factory-stats">
-      <span class="stat payout-stat">
-        <span class="stat-label">Next payout</span>
-        <span class="stat-value">{{ formatPayoutTime() }}</span>
-      </span>
-      <span class="stat">
-        <span class="stat-label">Total earned</span>
-        <span class="stat-value">{{ totalCoal().toFixed(1) }} coal</span>
-      </span>
-    </div>
+<div class="factory-page">
+  <div class="factory-bg">
+    <div class="heat-wave"></div>
+    <div class="heat-wave delay-1"></div>
+    <div class="heat-wave delay-2"></div>
   </div>
 
-  <div class="factory-grid">
-    @for (slot of slots(); track $index; let idx = $index) {
-      <div class="slot"
-           [class.premium]="idx < 2"
-           [class.empty]="slot.state === 'empty'"
-           [class.occupied]="slot.state !== 'empty'"
-           (click)="onSlotClick(idx)"
-           (keydown)="onSlotKeydown($event, idx)"
-           role="button"
-           tabindex="0"
-           [attr.aria-label]="slot.state === 'empty' ? 'Empty slot ' + (idx + 1) : slot.stove!.stoveName + ', ' + slot.stove!.rarity">
-
-        @if (hasRightPipe(idx)) {
-          <div class="pipe pipe-right" aria-hidden="true"></div>
-        }
-        @if (hasLeftPipe(idx)) {
-          <div class="pipe pipe-left" aria-hidden="true"></div>
-        }
-        @if (hasBottomPipe(idx)) {
-          <div class="pipe pipe-bottom" aria-hidden="true"></div>
-        }
-        @if (hasTopPipe(idx)) {
-          <div class="pipe pipe-top" aria-hidden="true"></div>
-        }
-
-        @if (slot.state === 'empty') {
-          <div class="slot-placeholder">
-            <span class="placeholder-icon">+</span>
-            @if (idx < 2) {
-              <span class="premium-label">Legendary / Secret</span>
-            }
-          </div>
-        }
-
-        @if (selectedSlotIndex() === idx) {
-          <div class="stove-popup" (click)="$event.stopPropagation()">
-            <div class="popup-header">
-              <span class="popup-title">Select Stove</span>
-              <button class="popup-close" (click)="closePopup()" aria-label="Close">×</button>
-            </div>
-            <div class="popup-list">
-              @if (availableForSlot(idx).length === 0) {
-                <div class="popup-empty">No stoves available</div>
-              }
-              @for (item of availableForSlot(idx); track item.stoveId) {
-                <button class="popup-item" (click)="placeStove(idx, item)">
-                  <img [ngSrc]="item.imageUrl" [alt]="item.stoveName" width="32" height="32" class="popup-thumb">
-                  <div class="popup-info">
-                    <span class="popup-name">{{ item.stoveName }}</span>
-                    <span class="popup-rarity" [class]="item.rarity.toLowerCase()">{{ item.rarity }}</span>
-                  </div>
-                </button>
-              }
-            </div>
-          </div>
-        }
-
-        @if (slot.state !== 'empty' && slot.stove) {
-          <div class="stove-container">
-            <div class="glow" [class]="'glow-' + slot.stove.rarity.toLowerCase()"></div>
-            <img [ngSrc]="slot.stove.imageUrl" [alt]="slot.stove.stoveName" width="80" height="80" class="stove-image">
-
-            @if (slot.state === 'building') {
-              <div class="build-overlay">
-                <img src="assets/hammer.png" alt="" class="hammer-spin" width="40" height="40">
-                <span class="build-timer">{{ formatBuildTime(slot) }}</span>
-              </div>
-            }
-
-            @if (slot.state === 'active') {
-              <div class="coal-badge">
-                <span class="coal-icon">
-                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M9 12h6M12 9v6"/>
-                  </svg>
-                </span>
-                <span class="coal-value">{{ slot.coalGenerated.toFixed(1) }}</span>
-              </div>
-            }
-
-            <span class="stove-label">{{ slot.stove.stoveName }}</span>
-          </div>
+  <header class="factory-header">
+    <div class="header-left">
+      <h1 class="factory-title">The Furnace Run</h1>
+      <p class="factory-subtitle">Fill all 10 slots. Survive 5 rounds. Cash out or lose everything.</p>
+    </div>
+    <div class="header-right">
+      <div class="round-tracker">
+        @for (r of [1,2,3,4,5]; track r) {
+          <div class="round-dot" [class.active]="r <= currentRound()" [class.current]="r === currentRound() + 1 && !gameOver()"></div>
         }
       </div>
-    }
-  </div>
-</section>
+      <div class="coal-display">
+        <span class="coal-icon">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9 12h6M12 9v6"/>
+          </svg>
+        </span>
+        <span class="coal-amount">{{ totalSessionCoal().toLocaleString() }}</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="factory-main">
+    <div class="stove-grid">
+      @for (slot of slots(); track $index; let idx = $index) {
+        <div class="slot"
+             [class.premium]="idx < 2"
+             [class.empty]="slot.stove === null"
+             [class.occupied]="slot.stove !== null"
+             [class.resolving]="isResolving()"
+             [class.locked]="isLocked()"
+             (click)="onSlotClick(idx)"
+             (keydown)="onSlotKeydown($event, idx)"
+             role="button"
+             tabindex="0"
+             [attr.aria-label]="slot.stove ? slot.stove.stoveName + ', heat ' + (slot.stove.heatLevel * 100).toFixed(0) + '%' : 'Empty slot ' + (idx + 1)">
+
+          @if (hasRightPipe(idx)) {
+            <div class="pipe pipe-right" aria-hidden="true"></div>
+          }
+          @if (hasLeftPipe(idx)) {
+            <div class="pipe pipe-left" aria-hidden="true"></div>
+          }
+          @if (hasBottomPipe(idx)) {
+            <div class="pipe pipe-bottom" aria-hidden="true"></div>
+          }
+          @if (hasTopPipe(idx)) {
+            <div class="pipe pipe-top" aria-hidden="true"></div>
+          }
+
+          @if (slot.stove === null) {
+            <div class="slot-placeholder">
+              @if (!isLocked()) {
+                <span class="placeholder-icon">+</span>
+              } @else {
+                <span class="placeholder-icon locked">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+              }
+              @if (idx < 2) {
+                <span class="premium-label">Legendary / Secret</span>
+              }
+            </div>
+          }
+
+          @if (selectedSlotIndex() === idx) {
+            <div class="stove-popup" (click)="$event.stopPropagation()">
+              <div class="popup-header">
+                <span class="popup-title">Select Stove</span>
+                <button class="popup-close" (click)="closePopup()" aria-label="Close">×</button>
+              </div>
+              <div class="popup-list">
+                @if (availableForSlot(idx).length === 0) {
+                  <div class="popup-empty">No stoves available</div>
+                }
+                @for (item of availableForSlot(idx); track item.stoveId) {
+                  <button class="popup-item" (click)="placeStove(idx, item)">
+                    <img [ngSrc]="item.imageUrl" [alt]="item.stoveName" width="32" height="32" class="popup-thumb">
+                    <div class="popup-info">
+                      <span class="popup-name">{{ item.stoveName }}</span>
+                      <span class="popup-rarity" [class]="item.rarity">{{ item.rarity }}</span>
+                    </div>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (slot.stove) {
+            <div class="stove-container">
+              <div class="glow" [class]="'glow-' + slot.stove.rarity"></div>
+              <img [ngSrc]="slot.stove.imageUrl" [alt]="slot.stove.stoveName" width="80" height="80" class="stove-image">
+
+              <div class="heat-badge">
+                <div class="heat-bar-bg">
+                  <div class="heat-bar-fill" [style.width.%]="slot.stove.heatLevel * 100" [style.background]="heatColor(slot.stove.heatLevel)"></div>
+                </div>
+                <span class="heat-label" [style.color]="heatColor(slot.stove.heatLevel)">{{ heatLabel(slot.stove.heatLevel) }}</span>
+                <span class="heat-value">{{ (slot.stove.heatLevel * 100).toFixed(0) }}%</span>
+              </div>
+
+              @if (isResolving()) {
+                <div class="resolve-overlay">
+                  <svg class="w-10 h-10 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                  </svg>
+                </div>
+              }
+
+              <span class="stove-label">{{ slot.stove.stoveName }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="control-panel">
+      @if (gameOver()) {
+        <div class="game-over">
+          <h3 class="game-over-title">All Stoves Extinguished</h3>
+          <p class="game-over-text">Your furnaces have gone cold. You lost everything.</p>
+          <button class="btn btn-primary" (click)="resetGame()">Try Again</button>
+        </div>
+      } @else if (roundResult()) {
+        <div class="round-result">
+          <h3 class="result-title">Round {{ currentRound() }} Complete</h3>
+          <div class="result-list">
+            @for (res of roundResult()!; track res.stoveId) {
+              <div class="result-item" [class.destroyed]="res.destroyed">
+                <span class="result-stove">Stove #{{ res.stoveId }}</span>
+                <span class="result-change">
+                  {{ heatLabel(res.oldHeat) }} → {{ heatLabel(res.newHeat) }}
+                  @if (res.destroyed) {
+                    <span class="destroyed-tag">DESTROYED</span>
+                  }
+                </span>
+                <span class="result-coal">+{{ res.coalEarned.toLocaleString() }}</span>
+              </div>
+            }
+          </div>
+          <div class="result-actions">
+            @if (currentRound() < maxRounds && !allDestroyed()) {
+              <button class="btn btn-danger" (click)="ignite()">
+                Ignite Round {{ currentRound() + 1 }}
+                <span class="btn-sub">Risk it for more</span>
+              </button>
+            }
+            <button class="btn btn-success" (click)="cashOut()">
+              Cash Out
+              <span class="btn-sub">{{ totalSessionCoal().toLocaleString() }} coal</span>
+            </button>
+          </div>
+        </div>
+      } @else if (isResolving()) {
+        <div class="resolving-panel">
+          <svg class="w-16 h-16 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+          <p class="resolving-text">Forging Round {{ currentRound() + 1 }}...</p>
+        </div>
+      } @else {
+        <div class="ready-panel">
+          <div class="ready-info">
+            @if (currentRound() === 0) {
+              <h3 class="ready-title">{{ filledCount() === maxSlots ? 'Furnace Full' : 'Fill Your Furnace' }}</h3>
+              <p class="ready-text">
+                @if (filledCount() < maxSlots) {
+                  Place {{ maxSlots - filledCount() }} more stove{{ (maxSlots - filledCount()) !== 1 ? 's' : '' }} to begin. All slots must be filled.
+                } @else {
+                  All 10 stoves placed. Ready to ignite Round 1.
+                }
+              </p>
+            } @else {
+              <h3 class="ready-title">Round {{ currentRound() }} Survived</h3>
+              <p class="ready-text">
+                {{ filledCount() }} stove{{ filledCount() !== 1 ? 's' : '' }} remaining. Continue to Round {{ currentRound() + 1 }}?
+              </p>
+            }
+          </div>
+
+          @if (activeStoves().length > 0) {
+            <div class="active-stoves">
+              <h4 class="active-stoves-title">Active Stoves</h4>
+              <div class="active-stoves-list">
+                @for (stove of activeStoves(); track stove.stoveId) {
+                  <div class="active-stove-item">
+                    <img [ngSrc]="stove.imageUrl" [alt]="stove.stoveName" width="32" height="32" class="active-stove-thumb">
+                    <div class="active-stove-info">
+                      <span class="active-stove-name">{{ stove.stoveName }}</span>
+                      <span class="active-stove-rarity" [class]="stove.rarity">{{ stove.rarity }}</span>
+                    </div>
+                    <div class="active-stove-heat">
+                      <div class="mini-heat-bar">
+                        <div class="mini-heat-fill" [style.width.%]="stove.heatLevel * 100" [style.background]="heatColor(stove.heatLevel)"></div>
+                      </div>
+                      <span class="heat-mini-value" [style.color]="heatColor(stove.heatLevel)">{{ (stove.heatLevel * 100).toFixed(0) }}%</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="ready-actions">
+            @if (canIgnite()) {
+              <button class="btn btn-danger btn-large" (click)="ignite()">
+                @if (currentRound() === 0) {
+                  Ignite Round 1
+                  <span class="btn-sub">Start the run</span>
+                } @else {
+                  Ignite Round {{ currentRound() + 1 }}
+                  <span class="btn-sub">Double down</span>
+                }
+              </button>
+            }
+            @if (totalSessionCoal() > 0) {
+              <button class="btn btn-success" (click)="cashOut()">
+                Cash Out
+                <span class="btn-sub">{{ totalSessionCoal().toLocaleString() }} coal</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </main>
+
+  <footer class="factory-footer">
+    <h4 class="footer-title">Round Risks</h4>
+    <div class="risk-table">
+      <div class="risk-header">
+        <span>Round</span>
+        <span>Multiplier</span>
+        <span>Common</span>
+        <span>Rare</span>
+        <span>Epic</span>
+        <span>Legendary</span>
+        <span>Secret</span>
+      </div>
+      @for (r of [1,2,3,4,5]; track r) {
+        <div class="risk-row" [class.current]="r === currentRound() + 1 && !gameOver()">
+          <span class="risk-round">{{ r }}</span>
+          <span class="risk-multi">×{{ roundMultipliers[r-1] }}</span>
+          <span class="risk-chance">{{ (lowerChance.common[r-1] * 100).toFixed(0) }}%</span>
+          <span class="risk-chance">{{ (lowerChance.rare[r-1] * 100).toFixed(0) }}%</span>
+          <span class="risk-chance">{{ (lowerChance.epic[r-1] * 100).toFixed(0) }}%</span>
+          <span class="risk-chance">{{ (lowerChance.legendary[r-1] * 100).toFixed(0) }}%</span>
+          <span class="risk-chance">{{ (lowerChance.secret[r-1] * 100).toFixed(0) }}%</span>
+        </div>
+      }
+    </div>
+  </footer>
+</div>

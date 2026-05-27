@@ -116,6 +116,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/pages/oauth-callback/oauth-callback.component').then(m => m.OAuthCallbackComponent)
   },
   {
+    path: 'factory',
+    loadComponent: () => import('./features/factory/factory').then(m => m.Factory),
+    canActivate: [authGuard]
+  },
+  {
     path: '**',
     loadComponent: () => import('./shared/components/not-found.component').then(m => m.NotFoundComponent)
   },
@@ -124,4 +129,5 @@ export const routes: Routes = [
     loadComponent: () => import('./features/merging/merging').then(m => m.Merging),
     canActivate: [authGuard]
   },
+
 ];

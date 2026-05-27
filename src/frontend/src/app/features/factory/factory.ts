@@ -1,36 +1,54 @@
-import { Component, ChangeDetectionStrategy, signal, computed, OnInit, OnDestroy, inject, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, OnInit, inject } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
+import { Router } from '@angular/router';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { StoveService } from '@core/services/stove.service';
 import { AuthService } from '@core/services/auth.service';
 import { StoveRow } from '@shared/model';
 
+type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'secret';
+
 interface InventoryStove {
   stoveId: number;
   typeId: number;
-  rarity: string;
+  rarity: Rarity;
   stoveName: string;
   imageUrl: string;
+  heatLevel: number;
 }
 
 interface FactorySlot {
   stove: InventoryStove | null;
-  state: 'empty' | 'building' | 'active';
-  buildStartedAt: number;
-  buildDurationMs: number;
-  coalGenerated: number;
 }
 
-const BUILD_CONFIG: Record<string, { durationMs: number; coalPerHour: number }> = {
-  common:    { durationMs: 10_000,    coalPerHour: 10 },
-  rare:      { durationMs: 120_000,   coalPerHour: 25 },
-  epic:      { durationMs: 600_000,   coalPerHour: 50 },
-  legendary: { durationMs: 1_800_000, coalPerHour: 100 },
-  secret:    { durationMs: 7_200_000, coalPerHour: 150 },
+interface RoundResultItem {
+  stoveId: number;
+  oldHeat: number;
+  newHeat: number;
+  destroyed: boolean;
+  coalEarned: number;
+}
+
+const BUILD_CONFIG: Record<Rarity, { baseCoal: number }> = {
+  common:    { baseCoal: 25 },
+  rare:      { baseCoal: 60 },
+  epic:      { baseCoal: 150 },
+  legendary: { baseCoal: 400 },
+  secret:    { baseCoal: 417 },
 };
 
-const PAYOUT_INTERVAL_MS = 3_600_000;
+const ROUND_MULTIPLIERS = [1.0, 1.5, 2.5, 4.0, 6.0];
+
+const LOWER_CHANCE: Record<Rarity, number[]> = {
+  common:    [0.10, 0.18, 0.30, 0.45, 0.65],
+  rare:      [0.07, 0.14, 0.24, 0.38, 0.55],
+  epic:      [0.05, 0.10, 0.18, 0.30, 0.45],
+  legendary: [0.03, 0.07, 0.13, 0.22, 0.35],
+  secret:    [0.02, 0.05, 0.10, 0.18, 0.28],
+};
+
+const HEAT_DAMAGE = 0.2;
 
 @Component({
   selector: 'app-factory',
@@ -39,45 +57,49 @@ const PAYOUT_INTERVAL_MS = 3_600_000;
   templateUrl: './factory.html',
   styleUrls: ['./factory.css']
 })
-export class Factory implements OnInit, OnDestroy {
+export class Factory implements OnInit {
   readonly maxSlots = 10;
+  readonly maxRounds = 5;
+
+  readonly roundMultipliers = ROUND_MULTIPLIERS;
+  readonly lowerChance = LOWER_CHANCE;
 
   private stoveService = inject(StoveService);
   private authService = inject(AuthService);
+  private router = inject(Router);
 
   slots = signal<FactorySlot[]>(
-    Array.from({ length: this.maxSlots }, () => ({
-      stove: null,
-      state: 'empty',
-      buildStartedAt: 0,
-      buildDurationMs: 0,
-      coalGenerated: 0,
-    }))
+    Array.from({ length: this.maxSlots }, () => ({ stove: null }))
   );
 
   inventoryItems = signal<InventoryStove[]>([]);
   selectedSlotIndex = signal<number | null>(null);
-  nextPayoutAt = signal<number>(Date.now() + PAYOUT_INTERVAL_MS);
+  currentRound = signal<number>(0);
+  isResolving = signal<boolean>(false);
+  roundResult = signal<RoundResultItem[] | null>(null);
+  totalSessionCoal = signal<number>(0);
+  gameOver = signal<boolean>(false);
 
-  totalCoal = computed(() => this.slots().reduce((sum, s) => sum + s.coalGenerated, 0));
+  filledCount = computed(() => this.slots().filter(s => s.stove !== null).length);
+  isFull = computed(() => this.filledCount() >= this.maxSlots);
+  canStartRound1 = computed(() => this.isFull() && this.currentRound() === 0 && !this.isResolving() && !this.gameOver());
+  canContinueRound = computed(() => this.filledCount() > 0 && this.currentRound() > 0 && this.currentRound() < this.maxRounds && !this.isResolving() && !this.gameOver());
+  canIgnite = computed(() => this.canStartRound1() || this.canContinueRound());
+  allDestroyed = computed(() => this.slots().every(s => s.stove === null));
+  isLocked = computed(() => this.currentRound() > 0);
 
-  stovePlaced = output<InventoryStove>();
-  stoveRemoved = output<InventoryStove>();
-
-  private ticker: ReturnType<typeof setInterval> | null = null;
+  activeStoves = computed(() => this.slots().filter(s => s.stove !== null).map(s => s.stove!));
 
   ngOnInit(): void {
     this.loadInventory();
-    this.startTicker();
-  }
-
-  ngOnDestroy(): void {
-    if (this.ticker) clearInterval(this.ticker);
   }
 
   private async loadInventory(): Promise<void> {
     const user = this.authService.getCurrentUser();
-    if (!user) return;
+    if (!user) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
     try {
       const stoves = await firstValueFrom(
@@ -90,9 +112,10 @@ export class Factory implements OnInit, OnDestroy {
                   map(type => ({
                     stoveId: stove.stoveId,
                     typeId: stove.typeId,
-                    rarity: type.rarity,
+                    rarity: type.rarity.toLowerCase() as Rarity,
                     stoveName: type.name,
                     imageUrl: type.imageUrl ?? '',
+                    heatLevel: stove.heatLevel,
                   }))
                 )
               )
@@ -106,45 +129,10 @@ export class Factory implements OnInit, OnDestroy {
     }
   }
 
-  private startTicker(): void {
-    this.ticker = setInterval(() => {
-      const now = Date.now();
-
-      this.slots.update(current =>
-        current.map(slot => {
-          if (slot.state === 'building' && now >= slot.buildStartedAt + slot.buildDurationMs) {
-            return { ...slot, state: 'active' };
-          }
-          return slot;
-        })
-      );
-
-      if (now >= this.nextPayoutAt()) {
-        this.slots.update(current =>
-          current.map(slot => {
-            if (slot.state === 'active' && slot.stove) {
-              const config = BUILD_CONFIG[slot.stove.rarity.toLowerCase()];
-              if (config) {
-                return {
-                  ...slot,
-                  coalGenerated: slot.coalGenerated + config.coalPerHour,
-                };
-              }
-            }
-            return slot;
-          })
-        );
-
-        let next = this.nextPayoutAt() + PAYOUT_INTERVAL_MS;
-        while (next < now) next += PAYOUT_INTERVAL_MS;
-        this.nextPayoutAt.set(next);
-      }
-    }, 1000);
-  }
-
   onSlotClick(index: number): void {
+    if (this.isResolving() || this.gameOver() || this.isLocked()) return;
     const slot = this.slots()[index];
-    if (slot.state === 'empty') {
+    if (slot.stove === null) {
       this.selectedSlotIndex.set(index);
     } else {
       this.removeStove(index);
@@ -172,46 +160,132 @@ export class Factory implements OnInit, OnDestroy {
   }
 
   placeStove(index: number, stove: InventoryStove): void {
-    const rarity = stove.rarity.toLowerCase();
-    const config = BUILD_CONFIG[rarity];
-    if (!config) return;
-
+    if (this.isLocked()) return;
     this.slots.update(current => {
       const next = [...current];
-      next[index] = {
-        stove,
-        state: 'building',
-        buildStartedAt: Date.now(),
-        buildDurationMs: config.durationMs,
-        coalGenerated: 0,
-      };
+      next[index] = { stove };
       return next;
     });
     this.selectedSlotIndex.set(null);
-    this.stovePlaced.emit(stove);
   }
 
   removeStove(index: number): void {
-    const slot = this.slots()[index];
-    if (!slot.stove) return;
-
-    const stove = slot.stove;
+    if (this.isLocked()) return;
     this.slots.update(current => {
       const next = [...current];
-      next[index] = {
-        stove: null,
-        state: 'empty',
-        buildStartedAt: 0,
-        buildDurationMs: 0,
-        coalGenerated: 0,
-      };
+      next[index] = { stove: null };
       return next;
     });
-    this.stoveRemoved.emit(stove);
   }
 
-  isOccupied(index: number): boolean {
-    return this.slots()[index].state !== 'empty';
+  ignite(): void {
+    if (!this.canIgnite()) return;
+
+    const nextRound = this.currentRound() + 1;
+
+    this.isResolving.set(true);
+    this.roundResult.set(null);
+
+    setTimeout(() => {
+      this.completeRound(nextRound);
+    }, 800);
+  }
+
+  private completeRound(round: number): void {
+    const results: RoundResultItem[] = [];
+    let roundCoal = 0;
+
+    this.slots.update(current =>
+      current.map(slot => {
+        if (!slot.stove) return slot;
+
+        const stove = slot.stove;
+        const rarity = stove.rarity;
+        const chance = LOWER_CHANCE[rarity][round - 1];
+        const roll = Math.random();
+
+        let newHeat = stove.heatLevel;
+        let destroyed = false;
+
+        if (roll < chance) {
+          newHeat = Math.max(0, stove.heatLevel - HEAT_DAMAGE);
+          if (newHeat <= 0) {
+            destroyed = true;
+          }
+        }
+
+        const config = BUILD_CONFIG[rarity];
+        const coal = Math.round(config.baseCoal * ROUND_MULTIPLIERS[round - 1]);
+        roundCoal += coal;
+
+        results.push({
+          stoveId: stove.stoveId,
+          oldHeat: stove.heatLevel,
+          newHeat,
+          destroyed,
+          coalEarned: coal,
+        });
+
+        if (destroyed) {
+          return { stove: null };
+        }
+
+        return {
+          stove: { ...stove, heatLevel: newHeat },
+        };
+      })
+    );
+
+    this.currentRound.set(round);
+    this.isResolving.set(false);
+    this.roundResult.set(results);
+    this.totalSessionCoal.update(t => t + roundCoal);
+
+    if (this.allDestroyed()) {
+      this.gameOver.set(true);
+    }
+  }
+
+  cashOut(): void {
+    const user = this.authService.getCurrentUser();
+    if (!user) return;
+
+    const coal = this.totalSessionCoal();
+    if (coal > 0) {
+      console.log(`Cashing out ${coal} coal`);
+    }
+
+    this.resetGame();
+  }
+
+  resetGame(): void {
+    this.slots.set(Array.from({ length: this.maxSlots }, () => ({ stove: null })));
+    this.currentRound.set(0);
+    this.isResolving.set(false);
+    this.roundResult.set(null);
+    this.totalSessionCoal.set(0);
+    this.gameOver.set(false);
+    this.selectedSlotIndex.set(null);
+  }
+
+  heatLabel(heat: number): string {
+    if (heat >= 0.8) return 'Inferno';
+    if (heat >= 0.6) return 'Blazing';
+    if (heat >= 0.4) return 'Smoldering';
+    if (heat >= 0.2) return 'Dying';
+    return 'Extinguished';
+  }
+
+  heatColor(heat: number): string {
+    if (heat >= 0.8) return '#ef4444';
+    if (heat >= 0.6) return '#f97316';
+    if (heat >= 0.4) return '#eab308';
+    if (heat >= 0.2) return '#6b7280';
+    return '#3b82f6';
+  }
+
+  heatBarWidth(heat: number): string {
+    return `${(heat * 100).toFixed(0)}%`;
   }
 
   hasRightPipe(index: number): boolean {
@@ -230,23 +304,7 @@ export class Factory implements OnInit, OnDestroy {
     return index >= 5 && this.isOccupied(index) && this.isOccupied(index - 5);
   }
 
-  formatBuildTime(slot: FactorySlot): string {
-    const ms = Math.max(0, slot.buildStartedAt + slot.buildDurationMs - Date.now());
-    const sec = Math.ceil(ms / 1000);
-    const h = Math.floor(sec / 3600);
-    const m = Math.floor((sec % 3600) / 60);
-    const s = sec % 60;
-    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
-
-  formatPayoutTime(): string {
-    const ms = Math.max(0, this.nextPayoutAt() - Date.now());
-    const sec = Math.ceil(ms / 1000);
-    const h = Math.floor(sec / 3600);
-    const m = Math.floor((sec % 3600) / 60);
-    const s = sec % 60;
-    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+  isOccupied(index: number): boolean {
+    return this.slots()[index].stove !== null;
   }
 }

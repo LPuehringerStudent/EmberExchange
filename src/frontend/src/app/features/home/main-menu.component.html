@@ -111,14 +111,7 @@
 
   <!-- ========== MAIN CONTENT ========== -->
   <main class="relative z-[1] px-6 lg:px-10 pb-12 max-w-[1400px] mx-auto">
-    <section>
-      <div class="flex items-center gap-3 mb-6">
-        <div class="h-px flex-1 bg-gradient-to-r from-border to-transparent"></div>
-        <span class="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Coal Factory</span>
-        <div class="h-px flex-1 bg-gradient-to-l from-border to-transparent"></div>
-      </div>
-      <app-factory></app-factory>
-    </section>
+
 
     <!-- Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
@@ -257,52 +250,6 @@
               <p class="text-sm text-text-secondary leading-relaxed m-0">Trade and sell stoves in the player-driven economy</p>
               <div class="mt-4 flex items-center gap-1.5 text-xs font-bold text-purple-500 group-hover:gap-2.5 transition-all duration-300">
                 Browse
-                <svg class="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </div>
-            </div>
-          </a>
-
-          <!-- Poker -->
-          <a [routerLink]="games[0].route" class="feature-card group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/5 hover:border-emerald-500/20">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors"></div>
-            <div class="relative z-[1]">
-              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/15 to-teal-400/5 border border-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <svg class="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="5" width="18" height="14" rx="2"/>
-                  <path d="M3 10h18"/>
-                  <path d="M8 14h.01M12 14h.01M16 14h.01"/>
-                </svg>
-              </div>
-              <h3 class="text-base font-bold text-text-primary m-0 mb-1.5">Poker</h3>
-              <p class="text-sm text-text-secondary leading-relaxed m-0">Multiplayer strategy. Read your opponents and go all-in.</p>
-              <div class="mt-4 flex items-center gap-1.5 text-xs font-bold text-emerald-500 group-hover:gap-2.5 transition-all duration-300">
-                Join Table
-                <svg class="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </div>
-            </div>
-          </a>
-
-          <!-- Blackjack -->
-          <a [routerLink]="games[1].route" class="feature-card group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/5 hover:border-cyan-500/20">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-blue-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-cyan-500/5 rounded-full blur-2xl group-hover:bg-cyan-500/10 transition-colors"></div>
-            <div class="relative z-[1]">
-              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500/15 to-blue-400/5 border border-cyan-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <svg class="w-5 h-5 text-cyan-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="5" width="18" height="14" rx="2"/>
-                  <path d="M3 10h18"/>
-                  <path d="M7 14h.01M17 14h.01M12 14h.01"/>
-                </svg>
-              </div>
-              <h3 class="text-base font-bold text-text-primary m-0 mb-1.5">Blackjack</h3>
-              <p class="text-sm text-text-secondary leading-relaxed m-0">Beat the dealer. Hit, stand, and double down to win coal.</p>
-              <div class="mt-4 flex items-center gap-1.5 text-xs font-bold text-cyan-500 group-hover:gap-2.5 transition-all duration-300">
-                Join Table
                 <svg class="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>

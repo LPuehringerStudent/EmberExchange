@@ -4,7 +4,6 @@ import { AuthService } from '@core/services/auth.service';
 import { OwnershipService } from '@core/services/ownership.service';
 import { LootboxService, RecentPull } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
-import {Factory} from '@features/factory/factory';
 
 interface Game {
   name: string;
@@ -17,7 +16,7 @@ interface Game {
 @Component({
   selector: 'app-main-menu',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule, Factory],
+  imports: [RouterModule],
   templateUrl: './main-menu.component.html',
   styleUrls: ['./main-menu.component.css']
 })
