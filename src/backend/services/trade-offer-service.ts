@@ -6,6 +6,7 @@ import { ChatMessageService } from "./chat-message-service";
 export interface TradeOfferResult {
     success: boolean;
     error?: string;
+    senderId?: number;
 }
 
 export class TradeOfferService {
@@ -129,7 +130,7 @@ export class TradeOfferService {
             { messageId }
         ).run();
 
-        return { success: true };
+        return { success: true, senderId };
     }
 
     async declineTradeOffer(messageId: number, declinerId: number): Promise<TradeOfferResult> {
@@ -158,6 +159,6 @@ export class TradeOfferService {
             { messageId }
         ).run();
 
-        return { success: true };
+        return { success: true, senderId: message.senderId };
     }
 }

@@ -2,6 +2,7 @@ import express from "express";
 import { Unit } from "../utils/unit";
 import { TradeOfferService } from "../services/trade-offer-service";
 import { SessionService } from "../services/session-service";
+import { connectionManager } from "../websocket/connection-manager";
 import { StatusCodes } from "http-status-codes";
 
 export const tradeOfferRouter = express.Router();
@@ -66,6 +67,13 @@ tradeOfferRouter.post("/trade-offers/:messageId/accept", async (req, res) => {
         const result = await tradeOfferService.acceptTradeOffer(messageId, session.playerId);
         if (result.success) {
             ok = true;
+            // Notify sender in real-time if online
+            if (result.senderId) {
+                connectionManager.sendToPlayerGlobal(result.senderId, {
+                    type: "trade_offer_update",
+                    payload: { messageId, status: "accepted" }
+                });
+            }
             res.status(StatusCodes.OK).json({ message: "Trade offer accepted" });
         } else {
             res.status(StatusCodes.CONFLICT).json({ error: result.error });
@@ -137,6 +145,13 @@ tradeOfferRouter.post("/trade-offers/:messageId/decline", async (req, res) => {
         const result = await tradeOfferService.declineTradeOffer(messageId, session.playerId);
         if (result.success) {
             ok = true;
+            // Notify sender in real-time if online
+            if (result.senderId) {
+                connectionManager.sendToPlayerGlobal(result.senderId, {
+                    type: "trade_offer_update",
+                    payload: { messageId, status: "declined" }
+                });
+            }
             res.status(StatusCodes.OK).json({ message: "Trade offer declined" });
         } else {
             res.status(StatusCodes.NOT_FOUND).json({ error: result.error });

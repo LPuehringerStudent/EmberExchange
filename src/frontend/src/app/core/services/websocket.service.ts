@@ -37,6 +37,7 @@ export class WebSocketService {
   readonly currentVersion = signal<number>(0);
   readonly stateBlob = signal<Record<string, unknown> | null>(null);
   readonly incomingChatMessage = signal<ChatMessageRow | null>(null);
+  readonly incomingTradeUpdate = signal<{ messageId: number; status: string } | null>(null);
 
   connect(): void {
     if (this.ws) {
@@ -243,6 +244,11 @@ export class WebSocketService {
       case 'chat_message': {
         const chatMsg = payload as unknown as ChatMessageRow;
         this.incomingChatMessage.set(chatMsg);
+        break;
+      }
+      case 'trade_offer_update': {
+        const update = payload as { messageId: number; status: string };
+        this.incomingTradeUpdate.set(update);
         break;
       }
     }

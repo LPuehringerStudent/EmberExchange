@@ -457,7 +457,8 @@ export type ServerMessageType =
     | 'player_left'
     | 'error'
     | 'event_replay'
-    | 'chat_message';
+    | 'chat_message'
+    | 'trade_offer_update';
 
 export enum ErrorCode {
     INVALID_STATE = 'INVALID_STATE',
