@@ -35,6 +35,9 @@ export class RegisterComponent implements OnInit {
   formStartTime = signal<number>(0);
   isWrongDomain = signal(false);
   isLocalhost = signal(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  powChallenge = signal<string | null>(null);
+  powDifficulty = signal<number>(0);
+  powSolving = signal(false);
 
   // Password strength
   passwordStrength = signal(0);
@@ -98,9 +101,15 @@ export class RegisterComponent implements OnInit {
     this.errorMessage.set('');
     this.currentStep.update(s => s + 1);
 
-    // Render Turnstile widget when reaching the final step (skip on localhost)
-    if (this.currentStep() === 3 && !this.isLocalhost()) {
-      setTimeout(() => this.renderTurnstile(), 50);
+    // Render Turnstile widget and fetch PoW challenge when reaching the final step (skip on localhost)
+    if (this.currentStep() === 3) {
+      if (!this.isLocalhost()) {
+        setTimeout(() => this.renderTurnstile(), 50);
+      }
+      // Fetch proof-of-work challenge
+      this.fetchPowChallenge().catch(() => {
+        this.errorMessage.set('Failed to load security challenge. Please refresh.');
+      });
     }
   }
 
@@ -133,6 +142,19 @@ export class RegisterComponent implements OnInit {
 
     const turnstileToken = this.isLocalhost() || !widgetId ? undefined : this.turnstileService.getToken(widgetId);
 
+    // Solve proof-of-work challenge
+    const challenge = this.powChallenge();
+    const difficulty = this.powDifficulty();
+    let powNonce: string | undefined;
+    if (challenge && difficulty > 0) {
+      this.powSolving.set(true);
+      try {
+        powNonce = await this.authService.solvePow(challenge, difficulty);
+      } finally {
+        this.powSolving.set(false);
+      }
+    }
+
     try {
       await this.authService.register(
         this.username(),
@@ -140,7 +162,9 @@ export class RegisterComponent implements OnInit {
         this.email(),
         false, // Don't remember me by default for new registrations
         turnstileToken ?? undefined,
-        this.formStartTime()
+        this.formStartTime(),
+        challenge ?? undefined,
+        powNonce
       );
       this.successMessage.set('Account created successfully! Redirecting...');
       setTimeout(() => {
@@ -217,5 +241,11 @@ export class RegisterComponent implements OnInit {
 
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  private async fetchPowChallenge(): Promise<void> {
+    const { challenge, difficulty } = await this.authService.getPowChallenge();
+    this.powChallenge.set(challenge);
+    this.powDifficulty.set(difficulty);
   }
 }

@@ -17,6 +17,54 @@ import { timingGuard } from "../middleware/timing-guard";
 import { headerGuard } from "../middleware/header-guard";
 import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, setBotHeaders } from "../utils/bot-trap";
 
+/* ─── Proof-of-work challenge store (in-memory, 10-min expiry) ─── */
+interface PowChallenge {
+    challenge: string;
+    difficulty: number;
+    expiresAt: number;
+    used: boolean;
+}
+const powStore = new Map<string, PowChallenge>();
+const POW_DIFFICULTY = parseInt(process.env.POW_DIFFICULTY ?? "4", 10);
+const POW_TTL_MS = 10 * 60 * 1000;
+
+function createPowChallenge(): PowChallenge {
+    const challenge = crypto.randomBytes(32).toString("hex");
+    return {
+        challenge,
+        difficulty: POW_DIFFICULTY,
+        expiresAt: Date.now() + POW_TTL_MS,
+        used: false,
+    };
+}
+
+function verifyPow(challenge: string, nonce: string, difficulty: number): boolean {
+    const hash = crypto.createHash("sha256").update(challenge + nonce).digest("hex");
+    const prefix = "0".repeat(difficulty);
+    return hash.startsWith(prefix);
+}
+
+/* ─── Heuristic bot-pattern detection ─── */
+function isBotPattern(username: string, email: string): boolean {
+    const u = username.toLowerCase().trim();
+    const e = email.toLowerCase().trim();
+    const localPart = e.split("@")[0] ?? "";
+
+    // Pattern 1: "bft" + digits (e.g. bft123456)
+    if (/^bft\d{4,8}$/.test(u)) return true;
+
+    // Pattern 2: 3-4 lowercase letters + 4-6 digits (e.g. fred6644)
+    if (/^[a-z]{3,4}\d{4,6}$/.test(u)) return true;
+
+    // Pattern 3: username matches email local part exactly AND is random-looking
+    if (u === localPart && /^[a-z]{3,6}\d{2,6}$/.test(u)) return true;
+
+    // Pattern 4: username is exactly "fred" + 4 digits
+    if (/^fred\d{4}$/.test(u)) return true;
+
+    return false;
+}
+
 export const authRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
@@ -767,6 +815,24 @@ authRouter.delete("/auth/sessions", async (req, res) => {
 });
 
 /**
+ * GET /auth/challenge — Returns a proof-of-work challenge for registration.
+ * The client must find a nonce such that SHA256(challenge + nonce) starts
+ * with `difficulty` hex zeros.
+ */
+authRouter.get("/auth/challenge", (req, res) => {
+    const ch = createPowChallenge();
+    powStore.set(ch.challenge, ch);
+    // Prune expired challenges periodically (simple sweep)
+    if (powStore.size > 5000) {
+        const now = Date.now();
+        for (const [key, val] of powStore) {
+            if (val.expiresAt < now) powStore.delete(key);
+        }
+    }
+    res.json({ challenge: ch.challenge, difficulty: ch.difficulty });
+});
+
+/**
  * @deprecated The registration flow is being replaced by OAuth-only signup.
  * This endpoint still works for testing but will be removed. The honeypot
  * validation on the backend was removed in commit f892de9 — the frontend
@@ -787,11 +853,28 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
 
     if (honeypotTriggered) {
         logBot(req, "register-blocked: honeypot");
-        setBotHeaders(res);
-        await tarPit(req);
-        res.status(StatusCodes.CREATED).json(fakeAuthResponse());
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Registration failed. Please try again." });
         return;
     }
+
+    // Proof-of-work verification
+    const { powChallenge, powNonce } = req.body as Record<string, unknown>;
+    if (!powChallenge || !powNonce || typeof powChallenge !== "string" || typeof powNonce !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing proof-of-work challenge. Please refresh the page and try again." });
+        return;
+    }
+    const stored = powStore.get(powChallenge);
+    if (!stored || stored.used || stored.expiresAt < Date.now()) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid or expired challenge. Please refresh the page and try again." });
+        return;
+    }
+    if (!verifyPow(powChallenge, powNonce, stored.difficulty)) {
+        logBot(req, "register-blocked: invalid-pow");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
+        return;
+    }
+    stored.used = true;
+    powStore.delete(powChallenge);
 
     // Phase 1: Validate everything before touching the DB or hashing
     if (isNullOrWhiteSpace(username) || isNullOrWhiteSpace(password) || isNullOrWhiteSpace(email)) {
@@ -868,6 +951,21 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create session" });
             await unit.complete(false);
             return;
+        }
+
+        // Heuristic auto-ban: if username matches known bot patterns, ban immediately
+        if (isBotPattern(username, email)) {
+            try {
+                await unit.prepare(
+                    `UPDATE Player SET bannedAt = @bannedAt, banReason = @reason WHERE playerId = @playerId`,
+                    { playerId, bannedAt: new Date().toISOString(), reason: "Auto-banned: bot pattern detected" }
+                ).run();
+                logBot(req, `register-auto-banned: pattern-match username=${username}`);
+                // Still return 201 so the bot thinks it succeeded, but the session is useless
+                // because requireNotBanned will reject every subsequent request
+            } catch {
+                // Ignore auto-ban errors
+            }
         }
 
         ok = true;
