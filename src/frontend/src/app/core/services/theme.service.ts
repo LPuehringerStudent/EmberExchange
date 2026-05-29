@@ -9,11 +9,13 @@ export type Theme = 'light' | 'dark' | 'system';
 })
 export class ThemeService {
   private currentTheme = signal<Theme>('dark');
-  
+  private systemMediaQuery: MediaQueryList | null = null;
+
   public readonly theme = this.currentTheme.asReadonly();
 
   constructor() {
     this.loadTheme();
+    this.listenToSystemChanges();
   }
 
   getCurrentTheme(): Theme {
@@ -32,7 +34,9 @@ export class ThemeService {
       this.currentTheme.set(savedTheme);
       this.applyTheme(savedTheme);
     } else {
+      this.currentTheme.set('dark');
       this.applyTheme('dark');
+      localStorage.setItem(THEME_KEY, 'dark');
     }
   }
 
@@ -44,6 +48,15 @@ export class ThemeService {
     document.body.classList.remove('theme-light', 'theme-dark');
     document.body.classList.add(`theme-${resolved}`);
     document.documentElement.setAttribute('data-theme', resolved);
+  }
+
+  private listenToSystemChanges(): void {
+    this.systemMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    this.systemMediaQuery.addEventListener('change', () => {
+      if (this.currentTheme() === 'system') {
+        this.applyTheme('system');
+      }
+    });
   }
 
   private isValidTheme(theme: string): theme is Theme {
