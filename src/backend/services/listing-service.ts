@@ -1,6 +1,7 @@
 import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { ListingRow } from "../../shared/model";
+import { QuestService } from "./quest-service";
 
 export class ListingService extends ServiceBase {
     constructor(unit: Unit) {
@@ -47,6 +48,74 @@ export class ListingService extends ServiceBase {
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
              WHERE l.status = 'active' ORDER BY l.listedAt DESC`
+        );
+        return await stmt.all();
+    }
+
+    /**
+     * Retrieves active listings with optional filters.
+     */
+    async getFilteredListings(filters: {
+        rarity?: string[];
+        collection?: string;
+        minPrice?: number;
+        maxPrice?: number;
+        itemType?: 'stove' | 'lootbox';
+        sortBy?: 'price_asc' | 'price_desc' | 'newest';
+        search?: string;
+    }): Promise<ListingRow[]> {
+        let where = "l.status = 'active'";
+        const params: Record<string, unknown> = {};
+
+        if (filters.itemType === 'stove') {
+            where += " AND l.stoveId IS NOT NULL";
+        } else if (filters.itemType === 'lootbox') {
+            where += " AND l.lootboxId IS NOT NULL";
+        }
+
+        if (filters.minPrice !== undefined) {
+            where += " AND l.price >= @minPrice";
+            params.minPrice = filters.minPrice;
+        }
+        if (filters.maxPrice !== undefined) {
+            where += " AND l.price <= @maxPrice";
+            params.maxPrice = filters.maxPrice;
+        }
+
+        let join = "";
+        if (filters.rarity?.length || filters.collection || filters.search) {
+            join += ` JOIN Stove s ON l.stoveId = s.stoveId JOIN StoveType st ON s.typeId = st.typeId `;
+            if (filters.rarity?.length) {
+                const placeholders = filters.rarity.map((_, i) => `@rarity${i}`).join(", ");
+                where += ` AND st.rarity IN (${placeholders})`;
+                filters.rarity.forEach((r, i) => { params[`rarity${i}`] = r; });
+            }
+            if (filters.collection) {
+                where += " AND st.collection = @collection";
+                params.collection = filters.collection;
+            }
+            if (filters.search) {
+                where += " AND (LOWER(st.name) LIKE @search OR LOWER(p.username) LIKE @search)";
+                params.search = `%${filters.search.toLowerCase()}%`;
+            }
+        } else if (filters.search) {
+            // Search without needing StoveType join (search by seller name only)
+            where += " AND LOWER(p.username) LIKE @search";
+            params.search = `%${filters.search.toLowerCase()}%`;
+        }
+
+        let orderBy = "l.listedAt DESC";
+        if (filters.sortBy === 'price_asc') orderBy = "l.price ASC";
+        else if (filters.sortBy === 'price_desc') orderBy = "l.price DESC";
+
+        const stmt = this.unit.prepare<ListingRow>(
+            `SELECT l.*, p.username as sellerName 
+             FROM Listing l
+             JOIN Player p ON l.sellerId = p.playerId
+             ${join}
+             WHERE ${where}
+             ORDER BY ${orderBy}`,
+            params
         );
         return await stmt.all();
     }
@@ -130,7 +199,18 @@ export class ListingService extends ServiceBase {
              VALUES (@sellerId, @stoveId, @lootboxId, @price, NOW(), 'active')`,
             { sellerId, stoveId: stoveId ?? null, lootboxId: lootboxId ?? null, price }
         );
-        return await this.executeStmt(stmt);
+        const result = await this.executeStmt(stmt);
+
+        if (result[0]) {
+            try {
+                const questService = new QuestService(this.unit);
+                await questService.trackProgress(sellerId, 'list_item', 1);
+            } catch {
+                // Ignore quest tracking errors
+            }
+        }
+
+        return result;
     }
 
     /**

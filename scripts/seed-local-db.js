@@ -42,7 +42,7 @@ async function run() {
 
   await sql(`CREATE TABLE IF NOT EXISTS StoveType (
     typeId SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     imageUrl TEXT NOT NULL,
     rarity TEXT NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary', 'limited', 'secret')),
     lootboxWeight INTEGER NOT NULL,
@@ -503,7 +503,15 @@ async function run() {
     { name: "Ultimate Snowman Stove", imageUrl: "/assets/stove_sprites/winter_stove/ultimate_snowman_stove.png", rarity: "legendary", lootboxWeight: 3, collection: "Winter", minHeat: 0.0, maxHeat: 0.40 }
   ];
   for (const s of stoves) {
-    await sql('INSERT INTO StoveType (name, imageUrl, rarity, lootboxWeight, collection, minHeat, maxHeat) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+    await sql(`INSERT INTO StoveType (name, imageUrl, rarity, lootboxWeight, collection, minHeat, maxHeat)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (name) DO UPDATE SET
+        imageUrl = EXCLUDED.imageUrl,
+        rarity = EXCLUDED.rarity,
+        lootboxWeight = EXCLUDED.lootboxWeight,
+        collection = EXCLUDED.collection,
+        minHeat = EXCLUDED.minHeat,
+        maxHeat = EXCLUDED.maxHeat`,
       [s.name, s.imageUrl, s.rarity, s.lootboxWeight, s.collection, s.minHeat, s.maxHeat]);
   }
   console.log('StoveTypes seeded');

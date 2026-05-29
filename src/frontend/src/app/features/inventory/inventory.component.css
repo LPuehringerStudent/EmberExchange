@@ -66,6 +66,22 @@
   cursor: not-allowed;
 }
 
+.btn-salvage {
+  background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+}
+.btn-salvage:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+}
+.btn-salvage:disabled {
+  background: var(--btn-secondary-bg);
+  color: var(--text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
 /* Listed badge */
 .listed-badge {
   background: #e85d04;

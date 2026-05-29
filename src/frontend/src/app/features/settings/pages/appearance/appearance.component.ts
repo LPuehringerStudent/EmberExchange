@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { ThemeService, Theme } from '@core/services/theme.service';
 
 interface ThemeOption {
@@ -14,10 +14,10 @@ interface ThemeOption {
   styleUrls: ['../../settings.component.css', './appearance.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppearanceComponent implements OnInit {
+export class AppearanceComponent {
   private _themeService = inject(ThemeService);
 
-  selectedTheme: Theme = 'dark';
+  selectedTheme = signal<Theme>(this._themeService.getCurrentTheme());
 
   readonly themes: ThemeOption[] = [
     { id: 'light', label: 'Light', icon: '☀️' },
@@ -25,12 +25,8 @@ export class AppearanceComponent implements OnInit {
     { id: 'system', label: 'System', icon: '🖥️' }
   ];
 
-  ngOnInit(): void {
-    this.selectedTheme = this._themeService.getCurrentTheme();
-  }
-
-  selectTheme(id: Theme) {
-    this.selectedTheme = id;
+  selectTheme(id: Theme): void {
+    this.selectedTheme.set(id);
     this._themeService.setTheme(id);
   }
 }

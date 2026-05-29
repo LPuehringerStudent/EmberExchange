@@ -82,6 +82,30 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
+     * Batch updates coin balances for multiple players in a single query.
+     * @param updates - Array of {playerId, coins} to update.
+     * @returns Number of rows updated.
+     */
+    async updatePlayerCoinsBatch(updates: { playerId: number; coins: number }[]): Promise<number> {
+        if (updates.length === 0) return 0;
+        // Build a VALUES table and UPDATE from it
+        const values = updates.map((u, i) => `(@pid${i}::int, @coins${i}::int)`).join(", ");
+        const params: Record<string, unknown> = {};
+        updates.forEach((u, i) => {
+            params[`pid${i}`] = u.playerId;
+            params[`coins${i}`] = u.coins;
+        });
+        const stmt = this.unit.prepare(
+            `UPDATE Player SET coins = v.coins
+             FROM (VALUES ${values}) AS v(playerId, coins)
+             WHERE Player.playerId = v.playerId`,
+            params
+        );
+        const result = await stmt.run();
+        return result.changes ?? 0;
+    }
+
+    /**
      * Updates the lootbox count of a player.
      * @param id - The player's unique ID.
      * @param lootboxCount - The new lootbox count to set.
@@ -91,6 +115,21 @@ export class PlayerService extends ServiceBase {
         const stmt = this.unit.prepare(
             "UPDATE Player SET lootboxCount = @lootboxCount WHERE playerId = @id",
             { id, lootboxCount }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
+    }
+
+    /**
+     * Updates the sparks balance of a player.
+     * @param id - The player's unique ID.
+     * @param sparks - The new sparks amount to set.
+     * @returns True if exactly one player was updated, false otherwise.
+     */
+    async updatePlayerSparks(id: number, sparks: number): Promise<boolean> {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET sparks = @sparks WHERE playerId = @id",
+            { id, sparks }
         );
         const result = await stmt.run();
         return result.changes === 1;
@@ -135,8 +174,8 @@ export class PlayerService extends ServiceBase {
         // 10. Delete ownership records
         await this.unit.prepare("DELETE FROM Ownership WHERE playerId = @id", { id }).run();
 
-        // 11. Delete trades where player is buyer
-        await this.unit.prepare("DELETE FROM Trade WHERE buyerId = @id", { id }).run();
+        // 11. Delete trades where player is buyer or seller
+        await this.unit.prepare("DELETE FROM Trade WHERE buyerId = @id OR sellerId = @id", { id }).run();
 
         // 12. Delete listings (this will cascade delete related trades via foreign key)
         // First get all listings by this player
@@ -176,7 +215,45 @@ export class PlayerService extends ServiceBase {
         // 17. Delete notifications
         await this.unit.prepare("DELETE FROM Notification WHERE playerId = @id", { id }).run();
 
-        // 18. Finally delete the player
+        // 18. Delete pity counter
+        await this.unit.prepare("DELETE FROM PlayerPity WHERE playerId = @id", { id }).run();
+
+        // 19. Delete quest progress
+        await this.unit.prepare("DELETE FROM PlayerQuest WHERE playerId = @id", { id }).run();
+
+        // 20. Delete daily statistics
+        await this.unit.prepare("DELETE FROM DailyStatistics WHERE playerId = @id", { id }).run();
+
+        // 21. Delete event logs
+        await this.unit.prepare("DELETE FROM EventLog WHERE playerId = @id", { id }).run();
+
+        // 22. Delete 2FA data
+        await this.unit.prepare("DELETE FROM TwoFactorBackupCode WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM TwoFactorChallenge WHERE playerId = @id", { id }).run();
+
+        // 23. Delete shop purchases
+        await this.unit.prepare("DELETE FROM ShopPurchase WHERE playerId = @id", { id }).run();
+
+        // 24. Delete daily reward tracking
+        await this.unit.prepare("DELETE FROM PlayerDailyReward WHERE playerId = @id", { id }).run();
+
+        // 25. Delete prestige data
+        await this.unit.prepare("DELETE FROM PrestigeLog WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM PlayerPrestige WHERE playerId = @id", { id }).run();
+
+        // 26. Delete glory/showcase data
+        await this.unit.prepare("DELETE FROM GloryFeaturedAchievement WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM GloryShowcase WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM PlayerGloryTheme WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM PlayerGloryTitle WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM PlayerGloryBanner WHERE playerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM PlayerGloryTrophy WHERE playerId = @id", { id }).run();
+
+        // 27. Delete visits and guestbook (both directions)
+        await this.unit.prepare("DELETE FROM GloryVisit WHERE visitorPlayerId = @id OR visitedPlayerId = @id", { id }).run();
+        await this.unit.prepare("DELETE FROM GloryGuestbook WHERE playerId = @id OR authorId = @id", { id }).run();
+
+        // 28. Finally delete the player
         const stmt = this.unit.prepare(
             "DELETE FROM Player WHERE playerId = @id",
             { id }

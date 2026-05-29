@@ -13,6 +13,7 @@ import { ListingService, Listing } from '@core/services/listing.service';
 import { TradeService } from '@core/services/trade.service';
 import { StoveService, StoveType, Stove } from '@core/services/stove.service';
 import { LootboxService, LootboxType } from '@core/services/lootbox.service';
+import { PriceHistoryService } from '@core/services/price-history.service';
 import { firstValueFrom } from 'rxjs';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
 
@@ -157,6 +158,7 @@ export class MarketplaceComponent implements OnInit {
   private _tradeService   = inject(TradeService);
   private _stoveService   = inject(StoveService);
   private _lootboxService = inject(LootboxService);
+  private _priceHistoryService = inject(PriceHistoryService);
 
 
   /* ── Lifecycle ─────────────────────────────────────────────── */
@@ -217,30 +219,57 @@ export class MarketplaceComponent implements OnInit {
   /* ── Detail modal ──────────────────────────────────────────── */
 
   /**
-   * Opens the detail modal for a listing and populates the price
-   * history chart with 30 mock data-points centred around the
-   * listing's current price.
+   * Opens the detail modal for a listing and fetches real price
+   * history from the backend for stove listings.
    */
-  openDetails(listing: Listing): void {
+  async openDetails(listing: Listing): Promise<void> {
     this.selectedListing.set(listing);
+    this.priceHistory.set([]);
 
-    /* --- Mock price history (remove when real endpoint exists) --- */
-    const base   = listing.price;
-    const points: PricePoint[] = [];
+    if (listing.stoveId) {
+      const stove = this.stoves().get(listing.stoveId);
+      const typeId = stove?.typeId;
+      if (typeId) {
+        try {
+          const history = await firstValueFrom(
+            this._priceHistoryService.getPriceHistoryByTypeId(typeId)
+          );
+          // Sort oldest → newest and take the last 30 entries
+          const sorted = history
+            .slice()
+            .sort((a, b) => new Date(a.saleDate).getTime() - new Date(b.saleDate).getTime());
 
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      /* Random walk within ±18% of current price */
-      const noise = base * 0.18 * (Math.random() * 2 - 1);
-      points.push({
-        date:  d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        price: Math.max(1, Math.round(base + noise)),
-      });
+          const points: PricePoint[] = sorted.map(h => ({
+            date: new Date(h.saleDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            price: h.salePrice,
+          }));
+
+          // If we have fewer than 2 real data-points, append the current listing price
+          // so the chart always has something meaningful to show.
+          if (points.length < 2) {
+            points.push({
+              date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              price: listing.price,
+            });
+          }
+          this.priceHistory.set(points);
+        } catch (err) {
+          console.error('Failed to load price history:', err);
+          // Fallback: just the current listing price
+          this.priceHistory.set([{
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            price: listing.price,
+          }]);
+        }
+      }
+    } else if (listing.lootboxId) {
+      // Price history is not yet tracked for lootbox types on the backend;
+      // show a single data-point so the chart renders gracefully.
+      this.priceHistory.set([{
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        price: listing.price,
+      }]);
     }
-    /* Anchor the final point to the real current listing price */
-    points[points.length - 1].price = base;
-    this.priceHistory.set(points);
   }
 
   closeDetails(): void {

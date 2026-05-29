@@ -4,6 +4,7 @@ import { ListingService } from "../services/listing-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
+import { ListingRow } from "../../shared/model";
 
 export const listingRouter = express.Router();
 
@@ -69,12 +70,29 @@ listingRouter.get("/listings", async (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/listings/active", async (_req, res) => {
+listingRouter.get("/listings/active", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
 
     try {
-        const response = await service.getActiveListings();
+        const { rarity, collection, minPrice, maxPrice, itemType, sortBy, search } = req.query;
+        const hasFilters = rarity || collection || minPrice || maxPrice || itemType || sortBy || search;
+
+        let response: ListingRow[];
+        if (hasFilters) {
+            const rarityArr = rarity ? (Array.isArray(rarity) ? rarity : [rarity]).map(String) : undefined;
+            response = await service.getFilteredListings({
+                rarity: rarityArr,
+                collection: collection ? String(collection) : undefined,
+                minPrice: minPrice ? Number(minPrice) : undefined,
+                maxPrice: maxPrice ? Number(maxPrice) : undefined,
+                itemType: itemType === 'stove' || itemType === 'lootbox' ? itemType : undefined,
+                sortBy: sortBy === 'price_asc' || sortBy === 'price_desc' || sortBy === 'newest' ? sortBy : undefined,
+                search: search ? String(search) : undefined,
+            });
+        } else {
+            response = await service.getActiveListings();
+        }
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

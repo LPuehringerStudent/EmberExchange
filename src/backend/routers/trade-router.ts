@@ -10,6 +10,7 @@ import { PriceHistoryService } from "../services/price-history-service";
 import { PlayerService } from "../services/player-service";
 import { CoinTransactionService } from "../services/coin-transaction-service";
 import { NotificationService } from "../services/notification-service";
+import { QuestService } from "../services/quest-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 
@@ -532,6 +533,15 @@ tradeRouter.post("/trades", async (req, res) => {
                 );
             } catch {
                 // Ignore notification errors
+            }
+
+            // Track quest progress for both buyer and seller
+            try {
+                const questService = new QuestService(unit);
+                await questService.trackProgress(buyerId, 'complete_10_trades', 1);
+                await questService.trackProgress(listing.sellerId, 'complete_10_trades', 1);
+            } catch {
+                // Ignore quest tracking errors
             }
 
             ok = true;

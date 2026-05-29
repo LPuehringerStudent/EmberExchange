@@ -4,6 +4,8 @@ import { LootboxRow, LootboxTypeRow, LootboxDropRow } from "../../shared/model";
 import { ListingService } from "./listing-service";
 import { PlayerPrestigeService } from "./player-prestige-service";
 import { AchievementEngine } from "./achievement-engine";
+import { PityService } from "./pity-service";
+import { QuestService } from "./quest-service";
 
 interface DropTable {
     rarity: string;
@@ -33,14 +35,18 @@ const DROP_TABLES: Record<number, DropTable[]> = {
         { rarity: 'secret', weight: 5 }
     ],
     4: [ // Dragon Crate
-        { rarity: 'dragon', weight: 100 }
+        { rarity: 'common', weight: 30 },
+        { rarity: 'rare', weight: 30 },
+        { rarity: 'epic', weight: 25 },
+        { rarity: 'legendary', weight: 12 },
+        { rarity: 'secret', weight: 3 }
     ],
     5: [ // Winter Crate
-        { rarity: 'common', weight: 50 },
+        { rarity: 'common', weight: 49 },
         { rarity: 'rare', weight: 30 },
         { rarity: 'epic', weight: 15 },
         { rarity: 'legendary', weight: 5 },
-        { rarity: 'secret', weight: 0 }
+        { rarity: 'secret', weight: 1 }
     ]
 };
 
@@ -69,20 +75,20 @@ export class LootboxService extends ServiceBase {
         return rows[Math.floor(Math.random() * rows.length)];
     }
 
-    private async pickDragonStoveType(): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
+    private async pickDragonStoveTypeByRarity(rarity: string): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
         const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number }>(
-            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE LOWER(name) LIKE '%dragon%'",
-            {}
+            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE LOWER(name) LIKE '%dragon%' AND rarity = @rarity AND name NOT LIKE '%Upgraded%'",
+            { rarity }
         );
         const rows = await stmt.all();
         if (rows.length === 0) return null;
         return rows[Math.floor(Math.random() * rows.length)];
     }
 
-    private async pickWinterStoveType(): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
+    private async pickWinterStoveTypeByRarity(rarity: string): Promise<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null> {
         const stmt = this.unit.prepare<{ typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number }>(
-            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE collection = 'Winter'",
-            {}
+            "SELECT typeId, name, rarity, imageUrl, minHeat, maxHeat FROM StoveType WHERE collection = 'Winter' AND rarity = @rarity",
+            { rarity }
         );
         const rows = await stmt.all();
         if (rows.length === 0) return null;
@@ -262,22 +268,43 @@ export class LootboxService extends ServiceBase {
         }
 
         // 2. Determine drop
+        const dropTable = DROP_TABLES[lootbox.lootboxTypeId] ?? DROP_TABLES[1];
+        let rarity = this.weightedRarity(dropTable);
+
+        // 2b. Check pity system
+        const pityService = new PityService(this.unit);
+        const guaranteedRarity = await pityService.checkPity(playerId, lootbox.lootboxTypeId, rarity);
+        if (guaranteedRarity) {
+            rarity = guaranteedRarity;
+        }
+
         let stoveType: { typeId: number; name: string; rarity: string; imageUrl: string; minHeat: number; maxHeat: number } | null = null;
         if (lootbox.lootboxTypeId === 4) {
-            // Dragon Crate: exclusively dragon stoves
-            stoveType = await this.pickDragonStoveType();
+            // Dragon Crate: dragon stoves of the rolled rarity
+            stoveType = await this.pickDragonStoveTypeByRarity(rarity);
         } else if (lootbox.lootboxTypeId === 5) {
-            // Winter Crate: exclusively winter-themed stoves
-            stoveType = await this.pickWinterStoveType();
+            // Winter Crate: winter-themed stoves of the rolled rarity
+            stoveType = await this.pickWinterStoveTypeByRarity(rarity);
         } else {
-            const dropTable = DROP_TABLES[lootbox.lootboxTypeId] ?? DROP_TABLES[1];
-            const rarity = this.weightedRarity(dropTable);
             stoveType = await this.pickStoveTypeByRarity(rarity);
         }
         if (!stoveType) return [false, null];
 
+        // 2c. Update pity counter
+        const rarityPriority: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3, limited: 4, secret: 5 };
+        if ((rarityPriority[rarity.toLowerCase()] ?? 0) >= 2) {
+            // Epic or better — reset counter
+            await pityService.resetCounter(playerId, lootbox.lootboxTypeId);
+        } else {
+            await pityService.incrementCounter(playerId, lootbox.lootboxTypeId);
+        }
+
         // 3. Create stove with randomized heat level
-        const heatLevel = stoveType.minHeat + Math.random() * (stoveType.maxHeat - stoveType.minHeat);
+        let heatLevel = stoveType.minHeat + Math.random() * (stoveType.maxHeat - stoveType.minHeat);
+        // Secret stoves should never be extinguished (heat > 0.55)
+        if (stoveType.rarity.toLowerCase() === 'secret') {
+            heatLevel = Math.min(heatLevel, 0.55);
+        }
         const stoveStmt = this.unit.prepare<{ stoveId: number }>(
             `INSERT INTO Stove (typeId, currentOwnerId, mintedAt, heatLevel) 
              VALUES (@typeId, @playerId, NOW(), @heatLevel)`,
@@ -326,6 +353,15 @@ export class LootboxService extends ServiceBase {
             await engine.checkWealthAchievements(playerId);
         } catch {
             try { await this.unit.rollbackToSavepoint('lootbox_achievements'); } catch { /* ignore */ }
+        }
+
+        // Track quest progress
+        try {
+            const questService = new QuestService(this.unit);
+            await questService.trackProgress(playerId, 'open_lootboxes', 1);
+            await questService.trackProgress(playerId, 'open_20_lootboxes', 1);
+        } catch {
+            // Ignore quest tracking errors
         }
 
         return [true, { stoveId, stoveName: stoveType.name, rarity: stoveType.rarity, imageUrl: stoveType.imageUrl, lootboxId }];

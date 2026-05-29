@@ -5,11 +5,13 @@ import { Router, RouterModule } from '@angular/router';
 import { StoveService } from '@core/services/stove.service';
 import { AuthService } from '@core/services/auth.service';
 import { ListingService } from '@core/services/listing.service';
+import { SparksService } from '@core/services/sparks.service';
 import { forkJoin, map, of, Subscription, switchMap } from 'rxjs';
 import { ShowedStove, StoveRow, LootboxTypeRow } from '@shared/model';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
 import { LootboxService } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
+import { StoveDetailComponent } from './stove-detail.component';
 
 interface InventoryLootbox {
   id: number;
@@ -19,8 +21,6 @@ interface InventoryLootbox {
   acquiredHow: string;
 }
 
-type SellableItem = { stoveId: number; name: string } | { lootboxId: number; name: string };
-
 @Component({
   selector: 'app-inventory',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,7 +29,8 @@ type SellableItem = { stoveId: number; name: string } | { lootboxId: number; nam
     CommonModule,
     FormsModule,
     RouterModule,
-    HeatTierPipe
+    HeatTierPipe,
+    StoveDetailComponent
   ],
   styleUrls: ['./inventory.component.css']
 })
@@ -42,15 +43,21 @@ export class InventoryComponent implements OnInit, OnDestroy {
   loading = true;
   error: string | null = null;
   coins = 0;
+  sparks = 0;
   playerId: number | null = null;
 
   // Listing tracking
   listedStoveIds = new Set<number>();
   listedLootboxIds = new Set<number>();
 
-  // Sell modal
+  // Stove detail modal
+  showDetailModal = false;
+  detailStove: ShowedStove | null = null;
+  detailLoading = false;
+  detailError: string | null = null;
+
+  // Sell modal (for lootboxes)
   showSellModal = false;
-  selectedStove: ShowedStove | null = null;
   selectedLootbox: InventoryLootbox | null = null;
   sellPrice = '';
   sellError: string | null = null;
@@ -62,6 +69,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private _lootboxService = inject(LootboxService);
   private _listingService = inject(ListingService);
+  private _sparksService = inject(SparksService);
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
@@ -73,6 +81,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
 
     this.playerId = user.playerId;
     this.coins = user.coins;
+    this.sparks = user.sparks ?? 0;
     this.loadItems(user.playerId);
     this.loadLootboxes(user.playerId);
     this.loadMyListings(user.playerId);
@@ -121,7 +130,8 @@ export class InventoryComponent implements OnInit, OnDestroy {
                 stoveId: stove.stoveId,
                 rarity: type.rarity,
                 stoveName: type.name,
-                imageUrl: type.imageUrl ?? ''
+                imageUrl: type.imageUrl ?? '',
+                collection: type.collection ?? 'Unknown'
               }))
             )
           )
@@ -179,16 +189,110 @@ export class InventoryComponent implements OnInit, OnDestroy {
     return this.listedLootboxIds.has(lootboxId);
   }
 
-  openSellStoveModal(item: ShowedStove): void {
-    this.selectedStove = item;
-    this.selectedLootbox = null;
-    this.sellPrice = '';
-    this.sellError = null;
-    this.showSellModal = true;
+  // ── Stove Detail Modal ───────────────────────────────────────
+
+  openDetailModal(item: ShowedStove): void {
+    this.detailStove = item;
+    this.detailError = null;
+    this.detailLoading = false;
+    this.showDetailModal = true;
+    this.cdr.markForCheck();
   }
 
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.detailStove = null;
+    this.detailError = null;
+    this.cdr.markForCheck();
+  }
+
+  async onDetailSell(price: number): Promise<void> {
+    if (!this.detailStove || this.playerId === null) return;
+    this.detailLoading = true;
+    this.detailError = null;
+    try {
+      await firstValueFrom(this._listingService.createListing(this.playerId, price, this.detailStove.stoveId, undefined));
+      await this._authService.refreshUser();
+      this.coins = this._authService.getCurrentUser()?.coins ?? 0;
+      this.closeDetailModal();
+      if (this.playerId !== null) {
+        this.loadItems(this.playerId);
+        this.loadMyListings(this.playerId);
+      }
+    } catch (err: any) {
+      this.detailError = err?.message || err?.error?.error || 'Failed to list item. Please try again.';
+    } finally {
+      this.detailLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async onDetailSalvage(): Promise<void> {
+    if (!this.detailStove) return;
+    this.detailLoading = true;
+    this.detailError = null;
+    try {
+      const result = await firstValueFrom(this._sparksService.salvageStove(this.detailStove.stoveId));
+      if (result.success) {
+        await this._authService.refreshUser();
+        this.sparks = this._authService.getCurrentUser()?.sparks ?? 0;
+        this.closeDetailModal();
+        if (this.playerId !== null) {
+          this.loadItems(this.playerId);
+          this.loadMyListings(this.playerId);
+        }
+      } else {
+        this.detailError = result.error || 'Failed to salvage stove';
+      }
+    } catch (err: any) {
+      this.detailError = err?.error?.error || 'Failed to salvage stove. Please try again.';
+    } finally {
+      this.detailLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async onDetailReRollHeat(): Promise<void> {
+    if (!this.detailStove) return;
+    this.detailLoading = true;
+    this.detailError = null;
+    try {
+      const result = await firstValueFrom(this._sparksService.reRollHeat(this.detailStove.stoveId));
+      if (result.success) {
+        // Update sparks from response if available, otherwise refresh from auth
+        if (result.newSparksBalance !== undefined) {
+          this.sparks = result.newSparksBalance;
+          this._authService.refreshUser(); // sync in background
+        } else {
+          await this._authService.refreshUser();
+          this.sparks = this._authService.getCurrentUser()?.sparks ?? 0;
+        }
+        // Update the detail stove's heat level and re-roll count so UI reflects change immediately
+        if (this.detailStove) {
+          this.detailStove = {
+            ...this.detailStove,
+            heatLevel: result.newHeatLevel ?? this.detailStove.heatLevel,
+            reRollCount: (this.detailStove.reRollCount ?? 0) + 1
+          };
+        }
+        // Refresh inventory to get updated data
+        if (this.playerId !== null) {
+          this.loadItems(this.playerId);
+        }
+      } else {
+        this.detailError = result.error || 'Failed to re-roll heat';
+      }
+    } catch (err: any) {
+      this.detailError = err?.error?.error || 'Failed to re-roll heat. Please try again.';
+    } finally {
+      this.detailLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  // ── Lootbox Sell Modal ───────────────────────────────────────
+
   openSellLootboxModal(box: InventoryLootbox): void {
-    this.selectedStove = null;
     this.selectedLootbox = box;
     this.sellPrice = '';
     this.sellError = null;
@@ -197,21 +301,18 @@ export class InventoryComponent implements OnInit, OnDestroy {
 
   closeSellModal(): void {
     this.showSellModal = false;
-    this.selectedStove = null;
     this.selectedLootbox = null;
     this.sellPrice = '';
     this.sellError = null;
   }
 
   getSellModalTitle(): string {
-    if (this.selectedStove) return this.selectedStove.stoveName;
-    if (this.selectedLootbox) return this.selectedLootbox.typeName;
-    return '';
+    return this.selectedLootbox?.typeName ?? '';
   }
 
   async confirmSell(): Promise<void> {
     if (this.playerId === null) return;
-    if (!this.selectedStove && !this.selectedLootbox) return;
+    if (!this.selectedLootbox) return;
 
     const price = Number(this.sellPrice);
     if (!this.sellPrice || isNaN(price) || price < 1) {
@@ -223,17 +324,12 @@ export class InventoryComponent implements OnInit, OnDestroy {
     this.sellError = null;
 
     try {
-      if (this.selectedStove) {
-        await firstValueFrom(this._listingService.createListing(this.playerId, price, this.selectedStove.stoveId, undefined));
-      } else if (this.selectedLootbox) {
-        await firstValueFrom(this._listingService.createListing(this.playerId, price, undefined, this.selectedLootbox.id));
-      }
+      await firstValueFrom(this._listingService.createListing(this.playerId, price, undefined, this.selectedLootbox.id));
 
       await this._authService.refreshUser();
       this.coins = this._authService.getCurrentUser()?.coins ?? 0;
       this.closeSellModal();
       if (this.playerId !== null) {
-        this.loadItems(this.playerId);
         this.loadLootboxes(this.playerId);
         this.loadMyListings(this.playerId);
       }

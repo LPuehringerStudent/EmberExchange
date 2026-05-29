@@ -159,7 +159,12 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
 
         const result = engine.processAction(
             state.stateBlob as Record<string, unknown>,
-            { type: actionType, amount: actionData?.amount as number | undefined },
+            {
+                type: actionType,
+                amount: actionData?.amount as number | undefined,
+                betType: actionData?.betType as string | undefined,
+                number: actionData?.number as number | undefined,
+            },
             meta.playerId
         );
 

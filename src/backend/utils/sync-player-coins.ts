@@ -25,23 +25,20 @@ export async function syncPlayerCoinsFromState(
         return [];
     }
 
-    const playerService = new PlayerService(unit);
-    const updated: number[] = [];
+    const updates: { playerId: number; coins: number }[] = players
+        .filter((p): p is StatePlayer & { playerId: number; stack: number } =>
+            typeof p.playerId === "number" && typeof p.stack === "number"
+        )
+        .map(p => ({ playerId: p.playerId, coins: p.stack }));
 
-    for (const p of players) {
-        if (
-            typeof p.playerId === "number" &&
-            typeof p.stack === "number"
-        ) {
-            const success = await playerService.updatePlayerCoins(p.playerId, p.stack);
-            if (success) {
-                updated.push(p.playerId);
-                // Coin sync succeeded
-            } else {
-                console.error(`[coins] FAILED to sync player ${p.playerId}`);
-            }
-        }
+    if (updates.length === 0) return [];
+
+    const playerService = new PlayerService(unit);
+    const changed = await playerService.updatePlayerCoinsBatch(updates);
+
+    if (changed !== updates.length) {
+        console.error(`[coins] Batch update changed ${changed} rows but expected ${updates.length}`);
     }
 
-    return updated;
+    return updates.map(u => u.playerId);
 }

@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -18,9 +18,12 @@ export class ApiService {
     return throwError(() => new Error(message));
   }
 
-  get<T>(path: string, headers?: HttpHeaders): Observable<T> {
+  get<T>(path: string, headers?: HttpHeaders, params?: HttpParams): Observable<T> {
+    const options: { headers?: HttpHeaders; params?: HttpParams } = {};
+    if (headers) options.headers = headers;
+    if (params) options.params = params;
     return this.http
-      .get<T>(`${this.baseUrl}${path}`, { headers })
+      .get<T>(`${this.baseUrl}${path}`, options)
       .pipe(catchError(err => this.handleError(err)));
   }
 
