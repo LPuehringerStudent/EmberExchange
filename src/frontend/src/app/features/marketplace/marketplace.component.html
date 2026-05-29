@@ -1,201 +1,525 @@
-<div class="p-[30px_40px] max-w-[1400px] mx-auto max-mobile:p-5">
-  <!-- Header -->
-  <div class="flex items-start justify-between gap-4 mb-6 max-mobile:flex-col max-mobile:gap-3">
-    <div>
-      <h1 class="text-[28px] text-text-primary font-bold m-0 mb-1.5">Marketplace</h1>
-      <p class="m-0 text-text-secondary text-sm">Buy and sell stoves and lootboxes with other players</p>
-    </div>
+<!-- ============================================================
+     MARKETPLACE PAGE
+     Shares the same ambient layers (mesh blobs · embers · grain)
+     as the main dashboard for visual consistency.
+     ============================================================ -->
+<div class="dashboard min-h-screen bg-body relative overflow-x-hidden">
+
+  <!-- Animated mesh background -->
+  <div class="bg-mesh fixed inset-0 pointer-events-none z-0">
+    <div class="mesh-blob mesh-1"></div>
+    <div class="mesh-blob mesh-2"></div>
+    <div class="mesh-blob mesh-3"></div>
   </div>
 
-  <!-- Tabs -->
-  <div class="flex gap-3 mb-6">
-    <button
-      class="tab-btn px-5 py-3 rounded-xl bg-surface text-text-secondary text-sm font-semibold cursor-pointer transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-none hover:bg-surface-secondary hover:text-accent"
-      [class.active]="activeTab === 'all'"
-      (click)="activeTab = 'all'">
-      All Listings ({{ allListings().length }})
-    </button>
-    <button
-      class="tab-btn px-5 py-3 rounded-xl bg-surface text-text-secondary text-sm font-semibold cursor-pointer transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-none hover:bg-surface-secondary hover:text-accent"
-      [class.active]="activeTab === 'my'"
-      (click)="activeTab = 'my'">
-      My Listings ({{ myListings().length }})
-    </button>
+  <!-- Floating ember particles -->
+  <div class="embers-layer fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+    <div class="ember-particle ember-1"></div>
+    <div class="ember-particle ember-2"></div>
+    <div class="ember-particle ember-3"></div>
+    <div class="ember-particle ember-4"></div>
+    <div class="ember-particle ember-5"></div>
+    <div class="ember-particle ember-6"></div>
+    <div class="ember-particle ember-7"></div>
+    <div class="ember-particle ember-8"></div>
   </div>
 
-  <!-- Inline Error -->
-  @if (error()) {
-    <div class="flex items-center gap-2.5 mb-5 px-4 py-3 bg-red-500/[0.08] border border-red-500/25 rounded-xl text-red-500 text-sm">
-      <svg class="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="8" x2="12" y2="12"/>
-        <line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
-      <span>{{ error() }}</span>
-      <button class="ml-auto bg-transparent border-none text-red-500 text-xs font-semibold cursor-pointer underline" (click)="error.set(null)">Dismiss</button>
-    </div>
-  }
+  <!-- Grain texture overlay -->
+  <div class="grain-overlay fixed inset-0 pointer-events-none z-0 opacity-[0.03]"></div>
 
-  <!-- Loading State -->
-  @if (loading()) {
-    <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
-      <div class="w-10 h-10 border-[3px] border-accent/20 border-t-accent rounded-full animate-spin mb-4"></div>
-      <p class="text-lg font-semibold text-text-primary m-0 mb-2">Loading marketplace...</p>
-    </div>
-  }
 
-  <!-- Listings Grid -->
-  @if (!loading() && !error()) {
-    <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-6 max-mobile:grid-cols-1">
-      @if (activeTab === 'all') {
-        @if (allListings().length === 0) {
-          <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
-            <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-              <svg class="w-12 h-12 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M3 3h18v18H3z"/>
-                <path d="M3 9h18M9 21V9"/>
+  <!-- ═══════════════════════════════════════════════════════════
+       HEADER — title + three market-stat pills
+  ════════════════════════════════════════════════════════════ -->
+  <header class="dashboard-header relative z-[1] px-6 lg:px-10 pt-10 pb-8">
+    <div class="max-w-[1400px] mx-auto">
+
+      <!-- Title row -->
+      <div class="flex items-end justify-between gap-4 mb-8 max-[640px]:flex-col max-[640px]:items-start">
+        <div>
+          <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.2em] mb-1">EmberExchange</p>
+          <h1 class="text-[2.5rem] font-extrabold text-text-primary leading-none tracking-tight m-0">Marketplace</h1>
+          <p class="text-text-secondary text-sm mt-2 m-0">Buy and sell stoves and lootboxes with other players</p>
+        </div>
+
+        <!-- Link back to Inventory to list items -->
+        <a
+          routerLink="/inventory"
+          class="group inline-flex items-center gap-3 px-5 py-3 bg-surface border border-border rounded-2xl text-sm font-semibold text-text-primary shadow-sm hover:shadow-lg hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-300 shrink-0"
+        >
+          <div class="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+            <svg class="w-4 h-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+          </div>
+          Sell from Inventory
+          <svg class="w-4 h-4 text-text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Market stat pills (same pattern as dashboard) -->
+      <div class="stats-row grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        <!-- Active listings count -->
+        <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 transition-all duration-300">
+          <div class="flex items-center gap-4">
+            <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-accent/20 to-orange-500/10 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/>
               </svg>
             </div>
-            <p class="text-lg font-semibold text-text-primary m-0 mb-2">No active listings</p>
-            <span class="text-sm text-text-secondary mb-6">Be the first to list an item!</span>
-            <button class="btn-primary" routerLink="/inventory">Go to Inventory</button>
-          </div>
-        } @else {
-          @for (listing of allListings(); track listing.listingId) {
-            <div [class]="'listing-card bg-surface rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border-2 border-transparent flex flex-col gap-4 transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(0,0,0,0.15)] rarity-' + getRarity(listing)">
-              <div class="relative h-40 flex items-center justify-center bg-surface-secondary rounded-xl">
-                <div class="stove-icon">
-                  @if (getImageUrl(listing)) {
-                    <img [src]="getImageUrl(listing)" [alt]="getItemName(listing)" class="w-[150px] h-[150px] object-contain" />
-                  } @else {
-                    <svg class="w-16 h-16 text-text-secondary drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      @if (isLootboxListing(listing)) {
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="3" y1="9" x2="21" y2="9"/>
-                        <line x1="9" y1="21" x2="9" y2="9"/>
-                      } @else {
-                        <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
-                        <circle cx="12" cy="5" r="2"/>
-                      }
-                    </svg>
-                  }
-                </div>
-                <span [class]="'rarity-badge absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] ' + getRarity(listing)">
-                  {{ getRarity(listing) }}
-                </span>
-                @if (getHeatLevel(listing) !== null) {
-                  <span class="heat-badge heat-{{getHeatLevel(listing)! | heatTier | lowercase}}">
-                    {{ getHeatLevel(listing)! | heatTier }}
-                  </span>
-                }
-                @if (isLootboxListing(listing)) {
-                  <span class="lootbox-badge absolute bottom-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] text-white">Lootbox</span>
-                }
-              </div>
-              <div class="flex flex-col gap-1">
-                <h4 class="m-0 text-base text-text-primary font-bold">{{ getItemName(listing) }}</h4>
-                <p class="m-0 text-[13px] text-text-secondary font-medium">{{ getItemMeta(listing) }}</p>
-                <p class="m-0 text-[13px] text-text-secondary">Listed by {{ listing.sellerName || 'Unknown' }}</p>
-                <p class="mt-1.5 m-0 text-lg text-accent font-bold">{{ formatPrice(listing.price) }} Coal</p>
-                <p class="m-0 text-xs text-text-muted">Listed {{ formatDate(listing.listedAt) }}</p>
-              </div>
-              <div class="mt-auto">
-                @if (isOwnListing(listing)) {
-                  <button class="btn-secondary w-full py-3 rounded-[10px] text-sm font-semibold flex items-center justify-center gap-2" disabled>Your listing</button>
-                } @else {
-                  <button
-                    class="btn-primary w-full py-3 rounded-[10px] text-sm font-semibold flex items-center justify-center gap-2"
-                    [disabled]="listing.status !== 'active' || processingId() === listing.listingId"
-                    (click)="buyListing(listing)">
-                    @if (processingId() === listing.listingId) {
-                      <span class="w-4 h-4 border-2 border-white/35 border-t-white rounded-full animate-spin"></span>
-                      <span>Buying...</span>
-                    } @else {
-                      <span>Buy Now</span>
-                    }
-                  </button>
-                }
-              </div>
+            <div>
+              <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Active Listings</p>
+              <p class="text-2xl font-extrabold text-text-primary">{{ allListings().length }}</p>
             </div>
-          }
-        }
-      }
+          </div>
+        </div>
 
-      @if (activeTab === 'my') {
-        @if (myListings().length === 0) {
-          <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
-            <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-              <svg class="w-12 h-12 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <!-- Lowest price available -->
+        <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
+          <div class="flex items-center gap-4">
+            <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">From</p>
+              <p class="text-2xl font-extrabold text-text-primary">{{ formatPrice(lowestPrice()) }} Coal</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- My listings count -->
+        <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-rarity-rare/30 hover:shadow-lg hover:shadow-rarity-rare/5 transition-all duration-300">
+          <div class="flex items-center gap-4">
+            <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-rarity-rare/20 to-blue-400/10 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6 text-rarity-rare" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
                 <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
               </svg>
             </div>
-            <p class="text-lg font-semibold text-text-primary m-0 mb-2">You have no listings</p>
-            <span class="text-sm text-text-secondary mb-6">List your items to sell them!</span>
-            <button class="btn-primary" routerLink="/inventory">Go to Inventory</button>
+            <div>
+              <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">My Listings</p>
+              <p class="text-2xl font-extrabold text-text-primary">{{ myListings().length }}</p>
+            </div>
           </div>
-        } @else {
-          @for (listing of myListings(); track listing.listingId) {
-            <div [class]="'listing-card bg-surface rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border-2 border-transparent flex flex-col gap-4 transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(0,0,0,0.15)] rarity-' + getRarity(listing)">
-              <div class="relative h-40 flex items-center justify-center bg-surface-secondary rounded-xl">
-                <div class="stove-icon">
-                  @if (getImageUrl(listing)) {
-                    <img [src]="getImageUrl(listing)" [alt]="getItemName(listing)" class="w-[150px] h-[150px] object-contain" />
-                  } @else {
-                    <svg class="w-16 h-16 text-text-secondary drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      @if (isLootboxListing(listing)) {
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="3" y1="9" x2="21" y2="9"/>
-                        <line x1="9" y1="21" x2="9" y2="9"/>
-                      } @else {
-                        <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
-                        <circle cx="12" cy="5" r="2"/>
-                      }
-                    </svg>
-                  }
-                </div>
-                <span [class]="'rarity-badge absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] ' + getRarity(listing)">
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MAIN CONTENT — tabs + grid
+  ════════════════════════════════════════════════════════════ -->
+  <main class="relative z-[1] px-6 lg:px-10 pb-16 max-w-[1400px] mx-auto">
+
+    <!-- Section divider matching home page style -->
+    <div class="flex items-center gap-3 mb-6">
+      <div class="h-px flex-1 bg-gradient-to-r from-border to-transparent"></div>
+      <span class="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Browse</span>
+      <div class="h-px flex-1 bg-gradient-to-l from-border to-transparent"></div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="flex gap-3 mb-6">
+      <button
+        class="tab-btn px-5 py-3 rounded-xl bg-surface/80 text-text-secondary text-sm font-semibold cursor-pointer transition-all duration-200 border border-border backdrop-blur-sm"
+        [class.active]="activeTab() === 'all'"
+        (click)="activeTab.set('all')"
+      >
+        All Listings ({{ allListings().length }})
+      </button>
+      <button
+        class="tab-btn px-5 py-3 rounded-xl bg-surface/80 text-text-secondary text-sm font-semibold cursor-pointer transition-all duration-200 border border-border backdrop-blur-sm"
+        [class.active]="activeTab() === 'my'"
+        (click)="activeTab.set('my')"
+      >
+        My Listings ({{ myListings().length }})
+      </button>
+    </div>
+
+    <!-- Error banner -->
+    @if (error()) {
+      <div class="flex items-center gap-2.5 mb-5 px-4 py-3 bg-red-500/[0.08] border border-red-500/25 rounded-xl text-red-500 text-sm">
+        <svg class="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ error() }}</span>
+        <button class="ml-auto bg-transparent border-none text-red-500 text-xs font-semibold cursor-pointer underline" (click)="error.set(null)">Dismiss</button>
+      </div>
+    }
+
+    <!-- Loading skeleton -->
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center py-24 gap-4">
+        <div class="w-10 h-10 border-[3px] border-accent/20 border-t-accent rounded-full animate-spin"></div>
+        <p class="text-text-secondary text-sm font-medium m-0">Loading marketplace...</p>
+      </div>
+    }
+
+    <!-- Listings grid -->
+    @if (!loading() && !error()) {
+
+      <!-- Empty state -->
+      @if (currentListings().length === 0) {
+        <div class="flex flex-col items-center justify-center py-24 px-5 text-center">
+          <div class="w-24 h-24 rounded-3xl bg-surface border border-border flex items-center justify-center mb-5 shadow-lg">
+            <svg class="w-10 h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/>
+            </svg>
+          </div>
+          <p class="text-lg font-bold text-text-primary m-0 mb-2">
+            @if (activeTab() === 'all') { No active listings yet } @else { You have no listings }
+          </p>
+          <p class="text-sm text-text-secondary mb-6 m-0">
+            @if (activeTab() === 'all') { Be the first to list an item! } @else { Go to Inventory to list your items. }
+          </p>
+          <a routerLink="/inventory" class="btn-primary">Go to Inventory</a>
+        </div>
+      }
+
+      <!--
+        CARD GRID
+        min-width 260px prevents cards from becoming too narrow.
+        The gap ensures no card ever touches another.
+      -->
+      @if (currentListings().length > 0) {
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
+
+          @for (listing of currentListings(); track listing.listingId) {
+            <div
+              class="listing-card group relative bg-surface/80 backdrop-blur-sm rounded-2xl border-2 border-transparent flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1"
+              [class]="'listing-card group relative bg-surface/80 backdrop-blur-sm rounded-2xl border-2 flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 rarity-' + getRarity(listing)"
+            >
+
+              <!-- Rarity accent line at top of card -->
+              <div class="rarity-line absolute top-0 left-0 right-0 h-[3px]" [class]="'rarity-line-' + getRarity(listing)"></div>
+
+              <!-- Item image area -->
+              <div class="relative h-44 flex items-center justify-center bg-surface-secondary mx-4 mt-4 rounded-xl overflow-hidden">
+
+                @if (getImageUrl(listing)) {
+                  <img
+                    [src]="getImageUrl(listing)"
+                    [alt]="getItemName(listing)"
+                    class="w-[140px] h-[140px] object-contain transition-transform duration-300 group-hover:scale-105"
+                  />
+                } @else {
+                  <svg class="w-14 h-14 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    @if (isLootboxListing(listing)) {
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="3" y1="9" x2="21" y2="9"/>
+                      <line x1="9" y1="21" x2="9" y2="9"/>
+                    } @else {
+                      <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                      <circle cx="12" cy="5" r="2"/>
+                    }
+                  </svg>
+                }
+
+                <!-- Rarity badge -->
+                <span class="rarity-badge absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider" [class]="getRarity(listing)">
                   {{ getRarity(listing) }}
                 </span>
+
+                <!-- Heat tier badge (stoves only) -->
                 @if (getHeatLevel(listing) !== null) {
-                  <span class="heat-badge heat-{{getHeatLevel(listing)! | heatTier | lowercase}}">
+                  <span class="heat-badge heat-{{ getHeatLevel(listing)! | heatTier | lowercase }}">
                     {{ getHeatLevel(listing)! | heatTier }}
                   </span>
                 }
+
+                <!-- Lootbox badge -->
                 @if (isLootboxListing(listing)) {
-                  <span class="lootbox-badge absolute bottom-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] text-white">Lootbox</span>
+                  <span class="lootbox-badge absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white">
+                    Lootbox
+                  </span>
                 }
-                @if (listing.status !== 'active') {
-                  <span [class]="'status-badge absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-[20px] text-[11px] font-bold uppercase text-white ' + listing.status">{{ listing.status }}</span>
+
+                <!-- Status badge (My Listings only) -->
+                @if (activeTab() === 'my' && listing.status !== 'active') {
+                  <span class="status-badge absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase text-white" [class]="listing.status">
+                    {{ listing.status }}
+                  </span>
                 }
+
               </div>
-              <div class="flex flex-col gap-1">
-                <h4 class="m-0 text-base text-text-primary font-bold">{{ getItemName(listing) }}</h4>
-                <p class="m-0 text-[13px] text-text-secondary font-medium">{{ getItemMeta(listing) }}</p>
-                <p class="mt-1.5 m-0 text-lg text-accent font-bold">{{ formatPrice(listing.price) }} Coal</p>
-                <p class="m-0 text-xs text-text-muted">Listed {{ formatDate(listing.listedAt) }}</p>
+
+              <!-- Card body -->
+              <div class="flex flex-col gap-1 px-4 pt-3 pb-1 flex-1">
+                <h4 class="m-0 text-sm font-bold text-text-primary leading-snug">{{ getItemName(listing) }}</h4>
+                <p class="m-0 text-xs text-text-muted">{{ getItemMeta(listing) }}</p>
+                <p class="m-0 text-xs text-text-secondary">
+                  @if (activeTab() === 'all') { Sold by {{ listing.sellerName || 'Unknown' }} }
+                </p>
               </div>
-              <div class="mt-auto">
+
+              <!-- Price + CTA -->
+              <div class="px-4 pb-4 pt-2 flex items-center justify-between gap-3">
+                <div>
+                  <p class="m-0 text-base font-extrabold text-accent leading-none">{{ formatPrice(listing.price) }}</p>
+                  <p class="m-0 text-[10px] text-text-muted uppercase tracking-wider mt-0.5">Coal</p>
+                </div>
+
+                <!--
+                  "View Details" opens the modal.
+                  No buy/cancel button on the card itself — that
+                  action lives inside the modal where the user
+                  has full context (price history, item details).
+                -->
+                <button
+                  class="btn-details flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-text-primary bg-surface border border-border hover:border-accent/50 hover:text-accent transition-all duration-200"
+                  (click)="openDetails(listing)"
+                >
+                  View Details
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
+              </div>
+
+            </div>
+          }
+
+        </div>
+      }
+
+    }
+  </main>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DETAIL MODAL
+       Shown when selectedListing() is non-null.
+       Backdrop click → closeDetails().
+       Panel click → preventClose() so it doesn't bubble.
+  ════════════════════════════════════════════════════════════ -->
+  @if (selectedListing(); as listing) {
+    <div
+      class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      (click)="closeDetails()"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'Item details for ' + getItemName(listing)"
+    >
+      <div
+        class="modal-panel relative w-full max-w-[780px] bg-surface rounded-3xl border border-border overflow-hidden shadow-2xl"
+        (click)="preventClose($event)"
+      >
+
+        <!-- Close button -->
+        <button
+          class="absolute top-4 right-4 z-10 w-9 h-9 rounded-xl bg-surface-secondary border border-border flex items-center justify-center text-text-muted hover:text-text-primary hover:border-accent/30 transition-all"
+          (click)="closeDetails()"
+          aria-label="Close details"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+
+        <!-- Top rarity accent strip -->
+        <div class="h-1 w-full" [class]="'rarity-line-' + getRarity(listing)"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-[280px_1fr]">
+
+          <!-- ── Left: large item image + identity ────────────── -->
+          <div class="modal-item-panel flex flex-col items-center justify-center gap-4 p-8 bg-surface-secondary border-r border-border">
+
+            <!-- Large image / placeholder -->
+            <div class="w-44 h-44 rounded-2xl bg-surface flex items-center justify-center overflow-hidden border border-border">
+              @if (getImageUrl(listing)) {
+                <img [src]="getImageUrl(listing)" [alt]="getItemName(listing)" class="w-40 h-40 object-contain" />
+              } @else {
+                <svg class="w-20 h-20 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  @if (isLootboxListing(listing)) {
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="3" y1="9" x2="21" y2="9"/>
+                    <line x1="9" y1="21" x2="9" y2="9"/>
+                  } @else {
+                    <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                    <circle cx="12" cy="5" r="2"/>
+                  }
+                </svg>
+              }
+            </div>
+
+            <!-- Item name + rarity + meta -->
+            <div class="text-center">
+              <span class="rarity-badge inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2" [class]="getRarity(listing)">
+                {{ getRarity(listing) }}
+              </span>
+              <h2 class="text-lg font-extrabold text-text-primary m-0 mb-1">{{ getItemName(listing) }}</h2>
+              <p class="text-xs text-text-muted m-0">{{ getItemMeta(listing) }}</p>
+              @if (getHeatLevel(listing) !== null) {
+                <p class="text-xs text-text-secondary mt-1 m-0">
+                  Heat: {{ getHeatLevel(listing)! | heatTier }}
+                </p>
+              }
+            </div>
+
+            <!-- Seller info -->
+            <div class="w-full pt-4 border-t border-border text-center">
+              <p class="text-[10px] text-text-muted uppercase tracking-wider m-0 mb-1">Listed by</p>
+              <p class="text-sm font-semibold text-text-primary m-0">{{ listing.sellerName || 'Unknown' }}</p>
+              <p class="text-[11px] text-text-muted m-0 mt-0.5">{{ formatDate(listing.listedAt) }}</p>
+            </div>
+
+          </div>
+
+          <!-- ── Right: price chart + stats + action ──────────── -->
+          <div class="flex flex-col p-6 gap-6">
+
+            <!-- Asking price + action button at the top for quick access -->
+            <div class="flex items-center justify-between gap-4 p-4 bg-surface-secondary rounded-2xl border border-border">
+              <div>
+                <p class="text-[10px] text-text-muted uppercase tracking-wider m-0 mb-0.5">Asking Price</p>
+                <p class="text-2xl font-extrabold text-accent m-0">{{ formatPrice(listing.price) }} <span class="text-sm font-semibold text-text-secondary">Coal</span></p>
+              </div>
+
+              <!-- Action button: Buy (other's listings) or Cancel (own) or Inactive -->
+              @if (isOwnListing(listing)) {
                 @if (listing.status === 'active') {
                   <button
-                    class="btn-danger w-full py-3 rounded-[10px] text-sm font-semibold flex items-center justify-center gap-2"
+                    class="btn-danger px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2"
                     [disabled]="processingId() === listing.listingId"
-                    (click)="cancelListing(listing)">
+                    (click)="cancelListing(listing)"
+                  >
                     @if (processingId() === listing.listingId) {
-                      <span class="w-4 h-4 border-2 border-white/35 border-t-white rounded-full animate-spin"></span>
-                      <span>Canceling...</span>
+                      <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      Cancelling...
                     } @else {
-                      <span>Cancel</span>
+                      Cancel Listing
                     }
                   </button>
                 } @else {
-                  <button class="btn-secondary w-full py-3 rounded-[10px] text-sm font-semibold flex items-center justify-center gap-2" disabled>{{ listing.status }}</button>
+                  <span class="px-4 py-2 rounded-xl text-xs font-bold uppercase bg-surface border border-border text-text-muted">{{ listing.status }}</span>
+                }
+              } @else {
+                <button
+                  class="btn-primary px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2"
+                  [disabled]="listing.status !== 'active' || processingId() === listing.listingId"
+                  (click)="buyListing(listing)"
+                >
+                  @if (processingId() === listing.listingId) {
+                    <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Buying...
+                  } @else {
+                    Buy Now
+                  }
+                </button>
+              }
+            </div>
+
+            <!-- Price history chart section -->
+            <div class="flex flex-col gap-3">
+
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-bold text-text-muted uppercase tracking-wider m-0">Price History (30 days)</p>
+                <div class="flex items-center gap-3">
+                  <span class="flex items-center gap-1.5 text-[11px] text-text-muted">
+                    <span class="w-6 h-px border-t border-dashed border-amber-400/60 inline-block"></span>
+                    Avg
+                  </span>
+                </div>
+              </div>
+
+              <!-- SVG line chart -->
+              <div class="chart-container rounded-xl bg-surface-secondary border border-border p-3 overflow-hidden">
+                @if (chartData().points) {
+                  <svg
+                    viewBox="0 0 420 100"
+                    class="chart-svg w-full h-auto"
+                    aria-label="30-day price history chart"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stop-color="#e85d04" stop-opacity="0.25"/>
+                        <stop offset="100%" stop-color="#e85d04" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+
+                    <!-- Area fill under the price line -->
+                    <polygon
+                      [attr.points]="chartData().area"
+                      fill="url(#chartFill)"
+                      class="chart-area"
+                    />
+
+                    <!-- Average price dashed horizontal reference line -->
+                    <line
+                      x1="10" [attr.y1]="chartData().avgY"
+                      x2="410" [attr.y2]="chartData().avgY"
+                      stroke="rgba(245,158,11,0.55)"
+                      stroke-width="1"
+                      stroke-dasharray="5,4"
+                    />
+
+                    <!-- Price line -->
+                    <polyline
+                      [attr.points]="chartData().points"
+                      fill="none"
+                      stroke="#e85d04"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="chart-line"
+                    />
+
+                    <!-- Current price dot at end of line -->
+                    @if (chartData().points) {
+                      <circle
+                        [attr.cx]="410"
+                        [attr.cy]="chartData().avgY"
+                        r="3"
+                        fill="#e85d04"
+                        class="chart-dot"
+                      />
+                    }
+                  </svg>
+                } @else {
+                  <div class="h-[100px] flex items-center justify-center text-text-muted text-xs">Loading chart...</div>
                 }
               </div>
+
+              <!-- Chart axis labels -->
+              <div class="flex justify-between text-[10px] text-text-muted px-1">
+                <span>30 days ago</span>
+                <span>Today</span>
+              </div>
             </div>
-          }
-        }
-      }
+
+            <!-- Three stat pills: avg / min / max -->
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-surface-secondary rounded-xl p-3 text-center border border-border">
+                <p class="text-[10px] text-text-muted uppercase tracking-wider m-0 mb-1">Avg</p>
+                <p class="text-sm font-extrabold text-text-primary m-0">{{ formatPrice(averageHistoryPrice()) }}</p>
+              </div>
+              <div class="bg-surface-secondary rounded-xl p-3 text-center border border-border">
+                <p class="text-[10px] text-text-muted uppercase tracking-wider m-0 mb-1">Low</p>
+                <p class="text-sm font-extrabold text-rarity-rare m-0">{{ formatPrice(chartData().minPrice) }}</p>
+              </div>
+              <div class="bg-surface-secondary rounded-xl p-3 text-center border border-border">
+                <p class="text-[10px] text-text-muted uppercase tracking-wider m-0 mb-1">High</p>
+                <p class="text-sm font-extrabold text-accent m-0">{{ formatPrice(chartData().maxPrice) }}</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
     </div>
   }
+
 </div>
