@@ -287,14 +287,19 @@
           </p>
         </div>
 
-        @if (errorMessage() === 'Please complete the security check') {
-          <div class="flex items-center gap-3 px-[18px] py-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-[0.95rem] animate-shake">
-            <svg class="w-[22px] h-[22px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <span>{{ errorMessage() }}</span>
+        @if (turnstileError()) {
+          <div class="flex flex-col gap-2 px-[18px] py-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-[0.95rem] animate-shake">
+            <div class="flex items-center gap-3">
+              <svg class="w-[22px] h-[22px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please complete the security check</span>
+            </div>
+            @if (isWrongDomain()) {
+              <span class="text-xs opacity-80">Are you on the correct domain? Try <a href="https://emberexchange.xyz/register" class="underline hover:text-white">emberexchange.xyz</a></span>
+            }
           </div>
         }
 

@@ -29,7 +29,9 @@ export class RegisterComponent implements OnInit {
   acceptedTerms = signal(false);
   turnstileWidgetId = signal<string | null>(null);
   turnstileReady = signal(false);
+  turnstileError = signal(false);
   formStartTime = signal<number>(0);
+  isWrongDomain = signal(false);
 
   // Password strength
   passwordStrength = signal(0);
@@ -105,6 +107,10 @@ export class RegisterComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
+    this.errorMessage.set('');
+    this.turnstileError.set(false);
+    this.isWrongDomain.set(false);
+
     if (!this.acceptedTerms()) {
       this.errorMessage.set('You must accept the terms and conditions');
       return;
@@ -112,7 +118,10 @@ export class RegisterComponent implements OnInit {
 
     const widgetId = this.turnstileWidgetId();
     if (!widgetId || !this.turnstileService.isReady(widgetId)) {
-      this.errorMessage.set('Please complete the security check');
+      this.turnstileError.set(true);
+      if (window.location.hostname.includes('onrender.com')) {
+        this.isWrongDomain.set(true);
+      }
       return;
     }
 

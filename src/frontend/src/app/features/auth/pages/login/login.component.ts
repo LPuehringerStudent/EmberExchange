@@ -23,7 +23,9 @@ export class LoginComponent implements OnInit {
   twoFACode = signal('');
   turnstileWidgetId = signal<string | null>(null);
   turnstileReady = signal(false);
+  turnstileError = signal(false);
   formStartTime = signal<number>(0);
+  isWrongDomain = signal(false);
 
   @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
 
@@ -85,6 +87,8 @@ export class LoginComponent implements OnInit {
 
   async onSubmit(): Promise<void> {
     this.errorMessage.set('');
+    this.turnstileError.set(false);
+    this.isWrongDomain.set(false);
 
     if (this.loginForm.invalid) {
       this.errorMessage.set('Please fill in all fields');
@@ -93,7 +97,11 @@ export class LoginComponent implements OnInit {
 
     const widgetId = this.turnstileWidgetId();
     if (!widgetId || !this.turnstileService.isReady(widgetId)) {
-      this.errorMessage.set('Please complete the security check');
+      this.turnstileError.set(true);
+      // If on the wrong domain, Turnstile invisible mode will silently fail
+      if (window.location.hostname.includes('onrender.com')) {
+        this.isWrongDomain.set(true);
+      }
       return;
     }
 
