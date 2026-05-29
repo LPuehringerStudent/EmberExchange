@@ -425,6 +425,45 @@ listingRouter.get("/lootboxes/:lootboxId/listing", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+/**
+ * Trace a stove back to the player who originally acquired it.
+ * 1. Ownership table (for traded stoves)
+ * 2. LootboxDrop → Lootbox (for lootbox-origin stoves)
+ * 3. Stove.currentOwnerId (fallback — never traded)
+ */
+async function getStoveOriginPlayerId(unit: Unit, stoveId: number): Promise<number | null> {
+    // Method 1: Ownership history (traded stoves)
+    const ownershipStmt = unit.prepare<{ playerId: number }>(
+        `SELECT playerId FROM Ownership WHERE stoveId = @stoveId ORDER BY acquiredAt ASC LIMIT 1`,
+        { stoveId }
+    );
+    const firstOwnership = await ownershipStmt.get();
+    if (firstOwnership) {
+        return firstOwnership.playerId;
+    }
+
+    // Method 2: Lootbox drop chain (lootbox-origin stoves)
+    const lootboxStmt = unit.prepare<{ playerId: number }>(
+        `SELECT l.playerId
+         FROM LootboxDrop ld
+         JOIN Lootbox l ON l.lootboxId = ld.lootboxId
+         WHERE ld.stoveId = @stoveId`,
+        { stoveId }
+    );
+    const lootboxOrigin = await lootboxStmt.get();
+    if (lootboxOrigin) {
+        return lootboxOrigin.playerId;
+    }
+
+    // Method 3: Fallback — current owner is also original owner
+    const stoveStmt = unit.prepare<{ currentOwnerId: number }>(
+        `SELECT currentOwnerId FROM Stove WHERE stoveId = @stoveId`,
+        { stoveId }
+    );
+    const stove = await stoveStmt.get();
+    return stove?.currentOwnerId ?? null;
+}
+
 listingRouter.post("/listings", async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ListingService(unit);
@@ -456,6 +495,48 @@ listingRouter.post("/listings", async (req, res) => {
         if (price < 1) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive number" });
             return;
+        }
+
+        // Verify seller actually owns the item
+        if (stoveId !== undefined && stoveId !== null) {
+            const stoveStmt = unit.prepare<{ currentOwnerId: number }>(
+                `SELECT currentOwnerId FROM Stove WHERE stoveId = @stoveId`,
+                { stoveId }
+            );
+            const stove = await stoveStmt.get();
+            if (!stove || stove.currentOwnerId !== sellerId) {
+                res.status(StatusCodes.FORBIDDEN).json({ error: "You do not own this stove" });
+                await unit.complete(false);
+                return;
+            }
+
+            // Check if stove originated from a banned account
+            const originPlayerId = await getStoveOriginPlayerId(unit, stoveId);
+            if (originPlayerId !== null) {
+                const playerStmt = unit.prepare<{ bannedAt: string | null }>(
+                    `SELECT bannedAt FROM Player WHERE playerId = @playerId`,
+                    { playerId: originPlayerId }
+                );
+                const originPlayer = await playerStmt.get();
+                if (originPlayer?.bannedAt) {
+                    res.status(StatusCodes.FORBIDDEN).json({ error: "This item cannot be listed because it originated from a banned account" });
+                    await unit.complete(false);
+                    return;
+                }
+            }
+        }
+
+        if (lootboxId !== undefined && lootboxId !== null) {
+            const lootboxStmt = unit.prepare<{ playerId: number }>(
+                `SELECT playerId FROM Lootbox WHERE lootboxId = @lootboxId`,
+                { lootboxId }
+            );
+            const lootbox = await lootboxStmt.get();
+            if (!lootbox || lootbox.playerId !== sellerId) {
+                res.status(StatusCodes.FORBIDDEN).json({ error: "You do not own this lootbox" });
+                await unit.complete(false);
+                return;
+            }
         }
 
         // Check if item is already listed
