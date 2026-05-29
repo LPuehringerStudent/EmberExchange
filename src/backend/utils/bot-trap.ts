@@ -14,6 +14,19 @@ export interface BotTrapEvent {
     userAgent: string;
     tarPitMs: number;
     headers: Record<string, string | string[] | undefined>;
+    /** Key request fields for forensics */
+    details: {
+        turnstileToken: "present" | "missing" | "invalid-type";
+        turnstileTokenLength: number;
+        formStartTime?: number;
+        hasRequiredHeader: boolean;
+        requiredHeaderValue?: string;
+        honeypotTriggered: boolean;
+        honeypotFields: Record<string, string>;
+        username?: string;
+        emailDomain?: string;
+        bodyKeys: string[];
+    };
 }
 
 const botMap = new Map<string, BotRecord>();
@@ -85,6 +98,37 @@ export function logBot(req: Request, reason: string): void {
         `🤖 BOT DETECTED | ${reason} | IP: ${ip} | ${endpoint} | UA: ${ua}`
     );
 
+    const body = req.body as Record<string, unknown> ?? {};
+    const rawToken = body.turnstileToken;
+    let turnstileStatus: "present" | "missing" | "invalid-type" = "missing";
+    let turnstileLen = 0;
+    if (rawToken !== undefined && rawToken !== null) {
+        if (typeof rawToken === "string") {
+            turnstileStatus = "present";
+            turnstileLen = rawToken.length;
+        } else {
+            turnstileStatus = "invalid-type";
+        }
+    }
+
+    const requiredHeaderName = process.env.REQUIRED_HEADER_NAME ?? "X-Ember-Client";
+    const requiredHeaderValue = req.headers[requiredHeaderName.toLowerCase()];
+    const hasRequiredHeader = typeof requiredHeaderValue === "string" && requiredHeaderValue.length > 0;
+
+    const honeypotFields = antiBotConfig.honeypotFields;
+    const triggeredHoneypots: Record<string, string> = {};
+    let honeypotTriggered = false;
+    for (const field of honeypotFields) {
+        const val = body[field];
+        if (typeof val === "string" && val.trim().length > 0) {
+            triggeredHoneypots[field] = val.substring(0, 50); // truncate
+            honeypotTriggered = true;
+        }
+    }
+
+    const emailRaw = body.email;
+    const emailDomain = typeof emailRaw === "string" ? emailRaw.split("@")[1] : undefined;
+
     botTrapLog.push({
         timestamp: new Date().toISOString(),
         ip,
@@ -93,6 +137,18 @@ export function logBot(req: Request, reason: string): void {
         userAgent: ua,
         tarPitMs: 0,
         headers: { ...req.headers },
+        details: {
+            turnstileToken: turnstileStatus,
+            turnstileTokenLength: turnstileLen,
+            formStartTime: typeof body.formStartTime === "number" ? body.formStartTime : undefined,
+            hasRequiredHeader,
+            requiredHeaderValue: typeof requiredHeaderValue === "string" ? requiredHeaderValue : undefined,
+            honeypotTriggered,
+            honeypotFields: triggeredHoneypots,
+            username: typeof body.username === "string" ? body.username : undefined,
+            emailDomain,
+            bodyKeys: Object.keys(body),
+        },
     });
 
     if (botTrapLog.length > MAX_LOG_SIZE) {

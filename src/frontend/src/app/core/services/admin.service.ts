@@ -54,6 +54,18 @@ export interface BotTrapEvent {
   reason: string;
   userAgent: string;
   tarPitMs: number;
+  details?: {
+    turnstileToken: "present" | "missing" | "invalid-type";
+    turnstileTokenLength: number;
+    formStartTime?: number;
+    hasRequiredHeader: boolean;
+    requiredHeaderValue?: string;
+    honeypotTriggered: boolean;
+    honeypotFields: Record<string, string>;
+    username?: string;
+    emailDomain?: string;
+    bodyKeys: string[];
+  };
 }
 
 @Injectable({ providedIn: 'root' })
