@@ -16,9 +16,9 @@ interface LimiterConfig {
  * Simple in-memory token-bucket rate limiter for Express.
  * No external dependencies — uses a Map that is pruned automatically.
  *
- * NOTE: This limiter is bypassed in production. Render sets NODE_ENV=production
- * which disables the middleware (see app.ts). Cloudflare handles rate limiting
- * at the edge. This code is kept for local development only.
+ * NOTE: This limiter runs in all environments. In production, Cloudflare also
+ * handles rate limiting at the edge, but this in-memory limiter is a second
+ * line of defense against bots that bypass Cloudflare.
  */
 class ExpressRateLimiter {
     private buckets = new Map<string, Bucket>();
@@ -89,7 +89,7 @@ class ExpressRateLimiter {
 /** Strict limit for registration — bots love this endpoint */
 export const registerRateLimiter = new ExpressRateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 5,
+    maxRequests: 3,
     message: "Too many registration attempts from this IP. Please try again in 15 minutes."
 });
 

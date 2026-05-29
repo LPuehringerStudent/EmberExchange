@@ -43,6 +43,71 @@ function validateRegistrationInput(username: string, password: string, email: st
     return null;
 }
 
+/** Known disposable / throwaway email domains. Registrations from these are rejected. */
+const DISPOSABLE_EMAIL_DOMAINS = new Set([
+    "mailinator.com",
+    "mailinator.net",
+    "mailinator.org",
+    "guerrillamail.com",
+    "guerrillamail.net",
+    "guerrillamail.org",
+    "sharklasers.com",
+    "tempmail.com",
+    "temp-mail.org",
+    "tempmailaddress.com",
+    "throwawaymail.com",
+    "yopmail.com",
+    "yopmail.fr",
+    "yopmail.net",
+    "cool.fr.nf",
+    "jetable.fr.nf",
+    "nospam.ze.tc",
+    "nomail.xl.cx",
+    "mega.zik.dj",
+    "speed.1s.fr",
+    "courriel.fr.nf",
+    "moncourrier.fr.nf",
+    "monemail.fr.nf",
+    "monmail.fr.nf",
+    "10minutemail.com",
+    "10minutemail.net",
+    "10minute-mail.com",
+    "temp-mail.ru",
+    "tempmail.ninja",
+    "tmpmail.org",
+    "burnermail.io",
+    "dispomail.eu",
+    "emailondeck.com",
+    "fake-email.net",
+    "getairmail.com",
+    "getnada.com",
+    "inboxbear.com",
+    "mailcatch.com",
+    "maildrop.cc",
+    "mailnesia.com",
+    "mailnull.com",
+    "mailsac.com",
+    "mintemail.com",
+    "mytrashmail.com",
+    "nwytg.net",
+    "spam4.me",
+    "spamgourmet.com",
+    "tempinbox.com",
+    "trashmail.com",
+    "trashmail.net",
+    "trashmail.org",
+    "trash-mail.com",
+    "wegwerfmail.de",
+    "wegwerfmail.net",
+    "wegwerfmail.org",
+]);
+
+function isDisposableEmail(email: string): boolean {
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (!domain) return false;
+    return DISPOSABLE_EMAIL_DOMAINS.has(domain);
+}
+
 /**
  * @openapi
  * /auth/login:
@@ -710,15 +775,13 @@ authRouter.delete("/auth/sessions", async (req, res) => {
 authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, async (req, res) => {
     const { username, password, email } = req.body;
 
-    // Bot detection: high-confidence bots get a FAKE SUCCESS — no DB write
+    // Bot detection — HARD BLOCK on Turnstile failure (no fake success)
     const turnstileFailed = res.locals.turnstileFailed as boolean;
     const honeypotTriggered = checkHoneypot(req);
 
-    if (turnstileFailed && honeypotTriggered) {
-        logBot(req, "register-blocked: turnstile + honeypot");
-        setBotHeaders(res);
-        await tarPit(req);
-        res.status(StatusCodes.CREATED).json(fakeAuthResponse());
+    if (turnstileFailed) {
+        logBot(req, "register-blocked: invalid-turnstile-token");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
         return;
     }
 
@@ -745,6 +808,13 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid email format" });
+        return;
+    }
+
+    // Block disposable / throwaway email domains
+    if (isDisposableEmail(email)) {
+        logBot(req, "register-blocked: disposable-email");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Please use a permanent email address." });
         return;
     }
 
