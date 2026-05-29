@@ -28,6 +28,8 @@ export class RegisterComponent implements OnInit {
   currentStep = signal(1);
   acceptedTerms = signal(false);
   turnstileWidgetId = signal<string | null>(null);
+  googleEnabled = signal(false);
+  githubEnabled = signal(false);
   turnstileReady = signal(false);
   turnstileError = signal(false);
   formStartTime = signal<number>(0);
@@ -158,6 +160,22 @@ export class RegisterComponent implements OnInit {
     // Set form start time for timing analysis (backend rejects instant submissions)
     this.formStartTime.set(Date.now());
 
+    // Check if there's an OAuth error in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthError = urlParams.get('error');
+    if (oauthError) {
+      this.errorMessage.set(decodeURIComponent(oauthError));
+    }
+
+    // Load OAuth provider status
+    try {
+      const status = await this.authService.getOAuthStatus();
+      this.googleEnabled.set(status.google);
+      this.githubEnabled.set(status.github);
+    } catch {
+      // OAuth status fetch failed, buttons will remain disabled
+    }
+
     try {
       await this.turnstileService.initialize();
     } catch {
@@ -181,6 +199,18 @@ export class RegisterComponent implements OnInit {
       this.showPassword.update(v => !v);
     } else {
       this.showConfirmPassword.update(v => !v);
+    }
+  }
+
+  registerWithGoogle(): void {
+    if (this.googleEnabled()) {
+      this.authService.loginWithGoogle();
+    }
+  }
+
+  registerWithGitHub(): void {
+    if (this.githubEnabled()) {
+      this.authService.loginWithGitHub();
     }
   }
 
