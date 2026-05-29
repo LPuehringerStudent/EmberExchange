@@ -1,6 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { PlayerService } from "../services/player-service";
+import type { PlayerRow } from "../../shared/model";
 import { SessionService } from "../services/session-service";
 import { PlayerStatisticsService } from "../services/player-statistics-service";
 import { LoginHistoryService } from "../services/login-history-service";
@@ -10,6 +11,7 @@ import { isNullOrWhiteSpace } from "../utils/util";
 import { hashPassword, comparePassword, isHashed } from "../utils/password";
 import { TwoFactorService } from "../services/two-factor-service";
 import { NotificationService } from "../services/notification-service";
+import { registerRateLimiter, loginRateLimiter, authRateLimiter } from "../middleware/rate-limiter";
 
 export const authRouter = express.Router();
 
@@ -17,6 +19,24 @@ function isConstraintError(err: unknown): boolean {
     const pgErr = err as { code?: string };
     return pgErr.code === "23503" ||
            pgErr.code === "23505";
+}
+
+/** Validates registration input. Returns error message or null if valid. */
+function validateRegistrationInput(username: string, password: string, email: string): string | null {
+    if (username.length < 3 || username.length > 32) {
+        return "Username must be between 3 and 32 characters";
+    }
+    if (email.length > 255) {
+        return "Email must not exceed 255 characters";
+    }
+    if (password.length < 8 || password.length > 128) {
+        return "Password must be between 8 and 128 characters";
+    }
+    // Require at least one letter and one number
+    if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+        return "Password must contain at least one letter and one number";
+    }
+    return null;
 }
 
 /**
@@ -69,53 +89,67 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post("/auth/login", async (req, res) => {
+authRouter.post("/auth/login", loginRateLimiter.middleware(), async (req, res) => {
     const { usernameOrEmail, password } = req.body;
-    
+
     if (isNullOrWhiteSpace(usernameOrEmail) || isNullOrWhiteSpace(password)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Username/email and password are required" });
         return;
     }
-    
-    const unit = await Unit.create(false);
-    const playerService = new PlayerService(unit);
-    const sessionService = new SessionService(unit);
-    const loginHistoryService = new LoginHistoryService(unit);
+    if (password.length > 128) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Password too long" });
+        return;
+    }
+
+    // Phase 1: Find player with a read-only unit (no transaction overhead)
+    const lookupUnit = await Unit.create(true);
+    const playerService = new PlayerService(lookupUnit);
+    let player: PlayerRow | null = null;
 
     try {
-        // Try to find player by username first, then by email
-        let player = await playerService.getPlayerByUsername(usernameOrEmail);
+        player = await playerService.getPlayerByUsername(usernameOrEmail);
         if (player === null) {
             player = await playerService.getPlayerByEmail(usernameOrEmail);
         }
-        
-        if (player === null) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
-            await unit.complete(false);
-            return;
-        }
+        await lookupUnit.complete();
+    } catch (err) {
+        await lookupUnit.complete(false);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        return;
+    }
 
-        // Check password (supports both bcrypt hashes and legacy plain text)
-        let passwordValid = false;
-        if (player.password === null) {
-            passwordValid = false;
-        } else if (isHashed(player.password)) {
-            passwordValid = await comparePassword(password, player.password);
-        } else {
-            // Legacy plain-text password — check and migrate to hash
-            passwordValid = player.password === password;
-            if (passwordValid) {
-                const hashed = await hashPassword(password);
-                await playerService.updatePlayerPassword(player.playerId, hashed);
-            }
-        }
+    if (player === null) {
+        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+        return;
+    }
 
-        if (!passwordValid) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
-            await unit.complete(false);
-            return;
-        }
+    // Phase 2: Verify password WITHOUT holding a DB connection
+    // bcrypt.compare is CPU-intensive; releasing the connection here
+    // prevents pool exhaustion under brute-force load.
+    let passwordValid = false;
+    let needsMigration = false;
+    if (player.password === null) {
+        passwordValid = false;
+    } else if (isHashed(player.password)) {
+        passwordValid = await comparePassword(password, player.password);
+    } else {
+        passwordValid = player.password === password;
+        needsMigration = passwordValid;
+    }
 
+    if (!passwordValid) {
+        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+        return;
+    }
+
+    // Phase 3: Create session with a fresh write unit
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    const loginHistoryService = new LoginHistoryService(unit);
+    const twoFactorService = new TwoFactorService(unit);
+    let ok = false;
+
+    try {
         // Reject banned players
         if (player.bannedAt) {
             res.status(StatusCodes.FORBIDDEN).json({ error: "Account banned", reason: player.banReason || "No reason provided" });
@@ -123,26 +157,31 @@ authRouter.post("/auth/login", async (req, res) => {
             return;
         }
 
+        // Migrate legacy plain-text password if needed
+        if (needsMigration) {
+            const hashed = await hashPassword(password);
+            await playerService.updatePlayerPassword(player.playerId, hashed);
+        }
+
         // Check if 2FA is enabled
-        const twoFactorService = new TwoFactorService(unit);
         const totpEnabled = await twoFactorService.isEnabled(player.playerId);
 
         if (totpEnabled) {
-            // Issue a temporary challenge instead of a full session
             const challengeId = await twoFactorService.createChallenge(player.playerId);
-            await unit.complete(true);
+            ok = true;
             res.status(StatusCodes.OK).json({ requires2FA: true, challengeId });
+            await unit.complete(true);
             return;
         }
 
         const sessionId = crypto.randomUUID();
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24); // 24-hour session
+        expiresAt.setHours(expiresAt.getHours() + 24);
 
         const success = await sessionService.createSession(sessionId, player.playerId, expiresAt);
         if (success) {
             await loginHistoryService.create(player.playerId, sessionId);
-            await unit.complete(true);
+            ok = true;
             res.status(StatusCodes.OK).json({ sessionId, playerId: player.playerId });
         } else {
             throw new Error("Failed to create session");
@@ -150,6 +189,9 @@ authRouter.post("/auth/login", async (req, res) => {
     } catch (err) {
         await unit.complete(false);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        return;
+    } finally {
+        if (ok) await unit.complete(true);
     }
 });
 
@@ -209,7 +251,7 @@ authRouter.post("/auth/login", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.patch("/auth/me", async (req, res) => {
+authRouter.patch("/auth/me", authRateLimiter.middleware(), async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
@@ -324,7 +366,7 @@ authRouter.patch("/auth/me", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.patch("/auth/password", async (req, res) => {
+authRouter.patch("/auth/password", authRateLimiter.middleware(), async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
@@ -420,7 +462,7 @@ authRouter.patch("/auth/password", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.delete("/auth/me", async (req, res) => {
+authRouter.delete("/auth/me", authRateLimiter.middleware(), async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
@@ -639,8 +681,33 @@ authRouter.delete("/auth/sessions", async (req, res) => {
     }
 });
 
-authRouter.post("/auth/register", async (req, res) => {
+authRouter.post("/auth/register", registerRateLimiter.middleware(), async (req, res) => {
     const { username, password, email } = req.body;
+
+    // Phase 1: Validate everything before touching the DB or hashing
+    if (isNullOrWhiteSpace(username) || isNullOrWhiteSpace(password) || isNullOrWhiteSpace(email)) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Username, password, and email are required" });
+        return;
+    }
+
+    const validationError = validateRegistrationInput(username, password, email);
+    if (validationError) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: validationError });
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid email format" });
+        return;
+    }
+
+    // Phase 2: Hash password BEFORE acquiring a DB connection.
+    // bcrypt is CPU-bound and can take 50-100ms. Holding a DB connection
+    // during hashing is the #1 cause of pool exhaustion under registration floods.
+    const hashedPassword = await hashPassword(password);
+
+    // Phase 3: Atomically create the player and all related records
     const unit = await Unit.create(false);
     const playerService = new PlayerService(unit);
     const playerStatisticsService = new PlayerStatisticsService(unit);
@@ -648,44 +715,6 @@ authRouter.post("/auth/register", async (req, res) => {
     let ok = false;
 
     try {
-        // Validation
-        if (isNullOrWhiteSpace(username) || isNullOrWhiteSpace(password) || isNullOrWhiteSpace(email)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Username, password, and email are required" });
-            await unit.complete(false);
-            return;
-        }
-
-        if (password.length < 6) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Password must be at least 6 characters" });
-            await unit.complete(false);
-            return;
-        }
-
-        // Basic email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid email format" });
-            await unit.complete(false);
-            return;
-        }
-
-        // Check if username or email already exists
-        const existingByUsername = await playerService.getPlayerByUsername(username);
-        if (existingByUsername) {
-            res.status(StatusCodes.CONFLICT).json({ error: "Username already exists" });
-            await unit.complete(false);
-            return;
-        }
-
-        const existingByEmail = await playerService.getPlayerByEmail(email);
-        if (existingByEmail) {
-            res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
-            await unit.complete(false);
-            return;
-        }
-
-        // Hash password and create player with default values (1000 coins, 10 lootboxes)
-        const hashedPassword = await hashPassword(password);
         const [success, playerId] = await playerService.createPlayer(username, hashedPassword, email, 1000, 10);
 
         if (!success) {
@@ -694,7 +723,6 @@ authRouter.post("/auth/register", async (req, res) => {
             return;
         }
 
-        // Create player statistics record
         const [statsSuccess] = await playerStatisticsService.createDefaultPlayerStatistics(playerId);
         if (!statsSuccess) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create player statistics" });
@@ -702,7 +730,6 @@ authRouter.post("/auth/register", async (req, res) => {
             return;
         }
 
-        // Create welcome notification
         try {
             const notificationService = new NotificationService(unit);
             await notificationService.create(
@@ -716,7 +743,6 @@ authRouter.post("/auth/register", async (req, res) => {
             // Ignore notification errors
         }
 
-        // Create session (auto-login)
         const sessionId = crypto.randomUUID();
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
@@ -967,7 +993,7 @@ authRouter.get("/auth/2fa/status", async (req, res) => {
  *                 qrCodeDataUrl:
  *                   type: string
  */
-authRouter.post("/auth/2fa/setup", async (req, res) => {
+authRouter.post("/auth/2fa/setup", authRateLimiter.middleware(), async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
@@ -1048,7 +1074,7 @@ authRouter.post("/auth/2fa/setup", async (req, res) => {
  *                   items:
  *                     type: string
  */
-authRouter.post("/auth/2fa/confirm", async (req, res) => {
+authRouter.post("/auth/2fa/confirm", authRateLimiter.middleware(), async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
@@ -1203,7 +1229,7 @@ authRouter.post("/auth/2fa/verify", async (req, res) => {
  *       200:
  *         description: 2FA disabled
  */
-authRouter.delete("/auth/2fa", async (req, res) => {
+authRouter.delete("/auth/2fa", authRateLimiter.middleware(), async (req, res) => {
     const sessionId = req.headers["session-id"] as string;
     if (!sessionId) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });

@@ -340,7 +340,12 @@ export class DB {
     public static getPool(): Pool {
         if (!DB.pool) {
             const connectionString = process.env.DATABASE_URL || "postgresql://localhost:5432/emberexchange";
-            DB.pool = new Pool({ connectionString });
+            DB.pool = new Pool({
+                connectionString,
+                max: 20,
+                idleTimeoutMillis: 30000,
+                connectionTimeoutMillis: 5000,
+            });
         }
         return DB.pool;
     }
