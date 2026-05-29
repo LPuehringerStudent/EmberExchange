@@ -5,6 +5,7 @@ import { ListingService } from "./listing-service";
 import { PlayerPrestigeService } from "./player-prestige-service";
 import { AchievementEngine } from "./achievement-engine";
 import { PityService } from "./pity-service";
+import { QuestService } from "./quest-service";
 
 interface DropTable {
     rarity: string;
@@ -299,7 +300,11 @@ export class LootboxService extends ServiceBase {
         }
 
         // 3. Create stove with randomized heat level
-        const heatLevel = stoveType.minHeat + Math.random() * (stoveType.maxHeat - stoveType.minHeat);
+        let heatLevel = stoveType.minHeat + Math.random() * (stoveType.maxHeat - stoveType.minHeat);
+        // Secret stoves should never be extinguished (heat > 0.55)
+        if (stoveType.rarity.toLowerCase() === 'secret') {
+            heatLevel = Math.min(heatLevel, 0.55);
+        }
         const stoveStmt = this.unit.prepare<{ stoveId: number }>(
             `INSERT INTO Stove (typeId, currentOwnerId, mintedAt, heatLevel) 
              VALUES (@typeId, @playerId, NOW(), @heatLevel)`,
@@ -348,6 +353,15 @@ export class LootboxService extends ServiceBase {
             await engine.checkWealthAchievements(playerId);
         } catch {
             try { await this.unit.rollbackToSavepoint('lootbox_achievements'); } catch { /* ignore */ }
+        }
+
+        // Track quest progress
+        try {
+            const questService = new QuestService(this.unit);
+            await questService.trackProgress(playerId, 'open_lootboxes', 1);
+            await questService.trackProgress(playerId, 'open_20_lootboxes', 1);
+        } catch {
+            // Ignore quest tracking errors
         }
 
         return [true, { stoveId, stoveName: stoveType.name, rarity: stoveType.rarity, imageUrl: stoveType.imageUrl, lootboxId }];

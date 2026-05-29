@@ -14,6 +14,8 @@ export interface SalvageResult {
 export interface ReRollResult {
   success: boolean;
   newHeatLevel?: number;
+  cost?: number;
+  newSparksBalance?: number;
   error?: string;
 }
 

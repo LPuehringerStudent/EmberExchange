@@ -71,6 +71,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/update-log/update-log.component').then(m => m.UpdateLogComponent)
   },
   {
+    path: 'quests',
+    loadComponent: () => import('./features/quests/quests.component').then(m => m.QuestsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'collections',
+    loadComponent: () => import('./features/collections/collections.component').then(m => m.CollectionsComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'glory',
     loadComponent: () => import('./features/hall-of-glory/hall-of-glory.component').then(m => m.HallOfGloryComponent),
     canActivate: [authGuard]

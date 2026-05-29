@@ -1,6 +1,7 @@
 import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { ForgeryResult, ForgedStove, Rarity, StoveTypeRow, StoveRow } from "../../shared/model";
+import { QuestService } from "./quest-service";
 
 const RARITY_ORDER = [
     Rarity.COMMON,
@@ -100,15 +101,38 @@ export class ForgeryService extends ServiceBase {
         // 6. Calculate output heatLevel
         const avgHeat = inputs.reduce((sum, s) => sum + s.heatLevel, 0) / 6;
         const outputHeat = avgHeat * (outputType.maxHeat - outputType.minHeat) + outputType.minHeat;
-        const clampedHeat = Math.max(outputType.minHeat, Math.min(outputType.maxHeat, outputHeat));
+        let clampedHeat = Math.max(outputType.minHeat, Math.min(outputType.maxHeat, outputHeat));
+        // Secret stoves should never be extinguished (heat > 0.55)
+        if (outputType.rarity.toLowerCase() === 'secret') {
+            clampedHeat = Math.min(clampedHeat, 0.55);
+        }
 
         // 7. Execute atomic transaction
-        // Clean up dependent records before deleting stoves
+        // Clean up dependent records before deleting stoves (in correct FK order)
+        // Trade → Listing → Stove chain, and other direct Stove references
+        const cleanupTradeStmt = this.unit.prepare(
+            `DELETE FROM Trade WHERE listingId IN (SELECT listingId FROM Listing WHERE stoveId IN (${placeholders}))`,
+            params
+        );
+        await cleanupTradeStmt.run();
+
         const cleanupLootboxDropStmt = this.unit.prepare(
             `DELETE FROM LootboxDrop WHERE stoveId IN (${placeholders})`,
             params
         );
         await cleanupLootboxDropStmt.run();
+
+        const cleanupGloryStmt = this.unit.prepare(
+            `DELETE FROM GloryShowcase WHERE stoveId IN (${placeholders})`,
+            params
+        );
+        await cleanupGloryStmt.run();
+
+        const cleanupOwnershipStmt = this.unit.prepare(
+            `DELETE FROM Ownership WHERE stoveId IN (${placeholders})`,
+            params
+        );
+        await cleanupOwnershipStmt.run();
 
         const cleanupListingStmt = this.unit.prepare(
             `DELETE FROM Listing WHERE stoveId IN (${placeholders})`,
@@ -159,12 +183,22 @@ export class ForgeryService extends ServiceBase {
             // Ignore achievement errors
         }
 
+        // Track quest progress
+        try {
+            const questService = new QuestService(this.unit);
+            await questService.trackProgress(playerId, 'forge_stove', 1);
+            await questService.trackProgress(playerId, 'forge_5_stoves', 1);
+        } catch {
+            // Ignore quest tracking errors
+        }
+
         const newStove: ForgedStove = {
             stoveId: newStoveId,
             typeId: outputType.typeId,
             currentOwnerId: playerId,
             mintedAt: new Date(),
             heatLevel: clampedHeat,
+            reRollCount: 0,
             name: outputType.name,
             rarity: outputRarity,
             imageUrl: outputType.imageUrl,

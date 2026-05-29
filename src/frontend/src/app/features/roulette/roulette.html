@@ -1,0 +1,270 @@
+<div class="roulette-container">
+  <!-- Header -->
+  <header class="rl-header">
+    <h1 class="rl-title">Roulette</h1>
+    <span class="rl-phase-badge" [class.rl-phase-badge--betting]="phase() === 'betting'"
+      [class.rl-phase-badge--settled]="phase() === 'settled'">
+      {{ phase() === 'betting' ? 'Place Your Bets' : 'Round Complete' }}
+    </span>
+  </header>
+
+  <!-- Error -->
+  @if (lastError(); as err) {
+    <div class="rl-error">{{ err.message || err }}</div>
+  }
+
+  <!-- Players Bar -->
+  <div class="rl-players-bar">
+    @for (player of players(); track player.playerId) {
+      <div class="rl-player-chip" [class.rl-player-chip--me]="player.playerId === myPlayerId()">
+        <span class="rl-player-name">{{ player.username }}</span>
+        <span class="rl-player-stack">{{ player.stack }} coins</span>
+        @if (player.bets.length > 0) {
+          <span class="rl-player-bet">
+            {{ formatBets(player.bets) }}
+          </span>
+        }
+        @if (player.result !== 'playing') {
+          <span class="rl-player-result" [class.rl-player-result--won]="player.result === 'won'"
+            [class.rl-player-result--lost]="player.result === 'lost'">
+            {{ player.result === 'won' ? 'Won!' : 'Lost' }}
+          </span>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Main Game Area -->
+  <div class="rl-game-area">
+    <!-- Wheel Section -->
+    <div class="rl-wheel-section">
+      <div class="rl-wheel-wrapper">
+        <div class="rl-wheel-rotator" [style.transform]="'rotate(' + wheelRotation() + 'deg)'">
+          <svg viewBox="0 0 220 220" class="rl-wheel-svg">
+            <!-- Defs for gradients -->
+            <defs>
+              <radialGradient id="turretGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#444" />
+                <stop offset="60%" stop-color="#222" />
+                <stop offset="100%" stop-color="#111" />
+              </radialGradient>
+              <radialGradient id="hubGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#555" />
+                <stop offset="40%" stop-color="#333" />
+                <stop offset="100%" stop-color="#1a1a1a" />
+              </radialGradient>
+            </defs>
+
+            <!-- Outer rim -->
+            <circle cx="110" cy="110" r="102" fill="none" stroke="#8b6914" stroke-width="3" />
+            <circle cx="110" cy="110" r="99" fill="none" stroke="#5c4a0d" stroke-width="1" />
+
+            <!-- Wheel segments -->
+            @for (n of wheelOrder; track $index; let i = $index) {
+              <path
+                [attr.d]="getSegmentPath(i)"
+                [attr.fill]="getNumberColor(n) === 'red' ? '#c62828' : getNumberColor(n) === 'black' ? '#212121' : '#2e7d32'"
+                stroke="#111"
+                stroke-width="0.8"
+              />
+            }
+
+            <!-- Numbers -->
+            @for (n of wheelOrder; track $index; let i = $index) {
+              <g [attr.transform]="getTextTransform(i)">
+                <text text-anchor="middle" dominant-baseline="central" fill="white" font-size="7.5"
+                  font-weight="700" font-family="system-ui, sans-serif">
+                  {{ n }}
+                </text>
+              </g>
+            }
+
+            <!-- Turret (center hub) -->
+            <circle cx="110" cy="110" r="30" fill="url(#turretGrad)" stroke="#8b6914" stroke-width="2" />
+            <circle cx="110" cy="110" r="18" fill="url(#hubGrad)" stroke="#666" stroke-width="1" />
+            <circle cx="110" cy="110" r="6" fill="#8b6914" />
+          </svg>
+        </div>
+
+        <!-- Ball (positioned at top of track, fixed while wheel spins underneath) -->
+        @if (showBall()) {
+          <div class="rl-ball" [class.rl-ball--bounce]="ballBounce()"></div>
+        }
+
+        <!-- Ball track ring (visual) -->
+        <div class="rl-track-ring"></div>
+      </div>
+
+      <!-- Result Display -->
+      @if (resultRevealed()) {
+        <div class="rl-result">
+          <div class="rl-result-number" [class.red]="winningColor() === 'red'"
+            [class.black]="winningColor() === 'black'" [class.green]="winningColor() === 'green'">
+            {{ winningNumber() }}
+          </div>
+          <div class="rl-result-label">{{ winningColor() }}</div>
+        </div>
+      }
+    </div>
+
+    <!-- Betting Table -->
+    <div class="rl-table">
+      <!-- Top row: Zero + Grid + Column bets -->
+      <div class="rl-table-top">
+        <!-- Zero -->
+        <div class="rl-zero" [class.disabled]="!canBet()" (click)="placeBet('straight', 0)">
+          0
+          @if (hasBetOn('straight', 0)) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('straight', 0) }}</div>
+          }
+        </div>
+
+        <!-- Number Grid -->
+        <div class="rl-grid">
+          @for (row of gridNumbers; track $index) {
+            <div class="rl-grid-row">
+              @for (n of row; track n) {
+                <div class="rl-cell" [class.red]="getNumberColor(n) === 'red'"
+                  [class.black]="getNumberColor(n) === 'black'" [class.disabled]="!canBet()"
+                  (click)="placeBet('straight', n)">
+                  {{ n }}
+                  @if (hasBetOn('straight', n)) {
+                    <div class="rl-chip-indicator">{{ getBetAmountFor('straight', n) }}</div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Column bets -->
+        <div class="rl-columns">
+          @for (col of [1, 2, 3]; track col) {
+            <div class="rl-column-cell" [class.disabled]="!canBet()"
+              (click)="placeBet(colBetType(col))">
+              2:1
+              @if (hasBetOn(colBetType(col))) {
+                <div class="rl-chip-indicator">{{ getBetAmountFor(colBetType(col)) }}</div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Dozen bets -->
+      <div class="rl-dozens">
+        <div class="rl-dozen" [class.disabled]="!canBet()" (click)="placeBet('dozen1')">
+          1st 12
+          @if (hasBetOn('dozen1')) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('dozen1') }}</div>
+          }
+        </div>
+        <div class="rl-dozen" [class.disabled]="!canBet()" (click)="placeBet('dozen2')">
+          2nd 12
+          @if (hasBetOn('dozen2')) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('dozen2') }}</div>
+          }
+        </div>
+        <div class="rl-dozen" [class.disabled]="!canBet()" (click)="placeBet('dozen3')">
+          3rd 12
+          @if (hasBetOn('dozen3')) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('dozen3') }}</div>
+          }
+        </div>
+      </div>
+
+      <!-- Even money bets -->
+      <div class="rl-even-money">
+        <div class="rl-even-cell" [class.disabled]="!canBet()" (click)="placeBet('low')">
+          1-18
+          @if (hasBetOn('low')) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('low') }}</div>
+          }
+        </div>
+        <div class="rl-even-cell" [class.disabled]="!canBet()" (click)="placeBet('even')">
+          Even
+          @if (hasBetOn('even')) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('even') }}</div>
+          }
+        </div>
+        <div class="rl-even-cell rl-even-cell--red" [class.disabled]="!canBet()"
+          (click)="placeBet('red')">
+          <span class="rl-diamond"></span> Red
+          @if (hasBetOn('red')) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('red') }}</div>
+          }
+        </div>
+        <div class="rl-even-cell rl-even-cell--black" [class.disabled]="!canBet()"
+          (click)="placeBet('black')">
+          <span class="rl-diamond rl-diamond--black"></span> Black
+          @if (hasBetOn('black')) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('black') }}</div>
+          }
+        </div>
+        <div class="rl-even-cell" [class.disabled]="!canBet()" (click)="placeBet('odd')">
+          Odd
+          @if (hasBetOn('odd')) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('odd') }}</div>
+          }
+        </div>
+        <div class="rl-even-cell" [class.disabled]="!canBet()" (click)="placeBet('high')">
+          19-36
+          @if (hasBetOn('high')) {
+            <div class="rl-chip-indicator">{{ getBetAmountFor('high') }}</div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="rl-controls">
+    <!-- Chip Selector -->
+    <div class="rl-chip-selector">
+      <span class="rl-chip-label">Chip:</span>
+      @for (val of [5, 10, 25, 50, 100, 500]; track val) {
+        <button class="rl-chip" [class.rl-chip--selected]="selectedChip() === val" (click)="selectChip(val)">
+          {{ val }}
+        </button>
+      }
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="rl-actions">
+      @if (canSpin()) {
+        <button class="rl-btn rl-btn--spin" (click)="spin()">
+          Spin the Wheel
+        </button>
+      }
+      @if (canNextHand()) {
+        <button class="rl-btn rl-btn--next" (click)="nextHand()">Next Round</button>
+      }
+      @if (!canBet() && !canSpin() && !canNextHand()) {
+        <span class="rl-waiting">Waiting...</span>
+      }
+    </div>
+  </div>
+
+  <!-- Winners Banner -->
+  @if (resultRevealed() && winners().length > 0) {
+    <div class="rl-winners">
+      @for (w of winners(); track w.playerId) {
+        <div class="rl-winner">
+          {{ getPlayerName(w.playerId) }} won {{ w.amount }} coins!
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Recent Bets Log -->
+  @if (allBets().length > 0) {
+    <div class="rl-bets-log">
+      <strong>Bets placed:</strong>
+      @for (b of allBets(); track $index) {
+        <span class="rl-bet-tag">
+          {{ getPlayerName(b.playerId) }}: {{ b.amount }} on {{ b.betType }}{{ b.number !== undefined ? ' ' + b.number : '' }}
+        </span>
+      }
+    </div>
+  }
+</div>

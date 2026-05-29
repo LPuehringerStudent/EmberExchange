@@ -2,6 +2,7 @@ import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { MiniGameSessionRow } from "../../shared/model";
 import { PlayerPrestigeService } from "./player-prestige-service";
+import { QuestService } from "./quest-service";
 
 export class MiniGameSessionService extends ServiceBase {
     constructor(unit: Unit) {
@@ -95,6 +96,21 @@ export class MiniGameSessionService extends ServiceBase {
                 await engine.checkWealthAchievements(playerId);
             } catch {
                 try { await this.unit.rollbackToSavepoint('achievements'); } catch { /* ignore */ }
+            }
+        }
+
+        // Track quest progress
+        if (success) {
+            try {
+                const questService = new QuestService(this.unit);
+                if (result.toLowerCase() === 'win') {
+                    await questService.trackProgress(playerId, 'win_minigame', 1);
+                }
+                if (coinPayout > 0) {
+                    await questService.trackProgress(playerId, 'earn_minigame_coins', coinPayout);
+                }
+            } catch {
+                // Ignore quest tracking errors
             }
         }
 

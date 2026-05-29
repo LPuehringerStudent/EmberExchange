@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { ShopService } from "../services/shop-service";
 import { ShopRotationService } from "../services/shop-rotation-service";
 import { SessionService } from "../services/session-service";
+import { QuestService } from "../services/quest-service";
 import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
 
@@ -324,6 +325,14 @@ shopRouter.post("/shop/claim-daily", async (req, res) => {
 
         const result = await shopService.claimDailyReward(session.playerId);
         if (result.success) {
+            // Track quest progress
+            try {
+                const questService = new QuestService(unit);
+                await questService.trackProgress(session.playerId, 'claim_daily', 1);
+            } catch {
+                // Ignore quest tracking errors
+            }
+
             await unit.complete(true);
             res.status(StatusCodes.OK).json({
                 message: `Claimed day ${result.newStreak} reward`,

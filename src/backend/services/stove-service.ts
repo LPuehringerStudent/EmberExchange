@@ -68,15 +68,19 @@ export class StoveService extends ServiceBase {
      *          and the second element is the new stove's ID (if successful).
      */
     async createStove(typeId: number, currentOwnerId: number): Promise<[boolean, number]> {
-        // Fetch stove type heat range
-        const typeStmt = this.unit.prepare<{ minHeat: number; maxHeat: number }>(
-            "SELECT minHeat, maxHeat FROM StoveType WHERE typeId = @typeId",
+        // Fetch stove type heat range and rarity
+        const typeStmt = this.unit.prepare<{ minHeat: number; maxHeat: number; rarity: string }>(
+            "SELECT minHeat, maxHeat, rarity FROM StoveType WHERE typeId = @typeId",
             { typeId }
         );
         const typeRow = await typeStmt.get();
-        const heatLevel = typeRow
+        let heatLevel = typeRow
             ? typeRow.minHeat + Math.random() * (typeRow.maxHeat - typeRow.minHeat)
             : 0.0;
+        // Secret stoves should never be extinguished (heat > 0.55)
+        if (typeRow && typeRow.rarity.toLowerCase() === 'secret') {
+            heatLevel = Math.min(heatLevel, 0.55);
+        }
 
         const stmt = this.unit.prepare<StoveRow>(
             `INSERT INTO Stove (typeId, currentOwnerId, mintedAt, heatLevel) 

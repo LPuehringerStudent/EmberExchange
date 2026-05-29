@@ -82,6 +82,30 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
+     * Batch updates coin balances for multiple players in a single query.
+     * @param updates - Array of {playerId, coins} to update.
+     * @returns Number of rows updated.
+     */
+    async updatePlayerCoinsBatch(updates: { playerId: number; coins: number }[]): Promise<number> {
+        if (updates.length === 0) return 0;
+        // Build a VALUES table and UPDATE from it
+        const values = updates.map((u, i) => `(@pid${i}::int, @coins${i}::int)`).join(", ");
+        const params: Record<string, unknown> = {};
+        updates.forEach((u, i) => {
+            params[`pid${i}`] = u.playerId;
+            params[`coins${i}`] = u.coins;
+        });
+        const stmt = this.unit.prepare(
+            `UPDATE Player SET coins = v.coins
+             FROM (VALUES ${values}) AS v(playerId, coins)
+             WHERE Player.playerId = v.playerId`,
+            params
+        );
+        const result = await stmt.run();
+        return result.changes ?? 0;
+    }
+
+    /**
      * Updates the lootbox count of a player.
      * @param id - The player's unique ID.
      * @param lootboxCount - The new lootbox count to set.

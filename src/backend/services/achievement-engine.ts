@@ -92,8 +92,185 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
 ];
 
 export class AchievementEngine extends ServiceBase {
+    // Per-request caches to avoid redundant DB round-trips
+    private playerCache = new Map<number, { coins: number; joinedAt: string }>();
+    private statsCache = new Map<number, { netWorthEstimate: number; totalCoinsEarned: number }>();
+    private prestigeCache = new Map<number, { currentLevel: number; prestigeCount: number }>();
+    private stoveCountsCache = new Map<number, {
+        total: number; dragon: number; winter: number; ownedTypes: number;
+        rarityCount: number; rareCount: number; winterUnique: number; dragonUnique: number;
+        totalTypes: number;
+    }>();
+    private ownershipCache = new Map<number, number>();
+    private marketCache = new Map<number, { listings: number; revenue: number; spending: number }>();
+    private miniGameCache = new Map<number, { games: number; wins: number; profit: number; maxPayout: number }>();
+    private lootboxCache = new Map<number, number>();
+    private tradeCache = new Map<number, number>();
+    private socialCache = new Map<number, { friends: number; messages: number; tradeOffers: number; visits: number }>();
+    private checkedCosmetics = false;
+
     constructor(unit: Unit) {
         super(unit);
+    }
+
+    private async getCachedPlayer(playerId: number): Promise<{ coins: number; joinedAt: string } | undefined> {
+        if (!this.playerCache.has(playerId)) {
+            const row = await this.unit.prepare<{ coins: number; joinedAt: string }>(
+                "SELECT coins, joinedAt FROM Player WHERE playerId = @playerId", { playerId }
+            ).get();
+            if (row) this.playerCache.set(playerId, row);
+        }
+        return this.playerCache.get(playerId);
+    }
+
+    private async getCachedStats(playerId: number): Promise<{ netWorthEstimate: number; totalCoinsEarned: number } | undefined> {
+        if (!this.statsCache.has(playerId)) {
+            const row = await this.unit.prepare<{ netWorthEstimate: number; totalCoinsEarned: number }>(
+                "SELECT netWorthEstimate, totalCoinsEarned FROM PlayerStatistics WHERE playerId = @playerId", { playerId }
+            ).get();
+            if (row) this.statsCache.set(playerId, row);
+        }
+        return this.statsCache.get(playerId);
+    }
+
+    private async getCachedPrestige(playerId: number): Promise<{ currentLevel: number; prestigeCount: number } | undefined> {
+        if (!this.prestigeCache.has(playerId)) {
+            const prestigeSvc = new PlayerPrestigeService(this.unit);
+            const p = await prestigeSvc.getPrestige(playerId);
+            if (p) this.prestigeCache.set(playerId, { currentLevel: p.currentLevel, prestigeCount: p.prestigeCount });
+        }
+        return this.prestigeCache.get(playerId);
+    }
+
+    private async getCachedStoveCounts(playerId: number) {
+        if (!this.stoveCountsCache.has(playerId)) {
+            const row = await this.unit.prepare<{
+                total: number; dragon: number; winter: number; ownedTypes: number;
+                rarityCount: number; rareCount: number; winterUnique: number; dragonUnique: number;
+                totalTypes: number;
+            }>(`
+                SELECT
+                    COUNT(*)::INTEGER as total,
+                    COUNT(DISTINCT s.stoveId) FILTER (WHERE st.collection = 'Dragon')::INTEGER as dragon,
+                    COUNT(DISTINCT s.stoveId) FILTER (WHERE st.collection = 'Winter')::INTEGER as winter,
+                    COUNT(DISTINCT s.typeId)::INTEGER as ownedTypes,
+                    COUNT(DISTINCT st.rarity)::INTEGER as rarityCount,
+                    COUNT(*) FILTER (WHERE st.rarity IN ('legendary', 'secret'))::INTEGER as rareCount,
+                    COUNT(DISTINCT s.typeId) FILTER (WHERE st.collection = 'Winter')::INTEGER as winterUnique,
+                    COUNT(DISTINCT s.typeId) FILTER (WHERE st.collection = 'Dragon')::INTEGER as dragonUnique,
+                    (SELECT COUNT(*)::INTEGER FROM StoveType) as totalTypes
+                FROM Stove s
+                JOIN StoveType st ON s.typeId = st.typeId
+                WHERE s.currentOwnerId = @playerId
+            `, { playerId }).get();
+            if (row) this.stoveCountsCache.set(playerId, row);
+        }
+        return this.stoveCountsCache.get(playerId);
+    }
+
+    private async getCachedOwnershipCount(playerId: number): Promise<number> {
+        if (!this.ownershipCache.has(playerId)) {
+            const row = await this.unit.prepare<{ count: number }>(
+                "SELECT COUNT(*)::INTEGER as count FROM Ownership WHERE playerId = @playerId", { playerId }
+            ).get();
+            this.ownershipCache.set(playerId, row?.count ?? 0);
+        }
+        return this.ownershipCache.get(playerId)!;
+    }
+
+    private async getCachedMarketStats(playerId: number) {
+        if (!this.marketCache.has(playerId)) {
+            const row = await this.unit.prepare<{
+                listings: number; revenue: number; spending: number;
+            }>(`
+                SELECT
+                    (SELECT COUNT(*)::INTEGER FROM Listing WHERE sellerId = @playerId) as listings,
+                    COALESCE((SELECT SUM(l.price) FROM Listing l
+                        JOIN Trade t ON l.listingId = t.listingId
+                        WHERE l.sellerId = @playerId AND l.status = 'sold'), 0)::INTEGER as revenue,
+                    COALESCE((SELECT SUM(l.price) FROM Trade t
+                        JOIN Listing l ON t.listingId = l.listingId
+                        WHERE t.buyerId = @playerId), 0)::INTEGER as spending
+            `, { playerId }).get();
+            if (row) this.marketCache.set(playerId, row);
+        }
+        return this.marketCache.get(playerId);
+    }
+
+    private async getCachedMiniGameStats(playerId: number) {
+        if (!this.miniGameCache.has(playerId)) {
+            const row = await this.unit.prepare<{
+                games: number; wins: number; profit: number; maxPayout: number;
+            }>(`
+                SELECT
+                    COUNT(*)::INTEGER as games,
+                    COUNT(*) FILTER (WHERE result = 'win')::INTEGER as wins,
+                    COALESCE(SUM(coinPayout), 0)::INTEGER as profit,
+                    COALESCE(MAX(coinPayout), 0)::INTEGER as maxPayout
+                FROM MiniGameSession
+                WHERE playerId = @playerId
+            `, { playerId }).get();
+            if (row) this.miniGameCache.set(playerId, row);
+        }
+        return this.miniGameCache.get(playerId);
+    }
+
+    private async getCachedLootboxCount(playerId: number): Promise<number> {
+        if (!this.lootboxCache.has(playerId)) {
+            const row = await this.unit.prepare<{ count: number }>(
+                "SELECT COUNT(*)::INTEGER as count FROM Lootbox WHERE playerId = @playerId AND openedAt IS NOT NULL", { playerId }
+            ).get();
+            this.lootboxCache.set(playerId, row?.count ?? 0);
+        }
+        return this.lootboxCache.get(playerId)!;
+    }
+
+    private async getCachedTradeCount(playerId: number): Promise<number> {
+        if (!this.tradeCache.has(playerId)) {
+            const row = await this.unit.prepare<{ count: number }>(`
+                SELECT COUNT(*)::INTEGER as count FROM Trade t
+                JOIN Listing l ON t.listingId = l.listingId
+                WHERE t.buyerId = @playerId OR l.sellerId = @playerId
+            `, { playerId }).get();
+            this.tradeCache.set(playerId, row?.count ?? 0);
+        }
+        return this.tradeCache.get(playerId)!;
+    }
+
+    private purchaseCache = new Map<number, number>();
+
+    private async getCachedPurchaseCount(playerId: number): Promise<number> {
+        if (!this.purchaseCache.has(playerId)) {
+            const row = await this.unit.prepare<{ count: number }>(`
+                SELECT COUNT(*)::INTEGER as count FROM Trade t
+                JOIN Listing l ON t.listingId = l.listingId
+                WHERE t.buyerId = @playerId
+            `, { playerId }).get();
+            this.purchaseCache.set(playerId, row?.count ?? 0);
+        }
+        return this.purchaseCache.get(playerId)!;
+    }
+
+    private async getCachedSocialStats(playerId: number) {
+        if (!this.socialCache.has(playerId)) {
+            const row = await this.unit.prepare<{
+                friends: number; messages: number; tradeOffers: number; visits: number;
+            }>(`
+                SELECT
+                    (SELECT COUNT(*)::INTEGER FROM Friend WHERE status = 'accepted' AND (requesterId = @playerId OR addresseeId = @playerId)) as friends,
+                    (SELECT COUNT(*)::INTEGER FROM ChatMessage WHERE senderId = @playerId) as messages,
+                    (SELECT COUNT(*)::INTEGER FROM ChatMessage WHERE senderId = @playerId AND messageType = 'trade_offer') as tradeOffers,
+                    (SELECT COUNT(*)::INTEGER FROM GloryVisit WHERE visitedPlayerId = @playerId) as visits
+            `, { playerId }).get();
+            if (row) this.socialCache.set(playerId, row);
+        }
+        return this.socialCache.get(playerId);
+    }
+
+    private async maybeCheckCosmeticUnlocks(playerId: number): Promise<void> {
+        if (this.checkedCosmetics) return;
+        this.checkedCosmetics = true;
+        await this.checkCosmeticUnlocks(playerId);
     }
 
     // ── Generic unlock helpers ─────────────────────────────────
@@ -139,81 +316,53 @@ export class AchievementEngine extends ServiceBase {
     // ── Lootbox achievements ───────────────────────────────────
 
     async checkLootboxAchievements(playerId: number): Promise<void> {
-        const stmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM Lootbox WHERE playerId = @playerId AND openedAt IS NOT NULL",
-            { playerId }
-        );
-        const opened = (await stmt.get())?.count ?? 0;
+        const opened = await this.getCachedLootboxCount(playerId);
 
         if (opened >= 1)  await this.unlock(playerId, 'first_drop');
         if (opened >= 50) await this.unlock(playerId, 'lootbox_addict');
         if (opened >= 100) await this.unlock(playerId, 'centurion');
         if (opened >= 500) await this.unlock(playerId, 'lootbox_god');
 
-        await this.checkCosmeticUnlocks(playerId);
+        await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
     // ── Trade achievements ─────────────────────────────────────
 
     async checkTradeAchievements(playerId: number): Promise<void> {
-        const tradesStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*)::INTEGER as count FROM Trade t
-             JOIN Listing l ON t.listingId = l.listingId
-             WHERE (t.buyerId = @playerId OR l.sellerId = @playerId)`,
-            { playerId }
-        );
-        const trades = (await tradesStmt.get())?.count ?? 0;
+        const trades = await this.getCachedTradeCount(playerId);
 
         if (trades >= 1)   await this.unlock(playerId, 'trader');
         if (trades >= 100) await this.unlock(playerId, 'trading_empire');
         if (trades >= 500) await this.unlock(playerId, 'market_mogul');
 
-        const purchasesStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM Trade t JOIN Listing l ON t.listingId = l.listingId WHERE t.buyerId = @playerId",
-            { playerId }
-        );
-        const purchases = (await purchasesStmt.get())?.count ?? 0;
+        const purchases = await this.getCachedPurchaseCount(playerId);
         if (purchases >= 10) await this.unlock(playerId, 'active_trader');
 
-        await this.checkCosmeticUnlocks(playerId);
+        await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
     // ── Mini-game achievements ─────────────────────────────────
 
     async checkMiniGameAchievements(playerId: number): Promise<void> {
-        const winsStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM MiniGameSession WHERE playerId = @playerId AND result = 'win'",
-            { playerId }
-        );
-        const wins = (await winsStmt.get())?.count ?? 0;
-
-        const gamesStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM MiniGameSession WHERE playerId = @playerId",
-            { playerId }
-        );
-        const games = (await gamesStmt.get())?.count ?? 0;
+        const stats = await this.getCachedMiniGameStats(playerId);
+        const wins = stats?.wins ?? 0;
+        const games = stats?.games ?? 0;
+        const profit = stats?.profit ?? 0;
 
         if (wins >= 5)  await this.unlock(playerId, 'big_winner');
         if (wins >= 20) await this.unlock(playerId, 'win_streak');
         if (games >= 50)  await this.unlock(playerId, 'gambler');
         if (games >= 100) await this.unlock(playerId, 'mini_game_master');
         if (games >= 500) await this.unlock(playerId, 'burnout');
-
-        const profitStmt = this.unit.prepare<{ total: number }>(
-            "SELECT COALESCE(SUM(coinPayout), 0) as total FROM MiniGameSession WHERE playerId = @playerId",
-            { playerId }
-        );
-        const profit = (await profitStmt.get())?.total ?? 0;
         if (profit >= 10000) await this.unlock(playerId, 'profitable');
 
-        await this.checkCosmeticUnlocks(playerId);
+        await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
     // ── Level / Prestige achievements ──────────────────────────
 
     async checkLevelAchievements(playerId: number): Promise<void> {
-        const prestigeSvc = new PlayerPrestigeService(this.unit);
-        const prestige = await prestigeSvc.getPrestige(playerId);
+        const prestige = await this.getCachedPrestige(playerId);
         const level = prestige?.currentLevel ?? 1;
         const prestigeCount = prestige?.prestigeCount ?? 0;
 
@@ -225,25 +374,16 @@ export class AchievementEngine extends ServiceBase {
         }
         if (prestigeCount >= 5) await this.unlock(playerId, 'immortal');
 
-        await this.checkCosmeticUnlocks(playerId);
+        await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
     // ── Wealth / Collection achievements ───────────────────────
 
     async checkWealthAchievements(playerId: number): Promise<void> {
-        const playerStmt = this.unit.prepare<{ coins: number; joinedAt: string }>(
-            "SELECT coins, joinedAt FROM Player WHERE playerId = @playerId",
-            { playerId }
-        );
-        const player = await playerStmt.get();
+        const player = await this.getCachedPlayer(playerId);
         if (!player) return;
 
-        const statsStmt = this.unit.prepare<{ netWorthEstimate: number; totalCoinsEarned: number }>(
-            "SELECT netWorthEstimate, totalCoinsEarned FROM PlayerStatistics WHERE playerId = @playerId",
-            { playerId }
-        );
-        const stats = await statsStmt.get();
-
+        const stats = await this.getCachedStats(playerId);
         const coins = player.coins ?? 0;
         const netWorth = stats?.netWorthEstimate ?? 0;
         const totalEarned = stats?.totalCoinsEarned ?? 0;
@@ -263,170 +403,93 @@ export class AchievementEngine extends ServiceBase {
         if (days >= 7)  await this.unlock(playerId, 'dedicated');
         if (days >= 30) await this.unlock(playerId, 'veteran');
 
-        // Stove collection
-        const stovesStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM Stove WHERE currentOwnerId = @playerId",
-            { playerId }
-        );
-        const stoves = (await stovesStmt.get())?.count ?? 0;
+        // Stove collection (all in one cached query)
+        const sc = await this.getCachedStoveCounts(playerId);
+        const stoves = sc?.total ?? 0;
+        const dragonStoves = sc?.dragon ?? 0;
+        const winterStoves = sc?.winter ?? 0;
+        const ownedTypes = sc?.ownedTypes ?? 0;
+        const rarityCount = sc?.rarityCount ?? 0;
+        const rareCount = sc?.rareCount ?? 0;
+        const totalTypes = sc?.totalTypes ?? 0;
+        const winterUnique = sc?.winterUnique ?? 0;
+        const dragonUnique = sc?.dragonUnique ?? 0;
 
-        const dragonStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(DISTINCT s.stoveId)::INTEGER as count FROM Stove s
-             JOIN StoveType st ON s.typeId = st.typeId
-             WHERE s.currentOwnerId = @playerId AND st.collection = 'Dragon'`,
-            { playerId }
-        );
-        const dragonStoves = (await dragonStmt.get())?.count ?? 0;
-
-        const winterStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(DISTINCT s.stoveId)::INTEGER as count FROM Stove s
-             JOIN StoveType st ON s.typeId = st.typeId
-             WHERE s.currentOwnerId = @playerId AND st.collection = 'Winter'`,
-            { playerId }
-        );
-        const winterStoves = (await winterStmt.get())?.count ?? 0;
         if (stoves >= 10) await this.unlock(playerId, 'collector');
         if (stoves >= 50) await this.unlock(playerId, 'collector_deluxe');
 
-        const acquiredStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM Ownership WHERE playerId = @playerId",
-            { playerId }
-        );
-        const acquired = (await acquiredStmt.get())?.count ?? 0;
+        const acquired = await this.getCachedOwnershipCount(playerId);
         if (acquired >= 50) await this.unlock(playerId, 'dragon_tamer');
 
-        // Collection-specific achievements (dragonStoves / winterStoves already queried above)
         if (dragonStoves >= 5) await this.unlock(playerId, 'dragon_master');
         if (dragonStoves >= 10) await this.unlock(playerId, 'dragon_hoarder');
         if (winterStoves >= 5) await this.unlock(playerId, 'winter_wonderland');
-
-        const winterUniqueStmt = this.unit.prepare<{ count: number; total: number }>(
-            `SELECT COUNT(DISTINCT s.typeId)::INTEGER as count,
-                    (SELECT COUNT(*)::INTEGER FROM StoveType WHERE collection = 'Winter') as total
-             FROM Stove s
-             JOIN StoveType st ON s.typeId = st.typeId
-             WHERE s.currentOwnerId = @playerId AND st.collection = 'Winter'`,
-            { playerId }
-        );
-        const winterUnique = await winterUniqueStmt.get();
-        if (winterUnique && winterUnique.count >= winterUnique.total) {
+        const winterTotal = (await this.unit.prepare<{ cnt: number }>("SELECT COUNT(*)::INTEGER as cnt FROM StoveType WHERE collection = 'Winter'").get())?.cnt ?? 0;
+        if (winterUnique > 0 && totalTypes > 0 && winterUnique >= winterTotal) {
             await this.unlock(playerId, 'frost_collector');
         }
-
-        // Dragon collection completion
-        const dragonUniqueStmt = this.unit.prepare<{ count: number; total: number }>(
-            `SELECT COUNT(DISTINCT s.typeId)::INTEGER as count,
-                    (SELECT COUNT(*)::INTEGER FROM StoveType WHERE collection = 'Dragon') as total
-             FROM Stove s
-             JOIN StoveType st ON s.typeId = st.typeId
-             WHERE s.currentOwnerId = @playerId AND st.collection = 'Dragon'`,
-            { playerId }
-        );
-        const dragonUnique = await dragonUniqueStmt.get();
-        if (dragonUnique && dragonUnique.count >= dragonUnique.total) {
+        const dragonTotal = (await this.unit.prepare<{ cnt: number }>("SELECT COUNT(*)::INTEGER as cnt FROM StoveType WHERE collection = 'Dragon'").get())?.cnt ?? 0;
+        if (dragonUnique > 0 && totalTypes > 0 && dragonUnique >= dragonTotal) {
             await this.unlock(playerId, 'all_dragon');
         }
-
-        // One of each rarity
-        const rarityStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(DISTINCT st.rarity)::INTEGER as count FROM Stove s
-             JOIN StoveType st ON s.typeId = st.typeId
-             WHERE s.currentOwnerId = @playerId`,
-            { playerId }
-        );
-        const rarityCount = (await rarityStmt.get())?.count ?? 0;
         if (rarityCount >= 6) await this.unlock(playerId, 'one_of_each');
-
-        // Completionist: own every stove type
-        const totalTypesStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*)::INTEGER as count FROM StoveType`
-        );
-        const ownedTypesStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(DISTINCT s.typeId)::INTEGER as count FROM Stove s
-             WHERE s.currentOwnerId = @playerId`,
-            { playerId }
-        );
-        const totalTypes = (await totalTypesStmt.get())?.count ?? 0;
-        const ownedTypes = (await ownedTypesStmt.get())?.count ?? 0;
         if (totalTypes > 0 && ownedTypes >= totalTypes) {
             await this.unlock(playerId, 'completionist');
         }
-
-        // Legendary/secret ownership
-        const rareStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*)::INTEGER as count FROM Stove s
-             JOIN StoveType st ON s.typeId = st.typeId
-             WHERE s.currentOwnerId = @playerId AND st.rarity IN ('legendary', 'secret')`,
-            { playerId }
-        );
-        const hasRare = ((await rareStmt.get())?.count ?? 0) > 0;
-        if (hasRare) await this.unlock(playerId, 'rare_hunter');
+        if (rareCount > 0) await this.unlock(playerId, 'rare_hunter');
 
         // Market achievements
-        const listingsStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM Listing WHERE sellerId = @playerId",
-            { playerId }
-        );
-        const listings = (await listingsStmt.get())?.count ?? 0;
-        if (listings >= 20) await this.unlock(playerId, 'merchant');
+        const market = await this.getCachedMarketStats(playerId);
+        const listings = market?.listings ?? 0;
+        const revenue = market?.revenue ?? 0;
+        const spending = market?.spending ?? 0;
 
-        const revenueStmt = this.unit.prepare<{ total: number }>(
-            `SELECT COALESCE(SUM(l.price), 0) as total FROM Listing l
-             JOIN Trade t ON l.listingId = t.listingId
-             WHERE l.sellerId = @playerId AND l.status = 'sold'`,
-            { playerId }
-        );
-        const revenue = (await revenueStmt.get())?.total ?? 0;
+        if (listings >= 20) await this.unlock(playerId, 'merchant');
         if (revenue >= 50000)  await this.unlock(playerId, 'market_shark');
         if (revenue >= 250000) await this.unlock(playerId, 'market_maker');
-
-        const spendingStmt = this.unit.prepare<{ total: number }>(
-            `SELECT COALESCE(SUM(l.price), 0) as total FROM Trade t
-             JOIN Listing l ON t.listingId = l.listingId
-             WHERE t.buyerId = @playerId`,
-            { playerId }
-        );
-        const spending = (await spendingStmt.get())?.total ?? 0;
         if (spending >= 25000)  await this.unlock(playerId, 'big_spender');
         if (spending >= 500000) await this.unlock(playerId, 'whale');
 
         // Luckiest win
-        const luckStmt = this.unit.prepare<{ max: number }>(
-            "SELECT COALESCE(MAX(coinPayout), 0) as max FROM MiniGameSession WHERE playerId = @playerId",
-            { playerId }
-        );
-        const luckiest = (await luckStmt.get())?.max ?? 0;
+        const mg = await this.getCachedMiniGameStats(playerId);
+        const luckiest = mg?.maxPayout ?? 0;
         if (luckiest >= 10000)  await this.unlock(playerId, 'high_roller');
         if (luckiest >= 100000) await this.unlock(playerId, 'jackpot');
 
-        await this.checkCosmeticUnlocks(playerId);
+        await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
     // ── Forge achievements ─────────────────────────────────────
 
     async checkForgeAchievements(playerId: number, outputRarity?: string, heatLevel?: number): Promise<void> {
+        const forged = await this.getCachedOwnershipCount(playerId); // approximate, counts all ownerships
+        // Note: we don't have a cheap way to filter by acquiredHow='craft' in the cache,
+        // but forge achievements are relatively rare so one extra query is acceptable
         const forgedStmt = this.unit.prepare<{ count: number }>(
             `SELECT COUNT(*)::INTEGER as count FROM Ownership WHERE playerId = @playerId AND acquiredHow = 'craft'`,
             { playerId }
         );
-        const forged = (await forgedStmt.get())?.count ?? 0;
+        const forgedExact = (await forgedStmt.get())?.count ?? 0;
 
-        if (forged >= 1) await this.unlock(playerId, 'first_forge');
-        if (forged >= 10) await this.unlock(playerId, 'blacksmith');
-        if (forged >= 50) await this.unlock(playerId, 'master_forge');
+        if (forgedExact >= 1) await this.unlock(playerId, 'first_forge');
+        if (forgedExact >= 10) await this.unlock(playerId, 'blacksmith');
+        if (forgedExact >= 50) await this.unlock(playerId, 'master_forge');
 
         if (outputRarity === 'legendary') await this.unlock(playerId, 'legendary_forge');
         if (outputRarity === 'limited') await this.unlock(playerId, 'limited_forge');
         if (heatLevel !== undefined && heatLevel >= 0.95) await this.unlock(playerId, 'perfect_forge');
 
-        await this.checkCosmeticUnlocks(playerId);
+        await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
     // ── Shop achievements ──────────────────────────────────────
 
     async checkShopAchievements(playerId: number): Promise<void> {
         const purchasesStmt = this.unit.prepare<{ count: number; total: number }>(
-            `SELECT COUNT(*)::INTEGER as count, COALESCE(SUM(price), 0) as total FROM ShopPurchase WHERE playerId = @playerId`,
+            `SELECT COUNT(*)::INTEGER as count, COALESCE(SUM(sl.price), 0) as total
+             FROM ShopPurchase sp
+             JOIN ShopListing sl ON sp.listingId = sl.listingId
+             WHERE sp.playerId = @playerId`,
             { playerId }
         );
         const shopData = await purchasesStmt.get();
@@ -444,111 +507,51 @@ export class AchievementEngine extends ServiceBase {
         const streak = (await streakStmt.get())?.streakCount ?? 0;
         if (streak >= 7) await this.unlock(playerId, 'streak_master');
 
-        await this.checkCosmeticUnlocks(playerId);
+        await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
     // ── Social achievements ────────────────────────────────────
 
     async checkSocialAchievements(playerId: number): Promise<void> {
-        const friendsStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*)::INTEGER as count FROM Friend WHERE status = 'accepted' AND (requesterId = @playerId OR addresseeId = @playerId)`,
-            { playerId }
-        );
-        const friends = (await friendsStmt.get())?.count ?? 0;
+        const social = await this.getCachedSocialStats(playerId);
+        const friends = social?.friends ?? 0;
+        const messages = social?.messages ?? 0;
+        const tradeOffers = social?.tradeOffers ?? 0;
+        const visits = social?.visits ?? 0;
+
         if (friends >= 1) await this.unlock(playerId, 'first_friend');
         if (friends >= 10) await this.unlock(playerId, 'socialite');
-
-        const messagesStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*)::INTEGER as count FROM ChatMessage WHERE senderId = @playerId`,
-            { playerId }
-        );
-        const messages = (await messagesStmt.get())?.count ?? 0;
         if (messages >= 100) await this.unlock(playerId, 'chatterbox');
-
-        const tradeOffersStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*)::INTEGER as count FROM ChatMessage WHERE senderId = @playerId AND messageType = 'trade_offer'`,
-            { playerId }
-        );
-        const tradeOffers = (await tradeOffersStmt.get())?.count ?? 0;
         if (tradeOffers >= 10) await this.unlock(playerId, 'diplomat');
-
-        const visitsStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*)::INTEGER as count FROM GloryVisit WHERE visitedPlayerId = @playerId`,
-            { playerId }
-        );
-        const visits = (await visitsStmt.get())?.count ?? 0;
         if (visits >= 10) await this.unlock(playerId, 'popular');
         if (visits >= 100) await this.unlock(playerId, 'famous');
         if (visits >= 1000) await this.unlock(playerId, 'celebrity');
 
-        await this.checkCosmeticUnlocks(playerId);
+        await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
     // ── Cosmetic auto-unlock engine ────────────────────────────
 
     async checkCosmeticUnlocks(playerId: number): Promise<void> {
         const glorySvc = new GloryCustomizationService(this.unit);
-        const prestigeSvc = new PlayerPrestigeService(this.unit);
 
-        // Gather player stats needed for unlock checks
-        const prestige = await prestigeSvc.getPrestige(playerId);
+        // Gather player stats using cached helpers (zero extra queries if already cached)
+        const prestige = await this.getCachedPrestige(playerId);
         const level = prestige?.currentLevel ?? 1;
         const prestigeCount = prestige?.prestigeCount ?? 0;
 
-        const playerStmt = this.unit.prepare<{ coins: number }>(
-            "SELECT coins FROM Player WHERE playerId = @playerId",
-            { playerId }
-        );
-        const player = await playerStmt.get();
+        const stats = await this.getCachedStats(playerId);
+        const netWorth = stats?.netWorthEstimate ?? 0;
 
-        const playerStatsStmt = this.unit.prepare<{ netWorthEstimate: number }>(
-            "SELECT netWorthEstimate FROM PlayerStatistics WHERE playerId = @playerId",
-            { playerId }
-        );
-        const playerStats = await playerStatsStmt.get();
-        const netWorth = playerStats?.netWorthEstimate ?? 0;
+        const trades = await this.getCachedTradeCount(playerId);
+        const lootboxes = await this.getCachedLootboxCount(playerId);
+        const mg = await this.getCachedMiniGameStats(playerId);
+        const games = mg?.games ?? 0;
 
-        const tradesStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(*)::INTEGER as count FROM Trade t
-             JOIN Listing l ON t.listingId = l.listingId
-             WHERE (t.buyerId = @playerId OR l.sellerId = @playerId)`,
-            { playerId }
-        );
-        const trades = (await tradesStmt.get())?.count ?? 0;
-
-        const lootboxesStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM Lootbox WHERE playerId = @playerId AND openedAt IS NOT NULL",
-            { playerId }
-        );
-        const lootboxes = (await lootboxesStmt.get())?.count ?? 0;
-
-        const gamesStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM MiniGameSession WHERE playerId = @playerId",
-            { playerId }
-        );
-        const games = (await gamesStmt.get())?.count ?? 0;
-
-        const stovesStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM Stove WHERE currentOwnerId = @playerId",
-            { playerId }
-        );
-        const stoves = (await stovesStmt.get())?.count ?? 0;
-
-        const dragonStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(DISTINCT s.stoveId)::INTEGER as count FROM Stove s
-             JOIN StoveType st ON s.typeId = st.typeId
-             WHERE s.currentOwnerId = @playerId AND st.collection = 'Dragon'`,
-            { playerId }
-        );
-        const dragonStoves = (await dragonStmt.get())?.count ?? 0;
-
-        const winterStmt = this.unit.prepare<{ count: number }>(
-            `SELECT COUNT(DISTINCT s.stoveId)::INTEGER as count FROM Stove s
-             JOIN StoveType st ON s.typeId = st.typeId
-             WHERE s.currentOwnerId = @playerId AND st.collection = 'Winter'`,
-            { playerId }
-        );
-        const winterStoves = (await winterStmt.get())?.count ?? 0;
+        const sc = await this.getCachedStoveCounts(playerId);
+        const stoves = sc?.total ?? 0;
+        const dragonStoves = sc?.dragon ?? 0;
+        const winterStoves = sc?.winter ?? 0;
 
         // Fetch all catalog items with unlock conditions
         const themesStmt = this.unit.prepare<{ themeId: number; unlockCondition: string | null; unlockValue: number | null; minLevel: number }>(

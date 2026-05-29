@@ -41,6 +41,8 @@ import { tradeOfferRouter } from "./routers/trade-offer-router";
 import { adminRouter } from "./routers/admin-router";
 import { sparksRouter } from "./routers/sparks-router";
 import { pityRouter } from "./routers/pity-router";
+import { collectionRouter } from "./routers/collection-router";
+import { questRouter } from "./routers/quest-router";
 import { swaggerSpec } from "./swagger";
 import { setupWebSocketServer, wssInstance } from "./websocket";
 import cron from "node-cron";
@@ -92,9 +94,20 @@ app.use("/api", notificationRouter);
 app.use("/api", forgeryRouter);
 app.use("/api", friendRouter);
 app.use("/api", tradeOfferRouter);
-app.use("/api", adminRouter);
 app.use("/api", sparksRouter);
 app.use("/api", pityRouter);
+app.use("/api", collectionRouter);
+app.use("/api", questRouter);
+
+// Health check endpoint (before admin router so it is not caught by requireAdmin)
+app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Admin router MUST come after all public routers — its requireAdmin middleware
+// runs for every request that enters it, so if it is mounted early it blocks
+// all later /api/* routes for non-admin users.
+app.use("/api", adminRouter);
 
 // Static files (frontend) - serve Angular build output
 app.use(express.static(path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser")));
@@ -107,11 +120,6 @@ app.use((req, res, next) => {
         return;
     }
     res.sendFile(path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser/index.html"));
-});
-
-// Health check endpoint
-app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 // Test database connection endpoint

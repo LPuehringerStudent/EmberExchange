@@ -2,6 +2,7 @@ import { Unit } from "../utils/unit";
 import { PlayerService } from "./player-service";
 import { ListingService } from "./listing-service";
 import { NotificationService } from "./notification-service";
+import { QuestService } from "./quest-service";
 
 const SPARKS_BASE: Record<string, number> = {
     common: 5,
@@ -12,7 +13,16 @@ const SPARKS_BASE: Record<string, number> = {
     secret: 250,
 };
 
-const HEAT_REROLL_COST = 20;
+const REROLL_BASE_COST: Record<string, number> = {
+    common: 10,
+    rare: 20,
+    epic: 40,
+    legendary: 80,
+    limited: 100,
+    secret: 150,
+};
+
+const REROLL_MULTIPLIER = 1.5;
 
 export class SparksService {
     constructor(private unit: Unit) {}
@@ -24,6 +34,15 @@ export class SparksService {
     calculateSparks(rarity: string, heatLevel: number): number {
         const base = SPARKS_BASE[rarity.toLowerCase()] ?? 1;
         return Math.floor(base * (1 + heatLevel));
+    }
+
+    /**
+     * Calculates the cost to re-roll a stove's heat.
+     * Formula: baseCost * (1.5 ^ reRollCount), rounded up.
+     */
+    calculateReRollCost(rarity: string, reRollCount: number): number {
+        const base = REROLL_BASE_COST[rarity.toLowerCase()] ?? 20;
+        return Math.ceil(base * Math.pow(REROLL_MULTIPLIER, reRollCount));
     }
 
     /**
@@ -69,6 +88,17 @@ export class SparksService {
         }
         const newBalance = (player.sparks ?? 0) + sparksAwarded;
 
+        // Clean up dependent records before deleting stove
+        await this.unit.prepare(
+            `DELETE FROM LootboxDrop WHERE stoveId = @stoveId`,
+            { stoveId }
+        ).run();
+
+        await this.unit.prepare(
+            `DELETE FROM Ownership WHERE stoveId = @stoveId`,
+            { stoveId }
+        ).run();
+
         // Delete stove
         await this.unit.prepare(
             `DELETE FROM Stove WHERE stoveId = @stoveId`,
@@ -92,23 +122,33 @@ export class SparksService {
             // Ignore notification errors
         }
 
+        // Track quest progress
+        try {
+            const questService = new QuestService(this.unit);
+            await questService.trackProgress(playerId, 'salvage_stove', 1);
+            await questService.trackProgress(playerId, 'salvage_10_stoves', 1);
+        } catch {
+            // Ignore quest tracking errors
+        }
+
         return { success: true, sparksAwarded, newBalance };
     }
 
     /**
      * Re-rolls a stove's heat level within its type's min/max range.
-     * Costs 20 sparks.
+     * Cost scales with rarity and increases exponentially per re-roll on the same stove.
      */
-    async reRollHeat(playerId: number, stoveId: number): Promise<{ success: boolean; newHeatLevel?: number; error?: string }> {
+    async reRollHeat(playerId: number, stoveId: number): Promise<{ success: boolean; newHeatLevel?: number; cost?: number; newSparksBalance?: number; error?: string }> {
         const playerService = new PlayerService(this.unit);
         const listingService = new ListingService(this.unit);
 
-        // Verify player owns the stove
+        // Verify player owns the stove and fetch all needed data
         const stoveStmt = this.unit.prepare<
-            { stoveId: number; currentOwnerId: number; name: string; minHeat: number; maxHeat: number; heatLevel: number },
+            { stoveId: number; currentOwnerId: number; name: string; rarity: string; minHeat: number; maxHeat: number; heatLevel: number; reRollCount: number },
             { stoveId: number }
         >(
-            `SELECT Stove.stoveId, Stove.currentOwnerId, StoveType.name, StoveType.minHeat, StoveType.maxHeat, Stove.heatLevel
+            `SELECT Stove.stoveId, Stove.currentOwnerId, StoveType.name, StoveType.rarity, 
+                    StoveType.minHeat, StoveType.maxHeat, Stove.heatLevel, Stove.reRollCount
              FROM Stove
              JOIN StoveType ON Stove.typeId = StoveType.typeId
              WHERE Stove.stoveId = @stoveId`,
@@ -128,26 +168,34 @@ export class SparksService {
             return { success: false, error: "Cannot re-roll heat on a listed stove" };
         }
 
+        // Calculate dynamic cost
+        const cost = this.calculateReRollCost(stove.rarity, stove.reRollCount);
+
         // Check sparks balance
         const player = await playerService.getInfoByID(playerId);
         if (!player) {
             return { success: false, error: "Player not found" };
         }
-        if ((player.sparks ?? 0) < HEAT_REROLL_COST) {
-            return { success: false, error: `Insufficient sparks. Re-roll costs ${HEAT_REROLL_COST} sparks.` };
+        if ((player.sparks ?? 0) < cost) {
+            return { success: false, error: `Insufficient sparks. This re-roll costs ${cost} sparks.` };
         }
 
         // Re-roll heat
-        const newHeatLevel = stove.minHeat + Math.random() * (stove.maxHeat - stove.minHeat);
+        let newHeatLevel = stove.minHeat + Math.random() * (stove.maxHeat - stove.minHeat);
+        // Secret stoves should never be extinguished (heat > 0.55)
+        if (stove.rarity.toLowerCase() === 'secret') {
+            newHeatLevel = Math.min(newHeatLevel, 0.55);
+        }
 
-        // Update stove
+        // Update stove heat and increment re-roll count
         await this.unit.prepare(
-            `UPDATE Stove SET heatLevel = @heatLevel WHERE stoveId = @stoveId`,
+            `UPDATE Stove SET heatLevel = @heatLevel, reRollCount = reRollCount + 1 WHERE stoveId = @stoveId`,
             { heatLevel: newHeatLevel, stoveId }
         ).run();
 
         // Deduct sparks
-        await playerService.updatePlayerSparks(playerId, (player.sparks ?? 0) - HEAT_REROLL_COST);
+        const newSparksBalance = (player.sparks ?? 0) - cost;
+        await playerService.updatePlayerSparks(playerId, newSparksBalance);
 
         // Notification
         try {
@@ -156,14 +204,14 @@ export class SparksService {
                 playerId,
                 "system",
                 "Heat Re-rolled",
-                `Re-rolled ${stove.name} heat to ${(newHeatLevel * 100).toFixed(1)}%`,
-                { stoveId, stoveName: stove.name, newHeatLevel }
+                `Re-rolled ${stove.name} heat to ${(newHeatLevel * 100).toFixed(1)}% for ${cost} sparks`,
+                { stoveId, stoveName: stove.name, newHeatLevel, cost }
             );
         } catch {
             // Ignore
         }
 
-        return { success: true, newHeatLevel };
+        return { success: true, newHeatLevel, cost, newSparksBalance };
     }
 
     /**

@@ -488,7 +488,13 @@
                     }
                   </svg>
                 } @else {
-                  <div class="h-[100px] flex items-center justify-center text-text-muted text-xs">Loading chart...</div>
+                  <div class="h-[100px] flex items-center justify-center text-text-muted text-xs">
+                    @if (priceHistory().length === 1) {
+                      Not enough data for chart
+                    } @else {
+                      Loading chart...
+                    }
+                  </div>
                 }
               </div>
 

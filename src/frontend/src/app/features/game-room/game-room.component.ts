@@ -5,6 +5,7 @@ import { WebSocketService } from '../../core/services/websocket.service';
 import { HttpClient } from '@angular/common/http';
 import { Poker } from '../poker/poker';
 import { BlackjackComponent } from '../blackjack/blackjack';
+import { RouletteComponent } from '../roulette/roulette';
 
 interface RoomResponse {
   roomId: string;
@@ -18,7 +19,7 @@ interface RoomResponse {
 @Component({
   selector: 'app-game-room',
   standalone: true,
-  imports: [CommonModule, Poker, BlackjackComponent],
+  imports: [CommonModule, Poker, BlackjackComponent, RouletteComponent],
   templateUrl: './game-room.component.html',
   styleUrls: ['./game-room.component.css']
 })
@@ -50,7 +51,9 @@ export class GameRoomComponent implements OnInit, OnDestroy {
   private _httpRoomStatus = signal<string>('');
 
   minPlayers = computed(() => {
-    return this.roomGameType() === 'blackjack' ? 1 : 2;
+    const gt = this.roomGameType();
+    if (gt === 'blackjack' || gt === 'roulette') return 1;
+    return 2;
   });
 
   canStartGame = computed(() => {

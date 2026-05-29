@@ -78,6 +78,23 @@ export class GamesComponent {
         { name: 'Davidus', avatar: 'D' }
       ],
       route: 'blackjack',
+    },
+    {
+      id: 3,
+      title: 'Roulette',
+      genre: 'Casino',
+      tags: ['Singleplayer', 'Gambling', 'Multiplayer'],
+      playCount: 0,
+      releaseDate: new Date('05-23-2026'),
+      isFavorite: false,
+      trending: true,
+      accentColor: '#c62828',
+      icon: '',
+      description: 'Bet on numbers, colors, or ranges and watch the European wheel spin!',
+      friendsPlayed: [
+        { name: 'Davidus', avatar: 'D' }
+      ],
+      route: 'roulette',
     }
   ]);
 

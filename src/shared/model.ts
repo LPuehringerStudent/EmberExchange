@@ -52,6 +52,7 @@ export interface Stove {
     currentOwnerId: number;
     mintedAt: Date;
     heatLevel: number;
+    reRollCount: number;
 }
 
 export interface StoveRow extends Stove {
@@ -62,6 +63,7 @@ export interface ShowedStove extends StoveRow {
     stoveName: string;
     rarity: Rarity;
     imageUrl: string;
+    collection: string;
 }
 
 // LootboxType
