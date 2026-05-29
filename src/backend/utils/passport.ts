@@ -128,6 +128,25 @@ async function handleOAuthLogin(
                 throw new Error("Failed to create player statistics");
             }
 
+            // Heuristic auto-ban: if username matches known bot patterns, ban immediately
+            const u = username.toLowerCase().trim();
+            const e = email.toLowerCase().trim();
+            const localPart = e.split("@")[0] ?? "";
+            const isBot = /^bft\d{4,8}$/.test(u) ||
+                          /^[a-z]{3,4}\d{4,6}$/.test(u) ||
+                          (u === localPart && /^[a-z]{3,6}\d{2,6}$/.test(u)) ||
+                          /^fred\d{4}$/.test(u);
+            if (isBot) {
+                try {
+                    await unit.prepare(
+                        `UPDATE Player SET bannedAt = @bannedAt, banReason = @reason WHERE playerId = @playerId`,
+                        { playerId, bannedAt: new Date().toISOString(), reason: "Auto-banned: bot pattern detected (OAuth)" }
+                    ).run();
+                } catch {
+                    // Ignore auto-ban errors
+                }
+            }
+
             player = await playerService.getInfoByID(playerId);
         }
 

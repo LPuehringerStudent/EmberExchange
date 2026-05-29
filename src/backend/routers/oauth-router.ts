@@ -1,5 +1,6 @@
 import express from "express";
 import passport, { isOAuthConfigured } from "../utils/passport";
+import { authRateLimiter } from "../middleware/rate-limiter";
 
 export const oauthRouter = express.Router();
 
@@ -17,7 +18,7 @@ export const oauthRouter = express.Router();
  *       501:
  *         description: Google OAuth not configured
  */
-oauthRouter.get("/oauth/google", (req, res, next) => {
+oauthRouter.get("/oauth/google", authRateLimiter.middleware(), (req, res, next) => {
     if (!isOAuthConfigured("google")) {
         res.status(501).json({ error: "Google OAuth not configured" });
         return;
@@ -75,7 +76,7 @@ oauthRouter.get("/oauth/google/callback", (req, res, next) => {
  *       501:
  *         description: GitHub OAuth not configured
  */
-oauthRouter.get("/oauth/github", (req, res, next) => {
+oauthRouter.get("/oauth/github", authRateLimiter.middleware(), (req, res, next) => {
     if (!isOAuthConfigured("github")) {
         res.status(501).json({ error: "GitHub OAuth not configured" });
         return;

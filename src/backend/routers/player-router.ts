@@ -12,7 +12,6 @@ import { PlayerAchievementService } from "../services/player-achievement-service
 import { ACHIEVEMENT_DEFINITIONS } from "../services/achievement-engine";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
-import { hashPassword } from "../utils/password";
 
 export const playerRouter = express.Router();
 
@@ -756,136 +755,21 @@ playerRouter.get("/players/username/:username/glory", async (req, res) => {
  * /players:
  *   post:
  *     summary: Create a new player
- *     description: Creates a new player with the given username, password, email and optional initial values
+ *     description: |
+ *       **DEPRECATED — Use `/auth/register` instead.**
+ *       This endpoint is disabled. All player creation must go through
+ *       `/auth/register` which enforces rate limiting, Turnstile, honeypot,
+ *       timing analysis, proof-of-work, and disposable-email blocking.
  *     tags:
  *       - Players
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - username
- *               - password
- *               - email
- *             properties:
- *               username:
- *                 type: string
- *                 description: Unique username for the player
- *                 example: "player123"
- *               password:
- *                 type: string
- *                 description: Player password (should be pre-hashed)
- *                 example: "hashedpassword123"
- *               email:
- *                 type: string
- *                 format: email
- *                 description: Unique email address for the player
- *                 example: "player@example.com"
- *               coins:
- *                 type: integer
- *                 description: Initial coin amount (default 1000)
- *                 example: 1500
- *               lootboxCount:
- *                 type: integer
- *                 description: Initial lootbox count (default 10)
- *                 example: 5
  *     responses:
- *       201:
- *         description: Player created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CreatePlayerResponse'
- *       400:
- *         description: Username, password, or email is required or invalid
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       409:
- *         description: Username or email already exists
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *       410:
+ *         description: Player creation via this endpoint has been permanently disabled.
  */
-playerRouter.post("/players", async (req, res) => {
-    const unit = await Unit.create(false);
-    const service = new PlayerService(unit);
-    let ok = false;
-
-    try {
-        const { username, password, email, coins, lootboxCount } = req.body;
-
-        // Validate required fields
-        if (isNullOrWhiteSpace(username)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Username is required" });
-            return;
-        }
-
-        if (isNullOrWhiteSpace(password)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Password is required" });
-            return;
-        }
-
-        if (isNullOrWhiteSpace(email)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Email is required" });
-            return;
-        }
-
-        // Basic email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid email format" });
-            return;
-        }
-
-        // Check if username already exists
-        const existingUsername = await service.getPlayerByUsername(username);
-        if (existingUsername !== null) {
-            res.status(StatusCodes.CONFLICT).json({ error: "Username already exists" });
-            return;
-        }
-
-        // Check if email already exists
-        const existingEmail = await service.getPlayerByEmail(email);
-        if (existingEmail !== null) {
-            res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
-            return;
-        }
-
-        const hashedPassword = await hashPassword(password);
-        const [success, id] = await service.createPlayer(
-            username,
-            hashedPassword,
-            email,
-            coins ?? 1000,
-            lootboxCount ?? 10
-        );
-
-        if (success) {
-            ok = true;
-            res.status(StatusCodes.CREATED).json({ playerId: id, username });
-        } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create player" });
-        }
-    } catch (err) {
-        if (isConstraintError(err)) {
-            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
-        } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
-        }
-    } finally {
-        await unit.complete(ok);
-    }
+playerRouter.post("/players", (_req, res) => {
+    res.status(StatusCodes.GONE).json({
+        error: "This endpoint is permanently disabled. Use /auth/register instead."
+    });
 });
 
 /**

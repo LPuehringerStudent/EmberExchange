@@ -176,14 +176,6 @@ const options: swaggerJsdoc.Options = {
                         count: { type: "integer", description: "Number of sales" },
                     },
                 },
-                CreatePlayerResponse: {
-                    type: "object",
-                    properties: {
-                        playerId: { type: "integer", description: "Created player ID" },
-                        username: { type: "string", description: "Player username" },
-                    },
-                    required: ["playerId", "username"],
-                },
                 CreateListingResponse: {
                     type: "object",
                     properties: {
