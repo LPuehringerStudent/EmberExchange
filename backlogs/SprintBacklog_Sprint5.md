@@ -75,12 +75,12 @@
 |------|--------|-----|-------------------|------|--------|
 | Settings – profile updates | Done   | Laurenz / David | "Account" tab: change username (unique check), change email, update motto for Hall of Glory; `PATCH /players/:id/profile` | 1h | ~1h |
 | Settings – security | Done   | Laurenz / David | "Security" tab: change password (current required, bcrypt rehash); view active sessions; "Log out all devices" | 1.5h | ~1.5h |
-| Settings – notifications | Done   | David | "Notifications" tab: toggles for friend requests, chat, trade offers, daily reminder; `PlayerSettings` table; UI exists, some toggles functional | 1h | ~0.75h |
-| Settings – theme toggle | Done   | David | "Appearance" tab: Light/Dark/System mode; preference saved to `localStorage`; CSS variables switch themes | 1h | — |
-| Settings – delete account | Done      | Laurenz / David | "Danger Zone" tab: "Delete Account" with confirmation modal; cascades via DB FKs; backend exists, UI stub present | 1h | ~0.5h |
+| Settings – notifications | Done | David | "Notifications" tab: toggles for friend requests, chat, trade offers, daily reminder; `PlayerSettings` table; all toggles fully wired to backend and respected by `NotificationService` | 1h | ~0.75h |
+| Settings – theme toggle | Done | David | "Appearance" tab: Light/Dark/System mode; preference saved to `localStorage`; CSS variables switch themes; system preference listener; `ThemeService` injected in `AppComponent` | 1h | ~0.75h |
+| Settings – delete account | Done | Laurenz / David | "Danger Zone" tab: "Delete Account" with confirmation modal requiring username typed; full 28-step cascade delete covering all player-related tables (Pity, Quests, Glory, 2FA, Prestige, etc.) | 1h | ~0.75h |
 | Settings UI layout | Done   | David | Left sidebar nav (Account, Security, Notifications, Appearance, Danger Zone); scrollable panels; toast on save | 1h | ~1h |
 
-**Epic Total:** 7h planned → **~4.75h actual**
+**Epic Total:** 7h planned → **~5.5h actual**
 
 ---
 
@@ -145,6 +145,34 @@
 
 ---
 
+## Epic 10: Update Log
+
+| Task | Status | Who | Definition of Done | Est. | Actual |
+|------|--------|-----|-------------------|------|--------|
+| Update Log frontend | Done | David | `/update-log` page with 4 tabs: Changelog (commit history), Contributors (GitHub contributor stats), Releases (GitHub release notes), Insights (commit activity chart, language doughnut chart, code frequency line chart); pagination for commits; `GithubService` with `HttpClient` | — | ~2h |
+| Update Log backend | Done | Laurenz | `GET /github/commits`, `GET /github/contributors`, `GET /github/releases`, `GET /github/repo`, `GET /github/commit-activity`, `GET /github/languages`, `GET /github/code-frequency`; proxy to GitHub API with caching; Swagger docs | — | ~0.5h |
+| Update Log routing | Done | David | Lazy-loaded route `/update-log`; accessible from main menu or footer; `authGuard` optional | — | ~0.25h |
+
+**Epic Total:** — → **~2.75h actual**
+
+---
+
+## Epic 11: Admin Panel
+
+| Task | Status | Who | Definition of Done | Est. | Actual |
+|------|--------|-----|-------------------|------|--------|
+| Admin Panel backend | Done | Laurenz | `AdminService` with `getSystemStats`, `getPlayers`, `getPlayerDetail`, `adjustPlayerCoins`, `banPlayer`, `getStoveTypes`, `updateStoveType`, `createStoveType`; `AdminRouter` with `GET /admin/stats`, `/admin/players`, `/admin/players/:id`, `POST /admin/players/:id/coins`, `POST /admin/players/:id/ban`, `GET /admin/stove-types`, `PATCH /admin/stove-types/:id`, `POST /admin/stove-types`; Swagger docs | — | ~2h |
+| Admin middleware & guard | Done | Laurenz | `adminOnly` middleware rejects non-admin requests with 403; `adminGuard` frontend route guard redirects non-admins to `/home`; seeded admin account (`admin` / `321admin`) has `isAdmin: 1` | — | ~0.5h |
+| Admin Panel frontend — overview | Done | David | `/admin/overview` displays system stats cards: total players, total stoves, total trades, active listings; responsive grid layout | — | ~0.75h |
+| Admin Panel frontend — players list | Done | David | `/admin/players` table with pagination, search by username/email; sortable columns; click row opens player detail | — | ~0.75h |
+| Admin Panel frontend — player detail | Done | David | `/admin/players/:id` shows player profile, coin balance with +/- adjustment form, ban/unban toggle, inventory summary; toast confirmations | — | ~0.75h |
+| Admin Panel frontend — stove types | Done | David | `/admin/stove-types` table lists all stove types; inline edit for name, description, rarity, base heat, sprite; create new stove type modal | — | ~1h |
+| Admin Panel routing | Done | David | `/admin` lazy-loaded route with `adminGuard`; sidebar nav (Overview, Players, Stove Types); nested child routes | — | ~0.25h |
+
+**Epic Total:** — → **~6h actual**
+
+---
+
 ## Summary
 
 | Epic | Planned | Actual | Status |
@@ -153,19 +181,21 @@
 | Shop | 9h | ~9.5h | Complete |
 | Social | 10h | ~9.5h | Mostly complete (trade offers partial) |
 | Hall of Glory | 8h | ~8.25h | Complete |
-| Settings | 7h | ~4.75h | Partial (theme toggle missing, delete account partial) |
+| Settings | 7h | ~5.5h | Complete |
 | **Roulette** | — | **~10.5h** | **Complete** |
 | **Performance** | — | **~4.35h** | **Complete** |
 | **Collections & Quests** | — | **~5h** | **Complete** |
 | **Marketplace + Pity + Sparks** | — | **~6h** | **Complete** |
-| **TOTAL** | **41.5h** | **~71.5h** | |
+| **Update Log** | — | **~2.75h** | **Complete** |
+| **Admin Panel** | — | **~6h** | **Complete** |
+| **TOTAL** | **41.5h** | **~80.25h** | |
 
 ### By Developer
 
 | Developer | Areas | Approx. Hours |
 |-----------|-------|---------------|
-| **Laurenz** | Backend (all services, routers, engines, WebSocket, DB), infrastructure, performance, bug fixes, coin sync, roulette engine | ~38.5h |
-| **David** | Frontend UI (Forgery, Shop, Social, Hall of Glory, Settings, Collections, Quests, Marketplace, Stove Detail) | ~18h |
+| **Laurenz** | Backend (all services, routers, engines, WebSocket, DB), infrastructure, performance, bug fixes, coin sync, roulette engine, GitHub API proxy, admin middleware | ~41h |
+| **David** | Frontend UI (Forgery, Shop, Social, Hall of Glory, Settings, Collections, Quests, Marketplace, Stove Detail, Update Log, Admin Panel) | ~25.5h |
 | **Timon** | Roulette (frontend component, animation, multi-bet) | ~7h |
 | **Ayan** | Tests (all Jest test suites, engine tests, service tests, integration tests) | ~10h |
 
@@ -227,3 +257,5 @@
 7. **Collections & Quests** (Laurenz + David) — Player stove collection tracking and quest system
 8. **Pity Counter & Sparks Salvage** (Laurenz) — Drop-rate mercy system and stove salvage currency
 9. **Performance** (Laurenz) — ~85% reduction in achievement queries, batched coin updates, 15 new indexes
+10. **Update Log** (Laurenz + David) — GitHub-powered changelog, contributors, releases, and insights with Chart.js visualizations
+11. **Admin Panel** (Laurenz + David) — Admin-only dashboard with system stats, player management (search, coin adjustment, ban), and stove type CRUD

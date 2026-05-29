@@ -120,13 +120,3 @@
 
 ---
 
-## Out-of-Scope (Moved to Sprint 5)
-
-| Item | Reason |
-|------|--------|
-| Roulette mini-game | Scope replaced with Poker due to team decision |
-| Settings page (profile/security updates) | Priority lowered; focus on multiplayer games |
-| MiniGames Hub page | Deferred until all games are built |
-| Daily earning caps / coin economy guards | Deferred until more games exist |
-| Sound effects | Polish item; deferred |
-| Mobile responsiveness for games | Desktop-first for MVP; mobile later |
