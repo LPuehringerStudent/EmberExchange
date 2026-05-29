@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { ForgeryService } from "../services/forgery-service";
 import { SessionService } from "../services/session-service";
 import { StatusCodes } from "http-status-codes";
@@ -81,6 +82,11 @@ forgeryRouter.post("/forgery", async (req, res) => {
         const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
             await unit.complete(false);
             return;
         }

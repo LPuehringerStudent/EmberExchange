@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { PlayerService } from "../services/player-service";
 import { SessionService } from "../services/session-service";
 import { PlayerSettingsService } from "../services/player-settings-service";
@@ -189,6 +190,11 @@ playerRouter.patch("/players/:id/profile", async (req, res) => {
         const session = await sessionService.getSession(sessionId);
         if (!session || session.playerId !== playerId) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Unauthorized" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, playerId, res)) {
             await unit.complete(false);
             return;
         }
@@ -403,6 +409,11 @@ playerRouter.patch("/players/:id/settings", async (req, res) => {
         const session = await sessionService.getSession(sessionId);
         if (!session || session.playerId !== playerId) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Unauthorized" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, playerId, res)) {
             await unit.complete(false);
             return;
         }
@@ -952,13 +963,18 @@ playerRouter.patch("/players/:id/coins", async (req, res) => {
             return;
         }
 
+        const playerId = Number(id);
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
+
         const { coins } = req.body;
         if (typeof coins !== "number" || coins < 0) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Coins must be a non-negative number" });
             return;
         }
 
-        const success = await service.updatePlayerCoins(Number(id), coins);
+        const success = await service.updatePlayerCoins(playerId, coins);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Coins updated" });
@@ -1051,13 +1067,18 @@ playerRouter.patch("/players/:id/lootboxes", async (req, res) => {
             return;
         }
 
+        const playerId = Number(id);
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
+
         const { lootboxCount } = req.body;
         if (typeof lootboxCount !== "number" || lootboxCount < 0) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "LootboxCount must be a non-negative number" });
             return;
         }
 
-        const success = await service.updatePlayerLootboxCount(Number(id), lootboxCount);
+        const success = await service.updatePlayerLootboxCount(playerId, lootboxCount);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Lootbox count updated" });
@@ -1136,7 +1157,12 @@ playerRouter.delete("/players/:id", async (req, res) => {
             return;
         }
 
-        const success = await service.deletePlayer(Number(id));
+        const playerId = Number(id);
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
+
+        const success = await service.deletePlayer(playerId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Player deleted" });

@@ -5,6 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { ListingRow } from "../../shared/model";
+import { checkPlayerBanned } from "../middleware/ban-check";
 
 export const listingRouter = express.Router();
 
@@ -434,6 +435,11 @@ listingRouter.post("/listings", async (req, res) => {
 
         if (typeof sellerId !== "number" || typeof price !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "sellerId and price are required" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, sellerId, res)) {
+            await unit.complete(false);
             return;
         }
 

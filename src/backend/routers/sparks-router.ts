@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { SparksService } from "../services/sparks-service";
 import { SessionService } from "../services/session-service";
 import { StatusCodes } from "http-status-codes";
@@ -102,6 +103,10 @@ sparksRouter.post("/sparks/salvage", async (req, res) => {
             return;
         }
 
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
+            return;
+        }
+
         const sparksService = new SparksService(unit);
         const result = await sparksService.salvageStove(session.playerId, stoveId);
 
@@ -163,6 +168,10 @@ sparksRouter.post("/sparks/reroll-heat", async (req, res) => {
         const session = await sessionService.getSession(sessionId);
         if (!session || new Date(session.expiresAt) < new Date()) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
             return;
         }
 

@@ -273,19 +273,21 @@
           </label>
         </div>
 
-        <!-- Turnstile Widget -->
-        <div #turnstileContainer class="flex justify-center"></div>
+        <!-- Turnstile Widget (hidden on localhost) -->
+        @if (!isLocalhost()) {
+          <div #turnstileContainer class="flex justify-center"></div>
 
-        <!-- Privacy Notice -->
-        <div class="rounded-xl bg-surface-secondary/50 border border-border/50 p-3.5">
-          <p class="text-text-secondary text-[0.8rem] leading-relaxed m-0">
-            We use Cloudflare Turnstile to protect this site from spam and abuse.
-            Your interaction with the widget may be subject to Cloudflare's
-            <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Privacy Policy</a>
-            and
-            <a href="https://www.cloudflare.com/terms/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Terms of Service</a>.
-          </p>
-        </div>
+          <!-- Privacy Notice -->
+          <div class="rounded-xl bg-surface-secondary/50 border border-border/50 p-3.5">
+            <p class="text-text-secondary text-[0.8rem] leading-relaxed m-0">
+              We use Cloudflare Turnstile to protect this site from spam and abuse.
+              Your interaction with the widget may be subject to Cloudflare's
+              <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Privacy Policy</a>
+              and
+              <a href="https://www.cloudflare.com/terms/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Terms of Service</a>.
+            </p>
+          </div>
+        }
 
         @if (turnstileError()) {
           <div class="flex flex-col gap-2 px-[18px] py-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-[0.95rem] animate-shake">

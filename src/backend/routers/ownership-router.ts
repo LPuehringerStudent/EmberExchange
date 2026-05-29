@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { OwnershipService } from "../services/ownership-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -304,6 +305,10 @@ ownershipRouter.post("/ownerships", async (req, res) => {
 
         if (!["lootbox", "trade", "mini-game"].includes(acquiredHow)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "acquiredHow must be 'lootbox', 'trade', or 'mini-game'" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, playerId, res)) {
             return;
         }
 

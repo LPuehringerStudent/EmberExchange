@@ -78,7 +78,22 @@ adminRouter.get("/admin/players", async (req, res) => {
         const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string, 10) || 20));
         const search = req.query.search as string | undefined;
-        const result = await service.getPlayers(page, limit, search);
+        const banned = req.query.banned as 'all' | 'banned' | 'active' | undefined;
+        const minCoins = req.query.minCoins ? parseInt(req.query.minCoins as string, 10) : undefined;
+        const maxCoins = req.query.maxCoins ? parseInt(req.query.maxCoins as string, 10) : undefined;
+        const isAdmin = req.query.isAdmin as 'all' | 'admin' | 'user' | undefined;
+        const sortBy = req.query.sortBy as string | undefined;
+
+        const filters = {
+            search,
+            banned: banned && ['all', 'banned', 'active'].includes(banned) ? banned : 'all',
+            minCoins: minCoins !== undefined && !isNaN(minCoins) ? minCoins : undefined,
+            maxCoins: maxCoins !== undefined && !isNaN(maxCoins) ? maxCoins : undefined,
+            isAdmin: isAdmin && ['all', 'admin', 'user'].includes(isAdmin) ? isAdmin : 'all',
+            sortBy: sortBy && ['id_desc', 'id_asc', 'coins_desc', 'coins_asc', 'joined_desc', 'joined_asc'].includes(sortBy) ? sortBy : 'id_desc',
+        };
+
+        const result = await service.getPlayers(page, limit, filters);
         res.status(StatusCodes.OK).json(result);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

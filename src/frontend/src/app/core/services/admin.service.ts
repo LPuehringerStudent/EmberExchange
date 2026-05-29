@@ -17,6 +17,17 @@ export interface AdminSystemStats {
 export interface AdminPlayerList {
   players: PlayerRow[];
   total: number;
+  page: number;
+  limit: number;
+}
+
+export interface PlayerFilters {
+  search?: string;
+  banned?: 'all' | 'banned' | 'active';
+  minCoins?: number;
+  maxCoins?: number;
+  isAdmin?: 'all' | 'admin' | 'user';
+  sortBy?: string;
 }
 
 export interface AdminPlayerDetail {
@@ -60,9 +71,14 @@ export class AdminService {
     return firstValueFrom(this.api.get<AdminSystemStats>('/admin/stats', this.getHeaders()));
   }
 
-  async getPlayers(page = 1, limit = 20, search = ''): Promise<AdminPlayerList> {
+  async getPlayers(page = 1, limit = 20, filters: PlayerFilters = {}): Promise<AdminPlayerList> {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-    if (search) params.set('search', search);
+    if (filters.search) params.set('search', filters.search);
+    if (filters.banned && filters.banned !== 'all') params.set('banned', filters.banned);
+    if (filters.minCoins !== undefined) params.set('minCoins', String(filters.minCoins));
+    if (filters.maxCoins !== undefined) params.set('maxCoins', String(filters.maxCoins));
+    if (filters.isAdmin && filters.isAdmin !== 'all') params.set('isAdmin', filters.isAdmin);
+    if (filters.sortBy) params.set('sortBy', filters.sortBy);
     return firstValueFrom(
       this.api.get<AdminPlayerList>(`/admin/players?${params.toString()}`, this.getHeaders())
     );

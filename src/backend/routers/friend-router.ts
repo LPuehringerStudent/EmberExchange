@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { FriendService } from "../services/friend-service";
 import { SessionService } from "../services/session-service";
 import { NotificationService } from "../services/notification-service";
@@ -224,6 +225,11 @@ friendRouter.post("/friends/request", async (req, res) => {
             return;
         }
 
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
+            await unit.complete(false);
+            return;
+        }
+
         const [success, friendId] = await friendService.sendRequest(session.playerId, addresseeId);
         if (success) {
             await notificationService.create(
@@ -315,6 +321,11 @@ friendRouter.post("/friends/respond", async (req, res) => {
             return;
         }
 
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
+            await unit.complete(false);
+            return;
+        }
+
         const success = await friendService.respondToRequest(friendId, session.playerId, accept);
         if (success) {
             ok = true;
@@ -382,6 +393,11 @@ friendRouter.delete("/friends/:id", async (req, res) => {
         const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
             await unit.complete(false);
             return;
         }
@@ -459,6 +475,11 @@ friendRouter.post("/friends/block", async (req, res) => {
         const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
             await unit.complete(false);
             return;
         }

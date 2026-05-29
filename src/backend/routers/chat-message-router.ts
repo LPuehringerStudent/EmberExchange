@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { ChatMessageService } from "../services/chat-message-service";
 import { NotificationService } from "../services/notification-service";
 import { connectionManager } from "../websocket/connection-manager";
@@ -465,6 +466,11 @@ chatMessageRouter.post("/chat-messages", async (req, res) => {
 
         if (isNullOrWhiteSpace(content)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "content is required" });
+            return;
+        }
+
+        // Check sender is not banned
+        if (await checkPlayerBanned(unit, senderId, res)) {
             return;
         }
 

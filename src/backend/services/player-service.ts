@@ -32,6 +32,23 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
+     * Checks if a player is banned.
+     * @param id - The player's unique ID.
+     * @returns An object with `banned` boolean and optional `reason` string.
+     */
+    async checkBanned(id: number): Promise<{ banned: boolean; reason?: string }> {
+        const stmt = this.unit.prepare<{ bannedAt: string | null; banReason: string | null }>(
+            "SELECT bannedAt, banReason FROM Player WHERE playerId = @id",
+            { id }
+        );
+        const row = await stmt.get();
+        if (!row || !row.bannedAt) {
+            return { banned: false };
+        }
+        return { banned: true, reason: row.banReason ?? undefined };
+    }
+
+    /**
      * Creates a new player with the specified username, password, email and optional initial values.
      * New players are created as non-admins with the current timestamp as join date.
      * @param username - The unique username for the player.

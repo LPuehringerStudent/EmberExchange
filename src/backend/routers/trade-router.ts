@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { TradeService } from "../services/trade-service";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { ListingService } from "../services/listing-service";
@@ -413,8 +414,21 @@ tradeRouter.post("/trades", async (req, res) => {
             return;
         }
 
-        // Check buyer has enough coins
+        // Check buyer is not banned
         const buyer = await playerService.getInfoByID(buyerId);
+        if (buyer?.bannedAt) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Account banned", reason: buyer.banReason || "No reason provided" });
+            return;
+        }
+
+        // Check seller is not banned
+        const sellerInfo = await playerService.getInfoByID(listing.sellerId);
+        if (sellerInfo?.bannedAt) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Seller account banned" });
+            return;
+        }
+
+        // Check buyer has enough coins
         if (buyer === null) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Buyer not found" });
             return;

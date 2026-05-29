@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { CoinTransactionService } from "../services/coin-transaction-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -236,6 +237,11 @@ coinTransactionRouter.post("/coin-transactions", async (req, res) => {
 
         if (!VALID_TYPES.includes(type)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: `type must be one of: ${VALID_TYPES.join(', ')}` });
+            return;
+        }
+
+        // Check player is not banned
+        if (await checkPlayerBanned(unit, playerId, res)) {
             return;
         }
 

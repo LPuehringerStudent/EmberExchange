@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { StoveService } from "../services/stove-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -290,6 +291,10 @@ stoveRouter.post("/stoves", async (req, res) => {
             return;
         }
 
+        if (await checkPlayerBanned(unit, currentOwnerId, res)) {
+            return;
+        }
+
         const [success, id] = await service.createStove(typeId, currentOwnerId);
 
         if (success) {
@@ -376,6 +381,10 @@ stoveRouter.patch("/stoves/:id/owner", async (req, res) => {
         const { newOwnerId } = req.body;
         if (typeof newOwnerId !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "newOwnerId is required" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, newOwnerId, res)) {
             return;
         }
 

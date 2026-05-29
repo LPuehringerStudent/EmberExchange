@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { ShopService } from "../services/shop-service";
 import { ShopRotationService } from "../services/shop-rotation-service";
 import { SessionService } from "../services/session-service";
@@ -99,6 +100,11 @@ shopRouter.post("/shop/buy", async (req, res) => {
         const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
             await unit.complete(false);
             return;
         }
@@ -250,6 +256,11 @@ shopRouter.post("/shop/sell", async (req, res) => {
             return;
         }
 
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
+            await unit.complete(false);
+            return;
+        }
+
         const result = await shopService.sellStove(session.playerId, stoveId);
         if (result.success) {
             await unit.complete(true);
@@ -319,6 +330,11 @@ shopRouter.post("/shop/claim-daily", async (req, res) => {
         const session = await sessionService.getSession(sessionId);
         if (!session) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
             await unit.complete(false);
             return;
         }

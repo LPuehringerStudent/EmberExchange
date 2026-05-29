@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { QuestService } from "../services/quest-service";
 import { SessionService } from "../services/session-service";
 import { StatusCodes } from "http-status-codes";
@@ -87,6 +88,10 @@ questRouter.post("/quests/:id/claim", async (req, res) => {
         const session = await sessionService.getSession(sessionId);
         if (!session || new Date(session.expiresAt) < new Date()) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, session.playerId, res)) {
             return;
         }
 

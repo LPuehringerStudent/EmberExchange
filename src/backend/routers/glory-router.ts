@@ -1,6 +1,7 @@
 import express from "express";
 import { StatusCodes } from "http-status-codes";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { GloryCustomizationService } from "../services/glory-customization-service";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { PlayerAchievementService } from "../services/player-achievement-service";
@@ -93,6 +94,10 @@ gloryRouter.post("/glory/showcase", async (req, res) => {
             return;
         }
 
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
+
         await service.setShowcaseSlot(playerId, slotIndex, stoveId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Showcase updated" });
@@ -135,6 +140,9 @@ gloryRouter.delete("/glory/showcase/:playerId/:slotIndex", async (req, res) => {
     const slotIndex = Number(req.params.slotIndex);
 
     try {
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.removeShowcaseSlot(playerId, slotIndex);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Showcase slot cleared" });
@@ -170,6 +178,9 @@ gloryRouter.post("/glory/achievements", async (req, res) => {
     const { playerId, achievementId, slotIndex } = req.body;
 
     try {
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.setFeaturedAchievement(playerId, achievementId, slotIndex);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Achievement pinned" });
@@ -206,6 +217,9 @@ gloryRouter.delete("/glory/achievements/:playerId/:achievementId", async (req, r
     const { playerId, achievementId } = req.params;
 
     try {
+        if (await checkPlayerBanned(unit, Number(playerId), res)) {
+            return;
+        }
         await service.removeFeaturedAchievement(Number(playerId), achievementId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Achievement unpinned" });
@@ -274,6 +288,9 @@ gloryRouter.post("/glory/theme", async (req, res) => {
     const { playerId, themeId } = req.body;
 
     try {
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.activateTheme(playerId, themeId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Theme activated" });
@@ -342,6 +359,9 @@ gloryRouter.post("/glory/title", async (req, res) => {
     const { playerId, titleId } = req.body;
 
     try {
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.activateTitle(playerId, titleId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Title activated" });
@@ -410,6 +430,9 @@ gloryRouter.post("/glory/banner", async (req, res) => {
     const { playerId, bannerId } = req.body;
 
     try {
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.activateBanner(playerId, bannerId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Banner activated" });
@@ -470,6 +493,9 @@ gloryRouter.post("/glory/visit", async (req, res) => {
         }
         if (visitorId === profileId) {
             res.status(StatusCodes.OK).json({ message: "Self-visits are not recorded" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, visitorId, res)) {
             return;
         }
         await service.recordVisit(profileId, visitorId);
@@ -561,6 +587,9 @@ gloryRouter.post("/glory/guestbook", async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Message must be 1-200 characters" });
             return;
         }
+        if (await checkPlayerBanned(unit, authorId, res)) {
+            return;
+        }
         await service.addGuestbookEntry(playerId, authorId, message);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Guestbook entry added" });
@@ -603,6 +632,9 @@ gloryRouter.delete("/glory/guestbook/:entryId", async (req, res) => {
     const { requestingPlayerId } = req.body;
 
     try {
+        if (await checkPlayerBanned(unit, requestingPlayerId, res)) {
+            return;
+        }
         const success = await service.deleteGuestbookEntry(Number(req.params.entryId), requestingPlayerId);
         if (!success) {
             res.status(StatusCodes.FORBIDDEN).json({ error: "Not authorized to delete this entry" });
@@ -706,12 +738,16 @@ gloryRouter.post("/players/:playerId/prestige", async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerPrestigeService(unit);
     try {
-        const can = await service.canPrestige(Number(req.params.playerId));
+        const playerId = Number(req.params.playerId);
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
+        const can = await service.canPrestige(playerId);
         if (!can) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Not eligible for prestige" });
             return;
         }
-        const result = await service.doPrestige(Number(req.params.playerId));
+        const result = await service.doPrestige(playerId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json(result);
     } catch (err) {

@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { MiniGameSessionService } from "../services/mini-game-session-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -306,6 +307,10 @@ miniGameSessionRouter.post("/mini-game-sessions", async (req, res) => {
 
         if (typeof coinPayout !== "number" || coinPayout < 0) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "coinPayout must be a non-negative number" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, playerId, res)) {
             return;
         }
 

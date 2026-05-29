@@ -26,6 +26,7 @@ export class LoginComponent implements OnInit {
   turnstileError = signal(false);
   formStartTime = signal<number>(0);
   isWrongDomain = signal(false);
+  isLocalhost = signal(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
 
@@ -64,13 +65,15 @@ export class LoginComponent implements OnInit {
       // OAuth status fetch failed, buttons will remain disabled
     }
 
-    // Initialize Turnstile widget
-    try {
-      await this.turnstileService.initialize();
-      // Widget will be rendered after view init via a timeout
-      setTimeout(() => this.renderTurnstile(), 100);
-    } catch {
-      console.error('Failed to initialize Turnstile');
+    // Initialize Turnstile widget (skip on localhost)
+    if (!this.isLocalhost()) {
+      try {
+        await this.turnstileService.initialize();
+        // Widget will be rendered after view init via a timeout
+        setTimeout(() => this.renderTurnstile(), 100);
+      } catch {
+        console.error('Failed to initialize Turnstile');
+      }
     }
   }
 
@@ -96,7 +99,7 @@ export class LoginComponent implements OnInit {
     }
 
     const widgetId = this.turnstileWidgetId();
-    if (!widgetId || !this.turnstileService.isReady(widgetId)) {
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
       this.turnstileError.set(true);
       // If on the wrong domain, Turnstile invisible mode will silently fail
       if (window.location.hostname.includes('onrender.com')) {
@@ -108,7 +111,7 @@ export class LoginComponent implements OnInit {
     this.isLoading.set(true);
 
     const { email, password, rememberMe } = this.loginForm.value;
-    const turnstileToken = this.turnstileService.getToken(widgetId);
+    const turnstileToken = this.isLocalhost() || !widgetId ? undefined : this.turnstileService.getToken(widgetId);
 
     try {
       const result = await this.authService.login(
@@ -164,8 +167,10 @@ export class LoginComponent implements OnInit {
     this.show2FA.set(false);
     this.twoFAForm.reset();
     this.authService.cancel2FA();
-    // Re-render Turnstile widget when returning to the login form
-    setTimeout(() => this.renderTurnstile(), 50);
+    // Re-render Turnstile widget when returning to the login form (skip on localhost)
+    if (!this.isLocalhost()) {
+      setTimeout(() => this.renderTurnstile(), 50);
+    }
   }
 
   togglePassword(): void {

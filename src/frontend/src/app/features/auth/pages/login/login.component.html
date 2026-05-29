@@ -105,8 +105,10 @@
         <!-- Honeypot field — hidden from real users -->
         <input type="text" formControlName="website" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
-        <!-- Turnstile Widget -->
-        <div #turnstileContainer class="flex justify-center"></div>
+        <!-- Turnstile Widget (hidden on localhost) -->
+        @if (!isLocalhost()) {
+          <div #turnstileContainer class="flex justify-center"></div>
+        }
 
         @if (turnstileError()) {
           <div class="flex flex-col gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm animate-shake">

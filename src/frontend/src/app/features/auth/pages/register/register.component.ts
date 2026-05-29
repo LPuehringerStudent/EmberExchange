@@ -34,6 +34,7 @@ export class RegisterComponent implements OnInit {
   turnstileError = signal(false);
   formStartTime = signal<number>(0);
   isWrongDomain = signal(false);
+  isLocalhost = signal(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   // Password strength
   passwordStrength = signal(0);
@@ -97,8 +98,8 @@ export class RegisterComponent implements OnInit {
     this.errorMessage.set('');
     this.currentStep.update(s => s + 1);
 
-    // Render Turnstile widget when reaching the final step
-    if (this.currentStep() === 3) {
+    // Render Turnstile widget when reaching the final step (skip on localhost)
+    if (this.currentStep() === 3 && !this.isLocalhost()) {
       setTimeout(() => this.renderTurnstile(), 50);
     }
   }
@@ -119,7 +120,7 @@ export class RegisterComponent implements OnInit {
     }
 
     const widgetId = this.turnstileWidgetId();
-    if (!widgetId || !this.turnstileService.isReady(widgetId)) {
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
       this.turnstileError.set(true);
       if (window.location.hostname.includes('onrender.com')) {
         this.isWrongDomain.set(true);
@@ -130,7 +131,7 @@ export class RegisterComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    const turnstileToken = this.turnstileService.getToken(widgetId);
+    const turnstileToken = this.isLocalhost() || !widgetId ? undefined : this.turnstileService.getToken(widgetId);
 
     try {
       await this.authService.register(

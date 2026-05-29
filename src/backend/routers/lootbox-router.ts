@@ -4,6 +4,7 @@ import { LootboxService } from "../services/lootbox-service";
 import { ListingService } from "../services/listing-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { checkPlayerBanned } from "../middleware/ban-check";
 
 export const lootboxRouter = express.Router();
 
@@ -410,6 +411,11 @@ lootboxRouter.post("/lootboxes/:id/open", async (req, res) => {
         const { playerId } = req.body;
         if (typeof playerId !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "playerId is required" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            await unit.complete(false);
             return;
         }
 

@@ -60,11 +60,28 @@ async function verifyTurnstileToken(token: string, ip: string): Promise<boolean>
  * used by the internal uptime checker and is not documented publicly.
  * For automated testing, always include this header to avoid token issues.
  */
+function isLocalhost(req: Request): boolean {
+    const host = req.hostname;
+    const ip = req.socket.remoteAddress;
+    return host === 'localhost'
+        || host === '127.0.0.1'
+        || ip === '127.0.0.1'
+        || ip === '::1'
+        || ip === '::ffff:127.0.0.1';
+}
+
 export async function turnstileMiddleware(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<void> {
+    // Bypass Turnstile on localhost for development
+    if (isLocalhost(req)) {
+        res.locals.turnstileFailed = false;
+        next();
+        return;
+    }
+
     const token = (req.body as Record<string, unknown>)?.turnstileToken;
 
     // No token provided

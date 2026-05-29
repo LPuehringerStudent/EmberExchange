@@ -17,6 +17,7 @@ export class ListingService extends ServiceBase {
             `SELECT l.*, p.username as sellerName 
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
+             WHERE p.bannedAt IS NULL
              ORDER BY l.listedAt DESC`
         );
         return await stmt.all();
@@ -32,7 +33,8 @@ export class ListingService extends ServiceBase {
             `SELECT l.*, p.username as sellerName 
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
-             WHERE l.listingId = @id`,
+             WHERE l.listingId = @id
+               AND p.bannedAt IS NULL`,
             { id }
         );
         return (await stmt.get()) ?? null;
@@ -47,7 +49,9 @@ export class ListingService extends ServiceBase {
             `SELECT l.*, p.username as sellerName 
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
-             WHERE l.status = 'active' ORDER BY l.listedAt DESC`
+             WHERE l.status = 'active'
+               AND p.bannedAt IS NULL
+             ORDER BY l.listedAt DESC`
         );
         return await stmt.all();
     }
@@ -64,7 +68,7 @@ export class ListingService extends ServiceBase {
         sortBy?: 'price_asc' | 'price_desc' | 'newest';
         search?: string;
     }): Promise<ListingRow[]> {
-        let where = "l.status = 'active'";
+        let where = "l.status = 'active' AND p.bannedAt IS NULL";
         const params: Record<string, unknown> = {};
 
         if (filters.itemType === 'stove') {
@@ -146,7 +150,7 @@ export class ListingService extends ServiceBase {
             `SELECT l.*, p.username as sellerName 
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
-             WHERE l.sellerId = @sellerId AND l.status = 'active' ORDER BY l.listedAt DESC`,
+             WHERE l.sellerId = @sellerId AND l.status = 'active' AND p.bannedAt IS NULL ORDER BY l.listedAt DESC`,
             { sellerId }
         );
         return await stmt.all();
@@ -162,7 +166,7 @@ export class ListingService extends ServiceBase {
             `SELECT l.*, p.username as sellerName 
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
-             WHERE l.stoveId = @stoveId AND l.status = 'active'`,
+             WHERE l.stoveId = @stoveId AND l.status = 'active' AND p.bannedAt IS NULL`,
             { stoveId }
         );
         return (await stmt.get()) ?? null;
@@ -178,7 +182,7 @@ export class ListingService extends ServiceBase {
             `SELECT l.*, p.username as sellerName 
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
-             WHERE l.lootboxId = @lootboxId AND l.status = 'active'`,
+             WHERE l.lootboxId = @lootboxId AND l.status = 'active' AND p.bannedAt IS NULL`,
             { lootboxId }
         );
         return (await stmt.get()) ?? null;
