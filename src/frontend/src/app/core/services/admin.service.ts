@@ -64,6 +64,7 @@ export interface BotTrapEvent {
     honeypotFields: Record<string, string>;
     username?: string;
     emailDomain?: string;
+    hostHeader: string;
     bodyKeys: string[];
   };
 }

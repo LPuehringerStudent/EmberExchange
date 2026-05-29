@@ -61,13 +61,19 @@ async function verifyTurnstileToken(token: string, ip: string): Promise<boolean>
  * For automated testing, always include this header to avoid token issues.
  */
 function isLocalhost(req: Request): boolean {
-    const host = req.hostname;
-    const ip = req.socket.remoteAddress;
-    return host === 'localhost'
-        || host === '127.0.0.1'
-        || ip === '127.0.0.1'
-        || ip === '::1'
-        || ip === '::ffff:127.0.0.1';
+    // CRITICAL: Never trust req.hostname — it's spoofable via the Host header.
+    // An attacker sending "Host: localhost" would bypass Turnstile entirely.
+    // If X-Forwarded-For is present, the request came through a proxy
+    // (Render, Cloudflare, nginx) and is NEVER localhost.
+    const forwarded = req.headers["x-forwarded-for"];
+    if (forwarded) {
+        return false;
+    }
+
+    const ip = req.socket.remoteAddress || "";
+    return ip === "127.0.0.1"
+        || ip === "::1"
+        || ip === "::ffff:127.0.0.1";
 }
 
 export async function turnstileMiddleware(

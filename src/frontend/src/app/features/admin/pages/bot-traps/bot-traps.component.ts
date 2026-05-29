@@ -100,6 +100,12 @@ import { AdminService, type BotTrapEvent } from '@core/services/admin.service';
                               <div class="font-mono text-text-primary">{{ event.details.emailDomain ?? '—' }}</div>
                             </div>
                             <div class="bg-surface rounded-lg p-3 border border-border">
+                              <div class="text-text-muted mb-1">Host Header</div>
+                              <div class="font-mono" [class.text-red-400]="event.details.hostHeader === 'localhost' || event.details.hostHeader === '127.0.0.1'" [class.text-text-primary]="event.details.hostHeader !== 'localhost' && event.details.hostHeader !== '127.0.0.1'">
+                                {{ event.details.hostHeader }}
+                              </div>
+                            </div>
+                            <div class="bg-surface rounded-lg p-3 border border-border">
                               <div class="text-text-muted mb-1">Form Start Time</div>
                               <div class="font-mono text-text-primary">{{ event.details.formStartTime ?? '—' }}</div>
                             </div>

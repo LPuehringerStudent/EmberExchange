@@ -25,6 +25,7 @@ export interface BotTrapEvent {
         honeypotFields: Record<string, string>;
         username?: string;
         emailDomain?: string;
+        hostHeader: string;
         bodyKeys: string[];
     };
 }
@@ -147,6 +148,7 @@ export function logBot(req: Request, reason: string): void {
             honeypotFields: triggeredHoneypots,
             username: typeof body.username === "string" ? body.username : undefined,
             emailDomain,
+            hostHeader: (typeof req.headers.host === "string" ? req.headers.host : typeof req.headers["x-forwarded-host"] === "string" ? req.headers["x-forwarded-host"] : "no-host"),
             bodyKeys: Object.keys(body),
         },
     });
