@@ -13,12 +13,18 @@ export type { Player };
 export interface LoginRequest {
   usernameOrEmail: string;
   password: string;
+  turnstileToken?: string;
+  formStartTime?: number;
+  [key: string]: unknown;
 }
 
 export interface RegisterRequest {
   username: string;
   password: string;
   email: string;
+  turnstileToken?: string;
+  formStartTime?: number;
+  [key: string]: unknown;
 }
 
 export interface AuthResponse {
@@ -60,6 +66,9 @@ export class AuthService {
   private api = inject(ApiService);
   private router = inject(Router);
 
+  /** Runtime anti-bot config injected by the backend into index.html */
+  private abConfig = (window as unknown as Record<string, unknown>)['__EMBER_CFG'] as Record<string, string | number> | undefined;
+
   async initialize(): Promise<void> {
     try {
       const storedSessionId = this.getStoredSessionId();
@@ -83,10 +92,17 @@ export class AuthService {
     }
   }
 
-  async login(usernameOrEmail: string, password: string, rememberMe: boolean): Promise<AuthResponse | TwoFALoginResponse> {
+  async login(usernameOrEmail: string, password: string, rememberMe: boolean, turnstileToken?: string, formStartTime?: number): Promise<AuthResponse | TwoFALoginResponse> {
     const credentials: LoginRequest = {
       usernameOrEmail: usernameOrEmail.trim(),
-      password
+      password,
+      turnstileToken,
+      formStartTime,
+      // Decoy honeypot fields — visible in source, do nothing on backend
+      website: '',
+      company: '',
+      // Real honeypot field — name comes from runtime config, invisible in source
+      [this.abConfig?.['honeypotField'] ?? 'honeypot']: '',
     };
 
     const response = await firstValueFrom(this.api.post<AuthResponse | TwoFALoginResponse>('/auth/login', credentials));
@@ -118,11 +134,18 @@ export class AuthService {
     this.pending2FAChallenge.set(null);
   }
 
-  async register(username: string, password: string, email: string, rememberMe: boolean): Promise<void> {
+  async register(username: string, password: string, email: string, rememberMe: boolean, turnstileToken?: string, formStartTime?: number): Promise<void> {
     const data: RegisterRequest = {
       username: username.trim(),
       password,
-      email: email.trim()
+      email: email.trim(),
+      turnstileToken,
+      formStartTime,
+      // Decoy honeypot fields — visible in source, do nothing on backend
+      website: '',
+      company: '',
+      // Real honeypot field — name comes from runtime config, invisible in source
+      [this.abConfig?.['honeypotField'] ?? 'honeypot']: '',
     };
 
     const response = await firstValueFrom(this.api.post<AuthResponse>('/auth/register', data));

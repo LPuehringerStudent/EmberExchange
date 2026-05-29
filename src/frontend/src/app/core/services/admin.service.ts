@@ -36,6 +36,15 @@ export interface AdminPlayerDetail {
   }[];
 }
 
+export interface BotTrapEvent {
+  timestamp: string;
+  ip: string;
+  endpoint: string;
+  reason: string;
+  userAgent: string;
+  tarPitMs: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private api = inject(ApiService);
@@ -91,5 +100,13 @@ export class AdminService {
     return firstValueFrom(
       this.api.post<{ typeId: number; name: string }>('/admin/stove-types', data, this.getHeaders())
     );
+  }
+
+  async getBotTrapLog(): Promise<BotTrapEvent[]> {
+    return firstValueFrom(this.api.get<BotTrapEvent[]>('/admin/bot-traps', this.getHeaders()));
+  }
+
+  async clearBotTrapLog(): Promise<void> {
+    await firstValueFrom(this.api.delete<void>('/admin/bot-traps', this.getHeaders()));
   }
 }

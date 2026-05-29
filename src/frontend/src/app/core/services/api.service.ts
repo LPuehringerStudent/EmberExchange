@@ -7,6 +7,10 @@ import { catchError } from 'rxjs/operators';
 export class ApiService {
   private readonly baseUrl = '/api';
   private http = inject(HttpClient);
+  private readonly clientHeader = (window as unknown as Record<string, unknown>)['__EMBER_CFG'] ?
+    ((window as unknown as Record<string, unknown>)['__EMBER_CFG'] as Record<string, string>)?.['clientHeader'] ?? 'X-Ember-Client' : 'X-Ember-Client';
+  private readonly clientHeaderValue = (window as unknown as Record<string, unknown>)['__EMBER_CFG'] ?
+    ((window as unknown as Record<string, unknown>)['__EMBER_CFG'] as Record<string, string>)?.['clientHeaderValue'] ?? 'forge-v1' : 'forge-v1';
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     let message = `Request failed: ${error.status}`;
@@ -29,15 +33,17 @@ export class ApiService {
 
   post<T>(path: string, body: unknown, headers?: HttpHeaders): Observable<T> {
     const defaultHeaders = headers ?? new HttpHeaders({ 'Content-Type': 'application/json' });
+    const headersWithFingerprint = defaultHeaders.set(this.clientHeader, this.clientHeaderValue);
     return this.http
-      .post<T>(`${this.baseUrl}${path}`, body, { headers: defaultHeaders })
+      .post<T>(`${this.baseUrl}${path}`, body, { headers: headersWithFingerprint })
       .pipe(catchError(err => this.handleError(err)));
   }
 
   patch<T>(path: string, body: unknown, headers?: HttpHeaders): Observable<T> {
     const defaultHeaders = headers ?? new HttpHeaders({ 'Content-Type': 'application/json' });
+    const headersWithFingerprint = defaultHeaders.set(this.clientHeader, this.clientHeaderValue);
     return this.http
-      .patch<T>(`${this.baseUrl}${path}`, body, { headers: defaultHeaders })
+      .patch<T>(`${this.baseUrl}${path}`, body, { headers: headersWithFingerprint })
       .pipe(catchError(err => this.handleError(err)));
   }
 

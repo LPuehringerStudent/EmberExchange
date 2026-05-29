@@ -1,7 +1,8 @@
-import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, signal, inject, ChangeDetectionStrategy, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { TurnstileService } from '@core/services/turnstile.service';
 
 @Component({
   selector: 'app-register',
@@ -10,12 +11,13 @@ import { AuthService } from '@core/services/auth.service';
   styleUrls: ['./register.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   // Form signals
   username = signal('');
   email = signal('');
   password = signal('');
   confirmPassword = signal('');
+  honeypotWebsite = signal(''); // honeypot — real users leave empty
 
   // UI state signals
   isLoading = signal(false);
@@ -25,14 +27,20 @@ export class RegisterComponent {
   showConfirmPassword = signal(false);
   currentStep = signal(1);
   acceptedTerms = signal(false);
+  turnstileWidgetId = signal<string | null>(null);
+  turnstileReady = signal(false);
+  formStartTime = signal<number>(0);
 
   // Password strength
   passwordStrength = signal(0);
   strengthLabel = signal('Cold Ash');
   strengthColor = signal('#6c757d');
 
+  @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
+
   private router = inject(Router);
   private authService = inject(AuthService);
+  private turnstileService = inject(TurnstileService);
 
   updatePasswordStrength(password: string): void {
     let strength = 0;
@@ -84,6 +92,11 @@ export class RegisterComponent {
 
     this.errorMessage.set('');
     this.currentStep.update(s => s + 1);
+
+    // Render Turnstile widget when reaching the final step
+    if (this.currentStep() === 3) {
+      setTimeout(() => this.renderTurnstile(), 50);
+    }
   }
 
   prevStep(): void {
@@ -97,15 +110,25 @@ export class RegisterComponent {
       return;
     }
 
+    const widgetId = this.turnstileWidgetId();
+    if (!widgetId || !this.turnstileService.isReady(widgetId)) {
+      this.errorMessage.set('Please complete the security check');
+      return;
+    }
+
     this.isLoading.set(true);
     this.errorMessage.set('');
+
+    const turnstileToken = this.turnstileService.getToken(widgetId);
 
     try {
       await this.authService.register(
         this.username(),
         this.password(),
         this.email(),
-        false // Don't remember me by default for new registrations
+        false, // Don't remember me by default for new registrations
+        turnstileToken ?? undefined,
+        this.formStartTime()
       );
       this.successMessage.set('Account created successfully! Redirecting...');
       setTimeout(() => {
@@ -114,6 +137,33 @@ export class RegisterComponent {
     } catch (err) {
       this.isLoading.set(false);
       this.errorMessage.set(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+    } finally {
+      if (widgetId) {
+        this.turnstileService.reset(widgetId);
+        this.turnstileReady.set(false);
+      }
+    }
+  }
+
+  async ngOnInit(): Promise<void> {
+    // Set form start time for timing analysis (backend rejects instant submissions)
+    this.formStartTime.set(Date.now());
+
+    try {
+      await this.turnstileService.initialize();
+    } catch {
+      console.error('Failed to initialize Turnstile');
+    }
+  }
+
+  private renderTurnstile(): void {
+    if (!this.turnstileContainer?.nativeElement) return;
+    const widgetId = this.turnstileService.render(
+      this.turnstileContainer.nativeElement,
+      () => this.turnstileReady.set(true)
+    );
+    if (widgetId) {
+      this.turnstileWidgetId.set(widgetId);
     }
   }
 

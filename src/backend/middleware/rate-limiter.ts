@@ -15,6 +15,10 @@ interface LimiterConfig {
 /**
  * Simple in-memory token-bucket rate limiter for Express.
  * No external dependencies — uses a Map that is pruned automatically.
+ *
+ * NOTE: This limiter is bypassed in production. Render sets NODE_ENV=production
+ * which disables the middleware (see app.ts). Cloudflare handles rate limiting
+ * at the edge. This code is kept for local development only.
  */
 class ExpressRateLimiter {
     private buckets = new Map<string, Bucket>();

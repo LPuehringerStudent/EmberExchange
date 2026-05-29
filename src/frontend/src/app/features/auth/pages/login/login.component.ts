@@ -1,7 +1,8 @@
-import { Component, signal, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, signal, OnInit, ChangeDetectionStrategy, inject, ViewChild, ElementRef } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { TurnstileService } from '@core/services/turnstile.service';
 
 @Component({
   selector: 'app-login',
@@ -20,14 +21,21 @@ export class LoginComponent implements OnInit {
   githubEnabled = signal(false);
   show2FA = signal(false);
   twoFACode = signal('');
+  turnstileWidgetId = signal<string | null>(null);
+  turnstileReady = signal(false);
+  formStartTime = signal<number>(0);
+
+  @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private turnstileService = inject(TurnstileService);
 
   loginForm = new FormGroup({
     email: new FormControl('', [Validators.required]),
     password: new FormControl('', [Validators.required]),
-    rememberMe: new FormControl(false)
+    rememberMe: new FormControl(false),
+    website: new FormControl('') // honeypot — hidden via CSS
   });
 
   twoFAForm = new FormGroup({
@@ -35,6 +43,9 @@ export class LoginComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
+    // Set form start time for timing analysis (backend rejects instant submissions)
+    this.formStartTime.set(Date.now());
+
     // Check if there's an OAuth error in the URL
     const urlParams = new URLSearchParams(window.location.search);
     const oauthError = urlParams.get('error');
@@ -50,6 +61,26 @@ export class LoginComponent implements OnInit {
     } catch {
       // OAuth status fetch failed, buttons will remain disabled
     }
+
+    // Initialize Turnstile widget
+    try {
+      await this.turnstileService.initialize();
+      // Widget will be rendered after view init via a timeout
+      setTimeout(() => this.renderTurnstile(), 100);
+    } catch {
+      console.error('Failed to initialize Turnstile');
+    }
+  }
+
+  private renderTurnstile(): void {
+    if (!this.turnstileContainer?.nativeElement) return;
+    const widgetId = this.turnstileService.render(
+      this.turnstileContainer.nativeElement,
+      () => this.turnstileReady.set(true)
+    );
+    if (widgetId) {
+      this.turnstileWidgetId.set(widgetId);
+    }
   }
 
   async onSubmit(): Promise<void> {
@@ -60,15 +91,24 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    const widgetId = this.turnstileWidgetId();
+    if (!widgetId || !this.turnstileService.isReady(widgetId)) {
+      this.errorMessage.set('Please complete the security check');
+      return;
+    }
+
     this.isLoading.set(true);
 
     const { email, password, rememberMe } = this.loginForm.value;
+    const turnstileToken = this.turnstileService.getToken(widgetId);
 
     try {
       const result = await this.authService.login(
         email!,
         password!,
-        rememberMe ?? false
+        rememberMe ?? false,
+        turnstileToken ?? undefined,
+        this.formStartTime()
       );
 
       if ('requires2FA' in result) {
@@ -81,6 +121,11 @@ export class LoginComponent implements OnInit {
       this.errorMessage.set(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       this.isLoading.set(false);
+      const widgetId = this.turnstileWidgetId();
+      if (widgetId) {
+        this.turnstileService.reset(widgetId);
+        this.turnstileReady.set(false);
+      }
     }
   }
 
@@ -111,6 +156,8 @@ export class LoginComponent implements OnInit {
     this.show2FA.set(false);
     this.twoFAForm.reset();
     this.authService.cancel2FA();
+    // Re-render Turnstile widget when returning to the login form
+    setTimeout(() => this.renderTurnstile(), 50);
   }
 
   togglePassword(): void {

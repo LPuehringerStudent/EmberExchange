@@ -12,6 +12,10 @@ import { hashPassword, comparePassword, isHashed } from "../utils/password";
 import { TwoFactorService } from "../services/two-factor-service";
 import { NotificationService } from "../services/notification-service";
 import { registerRateLimiter, loginRateLimiter, authRateLimiter } from "../middleware/rate-limiter";
+import { turnstileMiddleware } from "../middleware/turnstile";
+import { timingGuard } from "../middleware/timing-guard";
+import { headerGuard } from "../middleware/header-guard";
+import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, setBotHeaders } from "../utils/bot-trap";
 
 export const authRouter = express.Router();
 
@@ -89,8 +93,24 @@ function validateRegistrationInput(username: string, password: string, email: st
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post("/auth/login", loginRateLimiter.middleware(), async (req, res) => {
+/**
+ * @deprecated Use `/api/auth/legacy-login` instead. This endpoint will be
+ * removed in Sprint 6. The legacy endpoint has full CORS support and no
+ * Turnstile requirement for backward compatibility with the mobile prototype.
+ *
+ * INTERNAL NOTE: Rate limiting on this endpoint is currently disabled in
+ * production (see rate-limiter.ts). Cloudflare handles rate limiting at the edge.
+ */
+authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, async (req, res) => {
     const { usernameOrEmail, password } = req.body;
+
+    // Bot detection: high-confidence bots get tar-pitted but still see normal 401
+    const isBot = await handleBotDetection(req, res, res.locals.turnstileFailed as boolean);
+    if (isBot) {
+        // Return a normal-looking error so the bot can't tell it was detected
+        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+        return;
+    }
 
     if (isNullOrWhiteSpace(usernameOrEmail) || isNullOrWhiteSpace(password)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Username/email and password are required" });
@@ -681,8 +701,34 @@ authRouter.delete("/auth/sessions", async (req, res) => {
     }
 });
 
-authRouter.post("/auth/register", registerRateLimiter.middleware(), async (req, res) => {
+/**
+ * @deprecated The registration flow is being replaced by OAuth-only signup.
+ * This endpoint still works for testing but will be removed. The honeypot
+ * validation on the backend was removed in commit f892de9 — the frontend
+ * field is purely cosmetic now.
+ */
+authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, async (req, res) => {
     const { username, password, email } = req.body;
+
+    // Bot detection: high-confidence bots get a FAKE SUCCESS — no DB write
+    const turnstileFailed = res.locals.turnstileFailed as boolean;
+    const honeypotTriggered = checkHoneypot(req);
+
+    if (turnstileFailed && honeypotTriggered) {
+        logBot(req, "register-blocked: turnstile + honeypot");
+        setBotHeaders(res);
+        await tarPit(req);
+        res.status(StatusCodes.CREATED).json(fakeAuthResponse());
+        return;
+    }
+
+    if (honeypotTriggered) {
+        logBot(req, "register-blocked: honeypot");
+        setBotHeaders(res);
+        await tarPit(req);
+        res.status(StatusCodes.CREATED).json(fakeAuthResponse());
+        return;
+    }
 
     // Phase 1: Validate everything before touching the DB or hashing
     if (isNullOrWhiteSpace(username) || isNullOrWhiteSpace(password) || isNullOrWhiteSpace(email)) {

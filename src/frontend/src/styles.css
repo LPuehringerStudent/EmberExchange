@@ -1,6 +1,17 @@
 /* Global styles */
 @import "tailwindcss";
 
+/* Honeypot field — invisible to humans, tempting to bots */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
 @source "./app/**/*.{html,ts}";
 @source "./../shared/**/*.{html,ts}";
 

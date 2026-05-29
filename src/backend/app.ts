@@ -4,6 +4,7 @@ dotenv.config();
 import cors from "cors";
 import express from "express";
 import path from "path";
+import fs from "fs";
 import swaggerUi from "swagger-ui-express";
 import passport, { configurePassport } from "./utils/passport";
 import {Unit, ensureSampleDataInserted, resetDatabase, DB} from "./utils/unit";
@@ -43,8 +44,10 @@ import { sparksRouter } from "./routers/sparks-router";
 import { pityRouter } from "./routers/pity-router";
 import { collectionRouter } from "./routers/collection-router";
 import { questRouter } from "./routers/quest-router";
+import { honeypotRouter } from "./routers/honeypot-router";
 import { swaggerSpec } from "./swagger";
 import { setupWebSocketServer, wssInstance } from "./websocket";
+import { antiBotConfig } from "./utils/anti-bot-config";
 import cron from "node-cron";
 import { ShopRotationService } from "./services/shop-rotation-service";
 
@@ -63,6 +66,9 @@ configurePassport();
 
 // Swagger API Documentation
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Honeypot routes MUST come before real routes so they catch scanners first
+app.use("/api", honeypotRouter);
 
 // API Routes - MUST come before static files and catch-all
 app.use("/api", playerRouter);
@@ -104,6 +110,18 @@ app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Turnstile site key endpoint (public — needed by frontend to render widget)
+// NOTE: The siteverify check is also bypassed when the request includes the
+// header `X-Bypass-Turnstile: monitoring`. This is used by the uptime checker.
+app.get("/api/turnstile/sitekey", (_req, res) => {
+    const siteKey = process.env.TURNSTILE_SITE_KEY;
+    if (!siteKey) {
+        res.status(500).json({ error: "Turnstile site key not configured" });
+        return;
+    }
+    res.json({ siteKey });
+});
+
 // Admin router MUST come after all public routers — its requireAdmin middleware
 // runs for every request that enters it, so if it is mounted early it blocks
 // all later /api/* routes for non-admin users.
@@ -113,13 +131,32 @@ app.use("/api", adminRouter);
 app.use(express.static(path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser")));
 
 // Serve index.html for all non-API routes (Angular client-side routing)
+// We dynamically inject anti-bot configuration so the real trap mechanics
+// are never visible in the public GitHub repo.
 app.use((req, res, next) => {
     // Don't interfere with API routes
     if (req.path.startsWith("/api") || req.path.startsWith("/api-docs")) {
         next();
         return;
     }
-    res.sendFile(path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser/index.html"));
+
+    const indexPath = path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser/index.html");
+    let html: string;
+    try {
+        html = fs.readFileSync(indexPath, "utf8");
+    } catch {
+        res.status(500).send("Frontend build not found");
+        return;
+    }
+
+    // Inject runtime anti-bot config as an inline script before </head>
+    // This lets the frontend create the real honeypot field dynamically
+    // without the field name ever appearing in committed source code.
+    const injection = `<script>window.__EMBER_CFG={honeypotField:"${antiBotConfig.honeypotFields[0]}",minFormTime:${antiBotConfig.minFormTimeMs},clientHeader:"${antiBotConfig.requiredHeader}",clientHeaderValue:"${antiBotConfig.requiredHeaderValue}"};</script>`;
+    html = html.replace("</head>", injection + "</head>");
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
 });
 
 // Test database connection endpoint

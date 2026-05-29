@@ -102,6 +102,23 @@
           </div>
         </div>
 
+        <!-- Honeypot field — hidden from real users -->
+        <input type="text" formControlName="website" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        <!-- Turnstile Widget -->
+        <div #turnstileContainer class="flex justify-center"></div>
+
+        @if (errorMessage() === 'Please complete the security check') {
+          <div class="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm animate-shake">
+            <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
         <!-- Remember Me & Forgot Password -->
         <div class="flex items-center justify-between flex-wrap gap-3">
           <label class="auth-checkbox-wrapper">

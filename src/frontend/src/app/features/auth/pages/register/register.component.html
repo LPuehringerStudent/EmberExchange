@@ -119,6 +119,9 @@
           />
         </div>
 
+        <!-- Honeypot field — hidden from real users -->
+        <input type="text" [ngModel]="honeypotWebsite()" (ngModelChange)="honeypotWebsite.set($event)" name="website" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
         <button type="submit" class="flex items-center justify-center gap-2.5 px-6 py-4 bg-gradient-to-br from-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(232,93,4,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(232,93,4,0.5)] active:translate-y-0">
           <span>Continue to register</span>
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -269,6 +272,31 @@
             <span class="text-[0.9rem] text-text-primary font-medium">I accept the terms and conditions!</span>
           </label>
         </div>
+
+        <!-- Turnstile Widget -->
+        <div #turnstileContainer class="flex justify-center"></div>
+
+        <!-- Privacy Notice -->
+        <div class="rounded-xl bg-surface-secondary/50 border border-border/50 p-3.5">
+          <p class="text-text-secondary text-[0.8rem] leading-relaxed m-0">
+            We use Cloudflare Turnstile to protect this site from spam and abuse.
+            Your interaction with the widget may be subject to Cloudflare's
+            <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Privacy Policy</a>
+            and
+            <a href="https://www.cloudflare.com/terms/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Terms of Service</a>.
+          </p>
+        </div>
+
+        @if (errorMessage() === 'Please complete the security check') {
+          <div class="flex items-center gap-3 px-[18px] py-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-[0.95rem] animate-shake">
+            <svg class="w-[22px] h-[22px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
 
         <div class="flex gap-3 mt-2.5">
           <button type="button" class="flex items-center justify-center gap-2.5 px-5 py-4 bg-surface-secondary text-text-secondary rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 border-none hover:bg-surface-secondary hover:-translate-y-0.5 flex-[0_0_auto]" (click)="prevStep()">

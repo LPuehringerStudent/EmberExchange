@@ -23,6 +23,10 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'stove-types',
         loadComponent: () => import('./pages/stove-types/stove-types.component').then(m => m.StoveTypesComponent)
+      },
+      {
+        path: 'bot-traps',
+        loadComponent: () => import('./pages/bot-traps/bot-traps.component').then(m => m.BotTrapsComponent)
       }
     ]
   }

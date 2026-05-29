@@ -4,6 +4,7 @@ import { AdminService } from "../services/admin-service";
 import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { getBotTrapLog, clearBotTrapLog } from "../utils/bot-trap";
 
 export const adminRouter = express.Router();
 
@@ -184,6 +185,62 @@ adminRouter.post("/admin/players/:id/coins", async (req, res) => {
     } finally {
         await unit.complete(ok);
     }
+});
+
+/**
+ * @openapi
+ * /admin/bot-traps:
+ *   get:
+ *     summary: Get bot trap event log
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     responses:
+ *       200:
+ *         description: List of bot trap events
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   timestamp: { type: string }
+ *                   ip: { type: string }
+ *                   endpoint: { type: string }
+ *                   reason: { type: string }
+ *                   userAgent: { type: string }
+ *                   tarPitMs: { type: integer }
+ *       403:
+ *         description: Admin access required
+ */
+adminRouter.get("/admin/bot-traps", (_req, res) => {
+    res.status(StatusCodes.OK).json(getBotTrapLog());
+});
+
+/**
+ * @openapi
+ * /admin/bot-traps:
+ *   delete:
+ *     summary: Clear bot trap event log
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     responses:
+ *       200:
+ *         description: Log cleared
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *       403:
+ *         description: Admin access required
+ */
+adminRouter.delete("/admin/bot-traps", (_req, res) => {
+    clearBotTrapLog();
+    res.status(StatusCodes.OK).json({ message: "Bot trap log cleared" });
 });
 
 /**
