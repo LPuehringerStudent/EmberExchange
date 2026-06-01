@@ -425,12 +425,18 @@ export class AuthService {
     return firstValueFrom(this.api.get<OAuthStatus>('/oauth/status'));
   }
 
-  loginWithGoogle(): void {
-    window.location.href = '/api/oauth/google';
+  loginWithGoogle(turnstileToken?: string): void {
+    const url = turnstileToken
+      ? `/api/oauth/google?turnstileToken=${encodeURIComponent(turnstileToken)}`
+      : '/api/oauth/google';
+    window.location.href = url;
   }
 
-  loginWithGitHub(): void {
-    window.location.href = '/api/oauth/github';
+  loginWithGitHub(turnstileToken?: string): void {
+    const url = turnstileToken
+      ? `/api/oauth/github?turnstileToken=${encodeURIComponent(turnstileToken)}`
+      : '/api/oauth/github';
+    window.location.href = url;
   }
 
   async updateEmail(sessionId: string, email: string): Promise<void> {

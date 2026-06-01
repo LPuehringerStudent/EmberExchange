@@ -183,13 +183,21 @@ export class LoginComponent implements OnInit {
 
   loginWithGoogle(): void {
     if (this.googleEnabled()) {
-      this.authService.loginWithGoogle();
+      const widgetId = this.turnstileWidgetId();
+      const token = this.isLocalhost() || !widgetId
+        ? undefined
+        : this.turnstileService.getToken(widgetId) ?? undefined;
+      this.authService.loginWithGoogle(token);
     }
   }
 
   loginWithGitHub(): void {
     if (this.githubEnabled()) {
-      this.authService.loginWithGitHub();
+      const widgetId = this.turnstileWidgetId();
+      const token = this.isLocalhost() || !widgetId
+        ? undefined
+        : this.turnstileService.getToken(widgetId) ?? undefined;
+      this.authService.loginWithGitHub(token);
     }
   }
 }

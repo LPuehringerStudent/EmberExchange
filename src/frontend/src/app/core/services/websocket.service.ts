@@ -51,10 +51,10 @@ export class WebSocketService {
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${protocol}//${window.location.host}/ws?sessionId=${encodeURIComponent(sessionId)}`;
+    const url = `${protocol}//${window.location.host}/ws`;
 
     this.connectionState.set('connecting');
-    this.ws = new WebSocket(url);
+    this.ws = new WebSocket(url, sessionId);
 
     this.ws.onopen = () => {
       this.reconnectAttempts = 0;
