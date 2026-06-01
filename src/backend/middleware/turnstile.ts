@@ -20,10 +20,13 @@ function getClientIp(req: Request): string {
 /**
  * Verifies a Turnstile token with Cloudflare.
  */
+const IS_PROD = process.env.NODE_ENV === "production";
+
 async function verifyTurnstileToken(token: string, ip: string): Promise<boolean> {
     if (!TURNSTILE_SECRET) {
         console.warn("TURNSTILE_SECRET_KEY not set; skipping Turnstile verification");
-        return true; // fail-open
+        // Fail-closed in production, fail-open in dev
+        return !IS_PROD;
     }
 
     try {
@@ -46,7 +49,8 @@ async function verifyTurnstileToken(token: string, ip: string): Promise<boolean>
         return data.success;
     } catch (err) {
         console.error("Turnstile verification request failed:", err);
-        return true; // fail-open on network errors
+        // Fail-closed in production, fail-open in dev
+        return !IS_PROD;
     }
 }
 

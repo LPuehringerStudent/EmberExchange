@@ -30,10 +30,11 @@ async function main() {
             return;
         }
 
-        // Show preview
+        // Show preview (raw pg rows use lowercase column names)
         console.log("\nPreview:");
         for (const bot of bots.slice(0, 5)) {
-            console.log(`  - ${bot.username} (${bot.email}) — currently ${bot.bannedAt ? 'BANNED' : 'active'}`);
+            const isBanned = bot.bannedat || bot.bannedAt;
+            console.log(`  - ${bot.username} (${bot.email}) — currently ${isBanned ? 'BANNED' : 'active'}`);
         }
         if (bots.length > 5) {
             console.log(`  ... and ${bots.length - 5} more`);

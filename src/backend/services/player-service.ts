@@ -10,6 +10,7 @@ export class PlayerService extends ServiceBase {
     /**
      * Retrieves all players from the database.
      * @returns An array of all PlayerRow objects in the database.
+     * @security WARNING: Returns password hashes. Use {@link getAllPublicPlayers} for public APIs.
      */
     async getAllPlayers(): Promise<PlayerRow[]> {
         const stmt = this.unit.prepare<PlayerRow>(
@@ -19,13 +20,47 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
+     * Retrieves all players EXCLUDING sensitive fields (password, totpSecret, email).
+     * Safe for public API responses.
+     */
+    async getAllPublicPlayers(): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email">[]> {
+        const stmt = this.unit.prepare<
+            Omit<PlayerRow, "password" | "totpSecret" | "email">
+        >(
+            `SELECT playerId, username, motto, coins, sparks, lootboxCount, isAdmin,
+                    isPublic, joinedAt, provider, providerId, totpEnabled, bannedAt,
+                    banReason, emailVerified, verifiedAt
+             FROM Player`
+        );
+        return await stmt.all();
+    }
+
+    /**
      * Retrieves a player by their unique ID.
      * @param id - The unique player ID.
      * @returns The PlayerRow object if found, otherwise null.
+     * @security WARNING: Returns password hash and totpSecret. Use {@link getPublicPlayerById} for public APIs.
      */
     async getInfoByID(id: number): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
             "SELECT * FROM Player WHERE playerId = @id",
+            { id }
+        );
+        return (await stmt.get()) ?? null;
+    }
+
+    /**
+     * Retrieves a player by ID EXCLUDING sensitive fields (password, totpSecret, email).
+     * Safe for public API responses.
+     */
+    async getPublicPlayerById(id: number): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email"> | null> {
+        const stmt = this.unit.prepare<
+            Omit<PlayerRow, "password" | "totpSecret" | "email">
+        >(
+            `SELECT playerId, username, motto, coins, sparks, lootboxCount, isAdmin,
+                    isPublic, joinedAt, provider, providerId, totpEnabled, bannedAt,
+                    banReason, emailVerified, verifiedAt
+             FROM Player WHERE playerId = @id`,
             { id }
         );
         return (await stmt.get()) ?? null;
@@ -161,40 +196,43 @@ export class PlayerService extends ServiceBase {
     async deletePlayer(id: number): Promise<boolean> {
         // Delete related records in correct order to respect foreign keys
 
-        // 1. Delete sessions
+        // 1. Delete email verification tokens
+        await this.unit.prepare("DELETE FROM EmailVerificationToken WHERE playerId = @id", { id }).run();
+
+        // 2. Delete sessions
         await this.unit.prepare("DELETE FROM Session WHERE playerId = @id", { id }).run();
 
-        // 2. Delete player statistics
+        // 3. Delete player statistics
         await this.unit.prepare("DELETE FROM PlayerStatistics WHERE playerId = @id", { id }).run();
 
-        // 3. Delete player settings
+        // 4. Delete player settings
         await this.unit.prepare("DELETE FROM PlayerSettings WHERE playerId = @id", { id }).run();
 
-        // 4. Delete login history
+        // 5. Delete login history
         await this.unit.prepare("DELETE FROM LoginHistory WHERE playerId = @id", { id }).run();
 
-        // 5. Delete mini game sessions
+        // 6. Delete mini game sessions
         await this.unit.prepare("DELETE FROM MiniGameSession WHERE playerId = @id", { id }).run();
 
-        // 6. Delete coin transactions
+        // 7. Delete coin transactions
         await this.unit.prepare("DELETE FROM CoinTransaction WHERE playerId = @id", { id }).run();
 
-        // 7. Delete support tickets
+        // 8. Delete support tickets
         await this.unit.prepare("DELETE FROM SupportTicket WHERE reporterId = @id", { id }).run();
 
-        // 8. Delete room players
+        // 9. Delete room players
         await this.unit.prepare("DELETE FROM RoomPlayer WHERE playerId = @id", { id }).run();
 
-        // 9. Delete chat messages (sent or received)
+        // 10. Delete chat messages (sent or received)
         await this.unit.prepare("DELETE FROM ChatMessage WHERE senderId = @id OR receiverId = @id", { id }).run();
 
-        // 10. Delete ownership records
+        // 11. Delete ownership records
         await this.unit.prepare("DELETE FROM Ownership WHERE playerId = @id", { id }).run();
 
-        // 11. Delete trades where player is buyer or seller
-        await this.unit.prepare("DELETE FROM Trade WHERE buyerId = @id OR sellerId = @id", { id }).run();
+        // 12. Delete trades where player is buyer or seller
+        await this.unit.prepare("DELETE FROM Trade WHERE buyerId = @id", { id }).run();
 
-        // 12. Delete listings (this will cascade delete related trades via foreign key)
+        // 13. Delete listings (this will cascade delete related trades via foreign key)
         // First get all listings by this player
         const listingsStmt = this.unit.prepare<{ listingId: number }>(
             "SELECT listingId FROM Listing WHERE sellerId = @id",
@@ -210,10 +248,10 @@ export class PlayerService extends ServiceBase {
         // Now delete the listings
         await this.unit.prepare("DELETE FROM Listing WHERE sellerId = @id", { id }).run();
 
-        // 13. Delete stoves owned by this player
+        // 14. Delete stoves owned by this player
         await this.unit.prepare("DELETE FROM Stove WHERE currentOwnerId = @id", { id }).run();
 
-        // 14. Delete lootbox drops for this player's lootboxes first (to respect FK constraints)
+        // 15. Delete lootbox drops for this player's lootboxes first (to respect FK constraints)
         const lootboxesStmt = this.unit.prepare<{ lootboxId: number }>(
             "SELECT lootboxId FROM Lootbox WHERE playerId = @id",
             { id }
@@ -223,23 +261,20 @@ export class PlayerService extends ServiceBase {
             await this.unit.prepare("DELETE FROM LootboxDrop WHERE lootboxId = @lootboxId", { lootboxId: lb.lootboxId }).run();
         }
 
-        // 15. Delete lootboxes owned by this player
+        // 16. Delete lootboxes owned by this player
         await this.unit.prepare("DELETE FROM Lootbox WHERE playerId = @id", { id }).run();
 
-        // 16. Delete player achievements
+        // 17. Delete player achievements
         await this.unit.prepare("DELETE FROM PlayerAchievement WHERE playerId = @id", { id }).run();
 
-        // 17. Delete notifications
+        // 18. Delete notifications
         await this.unit.prepare("DELETE FROM Notification WHERE playerId = @id", { id }).run();
 
-        // 18. Delete pity counter
+        // 19. Delete pity counter
         await this.unit.prepare("DELETE FROM PlayerPity WHERE playerId = @id", { id }).run();
 
-        // 19. Delete quest progress
+        // 20. Delete quest progress
         await this.unit.prepare("DELETE FROM PlayerQuest WHERE playerId = @id", { id }).run();
-
-        // 20. Delete daily statistics
-        await this.unit.prepare("DELETE FROM DailyStatistics WHERE playerId = @id", { id }).run();
 
         // 21. Delete event logs
         await this.unit.prepare("DELETE FROM EventLog WHERE playerId = @id", { id }).run();

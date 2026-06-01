@@ -4,6 +4,8 @@ import { checkPlayerBanned } from "../middleware/ban-check";
 import { MiniGameSessionService } from "../services/mini-game-session-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
 
 export const miniGameSessionRouter = express.Router();
 
@@ -282,7 +284,7 @@ miniGameSessionRouter.get("/mini-game-sessions/type/:gameType", async (req, res)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.post("/mini-game-sessions", async (req, res) => {
+miniGameSessionRouter.post("/mini-game-sessions", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new MiniGameSessionService(unit);
     let ok = false;
@@ -292,6 +294,10 @@ miniGameSessionRouter.post("/mini-game-sessions", async (req, res) => {
 
         if (typeof playerId !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "playerId is required" });
+            return;
+        }
+        if (req.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only record sessions for yourself" });
             return;
         }
 
@@ -374,7 +380,7 @@ miniGameSessionRouter.post("/mini-game-sessions", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.delete("/mini-game-sessions/:id", async (req, res) => {
+miniGameSessionRouter.delete("/mini-game-sessions/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new MiniGameSessionService(unit);
     const id = req.params.id;

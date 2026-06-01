@@ -4,6 +4,7 @@ import { PriceHistoryService } from "../services/price-history-service";
 import { StoveTypeService } from "../services/stove-type-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const priceHistoryRouter = express.Router();
 
@@ -216,7 +217,7 @@ priceHistoryRouter.get("/stove-types/:typeId/price-history", async (req, res) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.post("/price-history", async (req, res) => {
+priceHistoryRouter.post("/price-history", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PriceHistoryService(unit);
     let ok = false;
@@ -448,7 +449,7 @@ priceHistoryRouter.get("/stove-types/:typeId/recent-prices", async (req, res) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.delete("/price-history/:id", async (req, res) => {
+priceHistoryRouter.delete("/price-history/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PriceHistoryService(unit);
     const id = req.params.id;

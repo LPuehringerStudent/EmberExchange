@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { PlayerStatisticsService } from "../services/player-statistics-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const playerStatisticsRouter = express.Router();
 
@@ -242,7 +243,7 @@ playerStatisticsRouter.get("/players/:playerId/statistics", async (req, res) => 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.post("/players/:playerId/statistics", async (req, res) => {
+playerStatisticsRouter.post("/players/:playerId/statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerStatisticsService(unit);
     const playerId = req.params.playerId;
@@ -310,7 +311,7 @@ playerStatisticsRouter.post("/players/:playerId/statistics", async (req, res) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.delete("/players/:playerId/statistics", async (req, res) => {
+playerStatisticsRouter.delete("/players/:playerId/statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerStatisticsService(unit);
     const playerId = req.params.playerId;

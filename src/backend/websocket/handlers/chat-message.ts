@@ -34,6 +34,15 @@ export async function handleChatMessage(socketId: string, payload: Record<string
         return;
     }
 
+    const MAX_CHAT_LENGTH = 2000;
+    if (content.length > MAX_CHAT_LENGTH) {
+        connectionManager.sendToSocket(socketId, {
+            type: "error",
+            payload: { code: "INVALID_STATE", message: `Message too long (max ${MAX_CHAT_LENGTH} characters)`, recoverable: true }
+        });
+        return;
+    }
+
     const unit = await Unit.create(false);
     let ok = false;
 

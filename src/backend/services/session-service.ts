@@ -18,7 +18,10 @@ export class SessionService extends ServiceBase {
 
     async getSession(sessionId: string): Promise<SessionRow | null> {
         const stmt = this.unit.prepare<SessionRow>(
-            "SELECT * FROM Session WHERE sessionId = @sessionId AND isActive = 1",
+            `SELECT * FROM Session
+             WHERE sessionId = @sessionId
+               AND isActive = 1
+               AND expiresAt::timestamptz > NOW()`,
             { sessionId }
         );
         return (await stmt.get()) ?? null;
@@ -34,7 +37,7 @@ export class SessionService extends ServiceBase {
 
     async getSessionsByPlayer(playerId: number): Promise<SessionRow[]> {
         const stmt = this.unit.prepare<SessionRow>(
-            "SELECT * FROM Session WHERE playerId = @playerId AND isActive = 1 ORDER BY createdAt DESC",
+            `SELECT * FROM Session WHERE playerId = @playerId AND isActive = 1 AND expiresAt::timestamptz > NOW() ORDER BY createdAt DESC`,
             { playerId }
         );
         return await stmt.all();

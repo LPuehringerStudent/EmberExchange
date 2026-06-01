@@ -14,8 +14,22 @@ import { NotificationService } from "../services/notification-service";
 import { QuestService } from "../services/quest-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
+import { PunishmentService } from "../services/punishment-service";
 
 export const tradeRouter = express.Router();
+
+function getClientIp(req: express.Request): string {
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (typeof cfIp === "string" && cfIp.length > 0) return cfIp.trim();
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+        if (hops.length > 0) return hops[hops.length - 1];
+    }
+    return req.socket.remoteAddress ?? "unknown";
+}
 
 /**
  * @openapi
@@ -377,7 +391,7 @@ tradeRouter.get("/players/:buyerId/trades", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.post("/trades", async (req, res) => {
+tradeRouter.post("/trades", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const tradeService = new TradeService(unit);
     const listingService = new ListingService(unit);
@@ -393,6 +407,16 @@ tradeRouter.post("/trades", async (req, res) => {
 
         if (typeof listingId !== "number" || typeof buyerId !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "listingId and buyerId are required" });
+            return;
+        }
+
+        if (req.playerId !== buyerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_trade", `Attempted to execute trade as buyer ${buyerId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only execute trades as yourself" });
+            await unit.complete(false);
             return;
         }
 
@@ -613,7 +637,7 @@ tradeRouter.post("/trades", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.delete("/trades/:id", async (req, res) => {
+tradeRouter.delete("/trades/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new TradeService(unit);
     const id = req.params.id;

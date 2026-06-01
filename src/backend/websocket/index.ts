@@ -15,7 +15,7 @@ import { clearTurnTimer } from "./turn-timer";
 export let wssInstance: WebSocketServer | null = null;
 
 export function setupWebSocketServer(server: http.Server): void {
-    const wss = new WebSocketServer({ server, path: "/ws" });
+    const wss = new WebSocketServer({ server, path: "/ws", maxPayload: 65536 });
     wssInstance = wss;
 
     wss.on("connection", async (ws, req) => {
@@ -49,6 +49,11 @@ export function setupWebSocketServer(server: http.Server): void {
         }
 
         ws.on("message", (rawData) => {
+            // Cap pre-auth queue to prevent memory exhaustion from unauthenticated sockets
+            if (!authComplete && messageQueue.length >= 10) {
+                console.warn("WebSocket pre-auth queue full — dropping message");
+                return;
+            }
             messageQueue.push(rawData);
             if (!isProcessing && authComplete) {
                 isProcessing = true;

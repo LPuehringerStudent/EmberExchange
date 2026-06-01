@@ -4,6 +4,7 @@ import { checkPlayerBanned } from "../middleware/ban-check";
 import { StoveService } from "../services/stove-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const stoveRouter = express.Router();
 
@@ -278,7 +279,7 @@ stoveRouter.get("/stove-types/:typeId/stoves", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.post("/stoves", async (req, res) => {
+stoveRouter.post("/stoves", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveService(unit);
     let ok = false;
@@ -366,7 +367,7 @@ stoveRouter.post("/stoves", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.patch("/stoves/:id/owner", async (req, res) => {
+stoveRouter.patch("/stoves/:id/owner", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveService(unit);
     const id = req.params.id;
@@ -451,7 +452,7 @@ stoveRouter.patch("/stoves/:id/owner", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.delete("/stoves/:id", async (req, res) => {
+stoveRouter.delete("/stoves/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveService(unit);
     const id = req.params.id;

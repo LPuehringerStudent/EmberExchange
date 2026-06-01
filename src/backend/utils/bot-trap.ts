@@ -258,11 +258,11 @@ export async function handleBotDetection(
         return true;
     }
 
-    // Turnstile-only failures are logged but not tar-pitted here
-    // (rate limiter handles brute force; this avoids punishing real users)
+    // Turnstile-only failures = block the request (real users have valid tokens)
     if (turnstileFailed) {
         logBot(req, "turnstile-failed");
-        return false;
+        setBotHeaders(res);
+        return true;
     }
 
     return false;

@@ -392,6 +392,43 @@ export class DB {
         `);
 
         await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS emailVerified INTEGER NOT NULL DEFAULT 0
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS verifiedAt TEXT
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS violationCount INTEGER NOT NULL DEFAULT 0
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS lastViolationAt TEXT
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS BannedIP (
+                ip TEXT PRIMARY KEY,
+                reason TEXT NOT NULL,
+                bannedAt TEXT NOT NULL,
+                expiresAt TEXT,
+                violationType TEXT
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS ViolationLog (
+                violationId SERIAL PRIMARY KEY,
+                ip TEXT NOT NULL,
+                playerId INTEGER REFERENCES Player(playerId),
+                type TEXT NOT NULL,
+                details TEXT,
+                createdAt TEXT NOT NULL
+            )
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS StoveType (
                 typeId SERIAL PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,
@@ -500,6 +537,16 @@ export class DB {
                 createdAt TEXT NOT NULL,
                 expiresAt TEXT NOT NULL,
                 isActive INTEGER NOT NULL DEFAULT 1
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS EmailVerificationToken (
+                token TEXT PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
+                email TEXT NOT NULL,
+                createdAt TEXT NOT NULL,
+                expiresAt TEXT NOT NULL
             )
         `);
 
@@ -1342,8 +1389,10 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
     }
 
     async function insertPlayers(): Promise<void> {
+        // SECURITY: No admin account in seed data. Create admins manually via the
+        // admin panel or database. The previous seed had a weak admin password
+        // (321admin) and 999,999 coins — a trivial exploit vector.
         const players = [
-            { username: "admin", password: "321admin", email: "admin@emberexchange.com", coins: 999999, lootboxCount: 100, isAdmin: 1 },
             { username: "player1", password: "pass123", email: "player1@example.com", coins: 5000, lootboxCount: 10, isAdmin: 0 },
             { username: "player2", password: "pass456", email: "player2@example.com", coins: 3500, lootboxCount: 10, isAdmin: 0 },
             { username: "trader_joe", password: "trade789", email: "trader@example.com", coins: 10000, lootboxCount: 10, isAdmin: 0 },

@@ -1,8 +1,38 @@
 import express from "express";
+import crypto from "crypto";
 import passport, { isOAuthConfigured } from "../utils/passport";
 import { authRateLimiter } from "../middleware/rate-limiter";
 
 export const oauthRouter = express.Router();
+
+/* ─── OAuth state store (in-memory, 10-min expiry) ─── */
+interface OAuthState {
+    provider: string;
+    expiresAt: number;
+}
+const oauthStateStore = new Map<string, OAuthState>();
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
+
+function createOAuthState(provider: string): string {
+    const state = crypto.randomBytes(32).toString("hex");
+    oauthStateStore.set(state, { provider, expiresAt: Date.now() + OAUTH_STATE_TTL_MS });
+    return state;
+}
+
+function validateOAuthState(state: string, provider: string): boolean {
+    const entry = oauthStateStore.get(state);
+    if (!entry) return false;
+    oauthStateStore.delete(state);
+    return entry.provider === provider && entry.expiresAt > Date.now();
+}
+
+// Periodic cleanup
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, val] of oauthStateStore) {
+        if (val.expiresAt < now) oauthStateStore.delete(key);
+    }
+}, 60_000);
 
 /**
  * @openapi
@@ -23,8 +53,11 @@ oauthRouter.get("/oauth/google", authRateLimiter.middleware(), (req, res, next) 
         res.status(501).json({ error: "Google OAuth not configured" });
         return;
     }
+    const state = createOAuthState("google");
+    res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", maxAge: OAUTH_STATE_TTL_MS });
     passport.authenticate("google", {
         scope: ["profile", "email"],
+        state,
     })(req, res, next);
 });
 
@@ -47,6 +80,14 @@ oauthRouter.get("/oauth/google/callback", (req, res, next) => {
         res.status(501).json({ error: "Google OAuth not configured" });
         return;
     }
+    const state = req.query.state as string | undefined;
+    const cookieState = req.cookies?.oauth_state;
+    if (!state || !cookieState || !validateOAuthState(state, "google") || state !== cookieState) {
+        res.clearCookie("oauth_state");
+        res.redirect("/login?error=Invalid+OAuth+state");
+        return;
+    }
+    res.clearCookie("oauth_state");
     passport.authenticate("google", { session: false }, (err: Error | null, user: any) => {
         if (err) {
             console.error("Google OAuth error:", err);
@@ -57,8 +98,13 @@ oauthRouter.get("/oauth/google/callback", (req, res, next) => {
             res.redirect("/login?error=Authentication failed");
             return;
         }
-        // Redirect to frontend with session ID
-        res.redirect(`/oauth/callback?sessionId=${user.sessionId}&playerId=${user.playerId}`);
+        // Set session in a short-lived cookie instead of URL query param
+        res.cookie("oauth_session", JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId }), {
+            httpOnly: true,
+            sameSite: "lax",
+            maxAge: 60_000, // 1 minute — frontend reads it immediately
+        });
+        res.redirect("/oauth/callback");
     })(req, res, next);
 });
 
@@ -81,8 +127,11 @@ oauthRouter.get("/oauth/github", authRateLimiter.middleware(), (req, res, next) 
         res.status(501).json({ error: "GitHub OAuth not configured" });
         return;
     }
+    const state = createOAuthState("github");
+    res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", maxAge: OAUTH_STATE_TTL_MS });
     passport.authenticate("github", {
         scope: ["user:email"],
+        state,
     })(req, res, next);
 });
 
@@ -105,6 +154,14 @@ oauthRouter.get("/oauth/github/callback", (req, res, next) => {
         res.status(501).json({ error: "GitHub OAuth not configured" });
         return;
     }
+    const state = req.query.state as string | undefined;
+    const cookieState = req.cookies?.oauth_state;
+    if (!state || !cookieState || !validateOAuthState(state, "github") || state !== cookieState) {
+        res.clearCookie("oauth_state");
+        res.redirect("/login?error=Invalid+OAuth+state");
+        return;
+    }
+    res.clearCookie("oauth_state");
     passport.authenticate("github", { session: false }, (err: Error | null, user: any) => {
         if (err) {
             console.error("GitHub OAuth error:", err);
@@ -115,8 +172,13 @@ oauthRouter.get("/oauth/github/callback", (req, res, next) => {
             res.redirect("/login?error=Authentication failed");
             return;
         }
-        // Redirect to frontend with session ID
-        res.redirect(`/oauth/callback?sessionId=${user.sessionId}&playerId=${user.playerId}`);
+        // Set session in a short-lived cookie instead of URL query param
+        res.cookie("oauth_session", JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId }), {
+            httpOnly: true,
+            sameSite: "lax",
+            maxAge: 60_000, // 1 minute — frontend reads it immediately
+        });
+        res.redirect("/oauth/callback");
     })(req, res, next);
 });
 

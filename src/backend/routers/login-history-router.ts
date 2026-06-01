@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { LoginHistoryService } from "../services/login-history-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const loginHistoryRouter = express.Router();
 
@@ -210,7 +211,7 @@ loginHistoryRouter.get("/players/:playerId/login-history", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.post("/login-history", async (req, res) => {
+loginHistoryRouter.post("/login-history", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LoginHistoryService(unit);
     let ok = false;
@@ -279,7 +280,7 @@ loginHistoryRouter.post("/login-history", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.delete("/login-history/:id", async (req, res) => {
+loginHistoryRouter.delete("/login-history/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LoginHistoryService(unit);
     const id = req.params.id;

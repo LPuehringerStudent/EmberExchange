@@ -4,6 +4,7 @@ import { checkPlayerBanned } from "../middleware/ban-check";
 import { OwnershipService } from "../services/ownership-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const ownershipRouter = express.Router();
 
@@ -290,7 +291,7 @@ ownershipRouter.get("/players/:playerId/ownerships", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.post("/ownerships", async (req, res) => {
+ownershipRouter.post("/ownerships", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new OwnershipService(unit);
     let ok = false;
@@ -439,7 +440,7 @@ ownershipRouter.get("/stoves/:stoveId/current-owner", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.delete("/ownerships/:id", async (req, res) => {
+ownershipRouter.delete("/ownerships/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new OwnershipService(unit);
     const id = req.params.id;

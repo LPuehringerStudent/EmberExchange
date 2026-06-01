@@ -5,6 +5,7 @@ import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { getBotTrapLog, clearBotTrapLog } from "../utils/bot-trap";
+import { PunishmentService } from "../services/punishment-service";
 
 export const adminRouter = express.Router();
 
@@ -194,6 +195,83 @@ adminRouter.post("/admin/players/:id/coins", async (req, res) => {
             res.status(StatusCodes.OK).json({ message: "Coins adjusted" });
         } else {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+// ─── Punishment / Security Admin Endpoints ───
+
+adminRouter.get("/admin/banned-ips", async (_req, res) => {
+    const unit = await Unit.create(true);
+    const service = new PunishmentService(unit);
+    try {
+        const bans = await service.getBannedIPs();
+        res.status(StatusCodes.OK).json(bans);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+adminRouter.get("/admin/violations", async (req, res) => {
+    const unit = await Unit.create(true);
+    const service = new PunishmentService(unit);
+    try {
+        const limit = Math.min(Number(req.query.limit) || 100, 500);
+        const log = await service.getViolationLog(limit);
+        res.status(StatusCodes.OK).json(log);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+adminRouter.post("/admin/banned-ips/unban", async (req, res) => {
+    const { ip } = req.body;
+    if (!ip || typeof ip !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "IP is required" });
+        return;
+    }
+    const unit = await Unit.create(false);
+    const service = new PunishmentService(unit);
+    let ok = false;
+    try {
+        const success = await service.unbanIp(ip);
+        ok = success;
+        if (success) {
+            res.status(StatusCodes.OK).json({ message: `IP ${ip} unbanned` });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "IP not found in ban list" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+adminRouter.post("/admin/players/:id/unban", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new PunishmentService(unit);
+    let ok = false;
+    try {
+        const playerId = Number(req.params.id);
+        if (isNaN(playerId)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid player ID" });
+            return;
+        }
+        const success = await service.unbanPlayer(playerId);
+        ok = success;
+        if (success) {
+            res.status(StatusCodes.OK).json({ message: `Player ${playerId} unbanned` });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found or not banned" });
         }
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

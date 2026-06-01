@@ -6,6 +6,7 @@ import { NotificationService } from "../services/notification-service";
 import { connectionManager } from "../websocket/connection-manager";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAuth } from "../middleware/require-auth";
 
 export const chatMessageRouter = express.Router();
 
@@ -370,7 +371,7 @@ chatMessageRouter.get("/players/:playerId/unread-messages", async (req, res) => 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", async (req, res) => {
+chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const player1Id = req.params.player1Id;
@@ -388,7 +389,14 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", async
             return;
         }
 
-        const response = await service.getConversationPaginated(Number(player1Id), Number(player2Id), limit, offset);
+        const p1 = Number(player1Id);
+        const p2 = Number(player2Id);
+        if (req.playerId !== p1 && req.playerId !== p2) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view conversations you are part of" });
+            return;
+        }
+
+        const response = await service.getConversationPaginated(p1, p2, limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -451,7 +459,7 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", async
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.post("/chat-messages", async (req, res) => {
+chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ChatMessageService(unit);
     let ok = false;
@@ -461,6 +469,10 @@ chatMessageRouter.post("/chat-messages", async (req, res) => {
 
         if (typeof senderId !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "senderId is required" });
+            return;
+        }
+        if (req.playerId !== senderId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only send messages as yourself" });
             return;
         }
 
@@ -566,7 +578,7 @@ chatMessageRouter.post("/chat-messages", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.patch("/chat-messages/:id/read", async (req, res) => {
+chatMessageRouter.patch("/chat-messages/:id/read", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ChatMessageService(unit);
     const id = req.params.id;
@@ -578,6 +590,17 @@ chatMessageRouter.patch("/chat-messages/:id/read", async (req, res) => {
             return;
         }
 
+        const message = await service.getById(Number(id));
+        if (!message) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Message not found" });
+            await unit.complete(false);
+            return;
+        }
+        if (message.receiverId !== req.playerId && message.senderId !== req.playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only mark your own messages as read" });
+            await unit.complete(false);
+            return;
+        }
         const success = await service.markAsRead(Number(id));
         if (success) {
             ok = true;
@@ -633,7 +656,7 @@ chatMessageRouter.patch("/chat-messages/:id/read", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.delete("/chat-messages/:id", async (req, res) => {
+chatMessageRouter.delete("/chat-messages/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ChatMessageService(unit);
     const id = req.params.id;
@@ -645,6 +668,17 @@ chatMessageRouter.delete("/chat-messages/:id", async (req, res) => {
             return;
         }
 
+        const message = await service.getById(Number(id));
+        if (!message) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Message not found" });
+            await unit.complete(false);
+            return;
+        }
+        if (message.receiverId !== req.playerId && message.senderId !== req.playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only delete your own messages" });
+            await unit.complete(false);
+            return;
+        }
         const success = await service.delete(Number(id));
         if (success) {
             ok = true;

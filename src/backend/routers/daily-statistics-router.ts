@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { DailyStatisticsService } from "../services/daily-statistics-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const dailyStatisticsRouter = express.Router();
 
@@ -322,7 +323,7 @@ dailyStatisticsRouter.get("/daily-statistics/:date", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.post("/daily-statistics", async (req, res) => {
+dailyStatisticsRouter.post("/daily-statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new DailyStatisticsService(unit);
     let ok = false;
@@ -392,10 +393,10 @@ dailyStatisticsRouter.post("/daily-statistics", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.delete("/daily-statistics/:date", async (req, res) => {
+dailyStatisticsRouter.delete("/daily-statistics/:date", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new DailyStatisticsService(unit);
-    const date = req.params.date;
+    const date = req.params.date as string;
     let ok = false;
 
     try {

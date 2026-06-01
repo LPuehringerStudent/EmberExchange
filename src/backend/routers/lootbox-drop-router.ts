@@ -447,7 +447,7 @@ lootboxDropRouter.post("/lootbox-drops", requireAdmin, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.delete("/lootbox-drops/:id", async (req, res) => {
+lootboxDropRouter.delete("/lootbox-drops/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxDropService(unit);
     const id = req.params.id;

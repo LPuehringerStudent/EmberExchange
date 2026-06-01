@@ -5,6 +5,7 @@ import { ListingService } from "../services/listing-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { checkPlayerBanned } from "../middleware/ban-check";
+import { requireAdmin } from "../middleware/admin";
 
 export const lootboxRouter = express.Router();
 
@@ -309,7 +310,7 @@ lootboxRouter.get("/players/:playerId/lootboxes", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.post("/lootboxes", async (req, res) => {
+lootboxRouter.post("/lootboxes", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxService(unit);
     let ok = false;

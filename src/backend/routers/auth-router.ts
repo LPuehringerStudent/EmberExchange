@@ -11,11 +11,13 @@ import { isNullOrWhiteSpace } from "../utils/util";
 import { hashPassword, comparePassword, isHashed } from "../utils/password";
 import { TwoFactorService } from "../services/two-factor-service";
 import { NotificationService } from "../services/notification-service";
-import { registerRateLimiter, loginRateLimiter, authRateLimiter } from "../middleware/rate-limiter";
+import { PunishmentService } from "../services/punishment-service";
+import { registerRateLimiter, loginRateLimiter, authRateLimiter, resendVerificationRateLimiter, twoFactorRateLimiter } from "../middleware/rate-limiter";
 import { turnstileMiddleware } from "../middleware/turnstile";
 import { timingGuard } from "../middleware/timing-guard";
 import { headerGuard } from "../middleware/header-guard";
 import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, setBotHeaders } from "../utils/bot-trap";
+import { sendVerificationEmail } from "../services/email-service";
 
 /* ─── Proof-of-work challenge store (in-memory, 10-min expiry) ─── */
 interface PowChallenge {
@@ -45,32 +47,23 @@ function verifyPow(challenge: string, nonce: string, difficulty: number): boolea
 }
 
 /* ─── Heuristic bot-pattern detection ─── */
-function isBotPattern(username: string, email: string): boolean {
-    const u = username.toLowerCase().trim();
-    const e = email.toLowerCase().trim();
-    const localPart = e.split("@")[0] ?? "";
-
-    // Pattern 1: "bft" + digits (e.g. bft123456)
-    if (/^bft\d{4,8}$/.test(u)) return true;
-
-    // Pattern 2: 3-4 lowercase letters + 4-6 digits (e.g. fred6644)
-    if (/^[a-z]{3,4}\d{4,6}$/.test(u)) return true;
-
-    // Pattern 3: username matches email local part exactly AND is random-looking
-    if (u === localPart && /^[a-z]{3,6}\d{2,6}$/.test(u)) return true;
-
-    // Pattern 4: username is exactly "fred" + 4 digits
-    if (/^fred\d{4}$/.test(u)) return true;
-
-    return false;
-}
-
 export const authRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
     const pgErr = err as { code?: string };
     return pgErr.code === "23503" ||
            pgErr.code === "23505";
+}
+
+function getClientIp(req: express.Request): string {
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (typeof cfIp === "string" && cfIp.length > 0) return cfIp.trim();
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+        if (hops.length > 0) return hops[hops.length - 1];
+    }
+    return req.socket.remoteAddress ?? "unknown";
 }
 
 /** Validates registration input. Returns error message or null if valid. */
@@ -220,7 +213,16 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
     // Bot detection: high-confidence bots get tar-pitted but still see normal 401
     const isBot = await handleBotDetection(req, res, res.locals.turnstileFailed as boolean);
     if (isBot) {
-        // Return a normal-looking error so the bot can't tell it was detected
+        // Record violation and return a normal-looking error
+        try {
+            const punishmentUnit = await Unit.create(false);
+            const punishmentService = new PunishmentService(punishmentUnit);
+            const reason = res.locals.turnstileFailed ? "turnstile_failed" : "honeypot_triggered";
+            await punishmentService.recordViolation(getClientIp(req), null, reason);
+            await punishmentUnit.complete(true);
+        } catch {
+            // Ignore punishment errors
+        }
         res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
         return;
     }
@@ -260,17 +262,25 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
     // bcrypt.compare is CPU-intensive; releasing the connection here
     // prevents pool exhaustion under brute-force load.
     let passwordValid = false;
-    let needsMigration = false;
     if (player.password === null) {
         passwordValid = false;
     } else if (isHashed(player.password)) {
         passwordValid = await comparePassword(password, player.password);
     } else {
-        passwordValid = player.password === password;
-        needsMigration = passwordValid;
+        // Plaintext passwords are no longer supported — force password reset
+        passwordValid = false;
     }
 
     if (!passwordValid) {
+        // Record brute-force attempt
+        try {
+            const punishmentUnit = await Unit.create(false);
+            const punishmentService = new PunishmentService(punishmentUnit);
+            await punishmentService.recordViolation(getClientIp(req), player?.playerId ?? null, "brute_force_login", `Failed login for ${usernameOrEmail}`);
+            await punishmentUnit.complete(true);
+        } catch {
+            // Ignore punishment errors
+        }
         res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
         return;
     }
@@ -290,10 +300,15 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
             return;
         }
 
-        // Migrate legacy plain-text password if needed
-        if (needsMigration) {
-            const hashed = await hashPassword(password);
-            await playerService.updatePlayerPassword(player.playerId, hashed);
+        // Reject unverified email accounts (skip for OAuth users)
+        if (!player.emailVerified && !player.provider) {
+            res.status(StatusCodes.FORBIDDEN).json({
+                error: "Please verify your email before logging in.",
+                requiresVerification: true,
+                email: player.email
+            });
+            await unit.complete(false);
+            return;
         }
 
         // Check if 2FA is enabled
@@ -436,7 +451,15 @@ authRouter.patch("/auth/me", authRateLimiter.middleware(), async (req, res) => {
         }
     } catch (err) {
         if (isConstraintError(err)) {
-            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
+            const pgErr = err as { detail?: string };
+            const detail = pgErr.detail || "";
+            let message = "This account information conflicts with an existing account.";
+            if (detail.includes("email")) {
+                message = "This email is already associated with another account.";
+            } else if (detail.includes("username") || detail.includes("playerName")) {
+                message = "This username is already taken.";
+            }
+            res.status(StatusCodes.CONFLICT).json({ error: message });
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
@@ -847,12 +870,24 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
 
     if (turnstileFailed) {
         logBot(req, "register-blocked: invalid-turnstile-token");
+        try {
+            const punishmentUnit = await Unit.create(false);
+            const punishmentService = new PunishmentService(punishmentUnit);
+            await punishmentService.recordViolation(getClientIp(req), null, "turnstile_failed", "Registration blocked: invalid Turnstile");
+            await punishmentUnit.complete(true);
+        } catch { /* ignore */ }
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
         return;
     }
 
     if (honeypotTriggered) {
         logBot(req, "register-blocked: honeypot");
+        try {
+            const punishmentUnit = await Unit.create(false);
+            const punishmentService = new PunishmentService(punishmentUnit);
+            await punishmentService.recordViolation(getClientIp(req), null, "honeypot_triggered", "Registration blocked: honeypot filled");
+            await punishmentUnit.complete(true);
+        } catch { /* ignore */ }
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Registration failed. Please try again." });
         return;
     }
@@ -910,10 +945,33 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
     const unit = await Unit.create(false);
     const playerService = new PlayerService(unit);
     const playerStatisticsService = new PlayerStatisticsService(unit);
-    const sessionService = new SessionService(unit);
     let ok = false;
 
     try {
+        // Check if email already exists
+        const existingByEmail = await playerService.getPlayerByEmail(email);
+        if (existingByEmail) {
+            if (existingByEmail.emailVerified) {
+                res.status(StatusCodes.CONFLICT).json({ error: "An account with this email already exists. Please log in instead." });
+                await unit.complete(false);
+                return;
+            }
+            // Email exists but is unverified — delete old account to allow re-registration
+            await playerService.deletePlayer(existingByEmail.playerId);
+        }
+
+        // Check if username already exists
+        const existingByUsername = await playerService.getPlayerByUsername(username);
+        if (existingByUsername) {
+            if (existingByUsername.emailVerified) {
+                res.status(StatusCodes.CONFLICT).json({ error: "Username already taken. Please choose another." });
+                await unit.complete(false);
+                return;
+            }
+            // Username exists but is unverified — delete old account
+            await playerService.deletePlayer(existingByUsername.playerId);
+        }
+
         const [success, playerId] = await playerService.createPlayer(username, hashedPassword, email, 1000, 10);
 
         if (!success) {
@@ -935,47 +993,211 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
                 playerId,
                 "system",
                 "Welcome to Ember Exchange!",
-                "Your adventure begins now. Open your first lootbox and start trading!",
+                "Your adventure begins now. Verify your email to start trading!",
                 {}
             );
         } catch {
             // Ignore notification errors
         }
 
+        // Create email verification token (24h expiry)
+        const verifyToken = crypto.randomBytes(32).toString("hex");
+        const now = new Date();
+        const verifyExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+        await unit.prepare(
+            `INSERT INTO EmailVerificationToken (token, playerId, email, createdAt, expiresAt)
+             VALUES (@token, @playerId, @email, @createdAt, @expiresAt)`,
+            {
+                token: verifyToken,
+                playerId,
+                email,
+                createdAt: now.toISOString(),
+                expiresAt: verifyExpiresAt.toISOString(),
+            }
+        ).run();
+
+        ok = true;
+        await unit.complete(true);
+
+        // Send verification email OUTSIDE the DB transaction so email failure
+        // doesn't roll back the account creation
+        try {
+            await sendVerificationEmail(email, verifyToken);
+        } catch (err) {
+            console.error("Failed to send verification email:", err);
+            // Still return success — user can request a resend
+        }
+
+        res.status(StatusCodes.CREATED).json({
+            message: "Account created! Check your email to verify your account."
+        });
+        return;
+    } catch (err) {
+        if (isConstraintError(err)) {
+            const pgErr = err as { detail?: string };
+            const detail = pgErr.detail || "";
+            let message = "This account information is already in use.";
+            if (detail.includes("email")) {
+                message = "An account with this email already exists. Please log in instead.";
+            } else if (detail.includes("username") || detail.includes("playerName")) {
+                message = "This username is already taken. Please choose another.";
+            }
+            res.status(StatusCodes.CONFLICT).json({ error: message });
+        } else {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        }
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+/**
+ * GET /auth/verify-email/:token
+ * Verifies an email address using a token from the verification email.
+ */
+authRouter.get("/auth/verify-email/:token", async (req, res) => {
+    const { token } = req.params;
+    if (!token || typeof token !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid verification token" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const playerService = new PlayerService(unit);
+    const sessionService = new SessionService(unit);
+    let ok = false;
+
+    try {
+        // Look up the token
+        const tokenStmt = unit.prepare<{
+            playerId: number;
+            email: string;
+            expiresAt: string;
+        }>(
+            `SELECT playerId, email, expiresAt FROM EmailVerificationToken WHERE token = @token`,
+            { token }
+        );
+        const row = await tokenStmt.get();
+
+        if (!row) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid or expired verification token." });
+            await unit.complete(false);
+            return;
+        }
+
+        if (new Date(row.expiresAt) < new Date()) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Verification link has expired. Please request a new one." });
+            await unit.complete(false);
+            return;
+        }
+
+        // Verify the player's email
+        await unit.prepare(
+            `UPDATE Player SET emailVerified = 1, verifiedAt = @verifiedAt WHERE playerId = @playerId`,
+            { playerId: row.playerId, verifiedAt: new Date().toISOString() }
+        ).run();
+
+        // Delete the used token
+        await unit.prepare(
+            `DELETE FROM EmailVerificationToken WHERE token = @token`,
+            { token }
+        ).run();
+
+        // Create a session and auto-login
         const sessionId = crypto.randomUUID();
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
 
-        const sessionCreated = await sessionService.createSession(sessionId, playerId, expiresAt);
+        const sessionCreated = await sessionService.createSession(sessionId, row.playerId, expiresAt);
         if (!sessionCreated) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create session" });
             await unit.complete(false);
             return;
         }
 
-        // Heuristic auto-ban: if username matches known bot patterns, ban immediately
-        if (isBotPattern(username, email)) {
-            try {
-                await unit.prepare(
-                    `UPDATE Player SET bannedAt = @bannedAt, banReason = @reason WHERE playerId = @playerId`,
-                    { playerId, bannedAt: new Date().toISOString(), reason: "Auto-banned: bot pattern detected" }
-                ).run();
-                logBot(req, `register-auto-banned: pattern-match username=${username}`);
-                // Still return 201 so the bot thinks it succeeded, but the session is useless
-                // because requireNotBanned will reject every subsequent request
-            } catch {
-                // Ignore auto-ban errors
-            }
+        ok = true;
+        res.status(StatusCodes.OK).json({
+            sessionId,
+            playerId: row.playerId,
+            message: "Email verified! Welcome to Ember Exchange."
+        });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+/**
+ * POST /auth/resend-verification
+ * Resends the verification email. Rate-limited to prevent abuse.
+ */
+authRouter.post("/auth/resend-verification", resendVerificationRateLimiter.middleware(), async (req, res) => {
+    const { email } = req.body;
+    if (!email || typeof email !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Email is required" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    let ok = false;
+
+    try {
+        // Find unverified player by email
+        const playerStmt = unit.prepare<{
+            playerId: number;
+            email: string;
+        }>(
+            `SELECT playerId, email FROM Player WHERE email = @email AND emailVerified = 0 AND provider IS NULL`,
+            { email: email.toLowerCase().trim() }
+        );
+        const player = await playerStmt.get();
+
+        if (!player) {
+            // Return generic success to prevent email enumeration
+            res.status(StatusCodes.OK).json({ message: "If an unverified account exists, a verification email has been sent." });
+            ok = true;
+            await unit.complete(true);
+            return;
         }
 
+        // Delete any existing token for this player
+        await unit.prepare(
+            `DELETE FROM EmailVerificationToken WHERE playerId = @playerId`,
+            { playerId: player.playerId }
+        ).run();
+
+        // Create new token
+        const token = crypto.randomBytes(32).toString("hex");
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+        await unit.prepare(
+            `INSERT INTO EmailVerificationToken (token, playerId, email, createdAt, expiresAt)
+             VALUES (@token, @playerId, @email, @createdAt, @expiresAt)`,
+            {
+                token,
+                playerId: player.playerId,
+                email: player.email,
+                createdAt: now.toISOString(),
+                expiresAt: expiresAt.toISOString(),
+            }
+        ).run();
+
         ok = true;
-        res.status(StatusCodes.CREATED).json({ sessionId, playerId });
-    } catch (err) {
-        if (isConstraintError(err)) {
-            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
-        } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        await unit.complete(true);
+
+        // Send email outside transaction
+        try {
+            await sendVerificationEmail(player.email, token);
+        } catch (err) {
+            console.error("Failed to resend verification email:", err);
         }
+
+        res.status(StatusCodes.OK).json({ message: "If an unverified account exists, a verification email has been sent." });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
         await unit.complete(ok);
     }
@@ -1359,7 +1581,7 @@ authRouter.post("/auth/2fa/confirm", authRateLimiter.middleware(), async (req, r
  *       401:
  *         description: Invalid challenge or code
  */
-authRouter.post("/auth/2fa/verify", async (req, res) => {
+authRouter.post("/auth/2fa/verify", twoFactorRateLimiter.middleware(), async (req, res) => {
     const { challengeId, token } = req.body;
     if (isNullOrWhiteSpace(challengeId) || isNullOrWhiteSpace(token)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Challenge ID and token are required" });
@@ -1381,6 +1603,10 @@ authRouter.post("/auth/2fa/verify", async (req, res) => {
 
         const result = await twoFactorService.verifyToken(playerId, token);
         if (!result.success) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), playerId, "2fa_brute_force", `Invalid 2FA code for challenge ${challengeId}`);
+            } catch { /* ignore */ }
             res.status(StatusCodes.UNAUTHORIZED).json({ error: result.message });
             await unit.complete(false);
             return;

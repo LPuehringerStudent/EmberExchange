@@ -3,6 +3,8 @@ dotenv.config();
 
 import cors from "cors";
 import express from "express";
+import cookieParser from "cookie-parser";
+import { StatusCodes } from "http-status-codes";
 import path from "path";
 import fs from "fs";
 import swaggerUi from "swagger-ui-express";
@@ -48,8 +50,11 @@ import { honeypotRouter } from "./routers/honeypot-router";
 import { swaggerSpec } from "./swagger";
 import { setupWebSocketServer, wssInstance } from "./websocket";
 import { antiBotConfig } from "./utils/anti-bot-config";
+import { ipBanCheck } from "./middleware/ip-ban-check";
 import cron from "node-cron";
 import { ShopRotationService } from "./services/shop-rotation-service";
+import { SessionService } from "./services/session-service";
+import { PlayerService } from "./services/player-service";
 
 
 export const app = express();
@@ -59,6 +64,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(ipBanCheck);
 app.use(passport.initialize());
 
 // Configure Passport
@@ -149,18 +156,40 @@ app.use((req, res, next) => {
         return;
     }
 
-    // Inject runtime anti-bot config as an inline script before </head>
-    // This lets the frontend create the real honeypot field dynamically
-    // without the field name ever appearing in committed source code.
-    const injection = `<script>window.__EMBER_CFG={honeypotField:"${antiBotConfig.honeypotFields[0]}",minFormTime:${antiBotConfig.minFormTimeMs},clientHeader:"${antiBotConfig.requiredHeader}",clientHeaderValue:"${antiBotConfig.requiredHeaderValue}"};</script>`;
-    html = html.replace("</head>", injection + "</head>");
-
     res.setHeader("Content-Type", "text/html");
     res.send(html);
 });
 
-// Test database connection endpoint
-app.get("/api/db-test", async (_req, res) => {
+// Test database connection endpoint — restricted in production
+app.get("/api/db-test", async (req, res) => {
+    if (process.env.NODE_ENV === "production") {
+        // In production, require admin auth
+        const sessionId = req.headers["session-id"] as string;
+        if (!sessionId) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Admin access required" });
+            return;
+        }
+        const unit = await Unit.create(true);
+        try {
+            const sessionService = new SessionService(unit);
+            const playerService = new PlayerService(unit);
+            const session = await sessionService.getSession(sessionId);
+            if (!session) {
+                res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid session" });
+                return;
+            }
+            const player = await playerService.getInfoByID(session.playerId);
+            if (!player || !player.isAdmin) {
+                res.status(StatusCodes.FORBIDDEN).json({ error: "Admin access required" });
+                return;
+            }
+        } catch {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Server error" });
+            return;
+        } finally {
+            await unit.complete();
+        }
+    }
     let unit: Unit | null = null;
     try {
         unit = await Unit.create(true);

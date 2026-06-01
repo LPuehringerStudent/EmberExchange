@@ -1,6 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { checkPlayerBanned } from "../middleware/ban-check";
+import { requireAuth } from "../middleware/require-auth";
 import { PlayerService } from "../services/player-service";
 import { SessionService } from "../services/session-service";
 import { PlayerSettingsService } from "../services/player-settings-service";
@@ -9,6 +10,7 @@ import { PlayerStatisticsService } from "../services/player-statistics-service";
 import { GloryCustomizationService } from "../services/glory-customization-service";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { PlayerAchievementService } from "../services/player-achievement-service";
+import { PunishmentService } from "../services/punishment-service";
 import { ACHIEVEMENT_DEFINITIONS } from "../services/achievement-engine";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -19,6 +21,17 @@ function isConstraintError(err: unknown): boolean {
     const pgErr = err as { code?: string };
     return pgErr.code === "23503" || 
            pgErr.code === "23505";
+}
+
+function getClientIp(req: express.Request): string {
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (typeof cfIp === "string" && cfIp.length > 0) return cfIp.trim();
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+        if (hops.length > 0) return hops[hops.length - 1];
+    }
+    return req.socket.remoteAddress ?? "unknown";
 }
 
 /**
@@ -50,7 +63,7 @@ playerRouter.get("/players", async (_req, res) => {
     const service = new PlayerService(unit);
 
     try {
-        const response = await service.getAllPlayers();
+        const response = await service.getAllPublicPlayers();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -444,7 +457,7 @@ playerRouter.get("/players/:id", async (req, res) => {
             return;
         }
 
-        const response = await service.getInfoByID(Number(id));
+        const response = await service.getPublicPlayerById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         } else {
@@ -835,7 +848,7 @@ playerRouter.post("/players", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.patch("/players/:id/coins", async (req, res) => {
+playerRouter.patch("/players/:id/coins", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
@@ -848,6 +861,17 @@ playerRouter.patch("/players/:id/coins", async (req, res) => {
         }
 
         const playerId = Number(id);
+        if (req.playerId !== playerId) {
+            // Hard punishment for coin exploit attempts
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "coin_tampering", `Attempted to modify coins for player ${playerId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only update your own coin balance" });
+            await unit.complete(false);
+            return;
+        }
+
         if (await checkPlayerBanned(unit, playerId, res)) {
             return;
         }
@@ -867,7 +891,15 @@ playerRouter.patch("/players/:id/coins", async (req, res) => {
         }
     } catch (err) {
         if (isConstraintError(err)) {
-            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
+            const pgErr = err as { detail?: string };
+            const detail = pgErr.detail || "";
+            let message = "This account information conflicts with an existing account.";
+            if (detail.includes("email")) {
+                message = "This email is already associated with another account.";
+            } else if (detail.includes("username") || detail.includes("playerName")) {
+                message = "This username is already taken.";
+            }
+            res.status(StatusCodes.CONFLICT).json({ error: message });
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
@@ -939,7 +971,7 @@ playerRouter.patch("/players/:id/coins", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.patch("/players/:id/lootboxes", async (req, res) => {
+playerRouter.patch("/players/:id/lootboxes", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
@@ -952,6 +984,15 @@ playerRouter.patch("/players/:id/lootboxes", async (req, res) => {
         }
 
         const playerId = Number(id);
+        if (req.playerId !== playerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "lootbox_tampering", `Attempted to modify lootboxes for player ${playerId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only update your own lootbox count" });
+            await unit.complete(false);
+            return;
+        }
         if (await checkPlayerBanned(unit, playerId, res)) {
             return;
         }
@@ -1029,7 +1070,7 @@ playerRouter.patch("/players/:id/lootboxes", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.delete("/players/:id", async (req, res) => {
+playerRouter.delete("/players/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
@@ -1042,6 +1083,15 @@ playerRouter.delete("/players/:id", async (req, res) => {
         }
 
         const playerId = Number(id);
+        if (req.playerId !== playerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "account_deletion_attempt", `Attempted to delete player ${playerId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only delete your own account" });
+            await unit.complete(false);
+            return;
+        }
         if (await checkPlayerBanned(unit, playerId, res)) {
             return;
         }

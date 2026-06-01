@@ -10,6 +10,8 @@ import { antiBotConfig } from "../utils/anti-bot-config";
  *   "They validate a formStartTime field"
  * and not recognize it as a bot trap.
  */
+const MAX_FORM_AGE_MS = 5 * 60 * 1000; // 5 minutes
+
 export function timingGuard(req: Request, res: Response, next: NextFunction): void {
     const body = req.body as Record<string, unknown>;
     const formStartTime = body?.formStartTime;
@@ -20,10 +22,17 @@ export function timingGuard(req: Request, res: Response, next: NextFunction): vo
         return;
     }
 
-    const elapsed = Date.now() - formStartTime;
+    const now = Date.now();
+    const elapsed = now - formStartTime;
 
     // Too fast — bot behavior
     if (elapsed < antiBotConfig.minFormTimeMs) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
+        return;
+    }
+
+    // Timestamp too old (e.g. epoch 0) or in the future — bot replay / manipulation
+    if (elapsed > MAX_FORM_AGE_MS || formStartTime > now) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }

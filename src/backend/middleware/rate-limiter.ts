@@ -66,10 +66,21 @@ class ExpressRateLimiter {
     }
 
     private getClientIp(req: Request): string {
+        // Trust Cloudflare's connecting IP first (hard to spoof)
+        const cfIp = req.headers["cf-connecting-ip"];
+        if (typeof cfIp === "string" && cfIp.length > 0) {
+            return cfIp.trim();
+        }
+
+        // Use the LAST entry in X-Forwarded-For (closest to our server / hardest to spoof)
         const forwarded = req.headers["x-forwarded-for"];
         if (typeof forwarded === "string") {
-            return forwarded.split(",")[0].trim();
+            const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+            if (hops.length > 0) {
+                return hops[hops.length - 1];
+            }
         }
+
         return req.socket.remoteAddress ?? "unknown";
     }
 
@@ -105,4 +116,18 @@ export const authRateLimiter = new ExpressRateLimiter({
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 20,
     message: "Too many requests from this IP. Please try again in a minute."
+});
+
+/** Limit for resending verification emails — prevents email spam/abuse */
+export const resendVerificationRateLimiter = new ExpressRateLimiter({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: 3,
+    message: "Too many verification emails requested. Please try again in an hour."
+});
+
+/** Strict limit for 2FA verification — prevents brute-force of TOTP codes */
+export const twoFactorRateLimiter = new ExpressRateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 3,
+    message: "Too many 2FA attempts. Please try again in 15 minutes."
 });

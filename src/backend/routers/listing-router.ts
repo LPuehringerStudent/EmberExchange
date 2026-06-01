@@ -6,8 +6,21 @@ import { isNullOrWhiteSpace } from "../utils/util";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { ListingRow } from "../../shared/model";
 import { checkPlayerBanned } from "../middleware/ban-check";
+import { requireAuth } from "../middleware/require-auth";
+import { PunishmentService } from "../services/punishment-service";
 
 export const listingRouter = express.Router();
+
+function getClientIp(req: express.Request): string {
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (typeof cfIp === "string" && cfIp.length > 0) return cfIp.trim();
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+        if (hops.length > 0) return hops[hops.length - 1];
+    }
+    return req.socket.remoteAddress ?? "unknown";
+}
 
 /**
  * @openapi
@@ -464,7 +477,7 @@ async function getStoveOriginPlayerId(unit: Unit, stoveId: number): Promise<numb
     return stove?.currentOwnerId ?? null;
 }
 
-listingRouter.post("/listings", async (req, res) => {
+listingRouter.post("/listings", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ListingService(unit);
     let ok = false;
@@ -474,6 +487,16 @@ listingRouter.post("/listings", async (req, res) => {
 
         if (typeof sellerId !== "number" || typeof price !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "sellerId and price are required" });
+            return;
+        }
+
+        if (req.playerId !== sellerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_listing", `Attempted to create listing as seller ${sellerId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only create listings for your own items" });
+            await unit.complete(false);
             return;
         }
 
@@ -633,7 +656,7 @@ listingRouter.post("/listings", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.patch("/listings/:id/price", async (req, res) => {
+listingRouter.patch("/listings/:id/price", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ListingService(unit);
     const id = req.params.id;
@@ -645,13 +668,30 @@ listingRouter.patch("/listings/:id/price", async (req, res) => {
             return;
         }
 
+        const listingId = Number(id);
+        const listing = await service.getListingById(listingId);
+        if (!listing) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Listing not found" });
+            await unit.complete(false);
+            return;
+        }
+        if (req.playerId !== listing.sellerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_listing", `Attempted to update listing ${listingId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only update your own listings" });
+            await unit.complete(false);
+            return;
+        }
+
         const { price } = req.body;
         if (typeof price !== "number" || price < 1) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive number" });
             return;
         }
 
-        const success = await service.updatePrice(Number(id), price);
+        const success = await service.updatePrice(listingId, price);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Price updated" });
@@ -708,7 +748,7 @@ listingRouter.patch("/listings/:id/price", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.patch("/listings/:id/cancel", async (req, res) => {
+listingRouter.patch("/listings/:id/cancel", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ListingService(unit);
     const id = req.params.id;
@@ -720,7 +760,24 @@ listingRouter.patch("/listings/:id/cancel", async (req, res) => {
             return;
         }
 
-        const success = await service.cancelListing(Number(id));
+        const listingId = Number(id);
+        const listing = await service.getListingById(listingId);
+        if (!listing) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Listing not found" });
+            await unit.complete(false);
+            return;
+        }
+        if (req.playerId !== listing.sellerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_listing", `Attempted to cancel listing ${listingId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only cancel your own listings" });
+            await unit.complete(false);
+            return;
+        }
+
+        const success = await service.cancelListing(listingId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Listing cancelled" });
@@ -777,7 +834,7 @@ listingRouter.patch("/listings/:id/cancel", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.delete("/listings/:id", async (req, res) => {
+listingRouter.delete("/listings/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ListingService(unit);
     const id = req.params.id;
@@ -789,7 +846,24 @@ listingRouter.delete("/listings/:id", async (req, res) => {
             return;
         }
 
-        const success = await service.deleteListing(Number(id));
+        const listingId = Number(id);
+        const listing = await service.getListingById(listingId);
+        if (!listing) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Listing not found" });
+            await unit.complete(false);
+            return;
+        }
+        if (req.playerId !== listing.sellerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_listing", `Attempted to delete listing ${listingId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only delete your own listings" });
+            await unit.complete(false);
+            return;
+        }
+
+        const success = await service.deleteListing(listingId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Listing deleted" });
