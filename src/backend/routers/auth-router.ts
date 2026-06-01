@@ -1197,8 +1197,8 @@ authRouter.post("/auth/resend-verification", resendVerificationRateLimiter.middl
             playerId: number;
             email: string;
         }>(
-            `SELECT playerId, email FROM Player WHERE email = @email AND emailVerified = 0 AND provider IS NULL`,
-            { email: email.toLowerCase().trim() }
+            `SELECT playerId, email FROM Player WHERE LOWER(email) = LOWER(@email) AND emailVerified = 0 AND provider IS NULL`,
+            { email: email.trim() }
         );
         const player = await playerStmt.get();
 

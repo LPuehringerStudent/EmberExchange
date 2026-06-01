@@ -10,6 +10,7 @@ interface LimiterConfig {
     maxRequests: number;
     keyPrefix?: string;
     message?: string;
+    keyGenerator?: (req: Request) => string;
 }
 
 /**
@@ -25,17 +26,21 @@ class ExpressRateLimiter {
     private readonly windowMs: number;
     private readonly maxRequests: number;
     private readonly message: string;
+    private readonly keyGenerator?: (req: Request) => string;
     private lastPrune = Date.now();
 
     constructor(config: LimiterConfig) {
         this.windowMs = config.windowMs;
         this.maxRequests = config.maxRequests;
         this.message = config.message ?? "Too many requests, please try again later.";
+        this.keyGenerator = config.keyGenerator;
     }
 
     middleware() {
         return (req: Request, res: Response, next: NextFunction): void => {
-            const key = `${this.getClientIp(req)}:${req.path}`;
+            const key = this.keyGenerator
+                ? this.keyGenerator(req)
+                : `${this.getClientIp(req)}:${req.path}`;
             const now = Date.now();
 
             this.pruneIfNeeded(now);
@@ -122,7 +127,11 @@ export const authRateLimiter = new ExpressRateLimiter({
 export const resendVerificationRateLimiter = new ExpressRateLimiter({
     windowMs: 60 * 60 * 1000, // 1 hour
     maxRequests: 3,
-    message: "Too many verification emails requested. Please try again in an hour."
+    message: "Too many verification emails requested. Please try again in an hour.",
+    keyGenerator: (req: Request) => {
+        const email = (req.body?.email || "unknown").toLowerCase().trim();
+        return `resend:${email}`;
+    }
 });
 
 /** Strict limit for 2FA verification — prevents brute-force of TOTP codes */
