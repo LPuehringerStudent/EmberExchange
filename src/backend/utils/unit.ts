@@ -1251,7 +1251,7 @@ export class Unit {
     public static async create(readOnly: boolean): Promise<Unit> {
         const client = await DB.createDBConnection();
         if (!readOnly) {
-            await client.query("BEGIN");
+            await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
         }
         return new Unit(client, !readOnly);
     }
@@ -1276,12 +1276,20 @@ export class Unit {
 
     public async savepoint(name: string): Promise<void> {
         if (this.inTransaction) {
+            // Validate name is a simple identifier to prevent SQL injection
+            if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+                throw new Error("Invalid savepoint name");
+            }
             await this.client.query(`SAVEPOINT ${name}`);
         }
     }
 
     public async rollbackToSavepoint(name: string): Promise<void> {
         if (this.inTransaction) {
+            // Validate name is a simple identifier to prevent SQL injection
+            if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+                throw new Error("Invalid savepoint name");
+            }
             await this.client.query(`ROLLBACK TO SAVEPOINT ${name}`);
         }
     }

@@ -23,13 +23,12 @@ export class PlayerService extends ServiceBase {
      * Retrieves all players EXCLUDING sensitive fields (password, totpSecret, email).
      * Safe for public API responses.
      */
-    async getAllPublicPlayers(): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin">[]> {
+    async getAllPublicPlayers(): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin" | "provider" | "providerId" | "bannedAt" | "banReason" | "emailVerified" | "verifiedAt">[]> {
         const stmt = this.unit.prepare<
-            Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin">
+            Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin" | "provider" | "providerId" | "bannedAt" | "banReason" | "emailVerified" | "verifiedAt">
         >(
             `SELECT playerId, username, motto, coins, sparks, lootboxCount,
-                    isPublic, joinedAt, provider, providerId, totpEnabled, bannedAt,
-                    banReason, emailVerified, verifiedAt
+                    isPublic, joinedAt, totpEnabled
              FROM Player`
         );
         return await stmt.all();
@@ -53,13 +52,12 @@ export class PlayerService extends ServiceBase {
      * Retrieves a player by ID EXCLUDING sensitive fields (password, totpSecret, email).
      * Safe for public API responses.
      */
-    async getPublicPlayerById(id: number): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin"> | null> {
+    async getPublicPlayerById(id: number): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin" | "provider" | "providerId" | "bannedAt" | "banReason" | "emailVerified" | "verifiedAt"> | null> {
         const stmt = this.unit.prepare<
-            Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin">
+            Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin" | "provider" | "providerId" | "bannedAt" | "banReason" | "emailVerified" | "verifiedAt">
         >(
             `SELECT playerId, username, motto, coins, sparks, lootboxCount,
-                    isPublic, joinedAt, provider, providerId, totpEnabled, bannedAt,
-                    banReason, emailVerified, verifiedAt
+                    isPublic, joinedAt, totpEnabled
              FROM Player WHERE playerId = @id`,
             { id }
         );
@@ -128,6 +126,31 @@ export class PlayerService extends ServiceBase {
         const stmt = this.unit.prepare(
             "UPDATE Player SET coins = @coins WHERE playerId = @id",
             { id, coins }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
+    }
+
+    /**
+     * Atomically deduct coins if the player has enough.
+     * Prevents race-condition double-spending.
+     */
+    async deductCoinsAtomic(id: number, amount: number): Promise<boolean> {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET coins = coins - @amount WHERE playerId = @id AND coins >= @amount",
+            { id, amount }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
+    }
+
+    /**
+     * Atomically add coins to a player.
+     */
+    async addCoinsAtomic(id: number, amount: number): Promise<boolean> {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET coins = coins + @amount WHERE playerId = @id",
+            { id, amount }
         );
         const result = await stmt.run();
         return result.changes === 1;
@@ -355,6 +378,22 @@ export class PlayerService extends ServiceBase {
     async updatePlayerEmail(id: number, email: string): Promise<boolean> {
         const stmt = this.unit.prepare(
             "UPDATE Player SET email = @email WHERE playerId = @id",
+            { id, email }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
+    }
+
+    /**
+     * Updates a player's email address and resets email verification status.
+     * Used when a local account changes their email — they must re-verify.
+     * @param id - The player's unique ID.
+     * @param email - The new email address.
+     * @returns True if exactly one player was updated, false otherwise.
+     */
+    async updatePlayerEmailAndResetVerification(id: number, email: string): Promise<boolean> {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET email = @email, emailVerified = 0, verifiedAt = NULL WHERE playerId = @id AND provider IS NULL",
             { id, email }
         );
         const result = await stmt.run();

@@ -262,9 +262,11 @@ export class ShopService {
             return { success: false, error: "Insufficient coins" };
         }
 
-        // Deduct coins
-        const newBalance = player.coins - listing.price;
-        await playerService.updatePlayerCoins(playerId, newBalance);
+        // Atomically deduct coins (prevents race-condition overspending)
+        const deducted = await playerService.deductCoinsAtomic(playerId, listing.price);
+        if (!deducted) {
+            return { success: false, error: "Insufficient coins (concurrent transaction)" };
+        }
 
         // Log transaction
         await coinService.create(
@@ -336,11 +338,17 @@ export class ShopService {
         ).run();
 
         // Decrement stock if not unlimited (-1) and not a daily-limited lootbox
+        // Atomic: only decrement if stock is still > 0
         if (listing.itemType !== 'lootbox' && listing.stock > 0) {
-            await this.unit.prepare(
-                `UPDATE ShopListing SET stock = stock - 1 WHERE listingId = @listingId`,
+            const stockResult = await this.unit.prepare(
+                `UPDATE ShopListing SET stock = stock - 1 WHERE listingId = @listingId AND stock > 0`,
                 { listingId }
             ).run();
+            if (stockResult.changes !== 1) {
+                // Stock ran out between check and update — refund the buyer
+                await playerService.addCoinsAtomic(playerId, listing.price);
+                return { success: false, error: "Item just went out of stock" };
+            }
         }
 
         // Create purchase notification
@@ -501,24 +509,48 @@ export class ShopService {
         const playerService = new PlayerService(this.unit);
         const coinService = new CoinTransactionService(this.unit);
 
-        const status = await this.getDailyRewardStatus(playerId);
+        // Lock the reward row to prevent concurrent duplicate claims
+        const lockRow = await this.unit.prepare<
+            { lastClaimAt: string | null; streakCount: number }
+        >(
+            `SELECT lastClaimAt, streakCount FROM PlayerDailyReward WHERE playerId = @playerId FOR UPDATE`,
+            { playerId }
+        ).get();
 
-        if (!status.canClaim) {
-            return { success: false, reward: status.reward, newStreak: status.streakCount, error: "Daily reward already claimed" };
+        const now = new Date();
+        let streakCount = lockRow?.streakCount ?? 0;
+        let lastClaimAt = lockRow?.lastClaimAt ? new Date(lockRow.lastClaimAt) : null;
+
+        // Re-check eligibility after locking (prevents race conditions)
+        let canClaim = false;
+        if (!lastClaimAt) {
+            canClaim = true;
+        } else {
+            const hoursSinceClaim = (now.getTime() - lastClaimAt.getTime()) / (1000 * 60 * 60);
+            canClaim = hoursSinceClaim >= 24;
+            if (hoursSinceClaim > 48) {
+                streakCount = 0; // reset streak
+            }
+        }
+
+        if (!canClaim) {
+            const dayIndex = Math.min(streakCount + 1, 7);
+            const nextClaimAt = lastClaimAt ? new Date(lastClaimAt.getTime() + 24 * 60 * 60 * 1000) : null;
+            return { success: false, reward: REWARD_TABLE[dayIndex], newStreak: streakCount, error: "Daily reward already claimed" };
         }
 
         const player = await playerService.getInfoByID(playerId);
         if (!player) {
-            return { success: false, reward: status.reward, newStreak: status.streakCount, error: "Player not found" };
+            return { success: false, reward: REWARD_TABLE[1], newStreak: 0, error: "Player not found" };
         }
 
-        const newStreak = status.streakCount + 1;
+        const newStreak = streakCount + 1;
         const dayIndex = Math.min(newStreak, 7);
         const reward = REWARD_TABLE[dayIndex];
 
         // Award coins
         if (reward.coins > 0) {
-            await playerService.updatePlayerCoins(playerId, player.coins + reward.coins);
+            await playerService.addCoinsAtomic(playerId, reward.coins);
             await coinService.create(
                 playerId,
                 reward.coins,
@@ -539,14 +571,14 @@ export class ShopService {
             await playerService.updatePlayerLootboxCount(playerId, player.lootboxCount + reward.lootboxes);
         }
 
-        // Upsert PlayerDailyReward
-        const now = new Date().toISOString();
+        // Upsert PlayerDailyReward atomically
+        const nowIso = now.toISOString();
         await this.unit.prepare(
             `INSERT INTO PlayerDailyReward (playerId, lastClaimAt, streakCount)
              VALUES (@playerId, @lastClaimAt, @streakCount)
              ON CONFLICT (playerId)
              DO UPDATE SET lastClaimAt = @lastClaimAt, streakCount = @streakCount`,
-            { playerId, lastClaimAt: now, streakCount: newStreak }
+            { playerId, lastClaimAt: nowIso, streakCount: newStreak }
         ).run();
 
         // Award XP

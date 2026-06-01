@@ -100,7 +100,7 @@ lootboxRouter.get("/lootboxes/recent", async (req, res) => {
     const service = new LootboxService(unit);
 
     try {
-        const limit = req.query.limit ? Number(req.query.limit) : 20;
+        const limit = Math.min(100, req.query.limit ? Number(req.query.limit) : 20);
         const rows = await service.getRecentPulls(limit);
 
         // Format relative timestamps on the backend so the frontend stays simple

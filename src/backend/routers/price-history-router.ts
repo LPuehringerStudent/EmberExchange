@@ -383,7 +383,7 @@ priceHistoryRouter.get("/stove-types/:typeId/recent-prices", async (req, res) =>
     const service = new PriceHistoryService(unit);
     const typeId = req.params.typeId;
     const limitParam = req.query.limit;
-    const limit = limitParam !== undefined ? parseInt(limitParam as string) : 10;
+    const limit = Math.min(100, limitParam !== undefined ? parseInt(limitParam as string) : 10);
 
     try {
         if (isNullOrWhiteSpace(typeId) || isNaN(Number(typeId))) {

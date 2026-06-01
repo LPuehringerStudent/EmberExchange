@@ -104,7 +104,7 @@ tradeRouter.get("/trades", async (_req, res) => {
 tradeRouter.get("/trades/recent", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
 
     try {
         const response = await service.getRecentTrades(limit);
@@ -452,7 +452,7 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
             return;
         }
 
-        // Check buyer has enough coins
+        // Check buyer has enough coins (pre-check before atomic attempt)
         if (buyer === null) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Buyer not found" });
             return;
@@ -470,11 +470,19 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
             return;
         }
 
-        // Transfer coins
-        const buyerCoinsUpdated = await playerService.updatePlayerCoins(buyerId, buyer.coins - listing.price);
-        const sellerCoinsUpdated = await playerService.updatePlayerCoins(listing.sellerId, seller.coins + listing.price);
-        if (!buyerCoinsUpdated || !sellerCoinsUpdated) {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer coins" });
+        // Atomically transfer coins — prevents race-condition double-spending
+        const buyerDeducted = await playerService.deductCoinsAtomic(buyerId, listing.price);
+        if (!buyerDeducted) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Insufficient coins (concurrent transaction)" });
+            await unit.complete(false);
+            return;
+        }
+        const sellerCredited = await playerService.addCoinsAtomic(listing.sellerId, listing.price);
+        if (!sellerCredited) {
+            // This should never happen if seller exists, but roll back buyer if it does
+            await playerService.addCoinsAtomic(buyerId, listing.price);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to credit seller" });
+            await unit.complete(false);
             return;
         }
 

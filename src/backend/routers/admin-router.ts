@@ -6,6 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { getBotTrapLog, clearBotTrapLog } from "../utils/bot-trap";
 import { PunishmentService } from "../services/punishment-service";
+import net from "net";
 
 export const adminRouter = express.Router();
 
@@ -236,6 +237,10 @@ adminRouter.post("/admin/banned-ips", async (req, res) => {
     const { ip, reason, durationHours } = req.body;
     if (!ip || typeof ip !== "string") {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "IP is required" });
+        return;
+    }
+    if (net.isIP(ip) === 0) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid IP address" });
         return;
     }
     if (!reason || typeof reason !== "string") {

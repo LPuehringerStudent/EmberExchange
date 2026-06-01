@@ -141,6 +141,15 @@ export function logBot(req: Request, reason: string): void {
     const emailRaw = body.email;
     const emailDomain = typeof emailRaw === "string" ? emailRaw.split("@")[1] : undefined;
 
+    // Redact sensitive headers before logging
+    const safeHeaders = { ...req.headers };
+    const SENSITIVE_HEADERS = ["session-id", "cookie", "authorization", "x-api-key"];
+    for (const h of SENSITIVE_HEADERS) {
+        if (h in safeHeaders) {
+            safeHeaders[h] = "[REDACTED]";
+        }
+    }
+
     botTrapLog.push({
         timestamp: new Date().toISOString(),
         ip,
@@ -148,13 +157,13 @@ export function logBot(req: Request, reason: string): void {
         reason,
         userAgent: ua,
         tarPitMs: 0,
-        headers: { ...req.headers },
+        headers: safeHeaders,
         details: {
             turnstileToken: turnstileStatus,
             turnstileTokenLength: turnstileLen,
             formStartTime: typeof body.formStartTime === "number" ? body.formStartTime : undefined,
             hasRequiredHeader,
-            requiredHeaderValue: typeof requiredHeaderValue === "string" ? requiredHeaderValue : undefined,
+            // Never log the actual header value — it could be a session token
             honeypotTriggered,
             honeypotFields: triggeredHoneypots,
             username: typeof body.username === "string" ? body.username : undefined,

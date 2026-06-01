@@ -446,10 +446,48 @@ authRouter.patch("/auth/me", authRateLimiter.middleware(), async (req, res) => {
             return;
         }
 
-        // Update email
-        const success = await playerService.updatePlayerEmail(session.playerId, email);
+        const player = await playerService.getInfoByID(session.playerId);
+        const isLocalAccount = !player?.provider;
+        let success: boolean;
+        if (isLocalAccount) {
+            success = await playerService.updatePlayerEmailAndResetVerification(session.playerId, email);
+        } else {
+            success = await playerService.updatePlayerEmail(session.playerId, email);
+        }
         if (success) {
             ok = true;
+            if (isLocalAccount) {
+                try {
+                    await unit.prepare(
+                        `DELETE FROM EmailVerificationToken WHERE playerId = @playerId`,
+                        { playerId: session.playerId }
+                    ).run();
+                    const verifyToken = crypto.randomBytes(32).toString("hex");
+                    const now = new Date();
+                    const verifyExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                    await unit.prepare(
+                        `INSERT INTO EmailVerificationToken (token, playerId, email, createdAt, expiresAt)
+                         VALUES (@token, @playerId, @email, @createdAt, @expiresAt)`,
+                        {
+                            token: verifyToken,
+                            playerId: session.playerId,
+                            email,
+                            createdAt: now.toISOString(),
+                            expiresAt: verifyExpiresAt.toISOString(),
+                        }
+                    ).run();
+                    await unit.complete(true);
+                    try {
+                        await sendVerificationEmail(email, verifyToken);
+                    } catch (err) {
+                        console.error("Failed to send verification email after email change:", err);
+                    }
+                    res.status(StatusCodes.OK).json({ message: "Email updated. Please verify your new email address — a verification link has been sent." });
+                    return;
+                } catch {
+                    // Fall through to normal response
+                }
+            }
             res.status(StatusCodes.OK).json({ message: "Profile updated successfully" });
         } else {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });

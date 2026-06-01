@@ -15,6 +15,8 @@ import { ACHIEVEMENT_DEFINITIONS } from "../services/achievement-engine";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { sanitizeText } from "../utils/sanitize";
+import crypto from "crypto";
+import { sendVerificationEmail } from "../services/email-service";
 
 export const playerRouter = express.Router();
 
@@ -240,11 +242,53 @@ playerRouter.patch("/players/:id/profile", async (req, res) => {
                 await unit.complete(false);
                 return;
             }
-            const success = await playerService.updatePlayerEmail(playerId, email);
+
+            const player = await playerService.getInfoByID(playerId);
+            const isLocalAccount = !player?.provider;
+            let success: boolean;
+            if (isLocalAccount) {
+                success = await playerService.updatePlayerEmailAndResetVerification(playerId, email);
+            } else {
+                success = await playerService.updatePlayerEmail(playerId, email);
+            }
             if (!success) {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update email" });
                 await unit.complete(false);
                 return;
+            }
+
+            // For local accounts, send a new verification email
+            if (isLocalAccount) {
+                try {
+                    await unit.prepare(
+                        `DELETE FROM EmailVerificationToken WHERE playerId = @playerId`,
+                        { playerId }
+                    ).run();
+                    const verifyToken = crypto.randomBytes(32).toString("hex");
+                    const now = new Date();
+                    const verifyExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                    await unit.prepare(
+                        `INSERT INTO EmailVerificationToken (token, playerId, email, createdAt, expiresAt)
+                         VALUES (@token, @playerId, @email, @createdAt, @expiresAt)`,
+                        {
+                            token: verifyToken,
+                            playerId,
+                            email,
+                            createdAt: now.toISOString(),
+                            expiresAt: verifyExpiresAt.toISOString(),
+                        }
+                    ).run();
+                    await unit.complete(true);
+                    try {
+                        await sendVerificationEmail(email, verifyToken);
+                    } catch (err) {
+                        console.error("Failed to send verification email after email change:", err);
+                    }
+                    res.status(StatusCodes.OK).json({ message: "Profile updated. Please verify your new email address — a verification link has been sent." });
+                    return;
+                } catch {
+                    // Fall through to normal response if token creation fails
+                }
             }
         }
 

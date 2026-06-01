@@ -31,8 +31,10 @@ export async function ipBanCheck(req: Request, res: Response, next: NextFunction
             return;
         }
         next();
-    } catch {
-        next();
+    } catch (err) {
+        console.error("[ipBanCheck] Database error during ban check:", err);
+        res.status(StatusCodes.SERVICE_UNAVAILABLE).json({ error: "Service temporarily unavailable" });
+        return;
     } finally {
         await unit.complete();
     }
