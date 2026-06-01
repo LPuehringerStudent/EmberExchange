@@ -5,6 +5,7 @@ import { SessionService } from "../services/session-service";
 import { PlayerService } from "../services/player-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { sanitizeText } from "../utils/sanitize";
 
 export const supportRouter = express.Router();
 
@@ -133,10 +134,13 @@ supportRouter.post("/support", async (req, res) => {
             return;
         }
 
+        const safeTitle = sanitizeText(title.trim(), 200) ?? title.trim().slice(0, 200);
+        const safeDescription = sanitizeText(description.trim(), 5000) ?? description.trim().slice(0, 5000);
+
         const [success, ticketId] = await supportService.create(
             player.playerId,
-            title.trim(),
-            description.trim(),
+            safeTitle,
+            safeDescription,
             type,
             priority
         );

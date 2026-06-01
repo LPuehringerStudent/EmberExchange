@@ -132,7 +132,7 @@ dailyStatisticsRouter.get("/daily-statistics/today", async (_req, res) => {
 dailyStatisticsRouter.get("/daily-statistics/summary", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
-    const days = parseInt(req.query.days as string) || 7;
+    const days = Math.min(365, Math.max(1, parseInt(req.query.days as string) || 7));
 
     try {
         const response = await service.getSummary(days);

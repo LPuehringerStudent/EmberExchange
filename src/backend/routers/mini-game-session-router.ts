@@ -155,7 +155,7 @@ miniGameSessionRouter.get("/mini-game-sessions/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", async (req, res) => {
+miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
     const playerId = req.params.playerId;
@@ -163,6 +163,11 @@ miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", async (req, r
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own game sessions" });
             return;
         }
 

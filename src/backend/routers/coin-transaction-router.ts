@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { CoinTransactionService } from "../services/coin-transaction-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAuth } from "../middleware/require-auth";
 
 export const coinTransactionRouter = express.Router();
 
@@ -146,7 +147,7 @@ coinTransactionRouter.get("/coin-transactions/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-coinTransactionRouter.get("/players/:playerId/coin-transactions", async (req, res) => {
+coinTransactionRouter.get("/players/:playerId/coin-transactions", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new CoinTransactionService(unit);
     const playerId = req.params.playerId;
@@ -154,6 +155,11 @@ coinTransactionRouter.get("/players/:playerId/coin-transactions", async (req, re
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own transactions" });
             return;
         }
 

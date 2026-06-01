@@ -29,6 +29,14 @@ export class RoomService extends ServiceBase {
         return (await stmt.get()) ?? null;
     }
 
+    async getRoomByIdForUpdate(roomId: string): Promise<RoomRow | null> {
+        const stmt = this.unit.prepare<RoomRow, { roomId: string }>(
+            `SELECT * FROM Room WHERE roomId = @roomId FOR UPDATE`,
+            { roomId }
+        );
+        return (await stmt.get()) ?? null;
+    }
+
     async updateRoomStatus(roomId: string, status: RoomStatus): Promise<boolean> {
         const stmt = this.unit.prepare<
             unknown,

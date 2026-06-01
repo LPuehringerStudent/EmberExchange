@@ -100,12 +100,14 @@ export class ListingService extends ServiceBase {
             }
             if (filters.search) {
                 where += " AND (LOWER(st.name) LIKE @search OR LOWER(p.username) LIKE @search)";
-                params.search = `%${filters.search.toLowerCase()}%`;
+                const escaped = filters.search.toLowerCase().replace(/[%_\\]/g, "\\$&");
+                params.search = `%${escaped}%`;
             }
         } else if (filters.search) {
             // Search without needing StoveType join (search by seller name only)
             where += " AND LOWER(p.username) LIKE @search";
-            params.search = `%${filters.search.toLowerCase()}%`;
+            const escaped = filters.search.toLowerCase().replace(/[%_\\]/g, "\\$&");
+            params.search = `%${escaped}%`;
         }
 
         let orderBy = "l.listedAt DESC";
