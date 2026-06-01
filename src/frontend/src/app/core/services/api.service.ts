@@ -7,10 +7,10 @@ import { catchError } from 'rxjs/operators';
 export class ApiService {
   private readonly baseUrl = '/api';
   private http = inject(HttpClient);
-  private readonly clientHeader = (window as unknown as Record<string, unknown>)['__EMBER_CFG'] ?
-    ((window as unknown as Record<string, unknown>)['__EMBER_CFG'] as Record<string, string>)?.['clientHeader'] ?? 'X-Ember-Client' : 'X-Ember-Client';
-  private readonly clientHeaderValue = (window as unknown as Record<string, unknown>)['__EMBER_CFG'] ?
-    ((window as unknown as Record<string, unknown>)['__EMBER_CFG'] as Record<string, string>)?.['clientHeaderValue'] ?? 'forge-v1' : 'forge-v1';
+  /** Hardcoded to match backend production values.
+   *  Previously injected at runtime into index.html. */
+  private readonly clientHeader = 'X-DTOTF-JXLBHU';
+  private readonly clientHeaderValue = 'vqd7-pf16';
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     let message = `Request failed: ${error.status}`;

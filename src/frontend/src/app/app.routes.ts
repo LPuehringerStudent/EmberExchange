@@ -126,6 +126,22 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/pages/oauth-callback/oauth-callback.component').then(m => m.OAuthCallbackComponent)
   },
   {
+    path: 'check-email',
+    loadComponent: () => import('./features/auth/pages/check-email/check-email.component').then(m => m.CheckEmailComponent)
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
+  },
+  {
+    path: 'terms',
+    loadComponent: () => import('./features/legal/pages/terms/terms.component').then(m => m.TermsComponent)
+  },
+  {
+    path: 'privacy',
+    loadComponent: () => import('./features/legal/pages/privacy/privacy.component').then(m => m.PrivacyComponent)
+  },
+  {
     path: '**',
     loadComponent: () => import('./shared/components/not-found.component').then(m => m.NotFoundComponent)
   }

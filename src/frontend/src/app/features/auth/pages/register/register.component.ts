@@ -156,19 +156,18 @@ export class RegisterComponent implements OnInit {
     }
 
     try {
-      await this.authService.register(
+      const result = await this.authService.register(
         this.username(),
         this.password(),
         this.email(),
-        false, // Don't remember me by default for new registrations
         turnstileToken ?? undefined,
         this.formStartTime(),
         challenge ?? undefined,
         powNonce
       );
-      this.successMessage.set('Account created successfully! Redirecting...');
+      this.successMessage.set(result.message);
       setTimeout(() => {
-        this.router.navigate(['/']);
+        this.router.navigate(['/check-email'], { queryParams: { email: this.email() } });
       }, 1500);
     } catch (err) {
       this.isLoading.set(false);

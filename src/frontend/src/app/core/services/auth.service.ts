@@ -68,8 +68,15 @@ export class AuthService {
   private api = inject(ApiService);
   private router = inject(Router);
 
-  /** Runtime anti-bot config injected by the backend into index.html */
-  private abConfig = (window as unknown as Record<string, unknown>)['__EMBER_CFG'] as Record<string, string | number> | undefined;
+  /** Anti-bot config — hardcoded to match backend production values.
+   *  Previously injected at runtime into index.html, but that exposed
+   *  the config to a single curl. Now compiled into the bundle. */
+  private abConfig = {
+    honeypotField: 'l52csb',
+    minFormTime: 3000,
+    clientHeader: 'X-DTOTF-JXLBHU',
+    clientHeaderValue: 'vqd7-pf16',
+  };
 
   async initialize(): Promise<void> {
     try {
@@ -227,7 +234,7 @@ export class AuthService {
       .join('');
   }
 
-  async register(username: string, password: string, email: string, rememberMe: boolean, turnstileToken?: string, formStartTime?: number, powChallenge?: string, powNonce?: string): Promise<void> {
+  async register(username: string, password: string, email: string, turnstileToken?: string, formStartTime?: number, powChallenge?: string, powNonce?: string): Promise<{ message: string }> {
     const data: RegisterRequest = {
       username: username.trim(),
       password,
@@ -243,8 +250,22 @@ export class AuthService {
       [this.abConfig?.['honeypotField'] ?? 'honeypot']: '',
     };
 
-    const response = await firstValueFrom(this.api.post<AuthResponse>('/auth/register', data));
-    await this.handleAuthResponse(response, rememberMe);
+    const response = await firstValueFrom(this.api.post<{ message: string }>('/auth/register', data));
+    return response;
+  }
+
+  async verifyEmail(token: string): Promise<AuthResponse> {
+    const response = await firstValueFrom(
+      this.api.get<AuthResponse>(`/auth/verify-email/${encodeURIComponent(token)}`)
+    );
+    await this.handleAuthResponse(response, false);
+    return response;
+  }
+
+  async resendVerification(email: string): Promise<{ message: string }> {
+    return firstValueFrom(
+      this.api.post<{ message: string }>('/auth/resend-verification', { email: email.trim() })
+    );
   }
 
   async logout(): Promise<void> {

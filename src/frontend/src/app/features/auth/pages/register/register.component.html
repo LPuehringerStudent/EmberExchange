@@ -257,19 +257,32 @@
             </svg>
             Terms and Conditions
           </h3>
-          <div class="text-text-secondary text-[0.9rem] leading-relaxed mb-5">
-            <p class="m-0 mb-2.5">You will follow these rules:</p>
+          <div class="text-text-secondary text-[0.9rem] leading-relaxed mb-5 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+            <p class="m-0 mb-2.5">
+              By creating an account, you agree to our
+              <a routerLink="/terms" class="text-accent hover:underline">Terms of Service</a>
+              and
+              <a routerLink="/privacy" class="text-accent hover:underline">Privacy Policy</a>.
+              Key points:
+            </p>
             <ul class="m-0 pl-5">
-              <li class="mb-1.5">Respect the community</li>
-              <li class="mb-1.5">Keep playing fair</li>
-              <li class="mb-1.5">No copying from this website</li>
+              <li class="mb-1.5">You must be at least 13 years old.</li>
+              <li class="mb-1.5">Virtual items and currency have no real-world value.</li>
+              <li class="mb-1.5">Cheating, exploitation, harassment, and real-money trading are prohibited.</li>
+              <li class="mb-1.5">We may suspend accounts that violate the rules.</li>
+              <li class="mb-1.5">Your data is processed per our Privacy Policy and GDPR.</li>
             </ul>
           </div>
 
           <label class="auth-checkbox-wrapper mt-2.5">
             <input type="checkbox" [ngModel]="acceptedTerms()" (ngModelChange)="acceptedTerms.set($event)" name="acceptedTerms" />
             <span class="auth-checkmark"></span>
-            <span class="text-[0.9rem] text-text-primary font-medium">I accept the terms and conditions!</span>
+            <span class="text-[0.9rem] text-text-primary font-medium">
+              I have read and agree to the
+              <a routerLink="/terms" class="text-accent hover:underline">Terms of Service</a>
+              and
+              <a routerLink="/privacy" class="text-accent hover:underline">Privacy Policy</a>.
+            </span>
           </label>
         </div>
 
@@ -281,7 +294,9 @@
           <div class="rounded-xl bg-surface-secondary/50 border border-border/50 p-3.5">
             <p class="text-text-secondary text-[0.8rem] leading-relaxed m-0">
               We use Cloudflare Turnstile to protect this site from spam and abuse.
-              Your interaction with the widget may be subject to Cloudflare's
+              Your data is handled per our
+              <a routerLink="/privacy" class="text-accent hover:underline">Privacy Policy</a>.
+              Turnstile interactions are subject to Cloudflare's
               <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Privacy Policy</a>
               and
               <a href="https://www.cloudflare.com/terms/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Terms of Service</a>.

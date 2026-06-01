@@ -24,6 +24,8 @@ export interface Player {
     totpEnabled: boolean;
     bannedAt: Date | null;
     banReason: string | null;
+    emailVerified: boolean;
+    verifiedAt: Date | null;
 }
 
 export interface PlayerRow extends Player {
