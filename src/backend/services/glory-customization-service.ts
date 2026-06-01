@@ -103,6 +103,16 @@ export class GloryCustomizationService extends ServiceBase {
     }
 
     async setShowcaseSlot(playerId: number, slotIndex: number, stoveId: number): Promise<void> {
+        // Verify player owns the stove
+        const ownershipStmt = this.unit.prepare<{ currentOwnerId: number }>(
+            `SELECT currentOwnerId FROM Stove WHERE stoveId = @stoveId`,
+            { stoveId }
+        );
+        const stove = await ownershipStmt.get();
+        if (!stove || stove.currentOwnerId !== playerId) {
+            throw new Error('You do not own this stove.');
+        }
+
         // Prevent duplicate stoves in showcase
         const existingStmt = this.unit.prepare<{ count: number }>(
             `SELECT COUNT(*)::INTEGER as count FROM GloryShowcase WHERE playerId = @playerId AND stoveId = @stoveId`,

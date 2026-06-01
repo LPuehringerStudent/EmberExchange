@@ -492,7 +492,7 @@ export class ShopService {
         ).run();
 
         // Add coins to player
-        await playerService.updatePlayerCoins(playerId, player.coins + sellPrice);
+        await playerService.addCoinsAtomic(playerId, sellPrice);
 
         // Log transaction
         await coinService.create(

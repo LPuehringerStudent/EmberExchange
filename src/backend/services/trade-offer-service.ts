@@ -69,6 +69,15 @@ export class TradeOfferService {
             return { success: false, error: "Unsupported item type" };
         }
 
+        // Verify item is not currently listed on the marketplace
+        const listingCheck = await this.unit.prepare<{ count: number }>(
+            `SELECT COUNT(*)::INTEGER as count FROM Listing WHERE ${itemType === 'stove' ? 'stoveId' : 'lootboxId'} = @itemId AND status = 'active'`,
+            { itemId }
+        ).get();
+        if ((listingCheck?.count ?? 0) > 0) {
+            return { success: false, error: "Item is currently listed for sale" };
+        }
+
         // Verify accepter has enough coins
         const accepter = await playerService.getInfoByID(accepterId);
         if (!accepter) {
@@ -86,10 +95,18 @@ export class TradeOfferService {
 
         // Atomic transfer
         // 1. Deduct coins from accepter
-        await playerService.updatePlayerCoins(accepterId, accepter.coins - price);
+        const deducted = await playerService.deductCoinsAtomic(accepterId, price);
+        if (!deducted) {
+            return { success: false, error: "Insufficient coins (concurrent transaction)" };
+        }
 
         // 2. Add coins to sender
-        await playerService.updatePlayerCoins(senderId, sender.coins + price);
+        const credited = await playerService.addCoinsAtomic(senderId, price);
+        if (!credited) {
+            // Roll back accepter if sender credit fails
+            await playerService.addCoinsAtomic(accepterId, price);
+            return { success: false, error: "Failed to credit sender" };
+        }
 
         // 3. Transfer ownership
         if (itemType === 'stove') {

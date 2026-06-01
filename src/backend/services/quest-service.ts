@@ -160,9 +160,8 @@ export class QuestService {
 
         // Award coins
         const playerService = new PlayerService(this.unit);
-        const player = await playerService.getInfoByID(playerId);
-        if (player) {
-            await playerService.updatePlayerCoins(playerId, player.coins + quest.rewardCoins);
+        if (quest.rewardCoins > 0) {
+            await playerService.addCoinsAtomic(playerId, quest.rewardCoins);
         }
 
         // Award XP

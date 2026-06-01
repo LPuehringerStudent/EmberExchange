@@ -315,10 +315,13 @@ export class LootboxService extends ServiceBase {
         if (!stoveId) return [false, null];
 
         // 4. Mark lootbox as opened
-        await this.unit.prepare(
-            `UPDATE Lootbox SET openedAt = NOW() WHERE lootboxId = @lootboxId`,
+        const opened = await this.unit.prepare(
+            `UPDATE Lootbox SET openedAt = NOW() WHERE lootboxId = @lootboxId AND openedAt IS NULL`,
             { lootboxId }
         ).run();
+        if (opened.changes !== 1) {
+            return [false, null];
+        }
 
         // 5. Create lootbox drop
         const dropStmt = this.unit.prepare<LootboxDropRow>(

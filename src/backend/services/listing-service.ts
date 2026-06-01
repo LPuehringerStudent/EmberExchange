@@ -241,7 +241,7 @@ export class ListingService extends ServiceBase {
      */
     async markAsSold(id: number): Promise<boolean> {
         const stmt = this.unit.prepare(
-            "UPDATE Listing SET status = 'sold' WHERE listingId = @id",
+            "UPDATE Listing SET status = 'sold' WHERE listingId = @id AND status = 'active'",
             { id }
         );
         const result = await stmt.run();
