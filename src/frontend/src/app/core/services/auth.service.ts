@@ -38,6 +38,7 @@ export interface RegisterRequest {
 export interface AuthResponse {
   sessionId: string;
   playerId: number;
+  requiresEmailVerification?: boolean;
 }
 
 export interface TwoFALoginResponse {
@@ -61,6 +62,7 @@ export class AuthService {
   private isAuthenticated = signal<boolean>(false);
   private sessionId = signal<string | null>(null);
   private pending2FAChallenge = signal<string | null>(null);
+  private emailVerified = signal<boolean>(true);
 
   private initResolve!: () => void;
   private initPromise = new Promise<void>(resolve => { this.initResolve = resolve; });
@@ -70,6 +72,7 @@ export class AuthService {
   readonly authenticated = this.isAuthenticated.asReadonly();
   readonly currentSessionId = this.sessionId.asReadonly();
   readonly twoFAChallenge = this.pending2FAChallenge.asReadonly();
+  readonly isEmailVerified = this.emailVerified.asReadonly();
 
   private api = inject(ApiService);
   private router = inject(Router);
@@ -129,6 +132,10 @@ export class AuthService {
       }
 
       await this.handleAuthResponse(response as AuthResponse, rememberMe);
+      // If email verification is required, update the signal
+      if ('requiresEmailVerification' in response && response.requiresEmailVerification) {
+        this.emailVerified.set(false);
+      }
       return response as AuthResponse;
     } catch (err) {
       if (err instanceof ApiError && err.status === 403) {
@@ -363,6 +370,7 @@ export class AuthService {
     const player = await this.fetchCurrentUser(response.sessionId);
     if (player) {
       this.currentUser.set(player);
+      this.emailVerified.set(!!(player as any).emailVerified);
     }
   }
 
@@ -391,6 +399,7 @@ export class AuthService {
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
     this.pending2FAChallenge.set(null);
+    this.emailVerified.set(true);
     this.clearStoredSession();
   }
 

@@ -100,7 +100,33 @@
   </div>
 </header>
 
+<!-- Email Verification Banner -->
+@if (showVerifyBanner()) {
+  <div class="fixed top-16 left-0 right-0 z-[999] bg-accent/15 border-b-2 border-accent px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <svg class="w-5 h-5 text-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <span class="text-sm text-text-primary">
+        <strong>Please verify your email</strong> to secure your account. Current email: <code class="text-accent">{{ currentUser()?.email }}</code>
+      </span>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <button (click)="resendVerification()" class="px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-semibold hover:opacity-90 transition-opacity">
+        Resend Email
+      </button>
+      <button (click)="navigateToSettings()" class="px-3 py-1.5 rounded-lg border border-accent text-accent text-xs font-semibold hover:bg-accent/10 transition-colors">
+        Change Email
+      </button>
+      <button (click)="dismissBanner()" class="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors" title="Dismiss">
+        ✕
+      </button>
+    </div>
+  </div>
+}
+
 <!-- Main content -->
-<main class="mt-16 min-h-[calc(100vh-64px)] w-full content">
+<main class="mt-16 min-h-[calc(100vh-64px)] w-full content"
+      [class.mt-24]="showVerifyBanner()">
   <router-outlet></router-outlet>
 </main>

@@ -9,25 +9,34 @@
     <div class="alert alert-error">{{ passwordError() }}</div>
   }
 
+  @if (!emailVerified()) {
+    <div class="flex items-center gap-3 p-4 rounded-xl mb-5 bg-accent/10 border border-accent/30 text-text-primary text-sm">
+      <svg class="w-5 h-5 text-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <span><strong>Email verification required.</strong> Please verify your email before changing your password.</span>
+    </div>
+  }
+
   <h3 class="text-lg font-semibold text-text-primary mb-4">Change Password</h3>
   <div class="form-grid" [formGroup]="passwordForm">
     <div class="input-group">
       <label>Current Password</label>
-      <input type="password" formControlName="currentPassword" placeholder="••••••••">
+      <input type="password" formControlName="currentPassword" placeholder="••••••••" [disabled]="!emailVerified()">
     </div>
 
     <div class="input-group">
       <label>New Password</label>
-      <input type="password" formControlName="newPassword" placeholder="••••••••">
+      <input type="password" formControlName="newPassword" placeholder="••••••••" [disabled]="!emailVerified()">
     </div>
 
     <div class="input-group">
       <label>Confirm New Password</label>
-      <input type="password" formControlName="confirmPassword" placeholder="••••••••">
+      <input type="password" formControlName="confirmPassword" placeholder="••••••••" [disabled]="!emailVerified()">
     </div>
   </div>
 
-  <button class="btn-danger" (click)="updatePassword()" [disabled]="passwordLoading()">
+  <button class="btn-danger" (click)="updatePassword()" [disabled]="passwordLoading() || !emailVerified()">
     {{ passwordLoading() ? 'Updating...' : 'Update Password' }}
   </button>
 </div>

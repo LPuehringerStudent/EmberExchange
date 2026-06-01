@@ -298,16 +298,6 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
             return;
         }
 
-        // Reject unverified email accounts (skip for OAuth users)
-        if (!player.emailVerified && !player.provider) {
-            console.warn(`[Auth] Login rejected — playerId=${player.playerId} email not verified`);
-            res.status(StatusCodes.UNAUTHORIZED).json({
-                error: "Invalid username/email or password"
-            });
-            await unit.complete(false);
-            return;
-        }
-
         // Check if 2FA is enabled
         const totpEnabled = await twoFactorService.isEnabled(player.playerId);
         console.log(`[Auth] 2FA check — playerId=${player.playerId}, totpEnabled=${totpEnabled}`);
@@ -328,8 +318,13 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
         if (success) {
             await loginHistoryService.create(player.playerId, sessionId);
             ok = true;
-            console.log(`[Auth] Login success — playerId=${player.playerId}, sessionId=${sessionId.slice(0, 8)}...`);
-            res.status(StatusCodes.OK).json({ sessionId, playerId: player.playerId });
+            const requiresEmailVerification = !player.emailVerified && !player.provider;
+            if (requiresEmailVerification) {
+                console.log(`[Auth] Login success (unverified) — playerId=${player.playerId}, sessionId=${sessionId.slice(0, 8)}...`);
+            } else {
+                console.log(`[Auth] Login success — playerId=${player.playerId}, sessionId=${sessionId.slice(0, 8)}...`);
+            }
+            res.status(StatusCodes.OK).json({ sessionId, playerId: player.playerId, requiresEmailVerification });
         } else {
             console.error("[Auth] createSession returned false");
             throw new Error("Failed to create session");
