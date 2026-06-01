@@ -200,11 +200,12 @@ function isDisposableEmail(email: string): boolean {
  */
 authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, async (req, res) => {
     const { usernameOrEmail, password } = req.body;
+    console.log(`[Auth] Login attempt — usernameOrEmail=${usernameOrEmail}`);
 
     // Bot detection: high-confidence bots get tar-pitted but still see normal 401
     const isBot = await handleBotDetection(req, res, res.locals.turnstileFailed as boolean);
     if (isBot) {
-        // Record violation and return a normal-looking error
+        console.warn(`[Auth] Login blocked — bot detected (turnstileFailed=${res.locals.turnstileFailed})`);
         try {
             const punishmentUnit = await Unit.create(false);
             const punishmentService = new PunishmentService(punishmentUnit);
@@ -219,10 +220,12 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
     }
 
     if (isNullOrWhiteSpace(usernameOrEmail) || isNullOrWhiteSpace(password)) {
+        console.warn("[Auth] Login rejected — missing credentials");
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Username/email and password are required" });
         return;
     }
     if (password.length > 128) {
+        console.warn("[Auth] Login rejected — password too long");
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Password too long" });
         return;
     }
@@ -240,30 +243,33 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
         await lookupUnit.complete();
     } catch (err) {
         await lookupUnit.complete(false);
+        console.error("[Auth] Login DB error during player lookup:", (err as Error).message);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         return;
     }
 
     if (player === null) {
+        console.warn(`[Auth] Login failed — no player found for ${usernameOrEmail}`);
         res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
         return;
     }
+    console.log(`[Auth] Player found — playerId=${player.playerId}, provider=${player.provider || "local"}, emailVerified=${player.emailVerified}`);
 
     // Phase 2: Verify password WITHOUT holding a DB connection
-    // bcrypt.compare is CPU-intensive; releasing the connection here
-    // prevents pool exhaustion under brute-force load.
     let passwordValid = false;
     if (player.password === null) {
+        console.log("[Auth] Player has no password (OAuth account)");
         passwordValid = false;
     } else if (isHashed(player.password)) {
         passwordValid = await comparePassword(password, player.password);
+        console.log(`[Auth] Password comparison result: ${passwordValid}`);
     } else {
-        // Plaintext passwords are no longer supported — force password reset
+        console.warn("[Auth] Player has plaintext password — forcing invalid");
         passwordValid = false;
     }
 
     if (!passwordValid) {
-        // Record brute-force attempt
+        console.warn(`[Auth] Login failed — invalid password for playerId=${player.playerId}`);
         try {
             const punishmentUnit = await Unit.create(false);
             const punishmentService = new PunishmentService(punishmentUnit);
@@ -286,6 +292,7 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
     try {
         // Reject banned players
         if (player.bannedAt) {
+            console.warn(`[Auth] Login rejected — playerId=${player.playerId} is banned`);
             res.status(StatusCodes.FORBIDDEN).json({ error: "Account banned", reason: player.banReason || "No reason provided" });
             await unit.complete(false);
             return;
@@ -293,6 +300,7 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
 
         // Reject unverified email accounts (skip for OAuth users)
         if (!player.emailVerified && !player.provider) {
+            console.warn(`[Auth] Login rejected — playerId=${player.playerId} email not verified`);
             res.status(StatusCodes.UNAUTHORIZED).json({
                 error: "Invalid username/email or password"
             });
@@ -302,6 +310,7 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
 
         // Check if 2FA is enabled
         const totpEnabled = await twoFactorService.isEnabled(player.playerId);
+        console.log(`[Auth] 2FA check — playerId=${player.playerId}, totpEnabled=${totpEnabled}`);
 
         if (totpEnabled) {
             const challengeId = await twoFactorService.createChallenge(player.playerId);
@@ -319,12 +328,15 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
         if (success) {
             await loginHistoryService.create(player.playerId, sessionId);
             ok = true;
+            console.log(`[Auth] Login success — playerId=${player.playerId}, sessionId=${sessionId.slice(0, 8)}...`);
             res.status(StatusCodes.OK).json({ sessionId, playerId: player.playerId });
         } else {
+            console.error("[Auth] createSession returned false");
             throw new Error("Failed to create session");
         }
     } catch (err) {
         await unit.complete(false);
+        console.error("[Auth] Login error during session creation:", (err as Error).message);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         return;
     } finally {

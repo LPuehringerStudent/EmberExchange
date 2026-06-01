@@ -49,11 +49,14 @@ setInterval(() => {
  *         description: Google OAuth not configured
  */
 oauthRouter.get("/oauth/google", authRateLimiter.middleware(), (req, res, next) => {
+    console.log("[OAuth] Google initiation requested");
     if (!isOAuthConfigured("google")) {
+        console.warn("[OAuth] Google OAuth not configured — missing env vars");
         res.status(501).json({ error: "Google OAuth not configured" });
         return;
     }
     const state = createOAuthState("google");
+    console.log("[OAuth] Google state created, setting cookie");
     res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", secure: true, maxAge: OAUTH_STATE_TTL_MS });
     passport.authenticate("google", {
         scope: ["profile", "email"],
@@ -76,34 +79,40 @@ oauthRouter.get("/oauth/google", authRateLimiter.middleware(), (req, res, next) 
  *         description: Authentication failed
  */
 oauthRouter.get("/oauth/google/callback", oauthCallbackRateLimiter.middleware(), (req, res, next) => {
+    console.log("[OAuth] Google callback received");
     if (!isOAuthConfigured("google")) {
+        console.warn("[OAuth] Google callback rejected — not configured");
         res.status(501).json({ error: "Google OAuth not configured" });
         return;
     }
     const state = req.query.state as string | undefined;
     const cookieState = req.cookies?.oauth_state;
+    console.log(`[OAuth] Google callback — state query: ${state ? "present" : "missing"}, cookie: ${cookieState ? "present" : "missing"}`);
     if (!state || !cookieState || !validateOAuthState(state, "google") || state !== cookieState) {
+        console.warn(`[OAuth] Google state validation failed — query=${!!state}, cookie=${!!cookieState}, match=${state === cookieState}`);
         res.clearCookie("oauth_state");
         res.redirect("/login?error=Invalid+OAuth+state");
         return;
     }
+    console.log("[OAuth] Google state validated, calling passport.authenticate");
     res.clearCookie("oauth_state");
     passport.authenticate("google", { session: false }, (err: Error | null, user: any) => {
         if (err) {
-            console.error("Google OAuth error:", err);
+            console.error("[OAuth] Google passport auth error:", err.message);
             res.redirect(`/login?error=${encodeURIComponent(err.message)}`);
             return;
         }
         if (!user) {
+            console.warn("[OAuth] Google passport returned no user");
             res.redirect("/login?error=Authentication failed");
             return;
         }
-        // Set session in a short-lived cookie instead of URL query param
+        console.log(`[OAuth] Google auth success — playerId=${user.playerId}, sessionId=${user.sessionId?.slice(0, 8)}...`);
         res.cookie("oauth_session", JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId }), {
             httpOnly: true,
             sameSite: "lax",
             secure: true,
-            maxAge: 60_000, // 1 minute — frontend reads it immediately
+            maxAge: 60_000,
         });
         res.redirect("/oauth/callback");
     })(req, res, next);
@@ -124,11 +133,14 @@ oauthRouter.get("/oauth/google/callback", oauthCallbackRateLimiter.middleware(),
  *         description: GitHub OAuth not configured
  */
 oauthRouter.get("/oauth/github", authRateLimiter.middleware(), (req, res, next) => {
+    console.log("[OAuth] GitHub initiation requested");
     if (!isOAuthConfigured("github")) {
+        console.warn("[OAuth] GitHub OAuth not configured — missing env vars");
         res.status(501).json({ error: "GitHub OAuth not configured" });
         return;
     }
     const state = createOAuthState("github");
+    console.log("[OAuth] GitHub state created, setting cookie");
     res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", secure: true, maxAge: OAUTH_STATE_TTL_MS });
     passport.authenticate("github", {
         scope: ["user:email"],
@@ -151,34 +163,40 @@ oauthRouter.get("/oauth/github", authRateLimiter.middleware(), (req, res, next) 
  *         description: Authentication failed
  */
 oauthRouter.get("/oauth/github/callback", oauthCallbackRateLimiter.middleware(), (req, res, next) => {
+    console.log("[OAuth] GitHub callback received");
     if (!isOAuthConfigured("github")) {
+        console.warn("[OAuth] GitHub callback rejected — not configured");
         res.status(501).json({ error: "GitHub OAuth not configured" });
         return;
     }
     const state = req.query.state as string | undefined;
     const cookieState = req.cookies?.oauth_state;
+    console.log(`[OAuth] GitHub callback — state query: ${state ? "present" : "missing"}, cookie: ${cookieState ? "present" : "missing"}`);
     if (!state || !cookieState || !validateOAuthState(state, "github") || state !== cookieState) {
+        console.warn(`[OAuth] GitHub state validation failed — query=${!!state}, cookie=${!!cookieState}, match=${state === cookieState}`);
         res.clearCookie("oauth_state");
         res.redirect("/login?error=Invalid+OAuth+state");
         return;
     }
+    console.log("[OAuth] GitHub state validated, calling passport.authenticate");
     res.clearCookie("oauth_state");
     passport.authenticate("github", { session: false }, (err: Error | null, user: any) => {
         if (err) {
-            console.error("GitHub OAuth error:", err);
+            console.error("[OAuth] GitHub passport auth error:", err.message);
             res.redirect(`/login?error=${encodeURIComponent(err.message)}`);
             return;
         }
         if (!user) {
+            console.warn("[OAuth] GitHub passport returned no user");
             res.redirect("/login?error=Authentication failed");
             return;
         }
-        // Set session in a short-lived cookie instead of URL query param
+        console.log(`[OAuth] GitHub auth success — playerId=${user.playerId}, sessionId=${user.sessionId?.slice(0, 8)}...`);
         res.cookie("oauth_session", JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId }), {
             httpOnly: true,
             sameSite: "lax",
             secure: true,
-            maxAge: 60_000, // 1 minute — frontend reads it immediately
+            maxAge: 60_000,
         });
         res.redirect("/oauth/callback");
     })(req, res, next);
