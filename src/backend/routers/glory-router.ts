@@ -6,6 +6,7 @@ import { GloryCustomizationService } from "../services/glory-customization-servi
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { PlayerAchievementService } from "../services/player-achievement-service";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { sanitizeText } from "../utils/sanitize";
 import { requireAuth } from "../middleware/require-auth";
 
 export const gloryRouter = express.Router();
@@ -628,7 +629,12 @@ gloryRouter.post("/glory/guestbook", requireAuth, async (req, res) => {
         if (await checkPlayerBanned(unit, authorId, res)) {
             return;
         }
-        await service.addGuestbookEntry(playerId, authorId, message);
+        const sanitized = sanitizeText(message, 200);
+        if (!sanitized) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Message must be 1-200 characters" });
+            return;
+        }
+        await service.addGuestbookEntry(playerId, authorId, sanitized);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Guestbook entry added" });
     } catch (err) {

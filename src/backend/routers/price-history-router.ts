@@ -32,7 +32,7 @@ export const priceHistoryRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.get("/price-history", async (_req, res) => {
+priceHistoryRouter.get("/price-history", requireAdmin, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new PriceHistoryService(unit);
 

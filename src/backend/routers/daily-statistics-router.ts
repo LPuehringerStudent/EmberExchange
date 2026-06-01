@@ -31,7 +31,7 @@ export const dailyStatisticsRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.get("/daily-statistics", async (_req, res) => {
+dailyStatisticsRouter.get("/daily-statistics", requireAdmin, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
 

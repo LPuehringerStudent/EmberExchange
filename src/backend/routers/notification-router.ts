@@ -1,7 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { NotificationService } from "../services/notification-service";
-import { SessionService } from "../services/session-service";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 
 export const notificationRouter = express.Router();
@@ -28,25 +28,12 @@ export const notificationRouter = express.Router();
  *       500:
  *         description: Server error
  */
-notificationRouter.get("/notifications", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+notificationRouter.get("/notifications", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
-    const sessionService = new SessionService(unit);
     const notificationService = new NotificationService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
-        const notifications = await notificationService.getByPlayerId(session.playerId);
+        const notifications = await notificationService.getByPlayerId(req.playerId!);
         res.status(StatusCodes.OK).json(notifications);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -77,25 +64,12 @@ notificationRouter.get("/notifications", async (req, res) => {
  *       500:
  *         description: Server error
  */
-notificationRouter.get("/notifications/unread-count", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+notificationRouter.get("/notifications/unread-count", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
-    const sessionService = new SessionService(unit);
     const notificationService = new NotificationService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
-        const count = await notificationService.getUnreadCount(session.playerId);
+        const count = await notificationService.getUnreadCount(req.playerId!);
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -131,13 +105,7 @@ notificationRouter.get("/notifications/unread-count", async (req, res) => {
  *       500:
  *         description: Server error
  */
-notificationRouter.patch("/notifications/:id/read", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+notificationRouter.patch("/notifications/:id/read", requireAuth, async (req, res) => {
     const notificationId = Number(req.params.id);
     if (isNaN(notificationId)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid notification ID" });
@@ -145,19 +113,11 @@ notificationRouter.patch("/notifications/:id/read", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const notificationService = new NotificationService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const success = await notificationService.markAsRead(notificationId, session.playerId);
+        const success = await notificationService.markAsRead(notificationId, req.playerId!);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Notification marked as read" });
@@ -193,27 +153,13 @@ notificationRouter.patch("/notifications/:id/read", async (req, res) => {
  *       500:
  *         description: Server error
  */
-notificationRouter.patch("/notifications/read-all", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+notificationRouter.patch("/notifications/read-all", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const notificationService = new NotificationService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const count = await notificationService.markAllAsRead(session.playerId);
+        const count = await notificationService.markAllAsRead(req.playerId!);
         ok = true;
         res.status(StatusCodes.OK).json({ message: "All notifications marked as read", count });
     } catch (err) {
@@ -250,13 +196,7 @@ notificationRouter.patch("/notifications/read-all", async (req, res) => {
  *       500:
  *         description: Server error
  */
-notificationRouter.delete("/notifications/:id", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+notificationRouter.delete("/notifications/:id", requireAuth, async (req, res) => {
     const notificationId = Number(req.params.id);
     if (isNaN(notificationId)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid notification ID" });
@@ -264,19 +204,11 @@ notificationRouter.delete("/notifications/:id", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const notificationService = new NotificationService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const success = await notificationService.delete(notificationId, session.playerId);
+        const success = await notificationService.delete(notificationId, req.playerId!);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Notification deleted" });

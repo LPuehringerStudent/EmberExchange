@@ -5,6 +5,7 @@ import { StoveService } from "../services/stove-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { requireAdmin } from "../middleware/admin";
+import { requireAuth } from "../middleware/require-auth";
 
 export const stoveRouter = express.Router();
 
@@ -154,7 +155,7 @@ stoveRouter.get("/stoves/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/players/:playerId/stoves", async (req, res) => {
+stoveRouter.get("/players/:playerId/stoves", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveService(unit);
     const playerId = req.params.playerId;
@@ -165,7 +166,13 @@ stoveRouter.get("/players/:playerId/stoves", async (req, res) => {
             return;
         }
 
-        const response = await service.getStovesByOwnerId(Number(playerId));
+        const parsedPlayerId = Number(playerId);
+        if (req.playerId !== parsedPlayerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const response = await service.getStovesByOwnerId(parsedPlayerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -517,7 +524,7 @@ stoveRouter.delete("/stoves/:id", requireAdmin, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/players/:playerId/stoves/count", async (req, res) => {
+stoveRouter.get("/players/:playerId/stoves/count", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveService(unit);
     const playerId = req.params.playerId;
@@ -528,7 +535,13 @@ stoveRouter.get("/players/:playerId/stoves/count", async (req, res) => {
             return;
         }
 
-        const count = await service.countStovesByOwner(Number(playerId));
+        const parsedPlayerId = Number(playerId);
+        if (req.playerId !== parsedPlayerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const count = await service.countStovesByOwner(parsedPlayerId);
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

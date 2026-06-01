@@ -1,8 +1,8 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { SupportService } from "../services/support-service";
-import { SessionService } from "../services/session-service";
 import { PlayerService } from "../services/player-service";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { sanitizeText } from "../utils/sanitize";
@@ -76,32 +76,14 @@ export const supportRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-supportRouter.post("/support", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+supportRouter.post("/support", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const supportService = new SupportService(unit);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
-        if (new Date(session.expiresAt) < new Date()) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Session expired" });
-            return;
-        }
-
-        const player = await playerService.getInfoByID(session.playerId);
+        const player = await playerService.getInfoByID(req.playerId!);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             return;

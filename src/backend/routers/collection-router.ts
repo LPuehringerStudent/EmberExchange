@@ -1,7 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { CollectionService } from "../services/collection-service";
-import { SessionService } from "../services/session-service";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 
 export const collectionRouter = express.Router();
@@ -20,24 +20,11 @@ export const collectionRouter = express.Router();
  *       401:
  *         description: Unauthorized
  */
-collectionRouter.get("/player/collections", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Missing session-id header" });
-        return;
-    }
-
+collectionRouter.get("/player/collections", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     try {
-        const sessionService = new SessionService(unit);
-        const session = await sessionService.getSession(sessionId);
-        if (!session || new Date(session.expiresAt) < new Date()) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
         const collectionService = new CollectionService(unit);
-        const collections = await collectionService.getPlayerCollections(session.playerId);
+        const collections = await collectionService.getPlayerCollections(req.playerId!);
         res.status(StatusCodes.OK).json(collections);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

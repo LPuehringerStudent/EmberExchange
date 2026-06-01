@@ -4,6 +4,7 @@ import { CoinTransactionService } from "../services/coin-transaction-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
 
 export const coinTransactionRouter = express.Router();
 
@@ -31,7 +32,7 @@ export const coinTransactionRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-coinTransactionRouter.get("/coin-transactions", async (_req, res) => {
+coinTransactionRouter.get("/coin-transactions", requireAdmin, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new CoinTransactionService(unit);
 

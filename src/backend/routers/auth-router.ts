@@ -18,6 +18,7 @@ import { timingGuard } from "../middleware/timing-guard";
 import { headerGuard } from "../middleware/header-guard";
 import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, setBotHeaders, getClientIp } from "../utils/bot-trap";
 import { sendVerificationEmail } from "../services/email-service";
+import { requireAuth } from "../middleware/require-auth";
 
 /* ─── Proof-of-work challenge store (in-memory, 10-min expiry) ─── */
 interface PowChallenge {
@@ -250,6 +251,8 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
 
     if (player === null) {
         console.warn(`[Auth] Login failed — no player found for ${usernameOrEmail}`);
+        // Constant-time path to prevent username enumeration via timing
+        await comparePassword(password, "$2b$10$dummy.hash.for.constant.time.comparison.dummy.hash.dummy.hash.");
         res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
         return;
     }
@@ -404,13 +407,7 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.patch("/auth/me", authRateLimiter.middleware(), async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.patch("/auth/me", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const { email } = req.body;
     
     if (isNullOrWhiteSpace(email)) {
@@ -426,33 +423,27 @@ authRouter.patch("/auth/me", authRateLimiter.middleware(), async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
+        const playerId = req.playerId!;
 
         // Check if email already exists for another user
         const existingByEmail = await playerService.getPlayerByEmail(email);
-        if (existingByEmail && existingByEmail.playerId !== session.playerId) {
+        if (existingByEmail && existingByEmail.playerId !== playerId) {
             res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
             await unit.complete(false);
             return;
         }
 
-        const player = await playerService.getInfoByID(session.playerId);
+        const player = await playerService.getInfoByID(playerId);
         const isLocalAccount = !player?.provider;
         let success: boolean;
         if (isLocalAccount) {
-            success = await playerService.updatePlayerEmailAndResetVerification(session.playerId, email);
+            success = await playerService.updatePlayerEmailAndResetVerification(playerId, email);
         } else {
-            success = await playerService.updatePlayerEmail(session.playerId, email);
+            success = await playerService.updatePlayerEmail(playerId, email);
         }
         if (success) {
             ok = true;
@@ -460,7 +451,7 @@ authRouter.patch("/auth/me", authRateLimiter.middleware(), async (req, res) => {
                 try {
                     await unit.prepare(
                         `DELETE FROM EmailVerificationToken WHERE playerId = @playerId`,
-                        { playerId: session.playerId }
+                        { playerId }
                     ).run();
                     const verifyToken = crypto.randomBytes(32).toString("hex");
                     const now = new Date();
@@ -470,7 +461,7 @@ authRouter.patch("/auth/me", authRateLimiter.middleware(), async (req, res) => {
                          VALUES (@token, @playerId, @email, @createdAt, @expiresAt)`,
                         {
                             token: verifyToken,
-                            playerId: session.playerId,
+                            playerId,
                             email,
                             createdAt: now.toISOString(),
                             expiresAt: verifyExpiresAt.toISOString(),
@@ -565,13 +556,7 @@ authRouter.patch("/auth/me", authRateLimiter.middleware(), async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.patch("/auth/password", authRateLimiter.middleware(), async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.patch("/auth/password", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     
     if (isNullOrWhiteSpace(currentPassword) || isNullOrWhiteSpace(newPassword)) {
@@ -585,19 +570,12 @@ authRouter.patch("/auth/password", authRateLimiter.middleware(), async (req, res
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const player = await playerService.getInfoByID(session.playerId);
+        const playerId = req.playerId!;
+        const player = await playerService.getInfoByID(playerId);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             await unit.complete(false);
@@ -613,7 +591,7 @@ authRouter.patch("/auth/password", authRateLimiter.middleware(), async (req, res
 
         // Hash and update password
         const hashedPassword = await hashPassword(newPassword);
-        const success = await playerService.updatePlayerPassword(session.playerId, hashedPassword);
+        const success = await playerService.updatePlayerPassword(playerId, hashedPassword);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Password changed successfully" });
@@ -661,28 +639,16 @@ authRouter.patch("/auth/password", authRateLimiter.middleware(), async (req, res
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.delete("/auth/me", authRateLimiter.middleware(), async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.delete("/auth/me", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
+        const playerId = req.playerId!;
 
         // Delete player (cascade will handle related data)
-        const success = await playerService.deletePlayer(session.playerId);
+        const success = await playerService.deletePlayer(playerId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Account deleted successfully" });
@@ -951,13 +917,17 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
         return;
     }
+    // Atomically claim the challenge to prevent concurrent reuse (TOCTOU fix)
+    const claimed = powStore.delete(powChallenge);
+    if (!claimed) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Challenge already used. Please refresh the page and try again." });
+        return;
+    }
     if (!verifyPow(powChallenge, powNonce, stored.difficulty)) {
         logBot(req, "register-blocked: invalid-pow");
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
         return;
     }
-    stored.used = true;
-    powStore.delete(powChallenge);
 
     // Phase 1: Validate everything before touching the DB or hashing
     if (isNullOrWhiteSpace(username) || isNullOrWhiteSpace(password) || isNullOrWhiteSpace(email)) {
@@ -999,13 +969,11 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
         // Check if email already exists
         const existingByEmail = await playerService.getPlayerByEmail(email);
         if (existingByEmail) {
-            if (existingByEmail.emailVerified) {
-                res.status(StatusCodes.CONFLICT).json({ error: "An account with this email already exists. Please log in instead." });
-                await unit.complete(false);
-                return;
-            }
-            // Email exists but is unverified — delete old account to allow re-registration
-            await playerService.deletePlayer(existingByEmail.playerId);
+            // Block re-registration regardless of verification status to prevent email squatting.
+            // Unverified accounts are no longer deleted — they must verify or wait for token expiry.
+            res.status(StatusCodes.CONFLICT).json({ error: "An account with this email already exists. Please log in instead." });
+            await unit.complete(false);
+            return;
         }
 
         // Check if username already exists
@@ -1104,7 +1072,7 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
  * GET /auth/verify-email/:token
  * Verifies an email address using a token from the verification email.
  */
-authRouter.get("/auth/verify-email/:token", async (req, res) => {
+authRouter.get("/auth/verify-email/:token", authRateLimiter.middleware(), async (req, res) => {
     const { token } = req.params;
     if (!token || typeof token !== "string") {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid verification token" });
@@ -1241,6 +1209,8 @@ authRouter.post("/auth/resend-verification", resendVerificationRateLimiter.middl
             await sendVerificationEmail(player.email, token);
         } catch (err) {
             console.error("Failed to resend verification email:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to send verification email. Please try again later." });
+            return;
         }
 
         res.status(StatusCodes.OK).json({ message: "If an unverified account exists, a verification email has been sent." });
@@ -1316,7 +1286,7 @@ authRouter.get("/auth/me", async (req, res) => {
         }
 
         // Return player without sensitive fields
-        const { password, totpSecret, ...playerSafe } = player;
+        const { password, totpSecret, violationCount, lastViolationAt, ...playerSafe } = player;
         res.status(StatusCodes.OK).json(playerSafe);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -1477,27 +1447,14 @@ authRouter.get("/auth/2fa/status", async (req, res) => {
  *                 qrCodeDataUrl:
  *                   type: string
  */
-authRouter.post("/auth/2fa/setup", authRateLimiter.middleware(), async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.post("/auth/2fa/setup", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     const twoFactorService = new TwoFactorService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const player = await playerService.getInfoByID(session.playerId);
+        const playerId = req.playerId!;
+        const player = await playerService.getInfoByID(playerId);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             await unit.complete(false);
@@ -1510,7 +1467,7 @@ authRouter.post("/auth/2fa/setup", authRateLimiter.middleware(), async (req, res
             return;
         }
 
-        const result = await twoFactorService.generateSecret(session.playerId, player.username, player.email);
+        const result = await twoFactorService.generateSecret(playerId, player.username, player.email);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ secret: result.secret, qrCodeDataUrl: result.qrCodeDataUrl });
     } catch (err) {
@@ -1558,13 +1515,7 @@ authRouter.post("/auth/2fa/setup", authRateLimiter.middleware(), async (req, res
  *                   items:
  *                     type: string
  */
-authRouter.post("/auth/2fa/confirm", authRateLimiter.middleware(), async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.post("/auth/2fa/confirm", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const { token } = req.body;
     if (isNullOrWhiteSpace(token)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Token is required" });
@@ -1572,18 +1523,11 @@ authRouter.post("/auth/2fa/confirm", authRateLimiter.middleware(), async (req, r
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const twoFactorService = new TwoFactorService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const result = await twoFactorService.confirmSetup(session.playerId, token);
+        const playerId = req.playerId!;
+        const result = await twoFactorService.confirmSetup(playerId, token);
         if (!result.success) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: result.message });
             await unit.complete(false);
@@ -1717,13 +1661,7 @@ authRouter.post("/auth/2fa/verify", twoFactorRateLimiter.middleware(), async (re
  *       200:
  *         description: 2FA disabled
  */
-authRouter.delete("/auth/2fa", authRateLimiter.middleware(), async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.delete("/auth/2fa", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const { password } = req.body;
     if (isNullOrWhiteSpace(password)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Password is required" });
@@ -1731,20 +1669,13 @@ authRouter.delete("/auth/2fa", authRateLimiter.middleware(), async (req, res) =>
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     const twoFactorService = new TwoFactorService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const player = await playerService.getInfoByID(session.playerId);
+        const playerId = req.playerId!;
+        const player = await playerService.getInfoByID(playerId);
         if (!player || !player.password) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid credentials" });
             await unit.complete(false);
@@ -1758,7 +1689,7 @@ authRouter.delete("/auth/2fa", authRateLimiter.middleware(), async (req, res) =>
             return;
         }
 
-        await twoFactorService.disable(session.playerId);
+        await twoFactorService.disable(playerId);
         ok = true;
         res.status(StatusCodes.OK).json({ message: "Two-factor authentication disabled" });
     } catch (err) {

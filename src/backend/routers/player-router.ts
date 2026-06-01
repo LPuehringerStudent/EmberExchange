@@ -2,6 +2,7 @@ import express from "express";
 import { Unit } from "../utils/unit";
 import { checkPlayerBanned } from "../middleware/ban-check";
 import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
 import { PlayerService } from "../services/player-service";
 import { SessionService } from "../services/session-service";
 import { PlayerSettingsService } from "../services/player-settings-service";
@@ -899,7 +900,7 @@ playerRouter.post("/players", (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.patch("/players/:id/coins", requireAuth, async (req, res) => {
+playerRouter.patch("/players/:id/coins", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
@@ -912,16 +913,6 @@ playerRouter.patch("/players/:id/coins", requireAuth, async (req, res) => {
         }
 
         const playerId = Number(id);
-        if (req.playerId !== playerId) {
-            // Hard punishment for coin exploit attempts
-            try {
-                const punishmentService = new PunishmentService(unit);
-                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "coin_tampering", `Attempted to modify coins for player ${playerId}`);
-            } catch { /* ignore */ }
-            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only update your own coin balance" });
-            await unit.complete(false);
-            return;
-        }
 
         if (await checkPlayerBanned(unit, playerId, res)) {
             return;

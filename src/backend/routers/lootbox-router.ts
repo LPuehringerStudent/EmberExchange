@@ -40,7 +40,7 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.get("/lootboxes", async (_req, res) => {
+lootboxRouter.get("/lootboxes", requireAuth, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new LootboxService(unit);
 
@@ -237,7 +237,7 @@ lootboxRouter.get("/lootboxes/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.get("/players/:playerId/lootboxes", async (req, res) => {
+lootboxRouter.get("/players/:playerId/lootboxes", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LootboxService(unit);
     const playerId = req.params.playerId;
@@ -248,7 +248,13 @@ lootboxRouter.get("/players/:playerId/lootboxes", async (req, res) => {
             return;
         }
 
-        const response = await service.getLootboxesByPlayerId(Number(playerId));
+        const parsedPlayerId = Number(playerId);
+        if (req.playerId !== parsedPlayerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const response = await service.getLootboxesByPlayerId(parsedPlayerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

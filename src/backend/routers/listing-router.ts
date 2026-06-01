@@ -217,7 +217,7 @@ listingRouter.get("/listings/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/players/:sellerId/listings", async (req, res) => {
+listingRouter.get("/players/:sellerId/listings", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const sellerId = req.params.sellerId;
@@ -228,7 +228,13 @@ listingRouter.get("/players/:sellerId/listings", async (req, res) => {
             return;
         }
 
-        const response = await service.getListingsBySellerId(Number(sellerId));
+        const parsedSellerId = Number(sellerId);
+        if (req.playerId !== parsedSellerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const response = await service.getListingsBySellerId(parsedSellerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -274,7 +280,7 @@ listingRouter.get("/players/:sellerId/listings", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/players/:sellerId/listings/active", async (req, res) => {
+listingRouter.get("/players/:sellerId/listings/active", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const sellerId = req.params.sellerId;
@@ -285,7 +291,13 @@ listingRouter.get("/players/:sellerId/listings/active", async (req, res) => {
             return;
         }
 
-        const response = await service.getActiveListingsBySellerId(Number(sellerId));
+        const parsedSellerId = Number(sellerId);
+        if (req.playerId !== parsedSellerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const response = await service.getActiveListingsBySellerId(parsedSellerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

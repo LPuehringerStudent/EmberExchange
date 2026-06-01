@@ -2,6 +2,7 @@ import express from "express";
 import crypto from "crypto";
 import passport, { isOAuthConfigured } from "../utils/passport";
 import { authRateLimiter, oauthCallbackRateLimiter } from "../middleware/rate-limiter";
+import { turnstileMiddleware } from "../middleware/turnstile";
 
 export const oauthRouter = express.Router();
 
@@ -48,7 +49,12 @@ setInterval(() => {
  *       501:
  *         description: Google OAuth not configured
  */
-oauthRouter.get("/oauth/google", authRateLimiter.middleware(), (req, res, next) => {
+oauthRouter.get("/oauth/google", authRateLimiter.middleware(), turnstileMiddleware, (req, res, next) => {
+    if (res.locals.turnstileFailed) {
+        console.warn("[OAuth] Google initiation blocked — Turnstile failed");
+        res.redirect("/login?error=Security+check+failed");
+        return;
+    }
     console.log("[OAuth] Google initiation requested");
     if (!isOAuthConfigured("google")) {
         console.warn("[OAuth] Google OAuth not configured — missing env vars");
@@ -132,7 +138,12 @@ oauthRouter.get("/oauth/google/callback", oauthCallbackRateLimiter.middleware(),
  *       501:
  *         description: GitHub OAuth not configured
  */
-oauthRouter.get("/oauth/github", authRateLimiter.middleware(), (req, res, next) => {
+oauthRouter.get("/oauth/github", authRateLimiter.middleware(), turnstileMiddleware, (req, res, next) => {
+    if (res.locals.turnstileFailed) {
+        console.warn("[OAuth] GitHub initiation blocked — Turnstile failed");
+        res.redirect("/login?error=Security+check+failed");
+        return;
+    }
     console.log("[OAuth] GitHub initiation requested");
     if (!isOAuthConfigured("github")) {
         console.warn("[OAuth] GitHub OAuth not configured — missing env vars");
@@ -227,7 +238,7 @@ oauthRouter.get("/oauth/github/callback", oauthCallbackRateLimiter.middleware(),
  * GET /oauth/session — Exchange the short-lived oauth_session cookie
  * for session data. Called by the frontend callback page.
  */
-oauthRouter.get("/oauth/session", (req, res) => {
+oauthRouter.get("/oauth/session", authRateLimiter.middleware(), (req, res) => {
     const raw = req.cookies?.oauth_session;
     if (!raw) {
         res.status(401).json({ error: "No OAuth session cookie" });

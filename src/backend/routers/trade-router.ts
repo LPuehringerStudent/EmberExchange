@@ -55,7 +55,7 @@ function getClientIp(req: express.Request): string {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades", async (_req, res) => {
+tradeRouter.get("/trades", requireAuth, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
 

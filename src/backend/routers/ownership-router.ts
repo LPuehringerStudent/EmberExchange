@@ -4,7 +4,10 @@ import { checkPlayerBanned } from "../middleware/ban-check";
 import { OwnershipService } from "../services/ownership-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAuth } from "../middleware/require-auth";
 import { requireAdmin } from "../middleware/admin";
+import { StoveService } from "../services/stove-service";
+import { PlayerService } from "../services/player-service";
 
 export const ownershipRouter = express.Router();
 
@@ -38,7 +41,7 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/ownerships", async (_req, res) => {
+ownershipRouter.get("/ownerships", requireAuth, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
 
@@ -154,7 +157,7 @@ ownershipRouter.get("/ownerships/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/stoves/:stoveId/ownership-history", async (req, res) => {
+ownershipRouter.get("/stoves/:stoveId/ownership-history", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const stoveId = req.params.stoveId;
@@ -165,7 +168,22 @@ ownershipRouter.get("/stoves/:stoveId/ownership-history", async (req, res) => {
             return;
         }
 
-        const response = await service.getOwnershipHistoryByStoveId(Number(stoveId));
+        const parsedStoveId = Number(stoveId);
+        const stoveService = new StoveService(unit);
+        const stove = await stoveService.getStoveById(parsedStoveId);
+        if (!stove) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Stove not found" });
+            return;
+        }
+
+        const playerService = new PlayerService(unit);
+        const player = await playerService.getInfoByID(req.playerId!);
+        if (stove.currentOwnerId !== req.playerId && !player?.isAdmin) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view ownership history for stoves you own" });
+            return;
+        }
+
+        const response = await service.getOwnershipHistoryByStoveId(parsedStoveId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

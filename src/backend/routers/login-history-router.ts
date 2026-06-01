@@ -32,7 +32,7 @@ export const loginHistoryRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.get("/login-history", async (_req, res) => {
+loginHistoryRouter.get("/login-history", requireAdmin, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new LoginHistoryService(unit);
 

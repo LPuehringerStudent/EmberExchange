@@ -41,7 +41,7 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages", async (_req, res) => {
+chatMessageRouter.get("/chat-messages", requireAuth, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
 
@@ -79,7 +79,7 @@ chatMessageRouter.get("/chat-messages", async (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages/global", async (_req, res) => {
+chatMessageRouter.get("/chat-messages/global", requireAuth, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
 
