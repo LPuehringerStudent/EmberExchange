@@ -61,21 +61,11 @@ import { PlayerService } from "./services/player-service";
 export const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Security headers first
+// Security headers first (CSP disabled — external resources like Google Fonts,
+// Font Awesome, and Turnstile make a strict CSP too fragile for this app)
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            scriptSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "blob:"],
-            connectSrc: ["'self'", "wss:", "ws:"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            objectSrc: ["'none'"],
-            upgradeInsecureRequests: [],
-        },
-    },
-    crossOriginEmbedderPolicy: false, // Allow images/fonts from same origin without CORP headers
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
 }));
 
 // Middleware
