@@ -19,6 +19,7 @@ import { headerGuard } from "../middleware/header-guard";
 import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, setBotHeaders, getClientIp } from "../utils/bot-trap";
 import { sendVerificationEmail } from "../services/email-service";
 import { requireAuth } from "../middleware/require-auth";
+import { logSecurityEvent } from "../services/security-event-service";
 
 /* ─── Proof-of-work challenge store (in-memory, 10-min expiry) ─── */
 interface PowChallenge {
@@ -253,6 +254,14 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
         console.warn(`[Auth] Login failed — no player found for ${usernameOrEmail}`);
         // Constant-time path to prevent username enumeration via timing
         await comparePassword(password, "$2b$10$dummy.hash.for.constant.time.comparison.dummy.hash.dummy.hash.");
+        logSecurityEvent({
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] as string | undefined,
+            eventType: "failed_login",
+            path: req.path,
+            method: req.method,
+            details: `No player found for ${usernameOrEmail}`,
+        });
         res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
         return;
     }

@@ -3,6 +3,8 @@ import crypto from "crypto";
 import passport, { isOAuthConfigured } from "../utils/passport";
 import { authRateLimiter, oauthCallbackRateLimiter } from "../middleware/rate-limiter";
 import { turnstileMiddleware } from "../middleware/turnstile";
+import { logSecurityEvent } from "../services/security-event-service";
+import { getClientIp } from "../utils/bot-trap";
 
 export const oauthRouter = express.Router();
 
@@ -52,6 +54,14 @@ setInterval(() => {
 oauthRouter.get("/oauth/google", authRateLimiter.middleware(), turnstileMiddleware, (req, res, next) => {
     if (res.locals.turnstileFailed) {
         console.warn("[OAuth] Google initiation blocked — Turnstile failed");
+        logSecurityEvent({
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] as string | undefined,
+            eventType: "oauth_fail",
+            path: req.path,
+            method: req.method,
+            details: "Google OAuth blocked — Turnstile failed",
+        });
         res.redirect("/login?error=Security+check+failed");
         return;
     }
@@ -141,6 +151,14 @@ oauthRouter.get("/oauth/google/callback", oauthCallbackRateLimiter.middleware(),
 oauthRouter.get("/oauth/github", authRateLimiter.middleware(), turnstileMiddleware, (req, res, next) => {
     if (res.locals.turnstileFailed) {
         console.warn("[OAuth] GitHub initiation blocked — Turnstile failed");
+        logSecurityEvent({
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] as string | undefined,
+            eventType: "oauth_fail",
+            path: req.path,
+            method: req.method,
+            details: "GitHub OAuth blocked — Turnstile failed",
+        });
         res.redirect("/login?error=Security+check+failed");
         return;
     }

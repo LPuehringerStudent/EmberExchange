@@ -43,7 +43,7 @@ import { RouterLink } from '@angular/router';
               <li><strong>Game data:</strong> virtual inventory, currency balances, trades, game history, and statistics.</li>
               <li><strong>Social data:</strong> chat messages, friend lists, visits, and guestbook entries.</li>
               <li><strong>Technical data:</strong> IP address (for security and rate limiting), session IDs, and browser type.</li>
-              <li><strong>Security data:</strong> Turnstile challenge responses (processed by Cloudflare) and violation logs.</li>
+              <li><strong>Security data:</strong> Turnstile challenge responses (processed by Cloudflare), violation logs, and security event logs (failed logins, rate-limit hits, suspicious requests).</li>
             </ul>
           </div>
         </section>
@@ -53,7 +53,7 @@ import { RouterLink } from '@angular/router';
           <div class="text-text-secondary leading-relaxed">
             <ul class="list-disc pl-5 space-y-1">
               <li>To provide and maintain the Service (account management, marketplace, games).</li>
-              <li>To secure the platform (fraud detection, bot prevention, IP banning for abuse).</li>
+              <li>To secure the platform (fraud detection, bot prevention, IP banning for abuse, exploit patching).</li>
               <li>To communicate with you (email verification, password resets, critical announcements).</li>
               <li>To generate aggregate statistics (never identifying individual users).</li>
               <li>To enforce our Terms of Service and comply with legal obligations.</li>
@@ -100,7 +100,8 @@ import { RouterLink } from '@angular/router';
           <p class="text-text-secondary leading-relaxed">
             We retain your data for as long as your account is active. After deletion, we remove personal data
             within 30 days, except where longer retention is required for legal compliance, fraud prevention,
-            or security purposes. Aggregate statistics are kept indefinitely in anonymized form.
+            or security purposes. Security event logs (IPs, user agents, failed requests) are retained for
+            90 days and then automatically purged. Aggregate statistics are kept indefinitely in anonymized form.
           </p>
         </section>
 

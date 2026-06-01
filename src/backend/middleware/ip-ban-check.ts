@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { Unit } from "../utils/unit";
 import { PunishmentService } from "../services/punishment-service";
+import { logSecurityEvent } from "../services/security-event-service";
 import { StatusCodes } from "http-status-codes";
 
 function getClientIp(req: Request): string {
@@ -27,6 +28,14 @@ export async function ipBanCheck(req: Request, res: Response, next: NextFunction
         const punishmentService = new PunishmentService(unit);
         const ban = await punishmentService.isIpBanned(ip);
         if (ban.banned) {
+            logSecurityEvent({
+                ipAddress: ip,
+                userAgent: req.headers["user-agent"] as string | undefined,
+                eventType: "ip_banned_hit",
+                path: req.path,
+                method: req.method,
+                details: ban.reason ?? undefined,
+            });
             res.status(StatusCodes.FORBIDDEN).json({ error: "Access denied" });
             return;
         }

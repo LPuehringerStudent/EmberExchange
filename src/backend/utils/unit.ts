@@ -433,6 +433,20 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS SecurityEvent (
+                eventId SERIAL PRIMARY KEY,
+                ipAddress TEXT NOT NULL,
+                userAgent TEXT,
+                playerId INTEGER REFERENCES Player(playerId),
+                eventType TEXT NOT NULL,
+                path TEXT,
+                method TEXT,
+                details TEXT,
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS StoveType (
                 typeId SERIAL PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,

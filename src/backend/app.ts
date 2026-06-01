@@ -58,6 +58,7 @@ import cron from "node-cron";
 import { ShopRotationService } from "./services/shop-rotation-service";
 import { SessionService } from "./services/session-service";
 import { PlayerService } from "./services/player-service";
+import { purgeOldSecurityEvents } from "./services/security-event-service";
 
 
 export const app = express();
@@ -275,6 +276,17 @@ if (require.main === module) {
                 if (unit) {
                     try { await unit.complete(false); } catch { /* ignore */ }
                 }
+            }
+        });
+
+        // Daily security event cleanup (90-day retention)
+        cron.schedule("0 3 * * *", async () => {
+            console.log("🧹 Purging old security events...");
+            try {
+                const deleted = await purgeOldSecurityEvents(90);
+                console.log(`✅ Purged ${deleted} security events older than 90 days`);
+            } catch (error) {
+                console.error("❌ Security event cleanup failed:", error);
             }
         });
     });

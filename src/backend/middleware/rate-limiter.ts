@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { logSecurityEvent } from "../services/security-event-service";
 
 interface Bucket {
     tokens: number;
@@ -57,6 +58,14 @@ class ExpressRateLimiter {
                 bucket.lastRefill = now;
 
                 if (bucket.tokens < 1) {
+                    logSecurityEvent({
+                        ipAddress: this.getClientIp(req),
+                        userAgent: req.headers["user-agent"] as string | undefined,
+                        eventType: "rate_limit_hit",
+                        path: req.path,
+                        method: req.method,
+                        details: this.message,
+                    });
                     res.status(429).json({
                         error: this.message,
                         retryAfter: Math.ceil((1 - bucket.tokens) / refillRate / 1000)

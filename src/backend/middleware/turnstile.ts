@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { logSecurityEvent } from "../services/security-event-service";
 
 const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY;
 
@@ -104,12 +105,30 @@ export async function turnstileMiddleware(
     // No token provided
     if (!token || typeof token !== "string") {
         res.locals.turnstileFailed = true;
+        logSecurityEvent({
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] as string | undefined,
+            eventType: "turnstile_fail",
+            path: req.path,
+            method: req.method,
+            details: "No Turnstile token provided",
+        });
         next();
         return;
     }
 
     const ip = getClientIp(req);
     const valid = await verifyTurnstileToken(token, ip);
+    if (!valid) {
+        logSecurityEvent({
+            ipAddress: ip,
+            userAgent: req.headers["user-agent"] as string | undefined,
+            eventType: "turnstile_fail",
+            path: req.path,
+            method: req.method,
+            details: "Turnstile token verification failed",
+        });
+    }
     res.locals.turnstileFailed = !valid;
     next();
 }
