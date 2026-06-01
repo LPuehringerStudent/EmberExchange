@@ -43,7 +43,7 @@ import { RouterLink } from '@angular/router';
               <li><strong>Game data:</strong> virtual inventory, currency balances, trades, game history, and statistics.</li>
               <li><strong>Social data:</strong> chat messages, friend lists, visits, and guestbook entries.</li>
               <li><strong>Technical data:</strong> IP address (for security and rate limiting), session IDs, and browser type.</li>
-              <li><strong>Security data:</strong> Turnstile challenge responses (processed by Cloudflare), violation logs, and security event logs (failed logins, rate-limit hits, suspicious requests).</li>
+              <li><strong>Security data:</strong> Turnstile challenge responses (processed by Cloudflare), violation logs, security event logs (failed logins, rate-limit hits, suspicious requests), and API request logs (method, path, status code, response time) for the last 24 hours.</li>
             </ul>
           </div>
         </section>

@@ -447,6 +447,20 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS RequestLog (
+                logId SERIAL PRIMARY KEY,
+                ipAddress TEXT NOT NULL,
+                userAgent TEXT,
+                playerId INTEGER REFERENCES Player(playerId),
+                method TEXT NOT NULL,
+                path TEXT NOT NULL,
+                statusCode INTEGER NOT NULL,
+                durationMs INTEGER NOT NULL,
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS StoveType (
                 typeId SERIAL PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,

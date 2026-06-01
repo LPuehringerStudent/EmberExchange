@@ -59,6 +59,7 @@ import { ShopRotationService } from "./services/shop-rotation-service";
 import { SessionService } from "./services/session-service";
 import { PlayerService } from "./services/player-service";
 import { purgeOldSecurityEvents } from "./services/security-event-service";
+import { logRequest, purgeOldRequestLogs } from "./services/request-log-service";
 
 
 export const app = express();
@@ -130,6 +131,39 @@ app.use((req, _res, next) => {
 
 app.use(cookieParser());
 app.use(ipBanCheck);
+
+// API request logging — 24h retention for forensics (non-blocking)
+function getRequestClientIp(req: express.Request): string {
+    const cf = req.headers["cf-connecting-ip"];
+    if (typeof cf === "string" && cf.trim()) return cf.trim();
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+        return forwarded.split(",").pop()?.trim() ?? req.socket.remoteAddress ?? "unknown";
+    }
+    return req.socket.remoteAddress ?? "unknown";
+}
+
+app.use((req, res, next) => {
+    if (!req.path.startsWith("/api") || req.path === "/api/health" || req.path.startsWith("/api/admin/request-logs")) {
+        next();
+        return;
+    }
+    const start = Date.now();
+    res.on("finish", () => {
+        const duration = Date.now() - start;
+        logRequest({
+            ipAddress: getRequestClientIp(req),
+            userAgent: req.headers["user-agent"] as string | undefined,
+            playerId: (req as any).playerId ?? undefined,
+            method: req.method,
+            path: req.path,
+            statusCode: res.statusCode,
+            durationMs: duration,
+        });
+    });
+    next();
+});
+
 app.use(passport.initialize());
 
 // Configure Passport
@@ -287,6 +321,17 @@ if (require.main === module) {
                 console.log(`✅ Purged ${deleted} security events older than 90 days`);
             } catch (error) {
                 console.error("❌ Security event cleanup failed:", error);
+            }
+        });
+
+        // Hourly request log cleanup (24-hour retention)
+        cron.schedule("0 * * * *", async () => {
+            console.log("🧹 Purging old request logs...");
+            try {
+                const deleted = await purgeOldRequestLogs(24);
+                console.log(`✅ Purged ${deleted} request logs older than 24 hours`);
+            } catch (error) {
+                console.error("❌ Request log cleanup failed:", error);
             }
         });
     });

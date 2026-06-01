@@ -6,6 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { getBotTrapLog, clearBotTrapLog } from "../utils/bot-trap";
 import { PunishmentService } from "../services/punishment-service";
+import { queryRequestLogs } from "../services/request-log-service";
 import net from "net";
 
 export const adminRouter = express.Router();
@@ -201,6 +202,32 @@ adminRouter.post("/admin/players/:id/coins", async (req, res) => {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
         await unit.complete(ok);
+    }
+});
+
+adminRouter.get("/admin/request-logs", async (req, res) => {
+    const unit = await Unit.create(true);
+    try {
+        const playerId = req.query.playerId ? parseInt(req.query.playerId as string, 10) : undefined;
+        const ipAddress = req.query.ip as string | undefined;
+        const path = req.query.path as string | undefined;
+        const since = req.query.since as string | undefined;
+        const until = req.query.until as string | undefined;
+        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 500;
+
+        const logs = await queryRequestLogs(unit, {
+            playerId: playerId && !isNaN(playerId) ? playerId : undefined,
+            ipAddress: ipAddress || undefined,
+            path: path || undefined,
+            since: since || undefined,
+            until: until || undefined,
+            limit: limit && !isNaN(limit) ? limit : 500,
+        });
+        res.status(StatusCodes.OK).json(logs);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
     }
 });
 
