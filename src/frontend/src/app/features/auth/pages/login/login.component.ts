@@ -182,22 +182,32 @@ export class LoginComponent implements OnInit {
   }
 
   loginWithGoogle(): void {
-    if (this.googleEnabled()) {
-      const widgetId = this.turnstileWidgetId();
-      const token = this.isLocalhost() || !widgetId
-        ? undefined
-        : this.turnstileService.getToken(widgetId) ?? undefined;
-      this.authService.loginWithGoogle(token);
+    if (!this.googleEnabled()) return;
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      return;
     }
+
+    const token = this.isLocalhost() || !widgetId
+      ? undefined
+      : this.turnstileService.getToken(widgetId) ?? undefined;
+    this.authService.loginWithGoogle(token);
   }
 
   loginWithGitHub(): void {
-    if (this.githubEnabled()) {
-      const widgetId = this.turnstileWidgetId();
-      const token = this.isLocalhost() || !widgetId
-        ? undefined
-        : this.turnstileService.getToken(widgetId) ?? undefined;
-      this.authService.loginWithGitHub(token);
+    if (!this.githubEnabled()) return;
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      return;
     }
+
+    const token = this.isLocalhost() || !widgetId
+      ? undefined
+      : this.turnstileService.getToken(widgetId) ?? undefined;
+    this.authService.loginWithGitHub(token);
   }
 }
