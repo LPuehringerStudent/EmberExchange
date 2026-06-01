@@ -200,10 +200,14 @@ export class RegisterComponent implements OnInit {
       // OAuth status fetch failed, buttons will remain disabled
     }
 
-    try {
-      await this.turnstileService.initialize();
-    } catch {
-      console.error('Failed to initialize Turnstile');
+    // Initialize Turnstile widget (skip on localhost)
+    if (!this.isLocalhost()) {
+      try {
+        await this.turnstileService.initialize();
+        setTimeout(() => this.renderTurnstile(), 100);
+      } catch {
+        console.error('Failed to initialize Turnstile');
+      }
     }
   }
 
@@ -227,15 +231,33 @@ export class RegisterComponent implements OnInit {
   }
 
   registerWithGoogle(): void {
-    if (this.googleEnabled()) {
-      this.authService.loginWithGoogle();
+    if (!this.googleEnabled()) return;
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      return;
     }
+
+    const token = this.isLocalhost() || !widgetId
+      ? undefined
+      : this.turnstileService.getToken(widgetId) ?? undefined;
+    this.authService.loginWithGoogle(token);
   }
 
   registerWithGitHub(): void {
-    if (this.githubEnabled()) {
-      this.authService.loginWithGitHub();
+    if (!this.githubEnabled()) return;
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      return;
     }
+
+    const token = this.isLocalhost() || !widgetId
+      ? undefined
+      : this.turnstileService.getToken(widgetId) ?? undefined;
+    this.authService.loginWithGitHub(token);
   }
 
   private isValidEmail(email: string): boolean {
