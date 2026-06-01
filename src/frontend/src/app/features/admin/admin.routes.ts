@@ -27,6 +27,10 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'bot-traps',
         loadComponent: () => import('./pages/bot-traps/bot-traps.component').then(m => m.BotTrapsComponent)
+      },
+      {
+        path: 'banned-ips',
+        loadComponent: () => import('./pages/banned-ips/banned-ips.component').then(m => m.BannedIPsComponent)
       }
     ]
   }

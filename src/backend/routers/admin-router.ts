@@ -232,6 +232,33 @@ adminRouter.get("/admin/violations", async (req, res) => {
     }
 });
 
+adminRouter.post("/admin/banned-ips", async (req, res) => {
+    const { ip, reason, durationHours } = req.body;
+    if (!ip || typeof ip !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "IP is required" });
+        return;
+    }
+    if (!reason || typeof reason !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Reason is required" });
+        return;
+    }
+    const unit = await Unit.create(false);
+    const service = new PunishmentService(unit);
+    let ok = false;
+    try {
+        const durationMs = typeof durationHours === "number" && durationHours > 0
+            ? durationHours * 60 * 60 * 1000
+            : undefined;
+        await service.banIp(ip, reason, durationMs);
+        ok = true;
+        res.status(StatusCodes.OK).json({ message: `IP ${ip} banned` });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
 adminRouter.post("/admin/banned-ips/unban", async (req, res) => {
     const { ip } = req.body;
     if (!ip || typeof ip !== "string") {

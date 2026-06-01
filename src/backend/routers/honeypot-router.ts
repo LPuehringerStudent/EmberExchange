@@ -1,6 +1,8 @@
 import { Router } from "express";
-import { logBot, tarPit, setBotHeaders } from "../utils/bot-trap";
+import { logBot, tarPit, setBotHeaders, getClientIp } from "../utils/bot-trap";
 import { antiBotConfig } from "../utils/anti-bot-config";
+import { Unit } from "../utils/unit";
+import { PunishmentService } from "../services/punishment-service";
 
 export const honeypotRouter = Router();
 
@@ -65,6 +67,17 @@ for (const endpoint of antiBotConfig.honeypotEndpoints) {
         logBot(req, `honeypot:${req.path}`);
         setBotHeaders(res);
         await tarPit(req);
+
+        // Record violation so PunishmentService can auto-ban repeat offenders
+        try {
+            const unit = await Unit.create(false);
+            const punishmentService = new PunishmentService(unit);
+            await punishmentService.recordViolation(getClientIp(req), null, "honeypot_triggered", `Hit honeypot endpoint ${req.path}`);
+            await unit.complete(true);
+        } catch {
+            // Ignore punishment errors — log and tar-pit still happened
+        }
+
         res.json(responseFn());
     });
 }

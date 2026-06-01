@@ -69,6 +69,14 @@ export interface BotTrapEvent {
   };
 }
 
+export interface BannedIPRecord {
+  ip: string;
+  reason: string;
+  bannedAt: string;
+  expiresAt: string | null;
+  violationType: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private api = inject(ApiService);
@@ -137,5 +145,21 @@ export class AdminService {
 
   async clearBotTrapLog(): Promise<void> {
     await firstValueFrom(this.api.delete<void>('/admin/bot-traps', this.getHeaders()));
+  }
+
+  async getBannedIPs(): Promise<BannedIPRecord[]> {
+    return firstValueFrom(this.api.get<BannedIPRecord[]>('/admin/banned-ips', this.getHeaders()));
+  }
+
+  async banIp(ip: string, reason: string, durationHours?: number): Promise<void> {
+    await firstValueFrom(
+      this.api.post<void>('/admin/banned-ips', { ip, reason, durationHours }, this.getHeaders())
+    );
+  }
+
+  async unbanIp(ip: string): Promise<void> {
+    await firstValueFrom(
+      this.api.post<void>('/admin/banned-ips/unban', { ip }, this.getHeaders())
+    );
   }
 }

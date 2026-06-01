@@ -298,6 +298,15 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
             return;
         }
 
+        // SECURITY: Admin accounts MUST have a verified email — no soft-gate exception.
+        // This prevents compromised admin passwords from being usable while email is unverified.
+        if (player.isAdmin && !player.emailVerified && !player.provider) {
+            console.warn(`[Auth] Login rejected — admin playerId=${player.playerId} email not verified`);
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+            await unit.complete(false);
+            return;
+        }
+
         // Check if 2FA is enabled
         const totpEnabled = await twoFactorService.isEnabled(player.playerId);
         console.log(`[Auth] 2FA check — playerId=${player.playerId}, totpEnabled=${totpEnabled}`);
