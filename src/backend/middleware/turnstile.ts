@@ -10,9 +10,11 @@ interface TurnstileVerifyResponse {
 }
 
 function getClientIp(req: Request): string {
+    const cf = req.headers["cf-connecting-ip"];
+    if (typeof cf === "string" && cf.trim()) return cf.trim();
     const forwarded = req.headers["x-forwarded-for"];
     if (typeof forwarded === "string") {
-        return forwarded.split(",")[0].trim();
+        return forwarded.split(",").pop()?.trim() ?? req.socket.remoteAddress ?? "unknown";
     }
     return req.socket.remoteAddress ?? "unknown";
 }
@@ -92,7 +94,12 @@ export async function turnstileMiddleware(
         return;
     }
 
-    const token = (req.body as Record<string, unknown>)?.turnstileToken;
+    let token = (req.body as Record<string, unknown>)?.turnstileToken;
+
+    // Fallback to query param for GET requests (e.g. OAuth initiation)
+    if (!token && req.query.turnstileToken) {
+        token = req.query.turnstileToken;
+    }
 
     // No token provided
     if (!token || typeof token !== "string") {

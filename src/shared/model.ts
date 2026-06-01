@@ -26,6 +26,8 @@ export interface Player {
     banReason: string | null;
     emailVerified: boolean;
     verifiedAt: Date | null;
+    violationCount: number;
+    lastViolationAt: Date | null;
 }
 
 export interface PlayerRow extends Player {

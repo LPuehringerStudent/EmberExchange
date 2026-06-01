@@ -3,6 +3,7 @@ dotenv.config();
 
 import cors from "cors";
 import helmet from "helmet";
+import compression from "compression";
 import express from "express";
 import cookieParser from "cookie-parser";
 import { StatusCodes } from "http-status-codes";
@@ -52,6 +53,7 @@ import { swaggerSpec } from "./swagger";
 import { setupWebSocketServer, wssInstance } from "./websocket";
 import { antiBotConfig } from "./utils/anti-bot-config";
 import { ipBanCheck } from "./middleware/ip-ban-check";
+import { requireAdmin } from "./middleware/admin";
 import cron from "node-cron";
 import { ShopRotationService } from "./services/shop-rotation-service";
 import { SessionService } from "./services/session-service";
@@ -68,8 +70,27 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
 }));
 
-// Middleware
-app.use(cors());
+// Compression — gzip responses for text/json assets
+app.use(compression());
+
+// CORS — whitelist frontend origin only
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:4200";
+const allowedOrigins = new Set([
+    FRONTEND_URL,
+    "http://localhost:4200",
+    "http://localhost:3000",
+]);
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, same-origin)
+        if (!origin || allowedOrigins.has(origin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error(`CORS blocked: ${origin}`));
+    },
+    credentials: true,
+}));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
@@ -193,36 +214,8 @@ app.use((req, res, next) => {
     res.send(html);
 });
 
-// Test database connection endpoint — restricted in production
-app.get("/api/db-test", async (req, res) => {
-    if (process.env.NODE_ENV === "production") {
-        // In production, require admin auth
-        const sessionId = req.headers["session-id"] as string;
-        if (!sessionId) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Admin access required" });
-            return;
-        }
-        const unit = await Unit.create(true);
-        try {
-            const sessionService = new SessionService(unit);
-            const playerService = new PlayerService(unit);
-            const session = await sessionService.getSession(sessionId);
-            if (!session) {
-                res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid session" });
-                return;
-            }
-            const player = await playerService.getInfoByID(session.playerId);
-            if (!player || !player.isAdmin) {
-                res.status(StatusCodes.FORBIDDEN).json({ error: "Admin access required" });
-                return;
-            }
-        } catch {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Server error" });
-            return;
-        } finally {
-            await unit.complete();
-        }
-    }
+// Test database connection endpoint — ALWAYS admin-only
+app.get("/api/db-test", requireAdmin, async (_req, res) => {
     let unit: Unit | null = null;
     try {
         unit = await Unit.create(true);
@@ -234,8 +227,19 @@ app.get("/api/db-test", async (req, res) => {
         if (unit) {
             try { await unit.complete(); } catch { /* ignore */ }
         }
-        res.status(500).json({ status: "error", message: String(error) });
+        res.status(500).json({ status: "error", message: "Internal server error" });
     }
+});
+
+// Global error handler — prevents leaking stack traces in production
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error("Unhandled error:", err);
+    const isDev = process.env.NODE_ENV !== "production";
+    const message = isDev
+        ? (err?.message || "Internal server error")
+        : "Internal server error";
+    const status = err?.status || err?.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    res.status(status).json({ error: message });
 });
 
 // Start server first, then initialize DB

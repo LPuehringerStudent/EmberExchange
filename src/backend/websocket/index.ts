@@ -43,8 +43,9 @@ export function setupWebSocketServer(server: http.Server): void {
         }
         wsConnectionsByIp.set(clientIp, currentCount + 1);
 
-        const parsedUrl = new URL(req.url || "", "http://localhost");
-        const sessionId = parsedUrl.searchParams.get("sessionId") || undefined;
+        // Read sessionId from WebSocket subprotocol header (avoids leaking it to logs/URL/history)
+        const rawProtocol = req.headers["sec-websocket-protocol"];
+        const sessionId = typeof rawProtocol === "string" ? rawProtocol.split(",")[0].trim() : undefined;
 
         // Attach message listener immediately so messages don't get lost
         // while authenticateSession runs asynchronously
