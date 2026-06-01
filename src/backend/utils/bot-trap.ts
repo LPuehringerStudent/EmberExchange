@@ -42,11 +42,22 @@ const MAX_LOG_SIZE = 1000;
 /**
  * Extracts the client IP from a request, respecting X-Forwarded-For.
  */
-function getClientIp(req: Request): string {
+export function getClientIp(req: Request): string {
+    // Trust Cloudflare's connecting IP first (hard to spoof)
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (typeof cfIp === "string" && cfIp.length > 0) {
+        return cfIp.trim();
+    }
+
+    // Use the LAST entry in X-Forwarded-For (closest to our server / hardest to spoof)
     const forwarded = req.headers["x-forwarded-for"];
     if (typeof forwarded === "string") {
-        return forwarded.split(",")[0].trim();
+        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+        if (hops.length > 0) {
+            return hops[hops.length - 1];
+        }
     }
+
     return req.socket.remoteAddress ?? "unknown";
 }
 

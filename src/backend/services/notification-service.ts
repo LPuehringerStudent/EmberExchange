@@ -83,10 +83,10 @@ export class NotificationService extends ServiceBase {
     /**
      * Marks a single notification as read.
      */
-    async markAsRead(notificationId: number): Promise<boolean> {
+    async markAsRead(notificationId: number, playerId: number): Promise<boolean> {
         const stmt = this.unit.prepare(
-            `UPDATE Notification SET isRead = 1 WHERE notificationId = @notificationId`,
-            { notificationId }
+            `UPDATE Notification SET isRead = 1 WHERE notificationId = @notificationId AND playerId = @playerId`,
+            { notificationId, playerId }
         );
         const result = await stmt.run();
         return result.changes === 1;
@@ -107,10 +107,10 @@ export class NotificationService extends ServiceBase {
     /**
      * Deletes a notification.
      */
-    async delete(notificationId: number): Promise<boolean> {
+    async delete(notificationId: number, playerId: number): Promise<boolean> {
         const stmt = this.unit.prepare(
-            `DELETE FROM Notification WHERE notificationId = @notificationId`,
-            { notificationId }
+            `DELETE FROM Notification WHERE notificationId = @notificationId AND playerId = @playerId`,
+            { notificationId, playerId }
         );
         const result = await stmt.run();
         return result.changes === 1;

@@ -23,11 +23,11 @@ export class PlayerService extends ServiceBase {
      * Retrieves all players EXCLUDING sensitive fields (password, totpSecret, email).
      * Safe for public API responses.
      */
-    async getAllPublicPlayers(): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email">[]> {
+    async getAllPublicPlayers(): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin">[]> {
         const stmt = this.unit.prepare<
-            Omit<PlayerRow, "password" | "totpSecret" | "email">
+            Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin">
         >(
-            `SELECT playerId, username, motto, coins, sparks, lootboxCount, isAdmin,
+            `SELECT playerId, username, motto, coins, sparks, lootboxCount,
                     isPublic, joinedAt, provider, providerId, totpEnabled, bannedAt,
                     banReason, emailVerified, verifiedAt
              FROM Player`
@@ -53,11 +53,11 @@ export class PlayerService extends ServiceBase {
      * Retrieves a player by ID EXCLUDING sensitive fields (password, totpSecret, email).
      * Safe for public API responses.
      */
-    async getPublicPlayerById(id: number): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email"> | null> {
+    async getPublicPlayerById(id: number): Promise<Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin"> | null> {
         const stmt = this.unit.prepare<
-            Omit<PlayerRow, "password" | "totpSecret" | "email">
+            Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin">
         >(
-            `SELECT playerId, username, motto, coins, sparks, lootboxCount, isAdmin,
+            `SELECT playerId, username, motto, coins, sparks, lootboxCount,
                     isPublic, joinedAt, provider, providerId, totpEnabled, bannedAt,
                     banReason, emailVerified, verifiedAt
              FROM Player WHERE playerId = @id`,
@@ -321,7 +321,10 @@ export class PlayerService extends ServiceBase {
      */
     async getPlayerByUsername(username: string): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
-            "SELECT * FROM Player WHERE username = @username",
+            `SELECT playerId, username, password, email, motto, coins, sparks, lootboxCount,
+                    isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled, totpSecret,
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+             FROM Player WHERE username = @username`,
             { username }
         );
         return (await stmt.get()) ?? null;
@@ -334,7 +337,10 @@ export class PlayerService extends ServiceBase {
      */
     async getPlayerByEmail(email: string): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
-            "SELECT * FROM Player WHERE email = @email",
+            `SELECT playerId, username, password, email, motto, coins, sparks, lootboxCount,
+                    isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled, totpSecret,
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+             FROM Player WHERE email = @email`,
             { email }
         );
         return (await stmt.get()) ?? null;

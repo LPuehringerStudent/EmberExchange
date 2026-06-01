@@ -134,6 +134,9 @@ export class AdminService extends ServiceBase {
         const player = await playerService.getInfoByID(playerId);
         if (!player) return null;
 
+        // Strip sensitive fields from admin view too
+        const { password, totpSecret, ...playerSafe } = player;
+
         const stats = await statsService.getByPlayerId(playerId);
         const ownershipStmt = this.unit.prepare<{ cnt: number }>(
             "SELECT COUNT(*)::int as cnt FROM Ownership WHERE playerId = @playerId",
@@ -142,7 +145,7 @@ export class AdminService extends ServiceBase {
         const ownershipRes = await ownershipStmt.get();
 
         return {
-            player,
+            player: playerSafe as PlayerRow,
             stats: {
                 totalTradesCompleted: stats?.totalTradesCompleted ?? 0,
                 totalCoinsEarned: stats?.totalCoinsEarned ?? 0,

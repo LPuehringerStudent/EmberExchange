@@ -12,11 +12,11 @@ import { hashPassword, comparePassword, isHashed } from "../utils/password";
 import { TwoFactorService } from "../services/two-factor-service";
 import { NotificationService } from "../services/notification-service";
 import { PunishmentService } from "../services/punishment-service";
-import { registerRateLimiter, loginRateLimiter, authRateLimiter, resendVerificationRateLimiter, twoFactorRateLimiter } from "../middleware/rate-limiter";
+import { registerRateLimiter, loginRateLimiter, authRateLimiter, resendVerificationRateLimiter, twoFactorRateLimiter, challengeRateLimiter } from "../middleware/rate-limiter";
 import { turnstileMiddleware } from "../middleware/turnstile";
 import { timingGuard } from "../middleware/timing-guard";
 import { headerGuard } from "../middleware/header-guard";
-import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, setBotHeaders } from "../utils/bot-trap";
+import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, setBotHeaders, getClientIp } from "../utils/bot-trap";
 import { sendVerificationEmail } from "../services/email-service";
 
 /* ─── Proof-of-work challenge store (in-memory, 10-min expiry) ─── */
@@ -25,18 +25,20 @@ interface PowChallenge {
     difficulty: number;
     expiresAt: number;
     used: boolean;
+    clientIp: string;
 }
 const powStore = new Map<string, PowChallenge>();
-const POW_DIFFICULTY = parseInt(process.env.POW_DIFFICULTY ?? "4", 10);
+const POW_DIFFICULTY = parseInt(process.env.POW_DIFFICULTY ?? "6", 10);
 const POW_TTL_MS = 10 * 60 * 1000;
 
-function createPowChallenge(): PowChallenge {
+function createPowChallenge(clientIp: string): PowChallenge {
     const challenge = crypto.randomBytes(32).toString("hex");
     return {
         challenge,
         difficulty: POW_DIFFICULTY,
         expiresAt: Date.now() + POW_TTL_MS,
         used: false,
+        clientIp,
     };
 }
 
@@ -53,17 +55,6 @@ function isConstraintError(err: unknown): boolean {
     const pgErr = err as { code?: string };
     return pgErr.code === "23503" ||
            pgErr.code === "23505";
-}
-
-function getClientIp(req: express.Request): string {
-    const cfIp = req.headers["cf-connecting-ip"];
-    if (typeof cfIp === "string" && cfIp.length > 0) return cfIp.trim();
-    const forwarded = req.headers["x-forwarded-for"];
-    if (typeof forwarded === "string") {
-        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
-        if (hops.length > 0) return hops[hops.length - 1];
-    }
-    return req.socket.remoteAddress ?? "unknown";
 }
 
 /** Validates registration input. Returns error message or null if valid. */
@@ -302,10 +293,8 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
 
         // Reject unverified email accounts (skip for OAuth users)
         if (!player.emailVerified && !player.provider) {
-            res.status(StatusCodes.FORBIDDEN).json({
-                error: "Please verify your email before logging in.",
-                requiresVerification: true,
-                email: player.email
+            res.status(StatusCodes.UNAUTHORIZED).json({
+                error: "Invalid username/email or password"
             });
             await unit.complete(false);
             return;
@@ -842,8 +831,8 @@ authRouter.delete("/auth/sessions", async (req, res) => {
  * The client must find a nonce such that SHA256(challenge + nonce) starts
  * with `difficulty` hex zeros.
  */
-authRouter.get("/auth/challenge", (req, res) => {
-    const ch = createPowChallenge();
+authRouter.get("/auth/challenge", challengeRateLimiter.middleware(), (req, res) => {
+    const ch = createPowChallenge(getClientIp(req));
     powStore.set(ch.challenge, ch);
     // Prune expired challenges periodically (simple sweep)
     if (powStore.size > 5000) {
@@ -901,6 +890,11 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
     const stored = powStore.get(powChallenge);
     if (!stored || stored.used || stored.expiresAt < Date.now()) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid or expired challenge. Please refresh the page and try again." });
+        return;
+    }
+    if (stored.clientIp !== getClientIp(req)) {
+        logBot(req, "register-blocked: pow-ip-mismatch");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
         return;
     }
     if (!verifyPow(powChallenge, powNonce, stored.difficulty)) {
@@ -1267,9 +1261,9 @@ authRouter.get("/auth/me", async (req, res) => {
             return;
         }
 
-        // Return player without password
-        const { password, ...playerWithoutPassword } = player;
-        res.status(StatusCodes.OK).json(playerWithoutPassword);
+        // Return player without sensitive fields
+        const { password, totpSecret, ...playerSafe } = player;
+        res.status(StatusCodes.OK).json(playerSafe);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {

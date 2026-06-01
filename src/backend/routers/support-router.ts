@@ -112,8 +112,16 @@ supportRouter.post("/support", async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "title is required" });
             return;
         }
+        if (title.length > 200) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "title too long (max 200 characters)" });
+            return;
+        }
         if (isNullOrWhiteSpace(description)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "description is required" });
+            return;
+        }
+        if (description.length > 5000) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "description too long (max 5000 characters)" });
             return;
         }
         if (!["bug", "feature", "support"].includes(type)) {

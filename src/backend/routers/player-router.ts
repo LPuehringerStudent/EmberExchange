@@ -14,6 +14,7 @@ import { PunishmentService } from "../services/punishment-service";
 import { ACHIEVEMENT_DEFINITIONS } from "../services/achievement-engine";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { sanitizeText } from "../utils/sanitize";
 
 export const playerRouter = express.Router();
 
@@ -248,7 +249,13 @@ playerRouter.patch("/players/:id/profile", async (req, res) => {
         }
 
         if (motto !== undefined) {
-            const success = await playerService.updatePlayerMotto(playerId, motto);
+            const safeMotto = sanitizeText(motto, 100);
+            if (safeMotto === null) {
+                res.status(StatusCodes.BAD_REQUEST).json({ error: "motto must be a non-empty string (max 100 characters)" });
+                await unit.complete(false);
+                return;
+            }
+            const success = await playerService.updatePlayerMotto(playerId, safeMotto);
             if (!success) {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update motto" });
                 await unit.complete(false);
@@ -632,7 +639,7 @@ async function buildGloryProfile(
         motto: player.motto,
         coins: player.coins,
         joinedAt: player.joinedAt,
-        isAdmin: player.isAdmin,
+        isAdmin: false,  // Never expose admin status on public profiles
         provider: player.provider,
         stats,
         topStoves: displayStoves,

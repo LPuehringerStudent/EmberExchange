@@ -157,12 +157,12 @@ notificationRouter.patch("/notifications/:id/read", async (req, res) => {
             return;
         }
 
-        const success = await notificationService.markAsRead(notificationId);
+        const success = await notificationService.markAsRead(notificationId, session.playerId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Notification marked as read" });
         } else {
-            res.status(StatusCodes.NOT_FOUND).json({ error: "Notification not found" });
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Notification not found or does not belong to you" });
         }
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -276,12 +276,12 @@ notificationRouter.delete("/notifications/:id", async (req, res) => {
             return;
         }
 
-        const success = await notificationService.delete(notificationId);
+        const success = await notificationService.delete(notificationId, session.playerId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Notification deleted" });
         } else {
-            res.status(StatusCodes.NOT_FOUND).json({ error: "Notification not found" });
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Notification not found or does not belong to you" });
         }
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

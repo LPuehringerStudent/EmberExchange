@@ -131,3 +131,17 @@ export const twoFactorRateLimiter = new ExpressRateLimiter({
     maxRequests: 3,
     message: "Too many 2FA attempts. Please try again in 15 minutes."
 });
+
+/** Limit for OAuth callbacks — prevents callback flooding */
+export const oauthCallbackRateLimiter = new ExpressRateLimiter({
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 20,
+    message: "Too many OAuth attempts. Please try again in a minute."
+});
+
+/** Limit for proof-of-work challenges — prevents challenge flooding */
+export const challengeRateLimiter = new ExpressRateLimiter({
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 30,
+    message: "Too many challenge requests. Please try again in a minute."
+});

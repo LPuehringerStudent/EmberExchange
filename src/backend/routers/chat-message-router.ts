@@ -1,6 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { checkPlayerBanned } from "../middleware/ban-check";
+import { sanitizeText } from "../utils/sanitize";
 import { ChatMessageService } from "../services/chat-message-service";
 import { NotificationService } from "../services/notification-service";
 import { connectionManager } from "../websocket/connection-manager";
@@ -480,6 +481,10 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "content is required" });
             return;
         }
+        if (content.length > 2000) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Message too long (max 2000 characters)" });
+            return;
+        }
 
         // Check sender is not banned
         if (await checkPlayerBanned(unit, senderId, res)) {
@@ -489,7 +494,9 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
         const msgType: 'text' | 'trade_offer' = messageType === 'trade_offer' ? 'trade_offer' : 'text';
         const msgData: Record<string, unknown> = typeof data === 'object' && data !== null ? data : {};
 
-        const [success, id] = await service.create(senderId, receiverId ?? null, content, msgType, msgData);
+        const safeContent = sanitizeText(content, 2000) ?? content;
+
+        const [success, id] = await service.create(senderId, receiverId ?? null, safeContent, msgType, msgData);
 
         if (success) {
             // Push to recipient if online

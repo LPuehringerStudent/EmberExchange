@@ -1,7 +1,7 @@
 import express from "express";
 import crypto from "crypto";
 import passport, { isOAuthConfigured } from "../utils/passport";
-import { authRateLimiter } from "../middleware/rate-limiter";
+import { authRateLimiter, oauthCallbackRateLimiter } from "../middleware/rate-limiter";
 
 export const oauthRouter = express.Router();
 
@@ -75,7 +75,7 @@ oauthRouter.get("/oauth/google", authRateLimiter.middleware(), (req, res, next) 
  *       401:
  *         description: Authentication failed
  */
-oauthRouter.get("/oauth/google/callback", (req, res, next) => {
+oauthRouter.get("/oauth/google/callback", oauthCallbackRateLimiter.middleware(), (req, res, next) => {
     if (!isOAuthConfigured("google")) {
         res.status(501).json({ error: "Google OAuth not configured" });
         return;
@@ -150,7 +150,7 @@ oauthRouter.get("/oauth/github", authRateLimiter.middleware(), (req, res, next) 
  *       401:
  *         description: Authentication failed
  */
-oauthRouter.get("/oauth/github/callback", (req, res, next) => {
+oauthRouter.get("/oauth/github/callback", oauthCallbackRateLimiter.middleware(), (req, res, next) => {
     if (!isOAuthConfigured("github")) {
         res.status(501).json({ error: "GitHub OAuth not configured" });
         return;

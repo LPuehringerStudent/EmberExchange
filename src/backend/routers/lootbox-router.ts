@@ -6,6 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { checkPlayerBanned } from "../middleware/ban-check";
 import { requireAdmin } from "../middleware/admin";
+import { requireAuth } from "../middleware/require-auth";
 
 export const lootboxRouter = express.Router();
 
@@ -397,21 +398,16 @@ lootboxRouter.post("/lootboxes", requireAdmin, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.post("/lootboxes/:id/open", async (req, res) => {
+lootboxRouter.post("/lootboxes/:id/open", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxService(unit);
     const id = req.params.id;
+    const playerId = req.playerId!;
     let ok = false;
 
     try {
         if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Lootbox ID must be a valid number" });
-            return;
-        }
-
-        const { playerId } = req.body;
-        if (typeof playerId !== "number") {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "playerId is required" });
             return;
         }
 
@@ -421,6 +417,14 @@ lootboxRouter.post("/lootboxes/:id/open", async (req, res) => {
         }
 
         const lootboxId = Number(id);
+
+        // Verify ownership
+        const lootbox = await service.getLootboxById(lootboxId);
+        if (!lootbox || lootbox.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Lootbox not found or does not belong to you" });
+            await unit.complete(false);
+            return;
+        }
 
         // Check if lootbox is listed before attempting to open
         const listingService = new ListingService(unit);
@@ -500,10 +504,11 @@ lootboxRouter.post("/lootboxes/:id/open", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.delete("/lootboxes/:id", async (req, res) => {
+lootboxRouter.delete("/lootboxes/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxService(unit);
     const id = req.params.id;
+    const playerId = req.playerId!;
     let ok = false;
 
     try {
@@ -512,7 +517,17 @@ lootboxRouter.delete("/lootboxes/:id", async (req, res) => {
             return;
         }
 
-        const success = await service.deleteLootbox(Number(id));
+        const lootboxId = Number(id);
+
+        // Verify ownership before deleting
+        const lootbox = await service.getLootboxById(lootboxId);
+        if (!lootbox || lootbox.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Lootbox not found or does not belong to you" });
+            await unit.complete(false);
+            return;
+        }
+
+        const success = await service.deleteLootbox(lootboxId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Lootbox deleted" });

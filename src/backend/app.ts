@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import cors from "cors";
+import helmet from "helmet";
 import express from "express";
 import cookieParser from "cookie-parser";
 import { StatusCodes } from "http-status-codes";
@@ -59,6 +60,23 @@ import { PlayerService } from "./services/player-service";
 
 export const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Security headers first
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "blob:"],
+            connectSrc: ["'self'", "wss:", "ws:"],
+            fontSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    },
+    crossOriginEmbedderPolicy: false, // Allow images/fonts from same origin without CORP headers
+}));
 
 // Middleware
 app.use(cors());
