@@ -77,6 +77,18 @@ export interface BannedIPRecord {
   violationType: string | null;
 }
 
+export interface AdminRequestLog {
+  logId: number;
+  ipAddress: string;
+  userAgent: string | null;
+  playerId: number | null;
+  method: string;
+  path: string;
+  statusCode: number;
+  durationMs: number;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private api = inject(ApiService);
@@ -160,6 +172,27 @@ export class AdminService {
   async unbanIp(ip: string): Promise<void> {
     await firstValueFrom(
       this.api.post<void>('/admin/banned-ips/unban', { ip }, this.getHeaders())
+    );
+  }
+
+  async getRequestLogs(filters: {
+    playerId?: number;
+    ipAddress?: string;
+    path?: string;
+    since?: string;
+    until?: string;
+    limit?: number;
+  } = {}): Promise<AdminRequestLog[]> {
+    const params = new URLSearchParams();
+    if (filters.playerId !== undefined) params.set('playerId', String(filters.playerId));
+    if (filters.ipAddress) params.set('ip', filters.ipAddress);
+    if (filters.path) params.set('path', filters.path);
+    if (filters.since) params.set('since', filters.since);
+    if (filters.until) params.set('until', filters.until);
+    if (filters.limit !== undefined) params.set('limit', String(filters.limit));
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return firstValueFrom(
+      this.api.get<AdminRequestLog[]>(`/admin/request-logs${query}`, this.getHeaders())
     );
   }
 }

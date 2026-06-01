@@ -31,6 +31,10 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'banned-ips',
         loadComponent: () => import('./pages/banned-ips/banned-ips.component').then(m => m.BannedIPsComponent)
+      },
+      {
+        path: 'request-logs',
+        loadComponent: () => import('./pages/request-logs/request-logs.component').then(m => m.RequestLogsComponent)
       }
     ]
   }
