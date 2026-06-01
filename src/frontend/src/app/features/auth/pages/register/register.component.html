@@ -329,19 +329,6 @@
     <!-- Turnstile Widget (hidden on localhost) -->
     @if (!isLocalhost()) {
       <div #turnstileContainer class="flex justify-center my-4"></div>
-
-      <!-- Privacy Notice -->
-      <div class="rounded-xl bg-surface-secondary/50 border border-border/50 p-3.5 mb-4">
-        <p class="text-text-secondary text-[0.8rem] leading-relaxed m-0">
-          We use Cloudflare Turnstile to protect this site from spam and abuse.
-          Your data is handled per our
-          <a routerLink="/privacy" class="text-accent hover:underline">Privacy Policy</a>.
-          Turnstile interactions are subject to Cloudflare's
-          <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Privacy Policy</a>
-          and
-          <a href="https://www.cloudflare.com/terms/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Terms of Service</a>.
-        </p>
-      </div>
     }
 
     <!-- Divider -->
