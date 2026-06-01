@@ -70,6 +70,15 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
 }));
 
+// Redirect old Render subdomain to custom domain
+app.use((req, res, next) => {
+    if (req.hostname === "emberexchange.onrender.com") {
+        res.redirect(301, `https://emberexchange.xyz${req.originalUrl}`);
+        return;
+    }
+    next();
+});
+
 // Compression — gzip responses for text/json assets
 app.use(compression());
 
