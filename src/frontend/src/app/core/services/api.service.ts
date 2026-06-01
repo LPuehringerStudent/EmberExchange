@@ -3,6 +3,16 @@ import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public responseBody?: unknown
+  ) {
+    super(message);
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly baseUrl = '/api';
@@ -14,12 +24,14 @@ export class ApiService {
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     let message = `Request failed: ${error.status}`;
+    let body: unknown = undefined;
     if (error.error && typeof error.error === 'object' && 'error' in error.error) {
       message = (error.error as { error: string }).error || message;
+      body = error.error;
     } else if (error.statusText) {
       message = error.statusText;
     }
-    return throwError(() => new Error(message));
+    return throwError(() => new ApiError(message, error.status, body));
   }
 
   get<T>(path: string, headers?: HttpHeaders, params?: HttpParams): Observable<T> {

@@ -2,13 +2,19 @@ import { HttpHeaders } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { ApiService } from './api.service';
+import { ApiService, ApiError } from './api.service';
 import type { PlayerRow as Player } from '@shared/model';
 
 const SESSION_ID_KEY = 'ember_session_id';
 const REMEMBER_ME_KEY = 'ember_remember_me';
 
 export type { Player };
+
+export class VerificationRequiredError extends Error {
+  constructor(public email: string) {
+    super('Please verify your email before logging in.');
+  }
+}
 
 export interface LoginRequest {
   usernameOrEmail: string;
@@ -114,15 +120,25 @@ export class AuthService {
       [this.abConfig?.['honeypotField'] ?? 'honeypot']: '',
     };
 
-    const response = await firstValueFrom(this.api.post<AuthResponse | TwoFALoginResponse>('/auth/login', credentials));
+    try {
+      const response = await firstValueFrom(this.api.post<AuthResponse | TwoFALoginResponse>('/auth/login', credentials));
 
-    if ('requires2FA' in response && response.requires2FA) {
-      this.pending2FAChallenge.set(response.challengeId);
-      return response;
+      if ('requires2FA' in response && response.requires2FA) {
+        this.pending2FAChallenge.set(response.challengeId);
+        return response;
+      }
+
+      await this.handleAuthResponse(response as AuthResponse, rememberMe);
+      return response as AuthResponse;
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        const body = err.responseBody as { requiresVerification?: boolean; email?: string } | undefined;
+        if (body?.requiresVerification) {
+          throw new VerificationRequiredError(body.email ?? '');
+        }
+      }
+      throw err;
     }
-
-    await this.handleAuthResponse(response as AuthResponse, rememberMe);
-    return response as AuthResponse;
   }
 
   async verify2FA(token: string, rememberMe: boolean): Promise<void> {

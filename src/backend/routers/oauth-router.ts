@@ -54,7 +54,7 @@ oauthRouter.get("/oauth/google", authRateLimiter.middleware(), (req, res, next) 
         return;
     }
     const state = createOAuthState("google");
-    res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", maxAge: OAUTH_STATE_TTL_MS });
+    res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", secure: true, maxAge: OAUTH_STATE_TTL_MS });
     passport.authenticate("google", {
         scope: ["profile", "email"],
         state,
@@ -102,6 +102,7 @@ oauthRouter.get("/oauth/google/callback", (req, res, next) => {
         res.cookie("oauth_session", JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId }), {
             httpOnly: true,
             sameSite: "lax",
+            secure: true,
             maxAge: 60_000, // 1 minute — frontend reads it immediately
         });
         res.redirect("/oauth/callback");
@@ -128,7 +129,7 @@ oauthRouter.get("/oauth/github", authRateLimiter.middleware(), (req, res, next) 
         return;
     }
     const state = createOAuthState("github");
-    res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", maxAge: OAUTH_STATE_TTL_MS });
+    res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", secure: true, maxAge: OAUTH_STATE_TTL_MS });
     passport.authenticate("github", {
         scope: ["user:email"],
         state,
@@ -176,6 +177,7 @@ oauthRouter.get("/oauth/github/callback", (req, res, next) => {
         res.cookie("oauth_session", JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId }), {
             httpOnly: true,
             sameSite: "lax",
+            secure: true,
             maxAge: 60_000, // 1 minute — frontend reads it immediately
         });
         res.redirect("/oauth/callback");

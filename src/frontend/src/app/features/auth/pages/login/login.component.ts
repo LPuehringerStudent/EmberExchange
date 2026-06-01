@@ -1,7 +1,7 @@
 import { Component, signal, OnInit, ChangeDetectionStrategy, inject, ViewChild, ElementRef } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService, VerificationRequiredError } from '@core/services/auth.service';
 import { TurnstileService } from '@core/services/turnstile.service';
 
 @Component({
@@ -129,6 +129,10 @@ export class LoginComponent implements OnInit {
         this.router.navigate(['/']);
       }
     } catch (err) {
+      if (err instanceof VerificationRequiredError) {
+        this.router.navigate(['/check-email'], { state: { email: err.email } });
+        return;
+      }
       this.errorMessage.set(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       this.isLoading.set(false);
