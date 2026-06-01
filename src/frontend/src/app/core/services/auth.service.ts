@@ -399,6 +399,19 @@ export class AuthService {
     await this.handleAuthResponse(response, rememberMe);
   }
 
+  /**
+   * Fetch OAuth session data from the short-lived httpOnly cookie.
+   * The backend reads the cookie and returns sessionId + playerId.
+   */
+  async fetchOAuthSessionFromCookie(): Promise<{ sessionId: string; playerId: number } | null> {
+    try {
+      const result = await firstValueFrom(this.api.get<{ sessionId: string; playerId: number }>('/oauth/session'));
+      return result;
+    } catch {
+      return null;
+    }
+  }
+
   async getOAuthStatus(): Promise<OAuthStatus> {
     return firstValueFrom(this.api.get<OAuthStatus>('/oauth/status'));
   }

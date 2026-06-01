@@ -62,10 +62,8 @@ export class OAuthCallbackComponent implements OnInit {
   private authService = inject(AuthService);
 
   async ngOnInit(): Promise<void> {
-    // Get session data from URL params
+    // Check for error in URL (from OAuth provider failures)
     const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('sessionId');
-    const playerId = urlParams.get('playerId');
     const error = urlParams.get('error');
 
     if (error) {
@@ -78,11 +76,15 @@ export class OAuthCallbackComponent implements OnInit {
       return;
     }
 
-    if (!sessionId || !playerId) {
-      this.statusMessage.set('Invalid callback. Redirecting...');
+    // Fetch session from the short-lived httpOnly cookie via backend
+    this.statusMessage.set('Retrieving session...');
+    const sessionData = await this.authService.fetchOAuthSessionFromCookie();
+
+    if (!sessionData) {
+      this.statusMessage.set('Session expired or invalid. Redirecting...');
       setTimeout(() => {
         this.router.navigate(['/login'], { 
-          queryParams: { error: 'Invalid OAuth callback' }
+          queryParams: { error: 'OAuth session expired' }
         });
       }, 1500);
       return;
@@ -90,7 +92,7 @@ export class OAuthCallbackComponent implements OnInit {
 
     try {
       // Handle OAuth callback with session data
-      await this.authService.handleOAuthCallback(sessionId, parseInt(playerId, 10));
+      await this.authService.handleOAuthCallback(sessionData.sessionId, sessionData.playerId);
       
       this.statusMessage.set('Login successful! Redirecting...');
       

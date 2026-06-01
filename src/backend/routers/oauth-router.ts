@@ -223,6 +223,30 @@ oauthRouter.get("/oauth/github/callback", oauthCallbackRateLimiter.middleware(),
  *                 github:
  *                   type: boolean
  */
+/**
+ * GET /oauth/session — Exchange the short-lived oauth_session cookie
+ * for session data. Called by the frontend callback page.
+ */
+oauthRouter.get("/oauth/session", (req, res) => {
+    const raw = req.cookies?.oauth_session;
+    if (!raw) {
+        res.status(401).json({ error: "No OAuth session cookie" });
+        return;
+    }
+    try {
+        const data = JSON.parse(raw);
+        if (!data.sessionId || !data.playerId) {
+            res.status(400).json({ error: "Invalid OAuth session cookie" });
+            return;
+        }
+        // Clear the one-time cookie
+        res.clearCookie("oauth_session");
+        res.json({ sessionId: data.sessionId, playerId: data.playerId });
+    } catch {
+        res.status(400).json({ error: "Invalid OAuth session cookie" });
+    }
+});
+
 oauthRouter.get("/oauth/status", (_req, res) => {
     res.json({
         google: isOAuthConfigured("google"),
