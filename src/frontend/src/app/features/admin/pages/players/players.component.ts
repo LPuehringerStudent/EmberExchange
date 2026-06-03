@@ -181,7 +181,7 @@ import type { PlayerRow } from '@shared/model';
                       </a>
                       <button
                         (click)="toggleBan(player)"
-                        [disabled]="banningId() === player.playerId"
+                        [disabled]="banningId() === player.playerId || deletingId() === player.playerId"
                         class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50"
                         [class.bg-red-500/20]="!player.bannedAt"
                         [class.text-red-400]="!player.bannedAt"
@@ -196,6 +196,17 @@ import type { PlayerRow } from '@shared/model';
                           Unban
                         } @else {
                           Ban
+                        }
+                      </button>
+                      <button
+                        (click)="deletePlayer(player)"
+                        [disabled]="banningId() === player.playerId || deletingId() === player.playerId"
+                        class="px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                      >
+                        @if (deletingId() === player.playerId) {
+                          ...
+                        } @else {
+                          Delete
                         }
                       </button>
                     </div>
@@ -242,6 +253,7 @@ export class PlayersComponent {
   page = signal(1);
   limit = signal(20);
   banningId = signal<number | null>(null);
+  deletingId = signal<number | null>(null);
 
   // Filters
   searchQuery = '';
@@ -343,6 +355,26 @@ export class PlayersComponent {
       this.error.set(err instanceof Error ? err.message : `Failed to ${action} player`);
     } finally {
       this.banningId.set(null);
+    }
+  }
+
+  async deletePlayer(player: PlayerRow): Promise<void> {
+    const confirmMsg = `Permanently delete player "${player.username}" (ID: ${player.playerId})?\n\nThis action cannot be undone. All player data including items, trades, coins, and history will be permanently removed.`;
+    if (!confirm(confirmMsg)) return;
+
+    this.deletingId.set(player.playerId);
+    try {
+      await this.adminService.deletePlayer(player.playerId);
+      // Remove player from local list without full reload
+      const current = this.data();
+      if (current) {
+        const updated = current.players.filter(p => p.playerId !== player.playerId);
+        this.data.set({ ...current, players: updated as typeof current.players, total: current.total - 1 });
+      }
+    } catch (err) {
+      this.error.set(err instanceof Error ? err.message : 'Failed to delete player');
+    } finally {
+      this.deletingId.set(null);
     }
   }
 }

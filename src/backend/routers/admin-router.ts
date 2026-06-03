@@ -6,6 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { getBotTrapLog, clearBotTrapLog } from "../utils/bot-trap";
 import { PunishmentService } from "../services/punishment-service";
+import { PlayerService } from "../services/player-service";
 import { queryRequestLogs } from "../services/request-log-service";
 import net from "net";
 
@@ -422,6 +423,45 @@ adminRouter.delete("/admin/bot-traps", (_req, res) => {
  *       200:
  *         description: Ban status updated
  */
+adminRouter.delete("/admin/players/:id", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new PlayerService(unit);
+    const id = req.params.id;
+    let ok = false;
+    try {
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid player ID" });
+            return;
+        }
+        const playerId = Number(id);
+
+        // Prevent self-deletion
+        if (req.playerId === playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You cannot delete your own account" });
+            return;
+        }
+
+        // Prevent deleting the shop account
+        const player = await unit.prepare<{ username: string }>("SELECT username FROM Player WHERE playerId = @playerId", { playerId }).get();
+        if (player && player.username === "__shop__") {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "The shop account cannot be deleted" });
+            return;
+        }
+
+        const success = await service.deletePlayer(playerId);
+        if (success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ message: "Player deleted" });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
 adminRouter.post("/admin/players/:id/ban", async (req, res) => {
     const unit = await Unit.create(false);
     const service = new AdminService(unit);

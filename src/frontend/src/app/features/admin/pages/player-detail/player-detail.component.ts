@@ -127,11 +127,11 @@ import { AdminService, type AdminPlayerDetail } from '@core/services/admin.servi
           }
 
           <!-- Ban / Unban -->
-          <div class="border-t border-[rgba(232,93,4,0.1)] pt-4">
+          <div class="border-t border-[rgba(232,93,4,0.1)] pt-4 mb-4">
             @if (p.bannedAt) {
               <button
                 (click)="unban()"
-                [disabled]="banning"
+                [disabled]="banning || deleting"
                 class="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {{ banning ? 'Unbanning...' : 'Unban Player' }}
@@ -149,7 +149,7 @@ import { AdminService, type AdminPlayerDetail } from '@core/services/admin.servi
                 </div>
                 <button
                   (click)="ban()"
-                  [disabled]="banning"
+                  [disabled]="banning || deleting"
                   class="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {{ banning ? 'Banning...' : 'Ban Player' }}
@@ -159,6 +159,22 @@ import { AdminService, type AdminPlayerDetail } from '@core/services/admin.servi
             @if (banMessage()) {
               <div class="text-sm mt-2" [class.text-green-400]="!banError()" [class.text-red-400]="banError()">
                 {{ banMessage() }}
+              </div>
+            }
+          </div>
+
+          <!-- Delete Player -->
+          <div class="border-t border-[rgba(232,93,4,0.1)] pt-4">
+            <button
+              (click)="deletePlayer()"
+              [disabled]="deleting || banning"
+              class="px-4 py-2 rounded-lg bg-red-700 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {{ deleting ? 'Deleting...' : 'Delete Player' }}
+            </button>
+            @if (deleteMessage()) {
+              <div class="text-sm mt-2" [class.text-green-400]="!deleteError()" [class.text-red-400]="deleteError()">
+                {{ deleteMessage() }}
               </div>
             }
           </div>
@@ -216,6 +232,10 @@ export class PlayerDetailComponent {
   banning = false;
   banMessage = signal<string | null>(null);
   banError = signal(false);
+
+  deleting = false;
+  deleteMessage = signal<string | null>(null);
+  deleteError = signal(false);
 
   constructor() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -289,6 +309,28 @@ export class PlayerDetailComponent {
       this.banError.set(true);
     } finally {
       this.banning = false;
+    }
+  }
+
+  async deletePlayer(): Promise<void> {
+    const p = this.detail()?.player;
+    if (!p) return;
+    const confirmMsg = `Permanently delete player "${p.username}" (ID: ${p.playerId})?\n\nThis action cannot be undone. All player data including items, trades, coins, and history will be permanently removed.`;
+    if (!confirm(confirmMsg)) return;
+
+    this.deleting = true;
+    this.deleteMessage.set(null);
+    try {
+      await this.adminService.deletePlayer(p.playerId);
+      this.deleteMessage.set('Player deleted successfully');
+      this.deleteError.set(false);
+      // Navigate back to players list after a short delay
+      setTimeout(() => this.router.navigate(['/admin/players']), 1000);
+    } catch (err) {
+      this.deleteMessage.set(err instanceof Error ? err.message : 'Failed to delete player');
+      this.deleteError.set(true);
+    } finally {
+      this.deleting = false;
     }
   }
 }

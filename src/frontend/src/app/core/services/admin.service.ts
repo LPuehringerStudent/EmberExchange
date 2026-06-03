@@ -135,6 +135,12 @@ export class AdminService {
     );
   }
 
+  async deletePlayer(playerId: number): Promise<void> {
+    await firstValueFrom(
+      this.api.delete<void>(`/admin/players/${playerId}`, this.getHeaders())
+    );
+  }
+
   async getStoveTypes(): Promise<StoveTypeRow[]> {
     return firstValueFrom(this.api.get<StoveTypeRow[]>('/admin/stove-types', this.getHeaders()));
   }
