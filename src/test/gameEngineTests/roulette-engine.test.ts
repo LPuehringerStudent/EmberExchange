@@ -1,5 +1,5 @@
-import { RouletteEngine } from "../backend/game-engines/roulette-engine";
-import { RoomPlayerRow } from "../shared/model";
+import { RouletteEngine } from "../../backend/game-engines/roulette-engine";
+import { RoomPlayerRow } from "../../shared/model";
 
 describe("Roulette Engine", () => {
   const engine = new RouletteEngine();

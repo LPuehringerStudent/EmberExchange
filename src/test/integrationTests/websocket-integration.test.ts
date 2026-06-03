@@ -1,11 +1,11 @@
 import http from "http";
 import WebSocket from "ws";
 import request from "supertest";
-import { app } from "../backend/app";
-import { setupWebSocketServer } from "../backend/websocket";
-import { connectionManager } from "../backend/websocket/connection-manager";
-import { Unit, DB } from "../backend/utils/unit";
-import { PlayerService } from "../backend/services/player-service";
+import { app } from "../../backend/app";
+import { setupWebSocketServer } from "../../backend/websocket";
+import { connectionManager } from "../../backend/websocket/connection-manager";
+import { Unit, DB } from "../../backend/utils/unit";
+import { PlayerService } from "../../backend/services/player-service";
 
 describe("WebSocket Integration", () => {
     let server: http.Server;

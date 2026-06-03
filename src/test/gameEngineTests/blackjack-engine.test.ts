@@ -1,6 +1,6 @@
-import { BlackJackEngine } from "../backend/game-engines/blackjack-engine";
-import { RoomPlayerRow } from "../shared/model";
-import { handValue, isBlackjack, isBust, canSplit, canDouble, dealerShouldHit } from "../backend/game-logic/blackjack-utils";
+import { BlackJackEngine } from "../../backend/game-engines/blackjack-engine";
+import { RoomPlayerRow } from "../../shared/model";
+import { handValue, isBlackjack, isBust, canSplit, canDouble, dealerShouldHit } from "../../backend/game-logic/blackjack-utils";
 
 describe("BlackJack Utils", () => {
   test("handValue calculates hard totals correctly", () => {

@@ -1,10 +1,10 @@
 import http from "http";
 import WebSocket from "ws";
 import request from "supertest";
-import { app } from "./src/backend/app";
-import { setupWebSocketServer } from "./src/backend/websocket";
-import { connectionManager } from "./src/backend/websocket/connection-manager";
-import { Unit, DB, resetDatabase } from "./src/backend/utils/unit";
+import { app } from "../../backend/app";
+import { setupWebSocketServer } from "../../backend/websocket";
+import { connectionManager } from "../../backend/websocket/connection-manager";
+import { Unit, DB, resetDatabase } from "../../backend/utils/unit";
 
 async function main() {
     const server = http.createServer(app);

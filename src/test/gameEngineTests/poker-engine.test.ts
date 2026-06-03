@@ -6,10 +6,10 @@ import {
   evaluateHand,
   compareHands,
   getHandName,
-} from "../backend/game-logic/poker-utils";
-import { PokerEngine } from "../backend/game-engines/poker-engine";
-import { PokerState } from "../backend/game-logic/poker-types";
-import { RoomPlayerRow } from "../shared/model";
+} from "../../backend/game-logic/poker-utils";
+import { PokerEngine } from "../../backend/game-engines/poker-engine";
+import { PokerState } from "../../backend/game-logic/poker-types";
+import { RoomPlayerRow } from "../../shared/model";
 
 describe("Poker Utils", () => {
   describe("createDeck", () => {
