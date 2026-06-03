@@ -41,12 +41,12 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages", requireAuth, async (_req, res) => {
+chatMessageRouter.get("/chat-messages", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
 
     try {
-        const response = await service.getAll();
+        const response = await service.getAllForPlayer(req.playerId!);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -79,12 +79,14 @@ chatMessageRouter.get("/chat-messages", requireAuth, async (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages/global", requireAuth, async (_req, res) => {
+chatMessageRouter.get("/chat-messages/global", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getGlobalMessages();
+        const response = await service.getGlobalMessages(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -134,7 +136,7 @@ chatMessageRouter.get("/chat-messages/global", requireAuth, async (_req, res) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/chat-messages/:id", async (req, res) => {
+chatMessageRouter.get("/chat-messages/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const id = req.params.id;
@@ -148,6 +150,8 @@ chatMessageRouter.get("/chat-messages/:id", async (req, res) => {
         const response = await service.getById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Message not found" });
+        } else if (response.receiverId !== null && response.senderId !== req.playerId && response.receiverId !== req.playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view messages you are part of" });
         } else {
             res.status(StatusCodes.OK).json(response);
         }
@@ -195,7 +199,7 @@ chatMessageRouter.get("/chat-messages/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/players/:playerId/sent-messages", async (req, res) => {
+chatMessageRouter.get("/players/:playerId/sent-messages", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const playerId = req.params.playerId;
@@ -203,6 +207,11 @@ chatMessageRouter.get("/players/:playerId/sent-messages", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own messages" });
             return;
         }
 
@@ -252,7 +261,7 @@ chatMessageRouter.get("/players/:playerId/sent-messages", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/players/:playerId/received-messages", async (req, res) => {
+chatMessageRouter.get("/players/:playerId/received-messages", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const playerId = req.params.playerId;
@@ -260,6 +269,11 @@ chatMessageRouter.get("/players/:playerId/received-messages", async (req, res) =
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own messages" });
             return;
         }
 
@@ -309,7 +323,7 @@ chatMessageRouter.get("/players/:playerId/received-messages", async (req, res) =
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/players/:playerId/unread-messages", async (req, res) => {
+chatMessageRouter.get("/players/:playerId/unread-messages", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const playerId = req.params.playerId;
@@ -317,6 +331,11 @@ chatMessageRouter.get("/players/:playerId/unread-messages", async (req, res) => 
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own messages" });
             return;
         }
 
@@ -735,7 +754,7 @@ chatMessageRouter.delete("/chat-messages/:id", requireAuth, async (req, res) => 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-chatMessageRouter.get("/players/:playerId/unread-count", async (req, res) => {
+chatMessageRouter.get("/players/:playerId/unread-count", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
     const playerId = req.params.playerId;
@@ -743,6 +762,11 @@ chatMessageRouter.get("/players/:playerId/unread-count", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own message count" });
             return;
         }
 

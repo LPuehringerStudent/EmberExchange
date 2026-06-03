@@ -1,8 +1,9 @@
-import { Component, signal, inject, ChangeDetectionStrategy, ViewChild, ElementRef, OnInit } from '@angular/core';
+import { Component, signal, inject, ChangeDetectionStrategy, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { TurnstileService } from '@core/services/turnstile.service';
+import { BehaviorTrackerService } from '@core/services/behavior-tracker.service';
 
 @Component({
   selector: 'app-register',
@@ -11,7 +12,7 @@ import { TurnstileService } from '@core/services/turnstile.service';
   styleUrls: ['./register.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RegisterComponent implements OnInit {
+export class RegisterComponent implements OnInit, AfterViewInit {
   // Form signals
   username = signal('');
   email = signal('');
@@ -45,10 +46,12 @@ export class RegisterComponent implements OnInit {
   strengthColor = signal('#6c757d');
 
   @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('registerFormEl', { static: false }) registerFormEl!: ElementRef<HTMLFormElement>;
 
   private router = inject(Router);
   private authService = inject(AuthService);
   private turnstileService = inject(TurnstileService);
+  private behaviorTracker = inject(BehaviorTrackerService);
 
   updatePasswordStrength(password: string): void {
     let strength = 0;
@@ -110,6 +113,13 @@ export class RegisterComponent implements OnInit {
       this.fetchPowChallenge().catch(() => {
         this.errorMessage.set('Failed to load security challenge. Please refresh.');
       });
+      // Start behavioral tracking on the final form
+      setTimeout(() => {
+        if (this.registerFormEl?.nativeElement) {
+          this.behaviorTracker.reset();
+          this.behaviorTracker.startTracking(this.registerFormEl.nativeElement);
+        }
+      }, 0);
     }
   }
 
@@ -155,6 +165,10 @@ export class RegisterComponent implements OnInit {
       }
     }
 
+    // Collect behavior token
+    const behaviorToken = this.behaviorTracker.getToken() ?? undefined;
+    this.behaviorTracker.stopTracking(this.registerFormEl.nativeElement);
+
     try {
       const result = await this.authService.register(
         this.username(),
@@ -163,7 +177,8 @@ export class RegisterComponent implements OnInit {
         turnstileToken ?? undefined,
         this.formStartTime(),
         challenge ?? undefined,
-        powNonce
+        powNonce,
+        behaviorToken
       );
       this.successMessage.set(result.message);
       setTimeout(() => {
@@ -209,6 +224,10 @@ export class RegisterComponent implements OnInit {
         console.error('Failed to initialize Turnstile');
       }
     }
+  }
+
+  ngAfterViewInit(): void {
+    // Behavioral tracking will be started when the user reaches step 3
   }
 
   private renderTurnstile(): void {

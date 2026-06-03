@@ -40,5 +40,9 @@ export const antiBotConfig = {
         "/internal/sessions",
         "/auth/legacy-login",
         "/admin/export-users",
+        "/v2/auth/quick-register",
+        "/internal/health/secrets",
+        "/graphql",
+        "/api-old/v1/auth/nocaptcha",
     ],
 };

@@ -32,12 +32,14 @@ export const coinTransactionRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-coinTransactionRouter.get("/coin-transactions", requireAdmin, async (_req, res) => {
+coinTransactionRouter.get("/coin-transactions", requireAdmin, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new CoinTransactionService(unit);
+    const limit = Math.min(Number(req.query.limit) || 500, 500);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAll();
+        const response = await service.getAll(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

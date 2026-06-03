@@ -46,12 +46,14 @@ function getClientIp(req: express.Request): string {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/listings", async (_req, res) => {
+listingRouter.get("/listings", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllListings();
+        const response = await service.getAllListings(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -87,6 +89,8 @@ listingRouter.get("/listings", async (_req, res) => {
 listingRouter.get("/listings/active", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
         const { rarity, collection, minPrice, maxPrice, itemType, sortBy, search } = req.query;
@@ -103,9 +107,9 @@ listingRouter.get("/listings/active", async (req, res) => {
                 itemType: itemType === 'stove' || itemType === 'lootbox' ? itemType : undefined,
                 sortBy: sortBy === 'price_asc' || sortBy === 'price_desc' || sortBy === 'newest' ? sortBy : undefined,
                 search: search ? String(search) : undefined,
-            });
+            }, limit, offset);
         } else {
-            response = await service.getActiveListings();
+            response = await service.getActiveListings(limit, offset);
         }
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
@@ -924,7 +928,7 @@ listingRouter.delete("/listings/:id", requireAuth, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/players/:sellerId/active-listings/count", async (req, res) => {
+listingRouter.get("/players/:sellerId/active-listings/count", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const sellerId = req.params.sellerId;
@@ -932,6 +936,11 @@ listingRouter.get("/players/:sellerId/active-listings/count", async (req, res) =
     try {
         if (isNullOrWhiteSpace(sellerId) || isNaN(Number(sellerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Seller ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(sellerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
             return;
         }
 

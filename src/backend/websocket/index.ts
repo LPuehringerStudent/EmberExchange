@@ -59,7 +59,11 @@ export function setupWebSocketServer(server: http.Server): void {
                 const rawData = messageQueue.shift()!;
                 try {
                     const data = JSON.parse(rawData.toString());
-                    await handleMessage(activeSocketId, data);
+                    if (!data || typeof data !== "object" || typeof data.type !== "string") {
+                        console.warn("[WebSocket] Dropping malformed message from", clientIp);
+                        continue;
+                    }
+                    await handleMessage(activeSocketId, clientIp, data);
                 } catch (err) {
                     console.error("WebSocket message parse error:", err);
                     if (activeSocketId) {

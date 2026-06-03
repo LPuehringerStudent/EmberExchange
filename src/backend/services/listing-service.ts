@@ -10,15 +10,19 @@ export class ListingService extends ServiceBase {
 
     /**
      * Retrieves all listings from the database.
-     * @returns An array of all ListingRow objects.
+     * @param limit - Maximum number of listings to return (default 100).
+     * @param offset - Number of listings to skip (default 0).
+     * @returns An array of ListingRow objects.
      */
-    async getAllListings(): Promise<ListingRow[]> {
+    async getAllListings(limit: number = 100, offset: number = 0): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
             `SELECT l.*, p.username as sellerName 
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
              WHERE p.bannedAt IS NULL
-             ORDER BY l.listedAt DESC`
+             ORDER BY l.listedAt DESC
+             LIMIT @limit OFFSET @offset`,
+            { limit, offset }
         );
         return await stmt.all();
     }
@@ -42,16 +46,20 @@ export class ListingService extends ServiceBase {
 
     /**
      * Retrieves all active listings.
+     * @param limit - Maximum number of listings to return (default 100).
+     * @param offset - Number of listings to skip (default 0).
      * @returns An array of active ListingRow objects.
      */
-    async getActiveListings(): Promise<ListingRow[]> {
+    async getActiveListings(limit: number = 100, offset: number = 0): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
             `SELECT l.*, p.username as sellerName 
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
              WHERE l.status = 'active'
                AND p.bannedAt IS NULL
-             ORDER BY l.listedAt DESC`
+             ORDER BY l.listedAt DESC
+             LIMIT @limit OFFSET @offset`,
+            { limit, offset }
         );
         return await stmt.all();
     }
@@ -67,7 +75,7 @@ export class ListingService extends ServiceBase {
         itemType?: 'stove' | 'lootbox';
         sortBy?: 'price_asc' | 'price_desc' | 'newest';
         search?: string;
-    }): Promise<ListingRow[]> {
+    }, limit: number = 100, offset: number = 0): Promise<ListingRow[]> {
         let where = "l.status = 'active' AND p.bannedAt IS NULL";
         const params: Record<string, unknown> = {};
 
@@ -114,13 +122,17 @@ export class ListingService extends ServiceBase {
         if (filters.sortBy === 'price_asc') orderBy = "l.price ASC";
         else if (filters.sortBy === 'price_desc') orderBy = "l.price DESC";
 
+        params.limit = limit;
+        params.offset = offset;
+
         const stmt = this.unit.prepare<ListingRow>(
             `SELECT l.*, p.username as sellerName 
              FROM Listing l
              JOIN Player p ON l.sellerId = p.playerId
              ${join}
              WHERE ${where}
-             ORDER BY ${orderBy}`,
+             ORDER BY ${orderBy}
+             LIMIT @limit OFFSET @offset`,
             params
         );
         return await stmt.all();

@@ -17,10 +17,6 @@ interface LimiterConfig {
 /**
  * Simple in-memory token-bucket rate limiter for Express.
  * No external dependencies — uses a Map that is pruned automatically.
- *
- * NOTE: This limiter runs in all environments. In production, Cloudflare also
- * handles rate limiting at the edge, but this in-memory limiter is a second
- * line of defense against bots that bypass Cloudflare.
  */
 class ExpressRateLimiter {
     private buckets = new Map<string, Bucket>();
@@ -153,7 +149,7 @@ export const twoFactorRateLimiter = new ExpressRateLimiter({
 /** Limit for OAuth callbacks — prevents callback flooding */
 export const oauthCallbackRateLimiter = new ExpressRateLimiter({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 20,
+    maxRequests: 5,
     message: "Too many OAuth attempts. Please try again in a minute."
 });
 

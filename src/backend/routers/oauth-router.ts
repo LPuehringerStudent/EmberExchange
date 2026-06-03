@@ -1,6 +1,8 @@
 import express from "express";
 import crypto from "crypto";
 import passport, { isOAuthConfigured } from "../utils/passport";
+
+const OAUTH_COOKIE_SECRET = process.env.SESSION_SECRET || process.env.OAUTH_COOKIE_SECRET || "default-oauth-secret-change-me";
 import { authRateLimiter, oauthCallbackRateLimiter } from "../middleware/rate-limiter";
 import { turnstileMiddleware } from "../middleware/turnstile";
 import { logSecurityEvent } from "../services/security-event-service";
@@ -12,13 +14,14 @@ export const oauthRouter = express.Router();
 interface OAuthState {
     provider: string;
     expiresAt: number;
+    turnstileValid: boolean;
 }
 const oauthStateStore = new Map<string, OAuthState>();
 const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 
-function createOAuthState(provider: string): string {
+function createOAuthState(provider: string, turnstileValid: boolean): string {
     const state = crypto.randomBytes(32).toString("hex");
-    oauthStateStore.set(state, { provider, expiresAt: Date.now() + OAUTH_STATE_TTL_MS });
+    oauthStateStore.set(state, { provider, expiresAt: Date.now() + OAUTH_STATE_TTL_MS, turnstileValid });
     return state;
 }
 
@@ -26,7 +29,7 @@ function validateOAuthState(state: string, provider: string): boolean {
     const entry = oauthStateStore.get(state);
     if (!entry) return false;
     oauthStateStore.delete(state);
-    return entry.provider === provider && entry.expiresAt > Date.now();
+    return entry.provider === provider && entry.expiresAt > Date.now() && entry.turnstileValid;
 }
 
 // Periodic cleanup
@@ -71,7 +74,7 @@ oauthRouter.get("/oauth/google", authRateLimiter.middleware(), turnstileMiddlewa
         res.status(501).json({ error: "Google OAuth not configured" });
         return;
     }
-    const state = createOAuthState("google");
+    const state = createOAuthState("google", !res.locals.turnstileFailed);
     console.log("[OAuth] Google state created, setting cookie");
     res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", secure: true, maxAge: OAUTH_STATE_TTL_MS });
     passport.authenticate("google", {
@@ -123,8 +126,10 @@ oauthRouter.get("/oauth/google/callback", oauthCallbackRateLimiter.middleware(),
             res.redirect("/login?error=Authentication failed");
             return;
         }
-        console.log(`[OAuth] Google auth success — playerId=${user.playerId}, sessionId=${user.sessionId?.slice(0, 8)}...`);
-        res.cookie("oauth_session", JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId }), {
+        console.log(`[OAuth] Google auth success — playerId=${user.playerId}`);
+        const payload = JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId });
+        const signature = crypto.createHmac("sha256", OAUTH_COOKIE_SECRET).update(payload).digest("hex");
+        res.cookie("oauth_session", `${signature}.${payload}`, {
             httpOnly: true,
             sameSite: "lax",
             secure: true,
@@ -168,7 +173,7 @@ oauthRouter.get("/oauth/github", authRateLimiter.middleware(), turnstileMiddlewa
         res.status(501).json({ error: "GitHub OAuth not configured" });
         return;
     }
-    const state = createOAuthState("github");
+    const state = createOAuthState("github", !res.locals.turnstileFailed);
     console.log("[OAuth] GitHub state created, setting cookie");
     res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", secure: true, maxAge: OAUTH_STATE_TTL_MS });
     passport.authenticate("github", {
@@ -220,8 +225,10 @@ oauthRouter.get("/oauth/github/callback", oauthCallbackRateLimiter.middleware(),
             res.redirect("/login?error=Authentication failed");
             return;
         }
-        console.log(`[OAuth] GitHub auth success — playerId=${user.playerId}, sessionId=${user.sessionId?.slice(0, 8)}...`);
-        res.cookie("oauth_session", JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId }), {
+        console.log(`[OAuth] GitHub auth success — playerId=${user.playerId}`);
+        const payload = JSON.stringify({ sessionId: user.sessionId, playerId: user.playerId });
+        const signature = crypto.createHmac("sha256", OAUTH_COOKIE_SECRET).update(payload).digest("hex");
+        res.cookie("oauth_session", `${signature}.${payload}`, {
             httpOnly: true,
             sameSite: "lax",
             secure: true,
@@ -263,8 +270,20 @@ oauthRouter.get("/oauth/session", authRateLimiter.middleware(), (req, res) => {
         return;
     }
     try {
-        const data = JSON.parse(raw);
-        if (!data.sessionId || !data.playerId) {
+        const dotIndex = raw.indexOf(".");
+        if (dotIndex === -1) {
+            res.status(400).json({ error: "Invalid OAuth session cookie" });
+            return;
+        }
+        const receivedSig = raw.slice(0, dotIndex);
+        const payload = raw.slice(dotIndex + 1);
+        const expectedSig = crypto.createHmac("sha256", OAUTH_COOKIE_SECRET).update(payload).digest("hex");
+        if (!crypto.timingSafeEqual(Buffer.from(receivedSig), Buffer.from(expectedSig))) {
+            res.status(400).json({ error: "Invalid OAuth session cookie" });
+            return;
+        }
+        const data = JSON.parse(payload);
+        if (typeof data.sessionId !== "string" || typeof data.playerId !== "number") {
             res.status(400).json({ error: "Invalid OAuth session cookie" });
             return;
         }

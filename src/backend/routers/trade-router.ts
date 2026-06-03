@@ -55,12 +55,14 @@ function getClientIp(req: express.Request): string {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades", requireAuth, async (_req, res) => {
+tradeRouter.get("/trades", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllTrades();
+        const response = await service.getAllTrades(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -319,7 +321,7 @@ tradeRouter.get("/listings/:listingId/trade", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/players/:buyerId/trades", async (req, res) => {
+tradeRouter.get("/players/:buyerId/trades", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const buyerId = req.params.buyerId;
@@ -327,6 +329,11 @@ tradeRouter.get("/players/:buyerId/trades", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(buyerId) || isNaN(Number(buyerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Buyer ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(buyerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
             return;
         }
 
@@ -706,7 +713,7 @@ tradeRouter.delete("/trades/:id", requireAdmin, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/players/:buyerId/trades/count", async (req, res) => {
+tradeRouter.get("/players/:buyerId/trades/count", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const buyerId = req.params.buyerId;
@@ -714,6 +721,11 @@ tradeRouter.get("/players/:buyerId/trades/count", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(buyerId) || isNaN(Number(buyerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Buyer ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(buyerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
             return;
         }
 

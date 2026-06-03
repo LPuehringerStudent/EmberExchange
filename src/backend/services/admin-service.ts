@@ -134,8 +134,8 @@ export class AdminService extends ServiceBase {
         const player = await playerService.getInfoByID(playerId);
         if (!player) return null;
 
-        // Strip sensitive fields from admin view too
-        const { password, totpSecret, ...playerSafe } = player;
+        // password and totpSecret already excluded by getInfoByID
+        const playerSafe = player;
 
         const stats = await statsService.getByPlayerId(playerId);
         const ownershipStmt = this.unit.prepare<{ cnt: number }>(

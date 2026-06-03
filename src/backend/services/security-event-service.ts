@@ -62,11 +62,12 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
  * Default: 90 days.
  */
 export async function purgeOldSecurityEvents(retentionDays = 90): Promise<number> {
+    const days = Number.isFinite(retentionDays) && retentionDays > 0 ? Math.floor(retentionDays) : 90;
     let unit: Unit | null = null;
     try {
         unit = await Unit.create(false);
         const stmt = unit.prepare(
-            `DELETE FROM SecurityEvent WHERE createdAt < NOW() - INTERVAL '${retentionDays} days'`
+            `DELETE FROM SecurityEvent WHERE createdAt < NOW() - INTERVAL '${days} days'`
         );
         const result = await stmt.run();
         await unit.complete(true);

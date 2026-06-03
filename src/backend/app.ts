@@ -12,6 +12,8 @@ import fs from "fs";
 import swaggerUi from "swagger-ui-express";
 import passport, { configurePassport } from "./utils/passport";
 import {Unit, ensureSampleDataInserted, resetDatabase, DB} from "./utils/unit";
+import { getClientIp } from "./utils/bot-trap";
+import { PunishmentService } from "./services/punishment-service";
 import { RoomPlayerService } from "./services/room-player-service";
 import { GameStateService } from "./services/game-state-service";
 import { playerRouter } from "./routers/player-router";
@@ -44,16 +46,17 @@ import { forgeryRouter } from "./routers/forgery-router";
 import { friendRouter } from "./routers/friend-router";
 import { tradeOfferRouter } from "./routers/trade-offer-router";
 import { adminRouter } from "./routers/admin-router";
+import { requireAdmin } from "./middleware/admin";
 import { sparksRouter } from "./routers/sparks-router";
 import { pityRouter } from "./routers/pity-router";
 import { collectionRouter } from "./routers/collection-router";
 import { questRouter } from "./routers/quest-router";
 import { honeypotRouter } from "./routers/honeypot-router";
+import { anomalyScorer } from "./middleware/anomaly-scorer";
 import { swaggerSpec } from "./swagger";
 import { setupWebSocketServer, wssInstance } from "./websocket";
 import { antiBotConfig } from "./utils/anti-bot-config";
 import { ipBanCheck } from "./middleware/ip-ban-check";
-import { requireAdmin } from "./middleware/admin";
 import cron from "node-cron";
 import { ShopRotationService } from "./services/shop-rotation-service";
 import { SessionService } from "./services/session-service";
@@ -169,11 +172,18 @@ app.use(passport.initialize());
 // Configure Passport
 configurePassport();
 
-// Swagger API Documentation
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Swagger API Documentation — gated behind admin in production
+if (process.env.NODE_ENV === 'production') {
+    app.use("/api-docs", requireAdmin, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+} else {
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
 // Honeypot routes MUST come before real routes so they catch scanners first
 app.use("/api", honeypotRouter);
+
+// Silent anomaly scoring on all API requests
+app.use("/api", anomalyScorer);
 
 // API Routes - MUST come before static files and catch-all
 app.use("/api", playerRouter);
@@ -216,8 +226,6 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Turnstile site key endpoint (public — needed by frontend to render widget)
-// NOTE: The siteverify check is also bypassed when the request includes the
-// header `X-Bypass-Turnstile: monitoring`. This is used by the uptime checker.
 app.get("/api/turnstile/sitekey", (_req, res) => {
     const siteKey = process.env.TURNSTILE_SITE_KEY;
     if (!siteKey) {
@@ -231,6 +239,58 @@ app.get("/api/turnstile/sitekey", (_req, res) => {
 // runs for every request that enters it, so if it is mounted early it blocks
 // all later /api/* routes for non-admin users.
 app.use("/api", adminRouter);
+
+// Decoy admin panel pages — catch directory brute-forcers
+app.get("/admin-panel-old", (_req, res) => {
+    res.send(`<!DOCTYPE html>
+<html><head><title>Admin Login</title><style>
+body{font-family:Arial;background:#1a1a2e;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+form{background:#16213e;padding:40px;border-radius:8px;box-shadow:0 0 20px rgba(0,0,0,0.5)}
+input{display:block;width:250px;margin:10px 0;padding:10px;border:none;border-radius:4px}
+button{width:100%;padding:10px;background:#e94560;border:none;color:#fff;border-radius:4px;cursor:pointer}
+</style></head><body>
+<form action="/admin-panel-old/login" method="POST">
+<h2>Legacy Admin Panel</h2>
+<input type="text" name="username" placeholder="Admin username" required>
+<input type="password" name="password" placeholder="Password" required>
+<button type="submit">Login</button>
+<p style="font-size:12px;color:#888;margin-top:10px">v1.2.4 — deprecated, use /admin</p>
+</form></body></html>`);
+});
+app.post("/admin-panel-old/login", async (req, res) => {
+    const ip = getClientIp(req);
+    try {
+        const unit = await Unit.create(false);
+        const punishmentService = new PunishmentService(unit);
+        await punishmentService.recordViolation(ip, null, "honeypot_triggered", "Decoy admin panel login attempt");
+        await unit.complete(true);
+    } catch { /* ignore */ }
+    res.status(401).send(`<!DOCTYPE html><html><body style="background:#1a1a2e;color:#fff;font-family:Arial;text-align:center;padding-top:100px">
+<h1>Invalid credentials</h1><p>Please try again.</p></body></html>`);
+});
+
+app.get("/phpmyadmin", (_req, res) => {
+    res.send(`<!DOCTYPE html>
+<html><head><title>phpMyAdmin</title></head><body style="background:#f0f0f0;font-family:Arial;text-align:center;padding-top:80px">
+<div style="background:#fff;padding:40px;display:inline-block;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1)">
+<h2 style="color:#333">phpMyAdmin</h2>
+<form action="/phpmyadmin/login" method="POST">
+<input type="text" name="user" placeholder="Username" style="display:block;width:250px;margin:10px 0;padding:8px">
+<input type="password" name="password" placeholder="Password" style="display:block;width:250px;margin:10px 0;padding:8px">
+<button type="submit" style="padding:8px 20px;background:#333;color:#fff;border:none;cursor:pointer">Go</button>
+</form></div></body></html>`);
+});
+app.post("/phpmyadmin/login", async (req, res) => {
+    const ip = getClientIp(req);
+    try {
+        const unit = await Unit.create(false);
+        const punishmentService = new PunishmentService(unit);
+        await punishmentService.recordViolation(ip, null, "honeypot_triggered", "Decoy phpMyAdmin login attempt");
+        await unit.complete(true);
+    } catch { /* ignore */ }
+    res.status(403).send(`<!DOCTYPE html><html><body style="background:#f0f0f0;font-family:Arial;text-align:center;padding-top:100px">
+<h1>#2002 — Cannot log in to the MySQL server</h1></body></html>`);
+});
 
 // Static files (frontend) - serve Angular build output
 app.use(express.static(path.join(process.cwd(), "src/frontend/dist/ember-frontend/browser")));

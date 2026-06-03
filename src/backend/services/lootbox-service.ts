@@ -98,8 +98,11 @@ export class LootboxService extends ServiceBase {
     /**
      * Retrieves all lootboxes from the database.
      */
-    async getAllLootboxes(): Promise<LootboxRow[]> {
-        const stmt = this.unit.prepare<LootboxRow>("SELECT * FROM Lootbox");
+    async getAllLootboxes(limit: number = 100, offset: number = 0): Promise<LootboxRow[]> {
+        const stmt = this.unit.prepare<LootboxRow>(
+            "SELECT * FROM Lootbox LIMIT @limit OFFSET @offset",
+            { limit, offset }
+        );
         return await stmt.all();
     }
 

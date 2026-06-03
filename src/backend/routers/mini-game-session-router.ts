@@ -40,12 +40,14 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/mini-game-sessions", requireAuth, async (_req, res) => {
+miniGameSessionRouter.get("/mini-game-sessions", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAll();
+        const response = await service.getAll(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -95,7 +97,7 @@ miniGameSessionRouter.get("/mini-game-sessions", requireAuth, async (_req, res) 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/mini-game-sessions/:id", async (req, res) => {
+miniGameSessionRouter.get("/mini-game-sessions/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
     const id = req.params.id;

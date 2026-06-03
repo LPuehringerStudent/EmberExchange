@@ -40,12 +40,14 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.get("/lootboxes", requireAuth, async (_req, res) => {
+lootboxRouter.get("/lootboxes", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LootboxService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllLootboxes();
+        const response = await service.getAllLootboxes(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

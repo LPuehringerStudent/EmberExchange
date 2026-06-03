@@ -24,10 +24,7 @@ async function sendEmail(options: {
     text: string;
 }): Promise<void> {
     if (!RESEND_API_KEY) {
-        console.log("[EmailService] MOCK EMAIL (RESEND_API_KEY not set):");
-        console.log(`  To: ${options.to}`);
-        console.log(`  Subject: ${options.subject}`);
-        console.log(`  Body preview: ${options.text.substring(0, 150)}...`);
+        console.log("[EmailService] MOCK EMAIL (RESEND_API_KEY not set) — PII redacted");
         return;
     }
 

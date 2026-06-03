@@ -21,6 +21,9 @@ export interface LoginRequest {
   password: string;
   turnstileToken?: string;
   formStartTime?: number;
+  powChallenge?: string;
+  powNonce?: string;
+  behaviorToken?: string;
   [key: string]: unknown;
 }
 
@@ -32,6 +35,7 @@ export interface RegisterRequest {
   formStartTime?: number;
   powChallenge?: string;
   powNonce?: string;
+  behaviorToken?: string;
   [key: string]: unknown;
 }
 
@@ -110,12 +114,15 @@ export class AuthService {
     }
   }
 
-  async login(usernameOrEmail: string, password: string, rememberMe: boolean, turnstileToken?: string, formStartTime?: number): Promise<AuthResponse | TwoFALoginResponse> {
+  async login(usernameOrEmail: string, password: string, rememberMe: boolean, turnstileToken?: string, formStartTime?: number, powChallenge?: string, powNonce?: string, behaviorToken?: string): Promise<AuthResponse | TwoFALoginResponse> {
     const credentials: LoginRequest = {
       usernameOrEmail: usernameOrEmail.trim(),
       password,
       turnstileToken,
       formStartTime,
+      powChallenge,
+      powNonce,
+      behaviorToken,
       // Decoy honeypot fields — visible in source, do nothing on backend
       website: '',
       company: '',
@@ -257,7 +264,7 @@ export class AuthService {
       .join('');
   }
 
-  async register(username: string, password: string, email: string, turnstileToken?: string, formStartTime?: number, powChallenge?: string, powNonce?: string): Promise<{ message: string }> {
+  async register(username: string, password: string, email: string, turnstileToken?: string, formStartTime?: number, powChallenge?: string, powNonce?: string, behaviorToken?: string): Promise<{ message: string }> {
     const data: RegisterRequest = {
       username: username.trim(),
       password,
@@ -266,6 +273,7 @@ export class AuthService {
       formStartTime,
       powChallenge,
       powNonce,
+      behaviorToken,
       // Decoy honeypot fields — visible in source, do nothing on backend
       website: '',
       company: '',

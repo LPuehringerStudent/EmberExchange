@@ -7,9 +7,10 @@ export class GameService extends ServiceBase {
         super(unit);
     }
 
-    async getAllGames(): Promise<GameRow[]> {
+    async getAllGames(limit: number = 100, offset: number = 0): Promise<GameRow[]> {
         const stmt = this.unit.prepare<GameRow>(
-            `SELECT * FROM Game WHERE isActive = 1 ORDER BY name ASC`
+            `SELECT * FROM Game WHERE isActive = 1 ORDER BY name ASC LIMIT @limit OFFSET @offset`,
+            { limit, offset }
         );
         return stmt.all();
     }

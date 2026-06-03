@@ -8,26 +8,26 @@ export class LoginHistoryService extends ServiceBase {
     }
 
     async getAll(): Promise<LoginHistoryRow[]> {
-        const stmt = this.unit.prepare<LoginHistoryRow>(
-            "SELECT * FROM LoginHistory ORDER BY loggedInAt DESC"
+        const stmt = this.unit.prepare<Omit<LoginHistoryRow, 'sessionId'>>(
+            "SELECT loginHistoryId, playerId, loggedInAt FROM LoginHistory ORDER BY loggedInAt DESC"
         );
-        return await stmt.all();
+        return await stmt.all() as LoginHistoryRow[];
     }
 
     async getById(id: number): Promise<LoginHistoryRow | null> {
-        const stmt = this.unit.prepare<LoginHistoryRow>(
-            "SELECT * FROM LoginHistory WHERE loginHistoryId = @id",
+        const stmt = this.unit.prepare<Omit<LoginHistoryRow, 'sessionId'>>(
+            "SELECT loginHistoryId, playerId, loggedInAt FROM LoginHistory WHERE loginHistoryId = @id",
             { id }
         );
-        return (await stmt.get()) ?? null;
+        return (await stmt.get() as LoginHistoryRow | undefined) ?? null;
     }
 
     async getByPlayerId(playerId: number): Promise<LoginHistoryRow[]> {
-        const stmt = this.unit.prepare<LoginHistoryRow>(
-            "SELECT * FROM LoginHistory WHERE playerId = @playerId ORDER BY loggedInAt DESC",
+        const stmt = this.unit.prepare<Omit<LoginHistoryRow, 'sessionId'>>(
+            "SELECT loginHistoryId, playerId, loggedInAt FROM LoginHistory WHERE playerId = @playerId ORDER BY loggedInAt DESC",
             { playerId }
         );
-        return await stmt.all();
+        return await stmt.all() as LoginHistoryRow[];
     }
 
     async create(playerId: number, sessionId: string | null = null): Promise<[boolean, number]> {

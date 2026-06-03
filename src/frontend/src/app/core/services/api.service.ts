@@ -35,8 +35,9 @@ export class ApiService {
   }
 
   get<T>(path: string, headers?: HttpHeaders, params?: HttpParams): Observable<T> {
-    const options: { headers?: HttpHeaders; params?: HttpParams } = {};
-    if (headers) options.headers = headers;
+    const defaultHeaders = headers ?? new HttpHeaders();
+    const headersWithFingerprint = defaultHeaders.set(this.clientHeader, this.clientHeaderValue);
+    const options: { headers?: HttpHeaders; params?: HttpParams } = { headers: headersWithFingerprint };
     if (params) options.params = params;
     return this.http
       .get<T>(`${this.baseUrl}${path}`, options)
@@ -60,8 +61,10 @@ export class ApiService {
   }
 
   delete<T>(path: string, headers?: HttpHeaders, body?: unknown): Observable<T> {
+    const defaultHeaders = headers ?? new HttpHeaders();
+    const headersWithFingerprint = defaultHeaders.set(this.clientHeader, this.clientHeaderValue);
     return this.http
-      .delete<T>(`${this.baseUrl}${path}`, { headers, body })
+      .delete<T>(`${this.baseUrl}${path}`, { headers: headersWithFingerprint, body })
       .pipe(catchError(err => this.handleError(err)));
   }
 }

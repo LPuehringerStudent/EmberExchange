@@ -7,9 +7,10 @@ export class CoinTransactionService extends ServiceBase {
         super(unit);
     }
 
-    async getAll(): Promise<CoinTransactionRow[]> {
+    async getAll(limit: number = 100, offset: number = 0): Promise<CoinTransactionRow[]> {
         const stmt = this.unit.prepare<CoinTransactionRow>(
-            "SELECT * FROM CoinTransaction ORDER BY createdAt DESC"
+            "SELECT * FROM CoinTransaction ORDER BY createdAt DESC LIMIT @limit OFFSET @offset",
+            { limit, offset }
         );
         return await stmt.all();
     }

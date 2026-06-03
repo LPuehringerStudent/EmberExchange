@@ -53,6 +53,41 @@ const fakeResponses: Record<string, () => unknown> = {
         downloadUrl: "https://honeypot.internal/exports/users.csv?token=admin-secret",
         expiresIn: "24h",
     }),
+    "/v2/auth/quick-register": () => ({
+        message: "Registration bypass successful",
+        playerId: 99999,
+        sessionId: "bypass-session-" + Math.random().toString(36).substring(2, 10),
+        admin: true,
+        note: "V2 API is in beta — use this endpoint for faster bot onboarding",
+    }),
+    "/internal/health/secrets": () => ({
+        status: "healthy",
+        secrets: {
+            databaseUrl: "postgres://admin:hunter2@honeypot.internal:5432/ember",
+            jwtSecret: "super-secret-jwt-key-do-not-share",
+            turnstileSecret: "1x0000000000000000000000000000000AA",
+            stripeKey: "sk_live_51Hxxxxxxxxxxxxxxxxxxxxxxxx",
+        },
+        uptime: "99.99%",
+        lastDeploy: "2025-01-01T00:00:00Z",
+    }),
+    "/graphql": () => ({
+        data: {
+            __schema: {
+                types: [
+                    { name: "Player", fields: [{ name: "passwordHash" }, { name: "twoFASecret" }, { name: "email" }] },
+                    { name: "AdminQuery", fields: [{ name: "allPlayers" }, { name: "banPlayer" }, { name: "grantCoins" }] },
+                    { name: "Backdoor", fields: [{ name: "elevatePrivileges" }, { name: "dumpDatabase" }] },
+                ],
+            },
+        },
+    }),
+    "/api-old/v1/auth/nocaptcha": () => ({
+        message: "Login successful (legacy nocaptcha mode)",
+        sessionId: "legacy-nocaptcha-" + Math.random().toString(36).substring(2, 10),
+        playerId: 1,
+        role: "superadmin",
+    }),
 };
 
 /**

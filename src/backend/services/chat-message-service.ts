@@ -8,12 +8,18 @@ export class ChatMessageService extends ServiceBase {
     }
 
     /**
-     * Retrieves all chat messages.
-     * @returns Array of all ChatMessageRow objects.
+     * Retrieves all chat messages visible to a player (global + their own conversations).
+     * @param playerId - The authenticated player's ID.
+     * @returns Array of ChatMessageRow objects.
      */
-    async getAll(): Promise<ChatMessageRow[]> {
+    async getAllForPlayer(playerId: number): Promise<ChatMessageRow[]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
-            "SELECT * FROM ChatMessage ORDER BY sentAt DESC"
+            `SELECT * FROM ChatMessage
+             WHERE receiverId IS NULL
+                OR senderId = @playerId
+                OR receiverId = @playerId
+             ORDER BY sentAt DESC`,
+            { playerId }
         );
         return await stmt.all();
     }
@@ -104,9 +110,10 @@ export class ChatMessageService extends ServiceBase {
      * Retrieves global messages (receiverId is null).
      * @returns Array of ChatMessageRow objects.
      */
-    async getGlobalMessages(): Promise<ChatMessageRow[]> {
+    async getGlobalMessages(limit: number = 100, offset: number = 0): Promise<ChatMessageRow[]> {
         const stmt = this.unit.prepare<ChatMessageRow>(
-            "SELECT * FROM ChatMessage WHERE receiverId IS NULL ORDER BY sentAt DESC"
+            "SELECT * FROM ChatMessage WHERE receiverId IS NULL ORDER BY sentAt DESC LIMIT @limit OFFSET @offset",
+            { limit, offset }
         );
         return await stmt.all();
     }

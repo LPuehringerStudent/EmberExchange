@@ -229,7 +229,7 @@ ownershipRouter.get("/stoves/:stoveId/ownership-history", requireAuth, async (re
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/players/:playerId/ownerships", async (req, res) => {
+ownershipRouter.get("/players/:playerId/ownerships", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const playerId = req.params.playerId;
@@ -237,6 +237,11 @@ ownershipRouter.get("/players/:playerId/ownerships", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
             return;
         }
 

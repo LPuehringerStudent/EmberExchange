@@ -31,7 +31,7 @@
 
     <!-- Login Form -->
     @if (!show2FA()) {
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+      <form #loginFormEl [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
         <!-- Error Message -->
         @if (errorMessage()) {
           <div class="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm animate-shake">

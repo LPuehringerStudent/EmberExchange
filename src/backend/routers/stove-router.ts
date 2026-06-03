@@ -39,12 +39,14 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/stoves", async (_req, res) => {
+stoveRouter.get("/stoves", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllStoves();
+        const response = await service.getAllStoves(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

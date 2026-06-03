@@ -16,6 +16,8 @@ import { registerRateLimiter, loginRateLimiter, authRateLimiter, resendVerificat
 import { turnstileMiddleware } from "../middleware/turnstile";
 import { timingGuard } from "../middleware/timing-guard";
 import { headerGuard } from "../middleware/header-guard";
+import { behaviorGuard } from "../middleware/behavior-guard";
+import { datacenterGuard } from "../middleware/datacenter-guard";
 import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, setBotHeaders, getClientIp } from "../utils/bot-trap";
 import { sendVerificationEmail } from "../services/email-service";
 import { requireAuth } from "../middleware/require-auth";
@@ -192,17 +194,9 @@ function isDisposableEmail(email: string): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-/**
- * @deprecated Use `/api/auth/legacy-login` instead. This endpoint will be
- * removed in Sprint 6. The legacy endpoint has full CORS support and no
- * Turnstile requirement for backward compatibility with the mobile prototype.
- *
- * INTERNAL NOTE: Rate limiting on this endpoint is currently disabled in
- * production (see rate-limiter.ts). Cloudflare handles rate limiting at the edge.
- */
-authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, async (req, res) => {
+authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, behaviorGuard, async (req, res) => {
     const { usernameOrEmail, password } = req.body;
-    console.log(`[Auth] Login attempt — usernameOrEmail=${usernameOrEmail}`);
+    console.log("[Auth] Login attempt");
 
     // Bot detection: high-confidence bots get tar-pitted but still see normal 401
     const isBot = await handleBotDetection(req, res, res.locals.turnstileFailed as boolean);
@@ -218,6 +212,33 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
             // Ignore punishment errors
         }
         res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+        return;
+    }
+
+    // Proof-of-work verification (login)
+    const { powChallenge, powNonce } = req.body as Record<string, unknown>;
+    if (!powChallenge || !powNonce || typeof powChallenge !== "string" || typeof powNonce !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing proof-of-work challenge. Please refresh the page and try again." });
+        return;
+    }
+    const stored = powStore.get(powChallenge);
+    if (!stored || stored.used || stored.expiresAt < Date.now()) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid or expired challenge. Please refresh the page and try again." });
+        return;
+    }
+    if (stored.clientIp !== getClientIp(req)) {
+        logBot(req, "login-blocked: pow-ip-mismatch");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
+        return;
+    }
+    const claimed = powStore.delete(powChallenge);
+    if (!claimed) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Challenge already used. Please refresh the page and try again." });
+        return;
+    }
+    if (!verifyPow(powChallenge, powNonce, stored.difficulty)) {
+        logBot(req, "login-blocked: invalid-pow");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
         return;
     }
 
@@ -238,9 +259,9 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
     let player: PlayerRow | null = null;
 
     try {
-        player = await playerService.getPlayerByUsername(usernameOrEmail);
+        player = await playerService.getPlayerWithCredentialsByUsername(usernameOrEmail);
         if (player === null) {
-            player = await playerService.getPlayerByEmail(usernameOrEmail);
+            player = await playerService.getPlayerWithCredentialsByEmail(usernameOrEmail);
         }
         await lookupUnit.complete();
     } catch (err) {
@@ -251,7 +272,7 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
     }
 
     if (player === null) {
-        console.warn(`[Auth] Login failed — no player found for ${usernameOrEmail}`);
+        console.warn("[Auth] Login failed — no player found");
         // Constant-time path to prevent username enumeration via timing
         await comparePassword(password, "$2b$10$dummy.hash.for.constant.time.comparison.dummy.hash.dummy.hash.");
         logSecurityEvent({
@@ -265,7 +286,7 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
         res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
         return;
     }
-    console.log(`[Auth] Player found — playerId=${player.playerId}, provider=${player.provider || "local"}, emailVerified=${player.emailVerified}`);
+    console.log(`[Auth] Player found — playerId=${player.playerId}`);
 
     // Phase 2: Verify password WITHOUT holding a DB connection
     let passwordValid = false;
@@ -274,7 +295,7 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
         passwordValid = false;
     } else if (isHashed(player.password)) {
         passwordValid = await comparePassword(password, player.password);
-        console.log(`[Auth] Password comparison result: ${passwordValid}`);
+        // Password comparison result intentionally not logged
     } else {
         console.warn("[Auth] Player has plaintext password — forcing invalid");
         passwordValid = false;
@@ -584,7 +605,7 @@ authRouter.patch("/auth/password", authRateLimiter.middleware(), requireAuth, as
 
     try {
         const playerId = req.playerId!;
-        const player = await playerService.getInfoByID(playerId);
+        const player = await playerService.getPlayerWithCredentialsById(playerId);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             await unit.complete(false);
@@ -873,13 +894,7 @@ authRouter.get("/auth/challenge", challengeRateLimiter.middleware(), (req, res) 
     res.json({ challenge: ch.challenge, difficulty: ch.difficulty });
 });
 
-/**
- * @deprecated The registration flow is being replaced by OAuth-only signup.
- * This endpoint still works for testing but will be removed. The honeypot
- * validation on the backend was removed in commit f892de9 — the frontend
- * field is purely cosmetic now.
- */
-authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, async (req, res) => {
+authRouter.post("/auth/register", datacenterGuard, registerRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, behaviorGuard, async (req, res) => {
     const { username, password, email } = req.body;
 
     // Bot detection — HARD BLOCK on Turnstile failure (no fake success)
@@ -988,13 +1003,9 @@ authRouter.post("/auth/register", registerRateLimiter.middleware(), timingGuard,
         // Check if username already exists
         const existingByUsername = await playerService.getPlayerByUsername(username);
         if (existingByUsername) {
-            if (existingByUsername.emailVerified) {
-                res.status(StatusCodes.CONFLICT).json({ error: "Username already taken. Please choose another." });
-                await unit.complete(false);
-                return;
-            }
-            // Username exists but is unverified — delete old account
-            await playerService.deletePlayer(existingByUsername.playerId);
+            res.status(StatusCodes.CONFLICT).json({ error: "Username already taken. Please choose another." });
+            await unit.complete(false);
+            return;
         }
 
         const [success, playerId] = await playerService.createPlayer(username, hashedPassword, email, 1000, 10);
@@ -1158,7 +1169,11 @@ authRouter.get("/auth/verify-email/:token", authRateLimiter.middleware(), async 
  * POST /auth/resend-verification
  * Resends the verification email. Rate-limited to prevent abuse.
  */
-authRouter.post("/auth/resend-verification", resendVerificationRateLimiter.middleware(), async (req, res) => {
+authRouter.post("/auth/resend-verification", authRateLimiter.middleware(), turnstileMiddleware, async (req, res) => {
+    if (res.locals.turnstileFailed) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security check failed" });
+        return;
+    }
     const { email } = req.body;
     if (!email || typeof email !== "string") {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Email is required" });
@@ -1294,8 +1309,8 @@ authRouter.get("/auth/me", async (req, res) => {
             return;
         }
 
-        // Return player without sensitive fields
-        const { password, totpSecret, violationCount, lastViolationAt, ...playerSafe } = player;
+        // Return player without sensitive fields (password/totpSecret already excluded by service)
+        const { violationCount, lastViolationAt, ...playerSafe } = player;
         res.status(StatusCodes.OK).json(playerSafe);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -1463,7 +1478,7 @@ authRouter.post("/auth/2fa/setup", authRateLimiter.middleware(), requireAuth, as
 
     try {
         const playerId = req.playerId!;
-        const player = await playerService.getInfoByID(playerId);
+        const player = await playerService.getPlayerWithCredentialsById(playerId);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             await unit.complete(false);
@@ -1684,7 +1699,7 @@ authRouter.delete("/auth/2fa", authRateLimiter.middleware(), requireAuth, async 
 
     try {
         const playerId = req.playerId!;
-        const player = await playerService.getInfoByID(playerId);
+        const player = await playerService.getPlayerWithCredentialsById(playerId);
         if (!player || !player.password) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid credentials" });
             await unit.complete(false);

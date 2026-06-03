@@ -80,7 +80,7 @@ async function handleOAuthLogin(
     provider: "google" | "github",
     profile: any
 ): Promise<{ playerId: number; sessionId: string }> {
-    console.log(`[OAuth] handleOAuthLogin started — provider=${provider}, profileId=${profile.id}`);
+    console.log(`[OAuth] handleOAuthLogin started — provider=${provider}`);
     const unit = await Unit.create(false);
     const playerService = new PlayerService(unit);
     const playerStatisticsService = new PlayerStatisticsService(unit);
@@ -90,7 +90,7 @@ async function handleOAuthLogin(
         const providerId = profile.id;
         const email = profile.emails?.[0]?.value || `${providerId}@${provider}.oauth`;
         const displayName = profile.displayName || profile.username || `User${providerId}`;
-        console.log(`[OAuth] profile parsed — email=${email}, displayName=${displayName}`);
+        console.log(`[OAuth] profile parsed — provider=${provider}`);
 
         // Check if user already exists with this OAuth provider
         let player = await playerService.getPlayerByOAuth(provider, providerId);
@@ -100,7 +100,7 @@ async function handleOAuthLogin(
             // Check if email is already used by another account
             const existingByEmail = await playerService.getPlayerByEmail(email);
             if (existingByEmail) {
-                console.warn(`[OAuth] email conflict — ${email} already used by player ${existingByEmail.playerId}`);
+                console.warn(`[OAuth] email conflict — player ${existingByEmail.playerId}`);
                 throw new Error("An account with this email already exists");
             }
 

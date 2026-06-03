@@ -104,11 +104,12 @@ export async function queryRequestLogs(
  * Default: 24 hours.
  */
 export async function purgeOldRequestLogs(retentionHours = 24): Promise<number> {
+    const hours = Number.isFinite(retentionHours) && retentionHours > 0 ? Math.floor(retentionHours) : 24;
     let unit: Unit | null = null;
     try {
         unit = await Unit.create(false);
         const stmt = unit.prepare(
-            `DELETE FROM RequestLog WHERE createdAt < NOW() - INTERVAL '${retentionHours} hours'`
+            `DELETE FROM RequestLog WHERE createdAt < NOW() - INTERVAL '${hours} hours'`
         );
         const result = await stmt.run();
         await unit.complete(true);

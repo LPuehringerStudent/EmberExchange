@@ -8,13 +8,15 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
-     * Retrieves all players from the database.
-     * @returns An array of all PlayerRow objects in the database.
-     * @security WARNING: Returns password hashes. Use {@link getAllPublicPlayers} for public APIs.
+     * Retrieves all players from the database (excluding sensitive fields).
+     * @returns An array of PlayerRow objects without password/totpSecret.
      */
-    async getAllPlayers(): Promise<PlayerRow[]> {
-        const stmt = this.unit.prepare<PlayerRow>(
-            "SELECT * FROM Player"
+    async getAllPlayers(): Promise<Omit<PlayerRow, "password" | "totpSecret">[]> {
+        const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
+            `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
+                    isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+             FROM Player`
         );
         return await stmt.all();
     }
@@ -35,12 +37,28 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
-     * Retrieves a player by their unique ID.
+     * Retrieves a player by their unique ID (excluding sensitive fields).
      * @param id - The unique player ID.
-     * @returns The PlayerRow object if found, otherwise null.
-     * @security WARNING: Returns password hash and totpSecret. Use {@link getPublicPlayerById} for public APIs.
+     * @returns The PlayerRow object without password/totpSecret if found, otherwise null.
      */
-    async getInfoByID(id: number): Promise<PlayerRow | null> {
+    async getInfoByID(id: number): Promise<Omit<PlayerRow, "password" | "totpSecret"> | null> {
+        const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
+            `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
+                    isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+             FROM Player WHERE playerId = @id`,
+            { id }
+        );
+        return (await stmt.get()) ?? null;
+    }
+
+    /**
+     * Retrieves a player by ID INCLUDING password and totpSecret.
+     * Only use this for authentication flows.
+     * @param id - The unique player ID.
+     * @returns The full PlayerRow object if found, otherwise null.
+     */
+    async getPlayerWithCredentialsById(id: number): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
             "SELECT * FROM Player WHERE playerId = @id",
             { id }
@@ -338,14 +356,14 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
-     * Retrieves a player by their username.
+     * Retrieves a player by their username (excluding sensitive fields).
      * @param username - The username to search for.
-     * @returns The PlayerRow object if found, otherwise null.
+     * @returns The PlayerRow object without password/totpSecret if found, otherwise null.
      */
-    async getPlayerByUsername(username: string): Promise<PlayerRow | null> {
-        const stmt = this.unit.prepare<PlayerRow>(
-            `SELECT playerId, username, password, email, motto, coins, sparks, lootboxCount,
-                    isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled, totpSecret,
+    async getPlayerByUsername(username: string): Promise<Omit<PlayerRow, "password" | "totpSecret"> | null> {
+        const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
+            `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
+                    isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
                     bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
              FROM Player WHERE username = @username`,
             { username }
@@ -354,16 +372,44 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
-     * Retrieves a player by their email address.
-     * @param email - The email to search for.
-     * @returns The PlayerRow object if found, otherwise null.
+     * Retrieves a player by username INCLUDING password and totpSecret.
+     * Only use this for authentication flows.
+     * @param username - The username to search for.
+     * @returns The full PlayerRow object if found, otherwise null.
      */
-    async getPlayerByEmail(email: string): Promise<PlayerRow | null> {
+    async getPlayerWithCredentialsByUsername(username: string): Promise<PlayerRow | null> {
         const stmt = this.unit.prepare<PlayerRow>(
-            `SELECT playerId, username, password, email, motto, coins, sparks, lootboxCount,
-                    isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled, totpSecret,
+            "SELECT * FROM Player WHERE username = @username",
+            { username }
+        );
+        return (await stmt.get()) ?? null;
+    }
+
+    /**
+     * Retrieves a player by their email address (excluding sensitive fields).
+     * @param email - The email to search for.
+     * @returns The PlayerRow object without password/totpSecret if found, otherwise null.
+     */
+    async getPlayerByEmail(email: string): Promise<Omit<PlayerRow, "password" | "totpSecret"> | null> {
+        const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
+            `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
+                    isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
                     bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
              FROM Player WHERE email = @email`,
+            { email }
+        );
+        return (await stmt.get()) ?? null;
+    }
+
+    /**
+     * Retrieves a player by email INCLUDING password and totpSecret.
+     * Only use this for authentication flows.
+     * @param email - The email to search for.
+     * @returns The full PlayerRow object if found, otherwise null.
+     */
+    async getPlayerWithCredentialsByEmail(email: string): Promise<PlayerRow | null> {
+        const stmt = this.unit.prepare<PlayerRow>(
+            "SELECT * FROM Player WHERE email = @email",
             { email }
         );
         return (await stmt.get()) ?? null;
@@ -460,14 +506,17 @@ export class PlayerService extends ServiceBase {
     }
 
     /**
-     * Finds a player by OAuth provider and provider ID.
+     * Finds a player by OAuth provider and provider ID (excluding sensitive fields).
      * @param provider - The OAuth provider ('google' or 'github').
      * @param providerId - The provider's unique user ID.
-     * @returns The PlayerRow object if found, otherwise null.
+     * @returns The PlayerRow object without password/totpSecret if found, otherwise null.
      */
-    async getPlayerByOAuth(provider: string, providerId: string): Promise<PlayerRow | null> {
-        const stmt = this.unit.prepare<PlayerRow>(
-            "SELECT * FROM Player WHERE provider = @provider AND providerId = @providerId",
+    async getPlayerByOAuth(provider: string, providerId: string): Promise<Omit<PlayerRow, "password" | "totpSecret"> | null> {
+        const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
+            `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
+                    isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+             FROM Player WHERE provider = @provider AND providerId = @providerId`,
             { provider, providerId }
         );
         return (await stmt.get()) ?? null;

@@ -87,7 +87,7 @@ loginHistoryRouter.get("/login-history", requireAdmin, async (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.get("/login-history/:id", async (req, res) => {
+loginHistoryRouter.get("/login-history/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LoginHistoryService(unit);
     const id = req.params.id;

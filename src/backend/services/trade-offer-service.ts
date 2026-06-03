@@ -40,11 +40,19 @@ export class TradeOfferService {
             return { success: false, error: "Invalid trade offer data" };
         }
 
-        if (status !== 'pending') {
-            return { success: false, error: "Trade offer has already been responded to" };
+        if (!Number.isFinite(price) || price <= 0) {
+            return { success: false, error: "Price must be a positive finite number" };
         }
 
         const senderId = message.senderId;
+
+        if (accepterId === senderId) {
+            return { success: false, error: "You cannot trade with yourself" };
+        }
+
+        if (status !== 'pending') {
+            return { success: false, error: "Trade offer has already been responded to" };
+        }
 
         // Verify sender still owns the item
         if (itemType === 'stove') {

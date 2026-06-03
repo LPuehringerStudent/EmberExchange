@@ -1,8 +1,9 @@
-import { Component, signal, OnInit, ChangeDetectionStrategy, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, OnInit, ChangeDetectionStrategy, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, VerificationRequiredError } from '@core/services/auth.service';
 import { TurnstileService } from '@core/services/turnstile.service';
+import { BehaviorTrackerService } from '@core/services/behavior-tracker.service';
 
 @Component({
   selector: 'app-login',
@@ -11,7 +12,7 @@ import { TurnstileService } from '@core/services/turnstile.service';
   styleUrls: ['./login.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, AfterViewInit {
   // Signals for reactive state (Angular 21 best practice)
   isLoading = signal(false);
   errorMessage = signal('');
@@ -27,12 +28,17 @@ export class LoginComponent implements OnInit {
   formStartTime = signal<number>(0);
   isWrongDomain = signal(false);
   isLocalhost = signal(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  powChallenge = signal<string | null>(null);
+  powDifficulty = signal<number>(0);
+  powSolving = signal(false);
 
   @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('loginFormEl', { static: false }) loginFormEl!: ElementRef<HTMLFormElement>;
 
   private router = inject(Router);
   private authService = inject(AuthService);
   private turnstileService = inject(TurnstileService);
+  private behaviorTracker = inject(BehaviorTrackerService);
 
   loginForm = new FormGroup({
     email: new FormControl('', [Validators.required]),
@@ -65,6 +71,11 @@ export class LoginComponent implements OnInit {
       // OAuth status fetch failed, buttons will remain disabled
     }
 
+    // Fetch proof-of-work challenge
+    this.fetchPowChallenge().catch(() => {
+      this.errorMessage.set('Failed to load security challenge. Please refresh.');
+    });
+
     // Initialize Turnstile widget (skip on localhost)
     if (!this.isLocalhost()) {
       try {
@@ -74,6 +85,13 @@ export class LoginComponent implements OnInit {
       } catch {
         console.error('Failed to initialize Turnstile');
       }
+    }
+  }
+
+  ngAfterViewInit(): void {
+    // Start behavioral tracking once the form is in the DOM
+    if (this.loginFormEl?.nativeElement) {
+      this.behaviorTracker.startTracking(this.loginFormEl.nativeElement);
     }
   }
 
@@ -113,13 +131,32 @@ export class LoginComponent implements OnInit {
     const { email, password, rememberMe } = this.loginForm.value;
     const turnstileToken = this.isLocalhost() || !widgetId ? undefined : this.turnstileService.getToken(widgetId);
 
+    // Solve proof-of-work challenge
+    const challenge = this.powChallenge();
+    const difficulty = this.powDifficulty();
+    let powNonce: string | undefined;
+    if (challenge && difficulty > 0) {
+      this.powSolving.set(true);
+      try {
+        powNonce = await this.authService.solvePow(challenge, difficulty);
+      } finally {
+        this.powSolving.set(false);
+      }
+    }
+
+    // Collect behavior token
+    const behaviorToken = this.behaviorTracker.getToken() ?? undefined;
+
     try {
       const result = await this.authService.login(
         email!,
         password!,
         rememberMe ?? false,
         turnstileToken ?? undefined,
-        this.formStartTime()
+        this.formStartTime(),
+        challenge ?? undefined,
+        powNonce,
+        behaviorToken
       );
 
       if ('requires2FA' in result) {
@@ -209,5 +246,11 @@ export class LoginComponent implements OnInit {
       ? undefined
       : this.turnstileService.getToken(widgetId) ?? undefined;
     this.authService.loginWithGitHub(token);
+  }
+
+  private async fetchPowChallenge(): Promise<void> {
+    const { challenge, difficulty } = await this.authService.getPowChallenge();
+    this.powChallenge.set(challenge);
+    this.powDifficulty.set(difficulty);
   }
 }
