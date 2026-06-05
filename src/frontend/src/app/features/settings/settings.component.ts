@@ -38,9 +38,15 @@ export class SettingsComponent {
     void this.router.navigate([tab], { relativeTo: this.route });
   }
 
-  async replayOnboarding(): Promise<void> {
-    await this.onboardingService.replayTour();
-    this.replaySuccess.set('Tour started! Return to the home page to see it.');
+  async replayQuickTour(): Promise<void> {
+    await this.onboardingService.replayQuickTour();
+    this.replaySuccess.set('Quick tour started! Return to the home page to see it.');
+    setTimeout(() => this.replaySuccess.set(''), 4000);
+  }
+
+  startFullTutorial(): void {
+    this.onboardingService.startFullTutorial();
+    this.replaySuccess.set('Full tutorial started! Return to the home page to see it.');
     setTimeout(() => this.replaySuccess.set(''), 4000);
   }
 }

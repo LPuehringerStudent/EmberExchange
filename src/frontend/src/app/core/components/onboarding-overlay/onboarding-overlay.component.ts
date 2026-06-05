@@ -35,7 +35,7 @@ export class OnboardingOverlayComponent implements OnInit, OnDestroy {
   }
 
   get totalSteps() {
-    return this.onboarding.steps.length;
+    return this.onboarding.steps().length;
   }
 
   ngOnInit(): void {
@@ -59,7 +59,10 @@ export class OnboardingOverlayComponent implements OnInit, OnDestroy {
 
   private updateSpotlight(): void {
     const step = this.onboarding.currentStep;
-    if (!step) return;
+    if (!step) {
+      this.onboarding.skipTour();
+      return;
+    }
 
     const target = document.querySelector(step.targetSelector) as HTMLElement | null;
     if (!target) {
