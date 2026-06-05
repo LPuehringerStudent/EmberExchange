@@ -39,7 +39,8 @@ export class OnboardingOverlayComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.updateSpotlight();
+    // Small delay to ensure target elements are rendered in the DOM
+    setTimeout(() => this.updateSpotlight(), 100);
     window.addEventListener('resize', this.onResize);
     window.addEventListener('scroll', this.onScroll, true);
   }
