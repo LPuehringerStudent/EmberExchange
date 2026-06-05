@@ -85,7 +85,7 @@ export class OnboardingOverlayComponent implements OnInit, OnDestroy {
   }
 
   private positionTooltip(targetRect: DOMRect, position: string): void {
-    const tooltip = this.tooltipRef()?.nativeElement as HTMLElement | undefined;
+    const tooltip = this.tooltipRef().nativeElement as HTMLElement | undefined;
     if (!tooltip) return;
 
     const tooltipRect = tooltip.getBoundingClientRect();
