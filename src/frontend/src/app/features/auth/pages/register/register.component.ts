@@ -47,6 +47,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
   @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('registerFormEl', { static: false }) registerFormEl!: ElementRef<HTMLFormElement>;
+  @ViewChild('trackContainer', { static: true }) trackContainer!: ElementRef<HTMLDivElement>;
 
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -113,13 +114,6 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       this.fetchPowChallenge().catch(() => {
         this.errorMessage.set('Failed to load security challenge. Please refresh.');
       });
-      // Start behavioral tracking on the final form
-      setTimeout(() => {
-        if (this.registerFormEl?.nativeElement) {
-          this.behaviorTracker.reset();
-          this.behaviorTracker.startTracking(this.registerFormEl.nativeElement);
-        }
-      }, 0);
     }
   }
 
@@ -167,7 +161,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     // Collect behavior token
     const behaviorToken = this.behaviorTracker.getToken() ?? undefined;
-    this.behaviorTracker.stopTracking(this.registerFormEl.nativeElement);
+    this.behaviorTracker.stopTracking(this.trackContainer.nativeElement);
 
     try {
       const result = await this.authService.register(
@@ -227,7 +221,11 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Behavioral tracking will be started when the user reaches step 3
+    // Start behavioral tracking on the persistent container so all steps are captured
+    if (this.trackContainer?.nativeElement) {
+      this.behaviorTracker.reset();
+      this.behaviorTracker.startTracking(this.trackContainer.nativeElement);
+    }
   }
 
   private renderTurnstile(): void {

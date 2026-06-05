@@ -44,9 +44,12 @@ export class SettingsComponent {
     setTimeout(() => this.replaySuccess.set(''), 4000);
   }
 
-  startFullTutorial(): void {
-    this.onboardingService.startFullTutorial();
-    this.replaySuccess.set('Full tutorial started! Return to the home page to see it.');
-    setTimeout(() => this.replaySuccess.set(''), 4000);
+  async startFullTutorial(): Promise<void> {
+    await this.router.navigate(['/home']);
+    // Give the home page time to render before starting the tour
+    setTimeout(() => {
+      this.onboardingService.startFullTutorial();
+    }, 500);
+    this.replaySuccess.set('');
   }
 }
