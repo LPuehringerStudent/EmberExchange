@@ -1,0 +1,136 @@
+.onboarding-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.7);
+  animation: fadeIn 200ms ease;
+}
+
+.spotlight {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  animation: pulse 2s infinite;
+}
+
+.onboarding-tooltip {
+  position: fixed;
+  z-index: 1201;
+  min-width: 280px;
+  max-width: 340px;
+  background: var(--surface-color, #1a1a1a);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 250ms ease;
+}
+
+.tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 22px;
+  padding: 0 8px;
+  background: var(--accent-color, #e85d04);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.tooltip-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.tooltip-body {
+  margin: 0 0 18px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.tooltip-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.btn-skip {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 150ms ease;
+
+  &:hover {
+    color: var(--text-primary, #fff);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.btn-next {
+  padding: 8px 20px;
+  background: var(--accent-color, #e85d04);
+  border: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 150ms ease;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); }
+  50% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65); }
+}
+
+/* Mobile */
+@media (max-width: 639px) {
+  .onboarding-tooltip {
+    min-width: auto;
+    max-width: calc(100vw - 32px);
+    left: 16px !important;
+    right: 16px;
+    transform: none !important;
+  }
+}

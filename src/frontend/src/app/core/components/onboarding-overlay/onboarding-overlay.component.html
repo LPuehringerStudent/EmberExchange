@@ -1,0 +1,42 @@
+@if (step(); as s) {
+  <div class="onboarding-backdrop" (click)="onBackdropClick($event)">
+    <!-- Spotlight cutout -->
+    @if (spotlightRect(); as rect) {
+      <div
+        class="spotlight"
+        [style.top.px]="rect.top"
+        [style.left.px]="rect.left"
+        [style.width.px]="rect.width"
+        [style.height.px]="rect.height"
+      ></div>
+    }
+
+    <!-- Tooltip -->
+    <div
+      #tooltip
+      class="onboarding-tooltip"
+      [style.top]="tooltipStyle().top"
+      [style.left]="tooltipStyle().left"
+      [style.transform]="tooltipStyle().transform"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="tooltip-header">
+        <span class="step-badge">{{ stepIndex + 1 }} / {{ totalSteps }}</span>
+        <h3 class="tooltip-title">{{ s.title }}</h3>
+      </div>
+
+      <p class="tooltip-body">{{ s.body }}</p>
+
+      <div class="tooltip-actions">
+        <button class="btn-skip" (click)="onSkip()">Skip Tour</button>
+        <button class="btn-next" (click)="onNext()">
+          @if (isLastStep()) {
+            Finish
+          } @else {
+            Next
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

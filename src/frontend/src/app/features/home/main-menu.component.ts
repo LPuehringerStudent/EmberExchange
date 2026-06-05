@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { OwnershipService } from '@core/services/ownership.service';
 import { LootboxService, RecentPull } from '@core/services/lootbox.service';
+import { OnboardingService } from '@core/services/onboarding.service';
 import { firstValueFrom } from 'rxjs';
 
 interface Game {
@@ -45,10 +46,12 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
   private authService = inject(AuthService);
   private ownershipService = inject(OwnershipService);
   private lootboxService = inject(LootboxService);
+  private onboardingService = inject(OnboardingService);
 
   ngOnInit(): void {
     this.loadUserData();
     this.loadRecentPulls();
+    this.onboardingService.loadState();
   }
 
   private async loadRecentPulls(): Promise<void> {
@@ -73,6 +76,11 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
       }
     }, 0);
     window.addEventListener('resize', this.boundUpdateCardsHeight);
+
+    // Delay tour start so DOM is fully rendered
+    setTimeout(() => {
+      this.onboardingService.startTourIfNeeded();
+    }, 800);
   }
 
   ngOnDestroy() {

@@ -130,3 +130,8 @@
       [class.mt-24]="showVerifyBanner()">
   <router-outlet></router-outlet>
 </main>
+
+<!-- Onboarding Tour -->
+@if (showOnboarding()) {
+  <app-onboarding-overlay />
+}

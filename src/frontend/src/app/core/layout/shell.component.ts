@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
+import { OnboardingService } from '../services/onboarding.service';
 import { NotificationBellComponent } from '../../shared/components/notification-bell.component';
+import { OnboardingOverlayComponent } from '../components/onboarding-overlay/onboarding-overlay.component';
 
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, NotificationBellComponent],
+  imports: [RouterOutlet, RouterLink, NotificationBellComponent, OnboardingOverlayComponent],
   templateUrl: './shell.component.html',
   styleUrls: ['./shell.component.css']
 })
@@ -22,10 +24,12 @@ export class ShellComponent {
   sparks = computed(() => this.authService.getCurrentUser()?.sparks ?? 0);
   emailVerified = computed(() => this.authService.isEmailVerified());
   showVerifyBanner = computed(() => this.isLoggedIn() && !this.emailVerified() && !this.bannerDismissed());
+  showOnboarding = computed(() => this.onboardingService.showTour());
 
   private authService = inject(AuthService);
   private router = inject(Router);
   private themeService = inject(ThemeService);
+  private onboardingService = inject(OnboardingService);
 
   toggleSidebar(): void {
     this.sidebarOpen.update(v => !v);

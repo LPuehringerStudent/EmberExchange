@@ -508,6 +508,7 @@ export interface PlayerSettings {
     notifyChatMessages: boolean;
     notifyTradeOffers: boolean;
     notifyDailyReward: boolean;
+    hasCompletedOnboarding?: boolean;
 }
 
 export interface PlayerSettingsRow extends PlayerSettings {

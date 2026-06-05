@@ -1017,7 +1017,8 @@ export class DB {
                 notifyFriendRequests INTEGER NOT NULL DEFAULT 1,
                 notifyChatMessages INTEGER NOT NULL DEFAULT 1,
                 notifyTradeOffers INTEGER NOT NULL DEFAULT 1,
-                notifyDailyReward INTEGER NOT NULL DEFAULT 1
+                notifyDailyReward INTEGER NOT NULL DEFAULT 1,
+                hasCompletedOnboarding INTEGER NOT NULL DEFAULT 0
             )
         `);
 
@@ -1456,19 +1457,19 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
 
     async function insertPlayerSettings(): Promise<void> {
         const settings = [
-            { playerId: 1, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
-            { playerId: 2, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
-            { playerId: 3, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
-            { playerId: 4, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
-            { playerId: 5, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 }
+            { playerId: 1, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 },
+            { playerId: 2, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 },
+            { playerId: 3, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 },
+            { playerId: 4, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 },
+            { playerId: 5, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 }
         ];
         for (const setting of settings) {
             const stmt = unit.prepare<
                 unknown,
-                { playerId: number; notifyFriendRequests: number; notifyChatMessages: number; notifyTradeOffers: number; notifyDailyReward: number }
+                { playerId: number; notifyFriendRequests: number; notifyChatMessages: number; notifyTradeOffers: number; notifyDailyReward: number; hasCompletedOnboarding: number }
             >(
-                `insert into PlayerSettings (playerId, notifyFriendRequests, notifyChatMessages, notifyTradeOffers, notifyDailyReward)
-                 values (@playerId, @notifyFriendRequests, @notifyChatMessages, @notifyTradeOffers, @notifyDailyReward)`,
+                `insert into PlayerSettings (playerId, notifyFriendRequests, notifyChatMessages, notifyTradeOffers, notifyDailyReward, hasCompletedOnboarding)
+                 values (@playerId, @notifyFriendRequests, @notifyChatMessages, @notifyTradeOffers, @notifyDailyReward, @hasCompletedOnboarding)`,
                 setting
             );
             await stmt.run();
