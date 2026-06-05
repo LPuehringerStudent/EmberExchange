@@ -18,6 +18,7 @@ export function timingGuard(req: Request, res: Response, next: NextFunction): vo
 
     // Missing or invalid timestamp — treat as bot
     if (typeof formStartTime !== "number") {
+        console.log(`[Debug] timingGuard blocked ${req.method} ${req.path} — formStartTime is not a number: ${typeof formStartTime}`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
@@ -27,12 +28,14 @@ export function timingGuard(req: Request, res: Response, next: NextFunction): vo
 
     // Too fast — bot behavior
     if (elapsed < antiBotConfig.minFormTimeMs) {
+        console.log(`[Debug] timingGuard blocked ${req.method} ${req.path} — too fast: ${elapsed}ms < ${antiBotConfig.minFormTimeMs}ms`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
 
     // Timestamp too old (e.g. epoch 0) or in the future — bot replay / manipulation
     if (elapsed > MAX_FORM_AGE_MS || formStartTime > now) {
+        console.log(`[Debug] timingGuard blocked ${req.method} ${req.path} — stale/future timestamp: elapsed=${elapsed}ms, formStartTime=${formStartTime}`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
