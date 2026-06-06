@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { ShellComponent } from './core/layout/shell.component';
 import { ToastHostComponent } from './shared/components/toast-host.component';
 import { ThemeService } from './core/services/theme.service';
@@ -12,6 +13,15 @@ import { ThemeService } from './core/services/theme.service';
     <app-toast-host />
   `
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   private _themeService = inject(ThemeService);
+  private _router = inject(Router);
+
+  ngOnInit(): void {
+    this._router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  }
 }

@@ -34,6 +34,7 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
   coins = signal<number>(0);
   stoveCount = signal<number>(0);
   lootboxCount = signal<number>(0);
+  loading = signal<boolean>(true);
 
   // Mini-games available in the platform
   games = [
@@ -94,6 +95,7 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
   }
 
   private async loadUserData(): Promise<void> {
+    this.loading.set(true);
     const user = this.authService.getCurrentUser();
     if (user) {
       this.username.set(user.username);
@@ -108,6 +110,7 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
         console.error('Failed to load stove count:', error);
       }
     }
+    this.loading.set(false);
   }
 
   private updateCardsHeight() {

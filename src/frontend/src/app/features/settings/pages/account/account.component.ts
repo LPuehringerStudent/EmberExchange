@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@ang
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { ToastService } from '@core/services/toast.service';
 
 @Component({
   selector: 'app-account',
@@ -29,6 +30,7 @@ export class AccountComponent implements OnInit {
 
   private _authService = inject(AuthService);
   private _router = inject(Router);
+  private _toastService = inject(ToastService);
 
   ngOnInit(): void {
     const user = this._authService.getCurrentUser();
@@ -57,6 +59,7 @@ export class AccountComponent implements OnInit {
       if (usernameCtrl?.hasError('required')) this.usernameError.set('Username is required');
       else if (usernameCtrl?.hasError('minlength')) this.usernameError.set('Username must be at least 3 characters');
       else if (usernameCtrl?.hasError('maxlength')) this.usernameError.set('Username must be at most 30 characters');
+      this._toastService.error('Please fix the errors in the form');
       return;
     }
 
@@ -83,10 +86,12 @@ export class AccountComponent implements OnInit {
     try {
       await this._authService.updateProfile(this.playerId(), payload);
       this.profileSuccess.set('Profile updated successfully');
+      this._toastService.success('Profile updated!', 'Your changes have been saved');
       if (payload.username) this.username.set(newUsername);
       if (payload.email) this.originalEmail = newEmail;
     } catch (err) {
       this.profileError.set(err instanceof Error ? err.message : 'Failed to update profile');
+      this._toastService.error('Update failed', err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       this.loading.set(false);
     }

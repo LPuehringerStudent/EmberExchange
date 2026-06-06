@@ -38,7 +38,7 @@
       <div class="flex items-end justify-between gap-4 mb-8 max-[640px]:flex-col max-[640px]:items-start">
         <div>
           <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.2em] mb-1">EmberExchange</p>
-          <h1 class="text-[2.5rem] font-extrabold text-text-primary leading-none tracking-tight m-0">Marketplace</h1>
+          <h1 class="text-[1.75rem] sm:text-[2.5rem] font-extrabold text-text-primary leading-none tracking-tight m-0">Marketplace</h1>
           <p class="text-text-secondary text-sm mt-2 m-0">Buy and sell stoves and lootboxes with other players</p>
         </div>
 
@@ -128,7 +128,7 @@
     </div>
 
     <!-- Tab bar -->
-    <div class="flex gap-3 mb-6">
+    <div class="flex flex-wrap gap-3 mb-6">
       <button
         class="tab-btn px-5 py-3 rounded-xl bg-surface/80 text-text-secondary text-sm font-semibold cursor-pointer transition-all duration-200 border border-border backdrop-blur-sm"
         [class.active]="activeTab() === 'all'"
@@ -160,9 +160,21 @@
 
     <!-- Loading skeleton -->
     @if (loading()) {
-      <div class="flex flex-col items-center justify-center py-24 gap-4">
-        <div class="w-10 h-10 border-[3px] border-accent/20 border-t-accent rounded-full animate-spin"></div>
-        <p class="text-text-secondary text-sm font-medium m-0">Loading marketplace...</p>
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skeleton-card p-0 flex flex-col overflow-hidden">
+            <div class="skeleton-shimmer h-[3px] w-full"></div>
+            <div class="skeleton-shimmer h-44 mx-4 mt-4 rounded-xl"></div>
+            <div class="px-4 pt-3 pb-1 flex flex-col gap-2">
+              <div class="skeleton-shimmer h-4 rounded-md w-3/4"></div>
+              <div class="skeleton-shimmer h-3 rounded-md w-1/2"></div>
+            </div>
+            <div class="px-4 pb-4 pt-2 flex items-center justify-between">
+              <div class="skeleton-shimmer h-5 rounded-md w-16"></div>
+              <div class="skeleton-shimmer h-8 rounded-md w-24"></div>
+            </div>
+          </div>
+        }
       </div>
     }
 
@@ -172,16 +184,14 @@
       <!-- Empty state -->
       @if (currentListings().length === 0) {
         <div class="flex flex-col items-center justify-center py-24 px-5 text-center">
-          <div class="w-24 h-24 rounded-3xl bg-surface border border-border flex items-center justify-center mb-5 shadow-lg">
-            <svg class="w-10 h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/>
-            </svg>
+          <div class="w-24 h-24 rounded-3xl bg-surface border border-border flex items-center justify-center mb-5 shadow-lg text-4xl">
+            @if (activeTab() === 'all') { 🏪 } @else { 📦 }
           </div>
           <p class="text-lg font-bold text-text-primary m-0 mb-2">
-            @if (activeTab() === 'all') { No active listings yet } @else { You have no listings }
+            @if (activeTab() === 'all') { No listings yet } @else { You have no listings }
           </p>
           <p class="text-sm text-text-secondary mb-6 m-0">
-            @if (activeTab() === 'all') { Be the first to list an item! } @else { Go to Inventory to list your items. }
+            @if (activeTab() === 'all') { Be the first to sell! } @else { Go to Inventory to list your items. }
           </p>
           <a routerLink="/inventory" class="btn-primary">Go to Inventory</a>
         </div>
@@ -383,7 +393,7 @@
           <div class="flex flex-col p-6 gap-6">
 
             <!-- Asking price + action button at the top for quick access -->
-            <div class="flex items-center justify-between gap-4 p-4 bg-surface-secondary rounded-2xl border border-border">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-surface-secondary rounded-2xl border border-border">
               <div>
                 <p class="text-[10px] text-text-muted uppercase tracking-wider m-0 mb-0.5">Asking Price</p>
                 <p class="text-2xl font-extrabold text-accent m-0">{{ formatPrice(listing.price) }} <span class="text-sm font-semibold text-text-secondary">Coal</span></p>
@@ -509,7 +519,7 @@
             </div>
 
             <!-- Three stat pills: avg / min / max -->
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="bg-surface-secondary rounded-xl p-3 text-center border border-border">
                 <p class="text-[10px] text-text-muted uppercase tracking-wider m-0 mb-1">Avg</p>
                 <p class="text-sm font-extrabold text-text-primary m-0">{{ formatPrice(averageHistoryPrice()) }}</p>

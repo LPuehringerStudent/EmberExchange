@@ -40,7 +40,7 @@
           </div>
           <div>
             <p class="text-text-muted text-xs font-bold uppercase tracking-[0.2em] mb-1">Welcome back, blacksmith</p>
-            <h1 class="text-[2.5rem] font-extrabold text-text-primary leading-none tracking-tight">{{ username() }}</h1>
+            <h1 class="text-[1.75rem] sm:text-[2.5rem] font-extrabold text-text-primary leading-none tracking-tight break-words">{{ username() }}</h1>
           </div>
         </div>
 
@@ -62,49 +62,79 @@
 
       <!-- Stat cards -->
       <div class="stats-row grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-        <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 transition-all duration-300">
-          <div class="flex items-center gap-4">
-            <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 flex items-center justify-center shrink-0">
-              <svg class="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="8" r="6"/>
-                <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
-              </svg>
-            </div>
-            <div>
-              <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Total Coal</p>
-              <p class="text-2xl font-extrabold text-text-primary">{{ coins() }}</p>
+        @if (loading()) {
+          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5">
+            <div class="flex items-center gap-4">
+              <div class="skeleton-shimmer w-12 h-12 rounded-xl shrink-0"></div>
+              <div class="flex-1">
+                <div class="skeleton-shimmer h-3 rounded-md w-20 mb-2"></div>
+                <div class="skeleton-shimmer h-7 rounded-md w-16"></div>
+              </div>
             </div>
           </div>
-        </div>
+          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5">
+            <div class="flex items-center gap-4">
+              <div class="skeleton-shimmer w-12 h-12 rounded-xl shrink-0"></div>
+              <div class="flex-1">
+                <div class="skeleton-shimmer h-3 rounded-md w-20 mb-2"></div>
+                <div class="skeleton-shimmer h-7 rounded-md w-16"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5">
+            <div class="flex items-center gap-4">
+              <div class="skeleton-shimmer w-12 h-12 rounded-xl shrink-0"></div>
+              <div class="flex-1">
+                <div class="skeleton-shimmer h-3 rounded-md w-20 mb-2"></div>
+                <div class="skeleton-shimmer h-7 rounded-md w-16"></div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 transition-all duration-300">
+            <div class="flex items-center gap-4">
+              <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="6"/>
+                  <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Total Coal</p>
+                <p class="text-2xl font-extrabold text-text-primary">{{ coins() }}</p>
+              </div>
+            </div>
+          </div>
 
-        <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-rarity-epic/30 hover:shadow-lg hover:shadow-rarity-epic/5 transition-all duration-300">
-          <div class="flex items-center gap-4">
-            <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-rarity-epic/20 to-rarity-secret/10 flex items-center justify-center shrink-0">
-              <svg class="w-6 h-6 text-rarity-epic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 12V8h-4M4 12V8h4M4 12v4h4M20 12v4h-4"/>
-                <rect x="8" y="4" width="8" height="16" rx="2"/>
-              </svg>
-            </div>
-            <div>
-              <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Lootboxes</p>
-              <p class="text-2xl font-extrabold text-text-primary">{{ lootboxCount() }}</p>
+          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-rarity-epic/30 hover:shadow-lg hover:shadow-rarity-epic/5 transition-all duration-300">
+            <div class="flex items-center gap-4">
+              <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-rarity-epic/20 to-rarity-secret/10 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6 text-rarity-epic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 12V8h-4M4 12V8h4M4 12v4h4M20 12v4h-4"/>
+                  <rect x="8" y="4" width="8" height="16" rx="2"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Lootboxes</p>
+                <p class="text-2xl font-extrabold text-text-primary">{{ lootboxCount() }}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-rarity-legendary/30 hover:shadow-lg hover:shadow-rarity-legendary/5 transition-all duration-300">
-          <div class="flex items-center gap-4">
-            <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-rarity-legendary/20 to-accent/10 flex items-center justify-center shrink-0">
-              <svg class="w-6 h-6 text-rarity-legendary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/>
-              </svg>
-            </div>
-            <div>
-              <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Stoves Owned</p>
-              <p class="text-2xl font-extrabold text-text-primary">{{ stoveCount() }}</p>
+          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-rarity-legendary/30 hover:shadow-lg hover:shadow-rarity-legendary/5 transition-all duration-300">
+            <div class="flex items-center gap-4">
+              <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-rarity-legendary/20 to-accent/10 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6 text-rarity-legendary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Stoves Owned</p>
+                <p class="text-2xl font-extrabold text-text-primary">{{ stoveCount() }}</p>
+              </div>
             </div>
           </div>
-        </div>
+        }
       </div>
     </div>
   </header>
@@ -124,6 +154,16 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" #cardsGrid>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <div class="feature-card group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden">
+                <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-4"></div>
+                <div class="skeleton-shimmer h-5 rounded-md w-28 mb-2"></div>
+                <div class="skeleton-shimmer h-4 rounded-md w-full mb-1"></div>
+                <div class="skeleton-shimmer h-4 rounded-md w-20"></div>
+              </div>
+            }
+          } @else {
           <!-- Lootboxes -->
           <a routerLink="/lootboxes" data-tour="lootboxes" class="feature-card group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/5 hover:border-red-500/20">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-red-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
@@ -343,6 +383,7 @@
               </div>
             </div>
           </a>
+          }
         </div>
       </section>
 

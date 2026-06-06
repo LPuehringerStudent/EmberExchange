@@ -31,7 +31,13 @@
         <div class="h-px flex-1 bg-gradient-to-l from-border to-transparent"></div>
       </div>
       @if (dailyQuests().length === 0) {
-        <p class="text-text-secondary text-sm text-center py-8">No active daily quests</p>
+        <div class="flex flex-col items-center justify-center py-16 px-5 text-text-secondary text-center">
+          <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+            ✨
+          </div>
+          <p class="text-base font-semibold text-text-primary m-0 mb-1">All caught up!</p>
+          <span class="text-sm text-text-secondary">Check back tomorrow for new daily quests</span>
+        </div>
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           @for (quest of dailyQuests(); track quest.questId) {
@@ -89,7 +95,13 @@
         <div class="h-px flex-1 bg-gradient-to-l from-border to-transparent"></div>
       </div>
       @if (weeklyQuests().length === 0) {
-        <p class="text-text-secondary text-sm text-center py-8">No active weekly quests</p>
+        <div class="flex flex-col items-center justify-center py-16 px-5 text-text-secondary text-center">
+          <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+            🎯
+          </div>
+          <p class="text-base font-semibold text-text-primary m-0 mb-1">No weekly quests</p>
+          <span class="text-sm text-text-secondary">Check back later for new challenges</span>
+        </div>
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           @for (quest of weeklyQuests(); track quest.questId) {

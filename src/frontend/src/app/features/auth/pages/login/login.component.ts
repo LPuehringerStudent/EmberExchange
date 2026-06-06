@@ -106,6 +106,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
     }
   }
 
+  shakeForm = signal(false);
+
   async onSubmit(): Promise<void> {
     this.errorMessage.set('');
     this.turnstileError.set(false);
@@ -113,6 +115,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
     if (this.loginForm.invalid) {
       this.errorMessage.set('Please fill in all fields');
+      this.shakeForm.set(true);
+      setTimeout(() => this.shakeForm.set(false), 500);
       return;
     }
 
