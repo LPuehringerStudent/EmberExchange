@@ -19,6 +19,7 @@ export interface SpinResult {
     prize: SpinPrize;
     amount: number;
     totalSpins: number;
+    nextSpinAt: string;
 }
 
 export interface SpinStatus {
@@ -164,6 +165,8 @@ export class DailySpinService {
             // Ignore achievement errors
         }
 
-        return { prize, amount, totalSpins: newTotal };
+        const nextSpinAt = new Date(now.getTime() + COOLDOWN_HOURS * 60 * 60 * 1000).toISOString();
+
+        return { prize, amount, totalSpins: newTotal, nextSpinAt };
     }
 }

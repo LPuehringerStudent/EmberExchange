@@ -3,6 +3,7 @@
   <a routerLink="/" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Home</a>
   <a routerLink="/marketplace" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Marketplace</a>
   <a routerLink="/lootboxes" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Lootboxes</a>
+  <a routerLink="/spin" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Lucky Wheel</a>
   <a routerLink="/statistics" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Statistics</a>
   <a routerLink="/update-log" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Update Log</a>
   <a routerLink="/glory" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Hall of Glory</a>
@@ -42,6 +43,13 @@
       <span title="Inventory" routerLink="/inventory" class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 topbar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-backpack" viewBox="0 0 16 16">
     <path d="M4.04 7.43a4 4 0 0 1 7.92 0 .5.5 0 1 1-.99.14 3 3 0 0 0-5.94 0 .5.5 0 1 1-.99-.14M4 9.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm1 .5v3h6v-3h-1v.5a.5.5 0 0 1-1 0V10z"/>
     <path d="M6 2.341V2a2 2 0 1 1 4 0v.341c2.33.824 4 3.047 4 5.659v5.5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 13.5V8a6 6 0 0 1 4-5.659M7 2v.083a6 6 0 0 1 2 0V2a1 1 0 0 0-2 0m1 1a5 5 0 0 0-5 5v5.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V8a5 5 0 0 0-5-5"/></svg></span>
+
+      <span title="Lucky Wheel" routerLink="/spin" class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 topbar-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-amber-400">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+      </span>
 
       <div class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-full text-white text-[13px] font-semibold bg-[rgba(232,93,4,0.15)]">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#ffba08]">

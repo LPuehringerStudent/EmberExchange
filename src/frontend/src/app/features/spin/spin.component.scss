@@ -123,6 +123,21 @@ $bg-card: rgba(20, 20, 35, 0.85);
   100% { background-position: -200% 0; }
 }
 
+// ── Wheel Wrap ─────────────────────────────────────────────
+.wheel-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  transition: opacity 0.3s ease;
+
+  &.opacity-50 {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
 // ── Wheel Area ─────────────────────────────────────────────
 .wheel-area {
   position: relative;

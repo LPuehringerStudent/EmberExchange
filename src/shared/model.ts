@@ -604,6 +604,7 @@ export interface SpinResult {
     prize: SpinPrize;
     amount: number;
     totalSpins: number;
+    nextSpinAt: string;
 }
 
 export interface SpinStatus {

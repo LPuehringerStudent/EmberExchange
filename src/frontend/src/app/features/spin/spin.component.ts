@@ -40,7 +40,8 @@ export class SpinComponent implements OnInit, OnDestroy {
   lastPrize = signal<SpinResult | null>(null);
   spinHistory = signal<SpinResult[]>([]);
   countdown = signal('');
-  isLoading = signal(true);
+  isLoading = signal(false);
+  spinStatusLoaded = signal(false);
 
   segments = WHEEL_SEGMENTS;
   segmentAngle = SEGMENT_ANGLE;
@@ -56,19 +57,20 @@ export class SpinComponent implements OnInit, OnDestroy {
   }
 
   private loadStatus(): void {
+    this.spinStatusLoaded.set(false);
     this.spinService.getStatus().subscribe({
       next: (status: SpinStatus) => {
         this.canSpin.set(status.canSpin);
         this.nextSpinAt.set(status.nextSpinAt);
         this.totalSpins.set(status.totalSpins);
-        this.isLoading.set(false);
+        this.spinStatusLoaded.set(true);
         if (!status.canSpin && status.nextSpinAt) {
           this.startCountdown(status.nextSpinAt);
         }
       },
       error: () => {
         this.toast.error('Failed to load spin status');
-        this.isLoading.set(false);
+        this.spinStatusLoaded.set(true);
       }
     });
   }
@@ -143,10 +145,11 @@ export class SpinComponent implements OnInit, OnDestroy {
           this.totalSpins.set(result.totalSpins);
           this.spinHistory.update(h => [result, ...h].slice(0, 5));
 
-          // Start countdown for next spin
-          const next = new Date(Date.now() + 24 * 60 * 60 * 1000);
-          this.nextSpinAt.set(next.toISOString());
-          this.startCountdown(next.toISOString());
+          // Use backend-provided nextSpinAt for accurate countdown
+          if (result.nextSpinAt) {
+            this.nextSpinAt.set(result.nextSpinAt);
+            this.startCountdown(result.nextSpinAt);
+          }
 
           this.toast.success(`You won ${result.prize.label}!`);
         }, 4200);

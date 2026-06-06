@@ -16,12 +16,14 @@
       <p class="subtitle">Come back every day for free spins and epic prizes!</p>
     </header>
 
-    @if (isLoading()) {
+    @if (!spinStatusLoaded()) {
       <div class="loading-skeleton">
         <div class="skeleton-wheel"></div>
         <div class="skeleton-button"></div>
       </div>
-    } @else {
+    }
+
+    <div class="wheel-wrap" [class.opacity-50]="!spinStatusLoaded()">
       <!-- Wheel Area -->
       <div class="wheel-area">
         <!-- Pointer -->
@@ -76,7 +78,10 @@
                   font-weight="600"
                   text-anchor="middle"
                   dominant-baseline="middle"
-                  style="text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none;"
+                  stroke="rgba(0,0,0,0.6)"
+                  stroke-width="0.8"
+                  paint-order="stroke"
+                  style="pointer-events: none;"
                 >
                   {{ seg.label }}
                 </text>
@@ -127,9 +132,11 @@
         <p class="total-spins">Lifetime spins: <strong>{{ totalSpins() }}</strong></p>
       </div>
 
-      <!-- Prize History -->
-      @if (spinHistory().length > 0) {
-        <div class="history-section">
+    </div>
+
+    <!-- Prize History -->
+    @if (spinHistory().length > 0) {
+      <div class="history-section">
           <h3>🎁 Recent Wins</h3>
           <div class="history-list">
             @for (entry of spinHistory(); track $index) {
@@ -144,7 +151,6 @@
           </div>
         </div>
       }
-    }
   </div>
 
   <!-- Result Modal -->
