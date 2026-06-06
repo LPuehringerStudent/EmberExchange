@@ -18,7 +18,7 @@ function mockUnit(stmt = mockStmt()) {
 describe('PlayerSettingsService', () => {
   describe('getSettings', () => {
     it('returns settings when they exist', async () => {
-      const dbRow = { playerid: 1, notifyfriendrequests: 1, notifychatmessages: 0, notifytradeoffers: 1, notifydailyreward: 0, hascompletedonboarding: 0 };
+      const dbRow = { playerid: 1, notifyfriendrequests: 1, notifychatmessages: 0, notifytradeoffers: 1, notifydailyreward: 0, notifyshoppurchases: 1, hascompletedonboarding: 0 };
       const stmt = mockStmt(dbRow);
       const unit = mockUnit(stmt);
       const service = new PlayerSettingsService(unit);
@@ -31,6 +31,7 @@ describe('PlayerSettingsService', () => {
         notifyChatMessages: false,
         notifyTradeOffers: true,
         notifyDailyReward: false,
+        notifyShopPurchases: true,
         hasCompletedOnboarding: false
       });
     });
@@ -48,7 +49,7 @@ describe('PlayerSettingsService', () => {
 
   describe('ensureSettings', () => {
     it('returns existing settings if found', async () => {
-      const dbRow = { playerid: 1, notifyfriendrequests: 1, notifychatmessages: 1, notifytradeoffers: 1, notifydailyreward: 1, hascompletedonboarding: 1 };
+      const dbRow = { playerid: 1, notifyfriendrequests: 1, notifychatmessages: 1, notifytradeoffers: 1, notifydailyreward: 1, notifyshoppurchases: 1, hascompletedonboarding: 1 };
       const stmt = mockStmt(dbRow);
       const unit = mockUnit(stmt);
       const service = new PlayerSettingsService(unit);
@@ -61,6 +62,7 @@ describe('PlayerSettingsService', () => {
         notifyChatMessages: true,
         notifyTradeOffers: true,
         notifyDailyReward: true,
+        notifyShopPurchases: true,
         hasCompletedOnboarding: true
       });
     });
@@ -85,6 +87,7 @@ describe('PlayerSettingsService', () => {
         notifyChatMessages: true,
         notifyTradeOffers: true,
         notifyDailyReward: true,
+        notifyShopPurchases: true,
         hasCompletedOnboarding: false
       });
     });
@@ -92,7 +95,7 @@ describe('PlayerSettingsService', () => {
 
   describe('updateSettings', () => {
     it('updates specified fields', async () => {
-      const getStmt = mockStmt({ playerid: 1, notifyfriendrequests: 1, notifychatmessages: 1, notifytradeoffers: 1, notifydailyreward: 1, hascompletedonboarding: 1 });
+      const getStmt = mockStmt({ playerid: 1, notifyfriendrequests: 1, notifychatmessages: 1, notifytradeoffers: 1, notifydailyreward: 1, notifyshoppurchases: 1, hascompletedonboarding: 1 });
       const runStmt = mockStmt(null, [], { changes: 1 });
       let callCount = 0;
       const unit = {
@@ -109,7 +112,7 @@ describe('PlayerSettingsService', () => {
     });
 
     it('returns false when no fields provided', async () => {
-      const getStmt = mockStmt({ playerid: 1, notifyfriendrequests: 1, notifychatmessages: 1, notifytradeoffers: 1, notifydailyreward: 1, hascompletedonboarding: 1 });
+      const getStmt = mockStmt({ playerid: 1, notifyfriendrequests: 1, notifychatmessages: 1, notifytradeoffers: 1, notifydailyreward: 1, notifyshoppurchases: 1, hascompletedonboarding: 1 });
       const unit = mockUnit(getStmt);
       const service = new PlayerSettingsService(unit);
 

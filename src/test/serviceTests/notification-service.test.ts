@@ -120,7 +120,7 @@ describe('NotificationService', () => {
             const unit = mockUnit();
             const service = new NotificationService(unit);
 
-            const result = await service.markAsRead(1);
+            const result = await service.markAsRead(1, 1);
             expect(result).toBe(true);
         });
     });
@@ -140,7 +140,7 @@ describe('NotificationService', () => {
             const unit = mockUnit();
             const service = new NotificationService(unit);
 
-            const result = await service.delete(1);
+            const result = await service.delete(1, 1);
             expect(result).toBe(true);
         });
     });
