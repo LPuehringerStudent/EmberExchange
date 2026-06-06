@@ -114,50 +114,57 @@ export class SpinComponent implements OnInit, OnDestroy {
     // Call backend first to get the actual result
     this.spinService.spin().subscribe({
       next: (result: SpinResult) => {
-        // Find the segment index for the winning prize
-        // If it's coins_small, prefer the first segment (index 0) over the "Try Again" (index 7)
-        let winningIndex = WHEEL_SEGMENTS.findIndex((s, i) => s.id === result.prize.id && (result.prize.id !== 'coins_small' || i < 7));
-        if (winningIndex === -1) winningIndex = 0;
-
-        // Calculate rotation: 5-8 full rotations + offset to land on winning segment
-        const fullRotations = 5 + Math.floor(Math.random() * 4); // 5-8
-        // The pointer is at top (0 degrees / 12 o'clock).
-        // Wheel rotates clockwise. To land segment N at top, we rotate so that segment's center aligns with 270deg (top).
-        // Segment i center angle (in wheel's local coords) = i * 45 + 22.5
-        // We want that center to be at top (270deg on the rotated wheel, or -90deg)
-        // Actually simpler: rotate so the winning segment's center ends up at the pointer.
-        // Pointer is at top = -90deg in standard circle terms.
-        // If we rotate the wheel by R degrees CW, a segment originally at angle A will appear at angle (A + R).
-        // We want the segment center to be at 270deg (or -90deg): A + R ≡ 270 (mod 360)
-        // A = winningIndex * 45 + 22.5
-        // R = 270 - A + fullRotations * 360
-        const segmentCenter = winningIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
-        const targetRotation = 270 - segmentCenter + fullRotations * 360;
-
-        this.wheelRotation.set(targetRotation);
-
-        // After animation completes (4s)
-        setTimeout(() => {
-          this.isSpinning.set(false);
-          this.canSpin.set(false);
-          this.lastPrize.set(result);
-          this.showResult.set(true);
-          this.totalSpins.set(result.totalSpins);
-          this.spinHistory.update(h => [result, ...h].slice(0, 5));
-
-          // Use backend-provided nextSpinAt for accurate countdown
-          if (result.nextSpinAt) {
-            this.nextSpinAt.set(result.nextSpinAt);
-            this.startCountdown(result.nextSpinAt);
+        try {
+          // Defensive: validate the response has the shape we expect
+          if (!result?.prize?.id) {
+            console.error('[SPIN] Invalid result shape:', result);
+            this.isSpinning.set(false);
+            this.toast.error('Spin failed. Invalid server response.');
+            return;
           }
 
-          this.toast.success(`You won ${result.prize.label}!`);
-        }, 4200);
+          // Find the segment index for the winning prize
+          let winningIndex = WHEEL_SEGMENTS.findIndex((s, i) => s.id === result.prize.id && (result.prize.id !== 'coins_small' || i < 7));
+          if (winningIndex === -1) winningIndex = 0;
+
+          const fullRotations = 5 + Math.floor(Math.random() * 4);
+          const segmentCenter = winningIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
+          const targetRotation = 270 - segmentCenter + fullRotations * 360;
+
+          this.wheelRotation.set(targetRotation);
+
+          // After animation completes (4s)
+          setTimeout(() => {
+            try {
+              this.isSpinning.set(false);
+              this.canSpin.set(false);
+              this.lastPrize.set(result);
+              this.showResult.set(true);
+              this.totalSpins.set(result.totalSpins);
+              this.spinHistory.update(h => [result, ...h].slice(0, 5));
+
+              if (result.nextSpinAt) {
+                this.nextSpinAt.set(result.nextSpinAt);
+                this.startCountdown(result.nextSpinAt);
+              }
+
+              this.toast.success(`You won ${result.prize.label}!`);
+            } catch (innerErr) {
+              console.error('[SPIN] Post-spin callback error:', innerErr);
+              this.isSpinning.set(false);
+            }
+          }, 4200);
+        } catch (err) {
+          console.error('[SPIN] Spin processing error:', err);
+          this.isSpinning.set(false);
+          this.toast.error('Something went wrong. Please refresh and try again.');
+        }
       },
       error: (err: any) => {
+        console.error('[SPIN] HTTP error:', err);
         this.isSpinning.set(false);
         const msg = err?.message || 'Spin failed. Try again later.';
-        this.toast.show(msg, 'error');
+        this.toast.error(msg);
       }
     });
   }

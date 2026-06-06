@@ -3,6 +3,7 @@ import { Unit } from "../../utils/unit";
 import { FriendService } from "../../services/friend-service";
 import { ChatMessageService } from "../../services/chat-message-service";
 import { NotificationService } from "../../services/notification-service";
+import { QuestService } from "../../services/quest-service";
 import { sanitizeText } from "../../utils/sanitize";
 
 export async function handleChatMessage(socketId: string, payload: Record<string, unknown>): Promise<void> {
@@ -95,6 +96,14 @@ export async function handleChatMessage(socketId: string, payload: Record<string
         }
 
         ok = true;
+
+        // Track quest progress
+        try {
+            const questService = new QuestService(unit);
+            await questService.trackProgress(senderId, 'send_messages', 1);
+        } catch {
+            // Ignore quest tracking errors
+        }
 
         // Push to recipient if online
         const pushed = connectionManager.sendToPlayerGlobal(receiverId, {

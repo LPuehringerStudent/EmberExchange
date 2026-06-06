@@ -171,12 +171,12 @@
       </div>
 
       <div class="result-card" (click)="$event.stopPropagation()">
-        <div class="result-glow" [style.--prize-color]="lastPrize()!.prize.color"></div>
-        <div class="result-icon">{{ getIconSvg(lastPrize()!.prize.icon) }}</div>
+        <div class="result-glow" [style.--prize-color]="lastPrize()?.prize?.color ?? '#94a3b8'"></div>
+        <div class="result-icon">{{ getIconSvg(lastPrize()?.prize?.icon ?? '') }}</div>
         <h2 class="result-title">You Won!</h2>
-        <p class="result-prize">{{ lastPrize()!.prize.label }}</p>
-        <p class="result-rarity" [class]="'rarity-' + getRarityLabel(lastPrize()!.prize.id).toLowerCase()">
-          {{ getRarityLabel(lastPrize()!.prize.id) }}
+        <p class="result-prize">{{ lastPrize()?.prize?.label ?? 'Unknown Prize' }}</p>
+        <p class="result-rarity" [class]="'rarity-' + getRarityLabel(lastPrize()?.prize?.id ?? '').toLowerCase()">
+          {{ getRarityLabel(lastPrize()?.prize?.id ?? '') }}
         </p>
         <button class="claim-btn" (click)="closeResult()">Claim Prize</button>
       </div>

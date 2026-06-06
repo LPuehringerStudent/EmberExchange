@@ -177,6 +177,9 @@ $bg-card: rgba(20, 20, 35, 0.85);
   width: 320px;
   height: 320px;
   border-radius: 50%;
+  overflow: hidden;
+  transform: rotate(0deg);
+  will-change: transform;
   transition: transform 4s cubic-bezier(0.1, 0.9, 0.2, 1);
   box-shadow:
     0 0 40px rgba($gold, 0.3),

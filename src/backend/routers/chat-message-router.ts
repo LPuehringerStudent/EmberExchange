@@ -4,6 +4,7 @@ import { checkPlayerBanned } from "../middleware/ban-check";
 import { sanitizeText } from "../utils/sanitize";
 import { ChatMessageService } from "../services/chat-message-service";
 import { NotificationService } from "../services/notification-service";
+import { QuestService } from "../services/quest-service";
 import { connectionManager } from "../websocket/connection-manager";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -518,6 +519,14 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
         const [success, id] = await service.create(senderId, receiverId ?? null, safeContent, msgType, msgData);
 
         if (success) {
+            // Track quest progress
+            try {
+                const questService = new QuestService(unit);
+                await questService.trackProgress(senderId, 'send_messages', 1);
+            } catch {
+                // Ignore quest tracking errors
+            }
+
             // Push to recipient if online
             let pushed = false;
             if (receiverId && typeof receiverId === "number") {
