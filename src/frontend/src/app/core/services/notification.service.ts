@@ -39,7 +39,7 @@ export class NotificationService {
         this.unreadCount.update(c => c + 1);
         this.loadNotifications();
         if (incoming.priority === 'high') {
-          this.lastHighPriorityNotification.set(incoming as NotificationItem);
+          this.lastHighPriorityNotification.set(incoming as unknown as NotificationItem);
         }
       }
     });
