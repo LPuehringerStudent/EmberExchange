@@ -34,15 +34,6 @@ export class InfoTooltipComponent {
     }
   }
 
-  toggle(event?: MouseEvent | TouchEvent): void {
-    event?.stopPropagation();
-    if (this.visible()) {
-      this.visible.set(false);
-    } else {
-      this.show();
-    }
-  }
-
   show(): void {
     this.visible.set(true);
     requestAnimationFrame(() => this.adjustPosition());
@@ -53,25 +44,25 @@ export class InfoTooltipComponent {
   }
 
   private adjustPosition(): void {
-    const trigger = this.el.nativeElement.querySelector('.tooltip-trigger') as HTMLElement | null;
-    const tooltip = this.el.nativeElement.querySelector('.tooltip-box') as HTMLElement | null;
-    if (!trigger || !tooltip) return;
+    const host = this.el.nativeElement;
+    const tooltip = host.querySelector('.tooltip-box') as HTMLElement | null;
+    if (!tooltip) return;
 
-    const triggerRect = trigger.getBoundingClientRect();
+    const hostRect = host.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
 
     const padding = 8;
-    const gap = 6;
+    const gap = 8;
 
-    let left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2;
-    let top = triggerRect.bottom + gap;
+    let left = hostRect.left + hostRect.width / 2 - tooltipRect.width / 2;
+    let top = hostRect.bottom + gap;
 
     // Clamp horizontally to viewport
     left = Math.max(padding, Math.min(left, window.innerWidth - tooltipRect.width - padding));
 
     // If overflowing bottom, place above trigger
     if (top + tooltipRect.height > window.innerHeight - padding) {
-      top = triggerRect.top - tooltipRect.height - gap;
+      top = hostRect.top - tooltipRect.height - gap;
     }
 
     this.tooltipStyle.set({ left: `${left}px`, top: `${top}px` });

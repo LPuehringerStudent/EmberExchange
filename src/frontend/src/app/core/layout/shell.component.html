@@ -55,8 +55,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#ff5722]">
           <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
         </svg>
-        <span [class.coin-pulse]="sparkAnimating()">{{ sparks().toLocaleString() }}<span class="hidden sm:inline ml-1">Sparks</span></span>
-        <app-info-tooltip class="hidden sm:block" text="A currency you get by breaking down unwanted stoves. Spend Sparks to re-roll a stove's Heat." />
+        <app-info-tooltip class="hidden sm:block" text="A currency you get by breaking down unwanted stoves. Spend Sparks to re-roll a stove's Heat."><span [class.coin-pulse]="sparkAnimating()">{{ sparks().toLocaleString() }}<span class="hidden sm:inline ml-1">Sparks</span></span></app-info-tooltip>
       </div>
 
       <app-notification-bell />

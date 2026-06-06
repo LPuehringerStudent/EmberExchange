@@ -44,8 +44,7 @@ const REROLL_BASE_COST: Record<string, number> = {
               <span [class]="'px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ' + stove().rarity.toLowerCase()"
                 [style.background]="rarityBg(stove().rarity)"
                 [style.color]="rarityColor(stove().rarity)">
-                {{ stove().rarity }}
-                <app-info-tooltip text="How rare this stove is. Higher rarity means fewer exist and they're worth more." />
+                <app-info-tooltip text="How rare this stove is. Higher rarity means fewer exist and they're worth more.">{{ stove().rarity }}</app-info-tooltip>
               </span>
               <span [class]="'px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider heat-' + (stove().heatLevel | heatTier | lowercase)"
                 class="heat-badge">
@@ -64,7 +63,7 @@ const REROLL_BASE_COST: Record<string, number> = {
               <p class="text-sm font-semibold text-text-primary m-0">#{{ stove().typeId }}</p>
             </div>
             <div class="bg-body rounded-xl p-3 border border-border">
-              <p class="text-[11px] uppercase tracking-wider text-text-muted m-0 mb-1">Heat Level <app-info-tooltip text="A score from 1–100. Hotter stoves are more valuable and produce more in the Factory." /></p>
+              <p class="text-[11px] uppercase tracking-wider text-text-muted m-0 mb-1"><app-info-tooltip text="A score from 1–100. Hotter stoves are more valuable and produce more in the Factory.">Heat Level</app-info-tooltip></p>
               <p class="text-sm font-semibold text-text-primary m-0">{{ (stove().heatLevel * 100).toFixed(1) }}%</p>
             </div>
             <div class="bg-body rounded-xl p-3 border border-border">
@@ -95,7 +94,7 @@ const REROLL_BASE_COST: Record<string, number> = {
                 <button (click)="toggleAction('reroll')" [class.ring-2]="activeAction() === 'reroll'"
                   class="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#60a5fa] text-white text-xs font-semibold border-none cursor-pointer transition-all hover:-translate-y-0.5">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 0 1-15.357-2m15.357 2H15"/></svg>
-                  <span class="inline-flex items-center gap-1">Re-Roll <app-info-tooltip text="A currency you get by breaking down unwanted stoves. Spend Sparks to re-roll a stove's Heat." /></span>
+                  <app-info-tooltip text="A currency you get by breaking down unwanted stoves. Spend Sparks to re-roll a stove's Heat."><span class="inline-flex items-center gap-1">Re-Roll</span></app-info-tooltip>
                 </button>
               </div>
 
