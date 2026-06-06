@@ -229,6 +229,9 @@
                 <!-- Rarity badge -->
                 <span class="rarity-badge absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider" [class]="getRarity(listing)">
                   {{ getRarity(listing) }}
+                  @if ($first) {
+                    <app-info-tooltip text="How rare this stove is. Higher rarity means fewer exist and they're worth more." />
+                  }
                 </span>
 
                 <!-- Heat tier badge (stoves only) -->

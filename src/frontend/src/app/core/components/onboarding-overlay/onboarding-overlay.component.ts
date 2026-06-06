@@ -35,7 +35,7 @@ export class OnboardingOverlayComponent implements OnInit, OnDestroy {
   }
 
   get totalSteps() {
-    return this.onboarding.steps().length;
+    return this.onboarding.steps.length;
   }
 
   ngOnInit(): void {

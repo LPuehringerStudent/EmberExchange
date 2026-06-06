@@ -8,6 +8,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/pages/startup/startup.component').then(m => m.StartupComponent)
   },
   {
+    path: 'how-it-works',
+    loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent)
+  },
+  {
     path: 'home',
     loadComponent: () => import('./features/home/main-menu.component').then(m => m.MainMenuComponent),
     canActivate: [authGuard]

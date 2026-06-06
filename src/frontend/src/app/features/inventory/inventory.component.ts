@@ -12,6 +12,7 @@ import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
 import { LootboxService } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 import { StoveDetailComponent } from './stove-detail.component';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 
 interface InventoryLootbox {
   id: number;
@@ -30,7 +31,8 @@ interface InventoryLootbox {
     FormsModule,
     RouterModule,
     HeatTierPipe,
-    StoveDetailComponent
+    StoveDetailComponent,
+    InfoTooltipComponent
   ],
   styleUrls: ['./inventory.component.css']
 })

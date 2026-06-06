@@ -42,6 +42,7 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
   ];
 
   recentPulls = signal<RecentPull[]>([]);
+  private onboardingLoadPromise: Promise<void> | null = null;
 
   private authService = inject(AuthService);
   private ownershipService = inject(OwnershipService);
@@ -51,7 +52,7 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
   ngOnInit(): void {
     this.loadUserData();
     this.loadRecentPulls();
-    this.onboardingService.loadState();
+    this.onboardingLoadPromise = this.onboardingService.loadState();
   }
 
   private async loadRecentPulls(): Promise<void> {
@@ -77,10 +78,12 @@ export class MainMenuComponent implements AfterViewInit, OnDestroy, OnInit {
     }, 0);
     window.addEventListener('resize', this.boundUpdateCardsHeight);
 
-    // Delay tour start so DOM is fully rendered
-    setTimeout(() => {
-      this.onboardingService.startTourIfNeeded();
-    }, 800);
+    // Wait for onboarding state to load, then start tour if needed
+    this.onboardingLoadPromise?.then(() => {
+      setTimeout(() => {
+        this.onboardingService.startTourIfNeeded();
+      }, 500);
+    });
   }
 
   ngOnDestroy() {

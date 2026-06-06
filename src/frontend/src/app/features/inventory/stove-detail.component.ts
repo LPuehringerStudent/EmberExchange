@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShowedStove } from '@shared/model';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 
 const REROLL_BASE_COST: Record<string, number> = {
   common: 10, rare: 20, epic: 40, legendary: 80, limited: 100, secret: 150,
@@ -11,7 +12,7 @@ const REROLL_BASE_COST: Record<string, number> = {
 @Component({
   selector: 'app-stove-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeatTierPipe],
+  imports: [CommonModule, FormsModule, HeatTierPipe, InfoTooltipComponent],
   template: `
     <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4" (click)="onClose.emit()">
       <div class="bg-surface border border-border rounded-[20px] max-w-[420px] w-full max-h-[90vh] flex flex-col overflow-hidden" (click)="$event.stopPropagation()">
@@ -44,6 +45,7 @@ const REROLL_BASE_COST: Record<string, number> = {
                 [style.background]="rarityBg(stove().rarity)"
                 [style.color]="rarityColor(stove().rarity)">
                 {{ stove().rarity }}
+                <app-info-tooltip text="How rare this stove is. Higher rarity means fewer exist and they're worth more." />
               </span>
               <span [class]="'px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider heat-' + (stove().heatLevel | heatTier | lowercase)"
                 class="heat-badge">
@@ -62,7 +64,7 @@ const REROLL_BASE_COST: Record<string, number> = {
               <p class="text-sm font-semibold text-text-primary m-0">#{{ stove().typeId }}</p>
             </div>
             <div class="bg-body rounded-xl p-3 border border-border">
-              <p class="text-[11px] uppercase tracking-wider text-text-muted m-0 mb-1">Heat Level</p>
+              <p class="text-[11px] uppercase tracking-wider text-text-muted m-0 mb-1">Heat Level <app-info-tooltip text="A score from 1–100. Hotter stoves are more valuable and produce more in the Factory." /></p>
               <p class="text-sm font-semibold text-text-primary m-0">{{ (stove().heatLevel * 100).toFixed(1) }}%</p>
             </div>
             <div class="bg-body rounded-xl p-3 border border-border">
@@ -93,7 +95,7 @@ const REROLL_BASE_COST: Record<string, number> = {
                 <button (click)="toggleAction('reroll')" [class.ring-2]="activeAction() === 'reroll'"
                   class="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#60a5fa] text-white text-xs font-semibold border-none cursor-pointer transition-all hover:-translate-y-0.5">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 0 1-15.357-2m15.357 2H15"/></svg>
-                  Re-Roll
+                  <span class="inline-flex items-center gap-1">Re-Roll <app-info-tooltip text="A currency you get by breaking down unwanted stoves. Spend Sparks to re-roll a stove's Heat." /></span>
                 </button>
               </div>
 

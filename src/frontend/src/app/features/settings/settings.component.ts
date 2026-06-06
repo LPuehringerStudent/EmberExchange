@@ -38,17 +38,11 @@ export class SettingsComponent {
     void this.router.navigate([tab], { relativeTo: this.route });
   }
 
-  async replayQuickTour(): Promise<void> {
-    await this.onboardingService.replayQuickTour();
-    this.replaySuccess.set('Quick tour started! Return to the home page to see it.');
-    setTimeout(() => this.replaySuccess.set(''), 4000);
-  }
-
-  async startFullTutorial(): Promise<void> {
+  async replayTutorial(): Promise<void> {
     await this.router.navigate(['/home']);
     // Give the home page time to render before starting the tour
     setTimeout(() => {
-      this.onboardingService.startFullTutorial();
+      this.onboardingService.replayTutorial();
     }, 500);
     this.replaySuccess.set('');
   }

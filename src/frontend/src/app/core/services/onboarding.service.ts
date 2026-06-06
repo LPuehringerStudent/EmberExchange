@@ -1,4 +1,4 @@
-import { Injectable, signal, inject, computed } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 
 const ONBOARDING_LOCAL_KEY = 'ember_onboarding_done';
@@ -11,31 +11,7 @@ export interface OnboardingStep {
   position: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export const QUICK_TOUR_STEPS: OnboardingStep[] = [
-  {
-    id: 'collect',
-    targetSelector: '[data-tour="lootboxes"]',
-    title: 'Collect',
-    body: 'Open lootboxes to discover rare stoves. Each stove has a rarity — from Common to Legendary. The rarer, the more valuable!',
-    position: 'bottom'
-  },
-  {
-    id: 'trade',
-    targetSelector: '[data-tour="marketplace"]',
-    title: 'Trade',
-    body: 'Sell your stoves on the Marketplace or trade directly with friends. Prices are set by players, so find the best deals!',
-    position: 'bottom'
-  },
-  {
-    id: 'play',
-    targetSelector: '[data-tour="games"]',
-    title: 'Play',
-    body: 'Join Poker, Blackjack, or Roulette tables. Bet your coins, beat the odds, and win big to buy even better lootboxes.',
-    position: 'bottom'
-  }
-];
-
-export const FULL_TUTORIAL_STEPS: OnboardingStep[] = [
+export const TUTORIAL_STEPS: OnboardingStep[] = [
   {
     id: 'inventory',
     targetSelector: '[data-tour="inventory"]',
@@ -104,18 +80,14 @@ export class OnboardingService {
   private _currentStepIndex = signal(0);
   readonly currentStepIndex = this._currentStepIndex.asReadonly();
 
-  private _steps = signal<OnboardingStep[]>(QUICK_TOUR_STEPS);
-  readonly steps = this._steps.asReadonly();
-
   private _hasLoaded = signal(false);
   private hasCompletedOnboarding = false;
 
-  readonly isFullTutorial = computed(() => this._steps().length > 3);
+  readonly steps = TUTORIAL_STEPS;
 
   get currentStep(): OnboardingStep | null {
     const idx = this._currentStepIndex();
-    const stepList = this._steps();
-    return stepList[idx] ?? null;
+    return this.steps[idx] ?? null;
   }
 
   async loadState(): Promise<void> {
@@ -131,7 +103,6 @@ export class OnboardingService {
       const settings = await this.auth.getNotificationSettings(user.playerId);
       this.hasCompletedOnboarding = settings.hasCompletedOnboarding ?? false;
     } catch {
-      // fallback to localStorage if API fails
       this.hasCompletedOnboarding = localStorage.getItem(ONBOARDING_LOCAL_KEY) === '1';
     }
 
@@ -144,29 +115,20 @@ export class OnboardingService {
     return !this.hasCompletedOnboarding && !localDone;
   }
 
-  private beginTour(steps: OnboardingStep[]): void {
-    this._steps.set(steps);
+  private beginTour(): void {
     this._currentStepIndex.set(0);
     this._showTour.set(true);
   }
 
-  startQuickTour(): void {
-    this.beginTour(QUICK_TOUR_STEPS);
-  }
-
-  startFullTutorial(): void {
-    this.beginTour(FULL_TUTORIAL_STEPS);
-  }
-
   startTourIfNeeded(): void {
     if (this.shouldShowTour()) {
-      this.startQuickTour();
+      this.beginTour();
     }
   }
 
   nextStep(): void {
     const next = this._currentStepIndex() + 1;
-    if (next >= this._steps().length) {
+    if (next >= this.steps.length) {
       this.completeTour();
     } else {
       this._currentStepIndex.set(next);
@@ -193,7 +155,7 @@ export class OnboardingService {
     }
   }
 
-  async replayQuickTour(): Promise<void> {
+  async replayTutorial(): Promise<void> {
     this.hasCompletedOnboarding = false;
     localStorage.removeItem(ONBOARDING_LOCAL_KEY);
 
@@ -206,6 +168,6 @@ export class OnboardingService {
       }
     }
 
-    this.startQuickTour();
+    this.beginTour();
   }
 }

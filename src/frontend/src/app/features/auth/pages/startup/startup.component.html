@@ -1,4 +1,4 @@
-<div class="min-h-screen flex items-center justify-center relative overflow-hidden p-6 bg-gradient-to-br from-[#1a0f0a] via-[#2d1b14] to-[#1a0f0a]">
+<div class="min-h-screen flex flex-col items-center relative overflow-hidden bg-gradient-to-br from-[#1a0f0a] via-[#2d1b14] to-[#1a0f0a]">
   <!-- Animated Fire Background -->
   <div class="absolute inset-0 pointer-events-none overflow-hidden">
     <div class="flame flame-1"></div>
@@ -10,10 +10,10 @@
     <div class="ember ember-4"></div>
   </div>
 
-  <!-- Landing Card -->
-  <div class="relative z-10 w-full max-w-[420px] bg-surface/95 backdrop-blur-lg rounded-[20px] p-12 text-center border-2 border-accent/30 shadow-[0_20px_60px_rgba(0,0,0,0.4),0_0_0_1px_rgba(232,93,4,0.1),inset_0_1px_0_rgba(255,255,255,0.2)]">
+  <!-- Hero Section -->
+  <div class="relative z-10 w-full max-w-[560px] mx-auto px-6 pt-20 pb-12 md:pt-28 md:pb-16 text-center">
     <div class="mb-8">
-      <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-accent to-[#f48c06] rounded-[20px] flex items-center justify-center shadow-[0_8px_30px_rgba(232,93,4,0.4)]">
+      <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-accent to-[#f48c06] rounded-[20px] flex items-center justify-center shadow-[0_8px_30px_rgba(232,93,4,0.4)]">
         <span>
           <img
             class="pixel-icon"
@@ -22,23 +22,63 @@
           />
         </span>
       </div>
-      <h1 class="text-[1.75rem] font-bold m-0 mb-2 bg-gradient-to-br from-accent to-[#d35400] bg-clip-text text-transparent">Ember Exchange</h1>
-      <p class="m-0 text-text-secondary text-[0.95rem]">Forge your legacy in the hottest marketplace</p>
+      <h1 class="text-[1.75rem] md:text-[2.25rem] font-bold m-0 mb-4 bg-gradient-to-br from-accent to-[#d35400] bg-clip-text text-transparent leading-tight">
+        Collect, trade, and invest in rare digital stoves.
+      </h1>
+      <p class="m-0 text-text-secondary text-[0.95rem] md:text-[1.05rem] leading-relaxed max-w-[480px] mx-auto">
+        Open lootboxes, build your collection, and battle friends in Poker, Blackjack, and Roulette — all powered by player-driven trading.
+      </p>
     </div>
 
-    <div class="flex flex-col gap-5">
-      <button type="button" class="flex items-center justify-center gap-2.5 px-6 py-4 bg-gradient-to-br from-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(232,93,4,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(232,93,4,0.5)] active:translate-y-0" (click)="goToLogin()">
-        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-          <polyline points="10 17 15 12 10 7"/>
-          <line x1="15" y1="12" x2="3" y2="12"/>
-        </svg>
-        <span>Login</span>
-      </button>
+    <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
+      <a routerLink="/register" class="flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-br from-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(232,93,4,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(232,93,4,0.5)] active:translate-y-0 w-full sm:w-auto">
+        Get Started — It's Free
+      </a>
+      <a routerLink="/how-it-works" class="flex items-center justify-center gap-2.5 px-8 py-4 bg-surface-secondary text-text-primary border border-border rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-lg active:translate-y-0 w-full sm:w-auto">
+        See How It Works
+      </a>
+    </div>
+  </div>
 
-      <div class="text-text-secondary text-sm">
-        <span>New here?</span>
-        <a routerLink="/register" class="text-accent no-underline font-semibold ml-1 hover:underline">Create an account</a>
+  <!-- Feature Preview Section -->
+  <div class="relative z-10 w-full max-w-[1200px] mx-auto px-6 pb-24">
+    <div class="feature-grid">
+      <!-- Collect Rare Stoves -->
+      <div class="feature-card reveal">
+        <div class="feature-image-wrap">
+          <img src="/assets/stove_sprites/legendary/dragon.png" alt="Rare Dragon Stove" class="feature-image" />
+        </div>
+        <div class="feature-content">
+          <h3 class="feature-title">Collect Rare Stoves</h3>
+          <p class="feature-desc">Open lootboxes and hunt for legendary stoves to build a collection that turns heads.</p>
+        </div>
+      </div>
+
+      <!-- Trade on the Marketplace -->
+      <div class="feature-card reveal">
+        <div class="feature-icon-wrap bg-purple-500/10 border-purple-500/10">
+          <svg class="w-8 h-8 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/>
+          </svg>
+        </div>
+        <div class="feature-content">
+          <h3 class="feature-title">Trade on the Marketplace</h3>
+          <p class="feature-desc">List your duplicates, set your own prices, and trade directly with other players.</p>
+        </div>
+      </div>
+
+      <!-- Play Mini-Games -->
+      <div class="feature-card reveal">
+        <div class="feature-icon-wrap bg-yellow-500/10 border-yellow-500/10">
+          <svg class="w-8 h-8 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="20" height="12" rx="2"/>
+            <path d="M6 12h.01M18 12h.01M8 10v4M16 10v4M12 10v4"/>
+          </svg>
+        </div>
+        <div class="feature-content">
+          <h3 class="feature-title">Play Mini-Games</h3>
+          <p class="feature-desc">Bet your coal in Poker, Blackjack, and Roulette. Win big or go home.</p>
+        </div>
       </div>
     </div>
   </div>

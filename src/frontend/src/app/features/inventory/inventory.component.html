@@ -149,9 +149,15 @@
               </div>
               <span [class]="'rarity-badge absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] ' + item.rarity.toLowerCase()">
                 {{item.rarity}}
+                @if ($first) {
+                  <app-info-tooltip text="How rare this stove is. Higher rarity means fewer exist and they're worth more." />
+                }
               </span>
               <span class="heat-badge heat-{{item.heatLevel | heatTier | lowercase}}">
                 {{item.heatLevel | heatTier}}
+                @if ($first) {
+                  <app-info-tooltip text="A score from 1–100. Hotter stoves are more valuable and produce more in the Factory." />
+                }
               </span>
               @if (isStoveListed(item.stoveId)) {
                 <span class="listed-badge absolute bottom-2.5 right-2.5 px-3 py-1 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)]">Listed</span>
