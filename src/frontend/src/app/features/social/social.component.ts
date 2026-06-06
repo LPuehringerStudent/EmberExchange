@@ -346,6 +346,20 @@ export class SocialComponent implements OnInit, OnDestroy {
   }
 
   private handleIncomingMessage(msg: ChatMessageRow): void {
+    // If this is our own message (WS ack), replace the optimistic version
+    if (msg.senderId === this.currentPlayerId()) {
+      this.messages.update(msgs => {
+        const idx = msgs.findIndex(m => m.messageId === 0 && m.content === msg.content);
+        if (idx !== -1) {
+          const updated = [...msgs];
+          updated[idx] = msg;
+          return updated;
+        }
+        return msgs;
+      });
+      return;
+    }
+
     // Skip duplicates
     const exists = this.messages().some(m => m.messageId === msg.messageId);
     if (exists) return;
