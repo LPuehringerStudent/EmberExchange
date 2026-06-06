@@ -781,6 +781,7 @@ export class DB {
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 questType TEXT NOT NULL CHECK (questType IN ('daily', 'weekly')),
                 templateId TEXT NOT NULL,
+                label TEXT,
                 targetValue INTEGER NOT NULL,
                 currentValue INTEGER NOT NULL DEFAULT 0,
                 rewardCoins INTEGER NOT NULL DEFAULT 0,
@@ -792,6 +793,7 @@ export class DB {
                 createdAt TEXT NOT NULL
             )
         `);
+        await connection.query(`ALTER TABLE PlayerQuest ADD COLUMN IF NOT EXISTS label TEXT`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerquest_player ON PlayerQuest(playerId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerquest_expires ON PlayerQuest(expiresAt)`);
 
@@ -1018,9 +1020,15 @@ export class DB {
                 notifyChatMessages INTEGER NOT NULL DEFAULT 1,
                 notifyTradeOffers INTEGER NOT NULL DEFAULT 1,
                 notifyDailyReward INTEGER NOT NULL DEFAULT 1,
+                notifyShopPurchases INTEGER NOT NULL DEFAULT 1,
                 hasCompletedOnboarding INTEGER NOT NULL DEFAULT 0
             )
         `);
+
+        await connection.query(`
+            ALTER TABLE PlayerSettings
+            ADD COLUMN IF NOT EXISTS notifyShopPurchases INTEGER NOT NULL DEFAULT 1
+        `).catch(() => {});
 
         await connection.query(`
             CREATE TABLE IF NOT EXISTS TwoFactorChallenge (
@@ -1075,17 +1083,36 @@ export class DB {
             CREATE TABLE IF NOT EXISTS Notification (
                 notificationId SERIAL PRIMARY KEY,
                 playerId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
-                type TEXT NOT NULL CHECK (type IN ('friend_request', 'chat_message', 'trade_offer', 'daily_reward', 'system')),
+                type TEXT NOT NULL CHECK (type IN ('friend_request', 'chat_message', 'trade_offer', 'daily_reward', 'system', 'quest_complete')),
                 title TEXT NOT NULL,
                 message TEXT NOT NULL,
                 data JSONB NOT NULL DEFAULT '{}',
                 isRead INTEGER NOT NULL DEFAULT 0,
-                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                priority TEXT NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high')),
+                groupKey TEXT,
+                count INTEGER NOT NULL DEFAULT 1,
+                expiresAt TIMESTAMPTZ,
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         `);
 
         await connection.query(`
             CREATE INDEX IF NOT EXISTS idx_notification_player_unread ON Notification(playerId, isRead)
+        `);
+
+        // Migration: notification system v2
+        await connection.query(`
+            ALTER TABLE Notification
+            ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'normal',
+            ADD COLUMN IF NOT EXISTS groupKey TEXT,
+            ADD COLUMN IF NOT EXISTS count INTEGER NOT NULL DEFAULT 1,
+            ADD COLUMN IF NOT EXISTS expiresAt TIMESTAMPTZ,
+            ADD COLUMN IF NOT EXISTS updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        `).catch(() => {});
+
+        await connection.query(`
+            CREATE INDEX IF NOT EXISTS idx_notification_player_group ON Notification(playerId, type, groupKey, isRead, updatedAt)
         `);
 
         await connection.query(`
@@ -1457,19 +1484,19 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
 
     async function insertPlayerSettings(): Promise<void> {
         const settings = [
-            { playerId: 1, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 },
-            { playerId: 2, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 },
-            { playerId: 3, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 },
-            { playerId: 4, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 },
-            { playerId: 5, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, hasCompletedOnboarding: 0 }
+            { playerId: 1, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 },
+            { playerId: 2, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 },
+            { playerId: 3, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 },
+            { playerId: 4, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 },
+            { playerId: 5, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 }
         ];
         for (const setting of settings) {
             const stmt = unit.prepare<
                 unknown,
-                { playerId: number; notifyFriendRequests: number; notifyChatMessages: number; notifyTradeOffers: number; notifyDailyReward: number; hasCompletedOnboarding: number }
+                { playerId: number; notifyFriendRequests: number; notifyChatMessages: number; notifyTradeOffers: number; notifyDailyReward: number; notifyShopPurchases: number; hasCompletedOnboarding: number }
             >(
-                `insert into PlayerSettings (playerId, notifyFriendRequests, notifyChatMessages, notifyTradeOffers, notifyDailyReward, hasCompletedOnboarding)
-                 values (@playerId, @notifyFriendRequests, @notifyChatMessages, @notifyTradeOffers, @notifyDailyReward, @hasCompletedOnboarding)`,
+                `insert into PlayerSettings (playerId, notifyFriendRequests, notifyChatMessages, notifyTradeOffers, notifyDailyReward, notifyShopPurchases, hasCompletedOnboarding)
+                 values (@playerId, @notifyFriendRequests, @notifyChatMessages, @notifyTradeOffers, @notifyDailyReward, @notifyShopPurchases, @hasCompletedOnboarding)`,
                 setting
             );
             await stmt.run();

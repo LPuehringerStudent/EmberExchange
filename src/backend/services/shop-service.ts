@@ -359,7 +359,12 @@ export class ShopService {
                 "system",
                 "Purchase successful",
                 `You purchased ${listing.name} from the shop for ${listing.price} coal`,
-                { listingId, itemType: listing.itemType, itemName: listing.name, price: listing.price }
+                { listingId, itemType: listing.itemType, itemName: listing.name, price: listing.price },
+                {
+                    groupKey: 'shop:purchase:' + playerId + ':' + new Date().toISOString().split('T')[0],
+                    priority: 'low',
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                }
             );
         } catch (e) {
             console.error("[SHOP] Notification creation failed:", e);

@@ -37,14 +37,20 @@
             <div
               class="notification-item flex items-start gap-3 px-3.5 py-3 rounded-[14px] cursor-pointer transition-all duration-180 relative mb-1 last:mb-0"
               [class.unread]="!notification.isRead"
+              [class.quest-complete]="notification.type === 'quest_complete'"
               (click)="markAsRead(notification.notificationId, $event)"
             >
               <div [class]="'notification-accent accent-' + notification.type"></div>
-              <div class="w-9 h-9 rounded-[10px] bg-surface-secondary flex items-center justify-center text-base flex-shrink-0 mt-0.5 transition-colors duration-200">{{ getTypeIcon(notification.type) }}</div>
+              <div class="w-9 h-9 rounded-[10px] bg-surface-secondary flex items-center justify-center text-base flex-shrink-0 mt-0.5 transition-colors duration-200 relative">
+                {{ getTypeIcon(notification.type) }}
+                @if (notification.count > 1) {
+                  <span class="count-badge">{{ notification.count }}</span>
+                }
+              </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-0.5">
                   <span class="text-[11px] font-bold uppercase tracking-wide text-accent bg-accent-glow px-[7px] py-0.5 rounded-md">{{ getTypeLabel(notification.type) }}</span>
-                  <span class="text-[11px] text-text-muted font-medium">{{ relativeTime(notification.createdAt) }}</span>
+                  <span class="text-[11px] text-text-muted font-medium">{{ relativeTime(notification.count > 1 ? (notification.updatedAt || notification.createdAt) : notification.createdAt) }}</span>
                 </div>
                 <div class="text-[13px] font-semibold text-text-primary leading-tight mb-0.5">{{ notification.title }}</div>
                 <div class="text-xs text-text-secondary leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis">{{ notification.message }}</div>

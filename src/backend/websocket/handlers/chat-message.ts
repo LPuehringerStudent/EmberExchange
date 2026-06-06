@@ -113,14 +113,19 @@ export async function handleChatMessage(socketId: string, payload: Record<string
 
         // If offline, create notification
         if (!pushed) {
-            const notificationService = new NotificationService(unit);
-            await notificationService.create(
-                receiverId,
-                "chat_message",
-                "New message",
-                safeContent.length > 60 ? safeContent.slice(0, 60) + "..." : safeContent,
-                { senderId, messageId }
-            );
+            try {
+                const notificationService = new NotificationService(unit);
+                await notificationService.create(
+                    receiverId,
+                    "chat_message",
+                    "New message",
+                    safeContent.length > 60 ? safeContent.slice(0, 60) + "..." : safeContent,
+                    { senderId, messageId },
+                    { priority: 'normal' }
+                );
+            } catch {
+                // Ignore notification errors
+            }
         }
 
         // Acknowledge sender

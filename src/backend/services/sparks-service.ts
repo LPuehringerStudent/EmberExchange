@@ -116,7 +116,8 @@ export class SparksService {
                 "system",
                 "Stove Salvaged",
                 `You salvaged ${stove.name} for ${sparksAwarded} sparks`,
-                { stoveId, stoveName: stove.name, sparksAwarded, newBalance }
+                { stoveId, stoveName: stove.name, sparksAwarded, newBalance },
+                { priority: 'normal' }
             );
         } catch {
             // Ignore notification errors
@@ -205,7 +206,8 @@ export class SparksService {
                 "system",
                 "Heat Re-rolled",
                 `Re-rolled ${stove.name} heat to ${(newHeatLevel * 100).toFixed(1)}% for ${cost} sparks`,
-                { stoveId, stoveName: stove.name, newHeatLevel, cost }
+                { stoveId, stoveName: stove.name, newHeatLevel, cost },
+                { priority: 'normal' }
             );
         } catch {
             // Ignore

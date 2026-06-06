@@ -1,6 +1,6 @@
 import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
-import { NotificationRow } from "../../shared/model";
+import { NotificationRow, NotificationPriority } from "../../shared/model";
 import { PlayerSettingsService } from "./player-settings-service";
 
 export class NotificationService extends ServiceBase {
@@ -9,12 +9,27 @@ export class NotificationService extends ServiceBase {
     }
 
     /**
+     * Deletes expired notifications.
+     */
+    async cleanupExpired(playerId: number): Promise<number> {
+        const stmt = this.unit.prepare(
+            `DELETE FROM Notification
+             WHERE playerId = @playerId AND expiresAt IS NOT NULL AND expiresAt < NOW()`,
+            { playerId }
+        );
+        const result = await stmt.run();
+        return result.changes ?? 0;
+    }
+
+    /**
      * Retrieves all notifications for a player, newest first.
      */
     async getByPlayerId(playerId: number, limit: number = 50, offset: number = 0): Promise<NotificationRow[]> {
+        await this.cleanupExpired(playerId);
         const stmt = this.unit.prepare<NotificationRow>(
             `SELECT * FROM Notification
              WHERE playerId = @playerId
+             AND (expiresAt IS NULL OR expiresAt > NOW())
              ORDER BY createdAt DESC
              LIMIT @limit OFFSET @offset`,
             { playerId, limit, offset }
@@ -26,9 +41,11 @@ export class NotificationService extends ServiceBase {
      * Counts unread notifications for a player.
      */
     async getUnreadCount(playerId: number): Promise<number> {
+        await this.cleanupExpired(playerId);
         const stmt = this.unit.prepare<{ count: number }>(
             `SELECT COUNT(*)::INTEGER as count FROM Notification
-             WHERE playerId = @playerId AND isRead = 0`,
+             WHERE playerId = @playerId AND isRead = 0
+             AND (expiresAt IS NULL OR expiresAt > NOW())`,
             { playerId }
         );
         const result = await stmt.get();
@@ -37,17 +54,35 @@ export class NotificationService extends ServiceBase {
 
     /**
      * Creates a notification if the player's settings allow it.
-     * System notifications are always created.
+     * System notifications are always created unless blocked by notifyShopPurchases.
      */
     async create(
         playerId: number,
         type: NotificationRow["type"],
         title: string,
         message: string,
-        data: Record<string, unknown> = {}
+        data: Record<string, unknown> = {},
+        options: {
+            priority?: NotificationPriority;
+            groupKey?: string;
+            expiresAt?: Date;
+        } = {}
     ): Promise<[boolean, number]> {
-        // System notifications bypass settings
-        if (type !== "system") {
+        const priority = options.priority ?? 'normal';
+        const groupKey = options.groupKey ?? null;
+        const expiresAt = options.expiresAt ?? null;
+
+        // Shop purchase setting check for system notifications
+        if (type === 'system' && groupKey?.startsWith('shop:purchase')) {
+            const settingsService = new PlayerSettingsService(this.unit);
+            const settings = await settingsService.getSettings(playerId);
+            if (settings && !settings.notifyShopPurchases) {
+                return [false, 0];
+            }
+        }
+
+        // Per-type settings check for non-system notifications
+        if (type !== 'system') {
             const settingsService = new PlayerSettingsService(this.unit);
             const settings = await settingsService.getSettings(playerId);
             if (settings) {
@@ -72,12 +107,86 @@ export class NotificationService extends ServiceBase {
             }
         }
 
+        // If groupKey provided, check for existing unread notification within 5 min window
+        if (groupKey) {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+            const existing = await this.unit.prepare<NotificationRow>(
+                `SELECT notificationId, count, message, data FROM Notification
+                 WHERE playerId = @playerId AND type = @type AND groupKey = @groupKey
+                 AND isRead = 0 AND updatedAt > @fiveMinutesAgo
+                 ORDER BY updatedAt DESC LIMIT 1`,
+                { playerId, type, groupKey, fiveMinutesAgo }
+            ).get();
+
+            if (existing) {
+                const newCount = existing.count + 1;
+                const mergedData = { ...existing.data, ...data, _count: newCount };
+                const newMessage = `${message} (${newCount} total)`;
+
+                await this.unit.prepare(
+                    `UPDATE Notification
+                     SET count = @newCount, updatedAt = NOW(),
+                         data = @mergedData,
+                         message = CASE WHEN @newCount > 2 THEN @newMessage ELSE message END
+                     WHERE notificationId = @notificationId`,
+                    { newCount, mergedData: JSON.stringify(mergedData), newMessage, notificationId: existing.notificationId }
+                ).run();
+
+                // Broadcast high-priority grouped notifications via WebSocket
+                if (priority === 'high') {
+                    try {
+                        const { connectionManager } = await import("../websocket/connection-manager");
+                        connectionManager.sendToPlayerGlobal(playerId, {
+                            type: "notification",
+                            payload: {
+                                notificationId: existing.notificationId,
+                                type,
+                                title,
+                                message: newCount > 2 ? newMessage : message,
+                                priority,
+                                count: newCount,
+                                createdAt: new Date().toISOString()
+                            }
+                        });
+                    } catch (e) {
+                        console.error('[NotificationService] WebSocket broadcast failed:', e);
+                    }
+                }
+
+                return [true, existing.notificationId];
+            }
+        }
+
+        // No grouping match — insert new
         const stmt = this.unit.prepare<NotificationRow>(
-            `INSERT INTO Notification (playerId, type, title, message, data, isRead, createdAt)
-             VALUES (@playerId, @type, @title, @message, @data, 0, NOW())`,
-            { playerId, type, title, message, data: JSON.stringify(data) }
+            `INSERT INTO Notification (playerId, type, title, message, data, isRead, priority, groupKey, count, expiresAt, createdAt, updatedAt)
+             VALUES (@playerId, @type, @title, @message, @data, 0, @priority, @groupKey, 1, @expiresAt, NOW(), NOW())`,
+            { playerId, type, title, message, data: JSON.stringify(data), priority, groupKey, expiresAt: expiresAt?.toISOString() ?? null }
         );
-        return await this.executeStmt(stmt);
+        const result = await this.executeStmt(stmt);
+
+        // Broadcast high-priority notifications via WebSocket
+        if (priority === 'high' && result[0]) {
+            try {
+                const { connectionManager } = await import("../websocket/connection-manager");
+                connectionManager.sendToPlayerGlobal(playerId, {
+                    type: "notification",
+                    payload: {
+                        notificationId: result[1],
+                        type,
+                        title,
+                        message,
+                        priority,
+                        count: 1,
+                        createdAt: new Date().toISOString()
+                    }
+                });
+            } catch (e) {
+                console.error('[NotificationService] WebSocket broadcast failed:', e);
+            }
+        }
+
+        return result;
     }
 
     /**

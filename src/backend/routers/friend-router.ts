@@ -179,13 +179,18 @@ friendRouter.post("/friends/request", requireAuth, async (req, res) => {
 
         const [success, friendId] = await friendService.sendRequest(req.playerId!, addresseeId);
         if (success) {
-            await notificationService.create(
-                addresseeId,
-                "friend_request",
-                "New friend request",
-                `${req.playerId!} sent you a friend request`,
-                { requesterId: req.playerId!, friendId }
-            );
+            try {
+                await notificationService.create(
+                    addresseeId,
+                    "friend_request",
+                    "New friend request",
+                    `${req.playerId!} sent you a friend request`,
+                    { requesterId: req.playerId!, friendId },
+                    { priority: 'normal' }
+                );
+            } catch {
+                // Ignore notification errors
+            }
             ok = true;
             res.status(StatusCodes.CREATED).json({ friendId, message: "Friend request sent" });
         } else {

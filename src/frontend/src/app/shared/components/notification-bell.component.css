@@ -82,6 +82,7 @@
 .notification-item.unread .notification-accent.accent-daily_reward    { background: #f59e0b; }
 .notification-item.unread .notification-accent.accent-friend_request  { background: #a855f7; }
 .notification-item.unread .notification-accent.accent-system          { background: var(--accent); }
+.notification-item.unread .notification-accent.accent-quest_complete  { background: #f59e0b; }
 
 /* Unread title bold */
 .notification-item.unread .notification-title {
@@ -120,6 +121,42 @@
 @keyframes dropdownEnter {
   from { opacity: 0; transform: translateY(-8px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Count badge on notification icon */
+.count-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface-bg, #1a1a1a);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Quest complete notification styling */
+.notification-item.quest-complete {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(245, 158, 11, 0.04) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+}
+
+.notification-item.quest-complete .notification-accent {
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+/* Accent bar for quest_complete */
+.notification-item.unread .notification-accent.accent-quest_complete {
+  background: #f59e0b;
 }
 
 /* Responsive */

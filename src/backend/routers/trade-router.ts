@@ -575,14 +575,16 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
                     "trade_offer",
                     "Trade completed",
                     `You purchased ${itemDescription} for ${listing.price} coal`,
-                    { tradeId: id, listingId, price: listing.price }
+                    { tradeId: id, listingId, price: listing.price },
+                    { priority: 'high' }
                 );
                 await notificationService.create(
                     listing.sellerId,
                     "trade_offer",
                     "Item sold",
                     `Your ${itemDescription} sold for ${listing.price} coal`,
-                    { tradeId: id, listingId, price: listing.price }
+                    { tradeId: id, listingId, price: listing.price },
+                    { priority: 'high' }
                 );
             } catch {
                 // Ignore notification errors

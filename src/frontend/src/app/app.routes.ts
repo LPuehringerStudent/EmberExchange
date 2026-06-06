@@ -32,6 +32,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'spin',
+    loadComponent: () => import('./features/spin/spin.component').then(m => m.SpinComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'games',
     loadComponent: () => import('./features/games/games.component').then(m => m.GamesComponent),
     canActivate: [authGuard]

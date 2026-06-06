@@ -49,6 +49,16 @@
         <div class="toggle-circle"></div>
       </div>
     </div>
+
+    <div class="toggle-card" (click)="shopPurchases.update(v => !v)">
+      <div class="toggle-info">
+        <span class="toggle-title">Shop Purchases</span>
+        <span class="toggle-desc">Get notified about shop purchases and order updates</span>
+      </div>
+      <div class="toggle" [class.active]="shopPurchases()">
+        <div class="toggle-circle"></div>
+      </div>
+    </div>
   </div>
 
   <button class="btn-primary" (click)="save()" [disabled]="loading()">

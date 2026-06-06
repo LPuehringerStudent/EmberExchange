@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@core/services/toast.service';
@@ -41,7 +42,7 @@ interface PlayerStove {
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [CommonModule, HeatTierPipe],
+  imports: [CommonModule, HeatTierPipe, RouterLink],
   templateUrl: './shop.component.html',
   styleUrls: ['./shop.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

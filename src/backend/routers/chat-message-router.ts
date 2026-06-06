@@ -537,14 +537,19 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
 
                 // If offline, create notification
                 if (!pushed) {
-                    const notificationService = new NotificationService(unit);
-                    await notificationService.create(
-                        receiverId,
-                        "chat_message",
-                        "New message",
-                        content.length > 60 ? content.slice(0, 60) + "..." : content,
-                        { senderId, messageId: id }
-                    );
+                    try {
+                        const notificationService = new NotificationService(unit);
+                        await notificationService.create(
+                            receiverId,
+                            "chat_message",
+                            "New message",
+                            content.length > 60 ? content.slice(0, 60) + "..." : content,
+                            { senderId, messageId: id },
+                            { priority: 'normal' }
+                        );
+                    } catch {
+                        // Ignore notification errors
+                    }
                 }
             }
             ok = true;

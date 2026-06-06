@@ -490,15 +490,15 @@ export class AuthService {
     await this.refreshUser();
   }
 
-  async getNotificationSettings(playerId: number): Promise<{ playerId: number; notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean; hasCompletedOnboarding?: boolean }> {
+  async getNotificationSettings(playerId: number): Promise<{ playerId: number; notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean; notifyShopPurchases: boolean; hasCompletedOnboarding?: boolean }> {
     const sessionId = this.getSessionId();
     if (!sessionId) throw new Error('Not authenticated');
     return firstValueFrom(
-      this.api.get<{ playerId: number; notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean; hasCompletedOnboarding?: boolean }>(`/players/${playerId}/settings`, new HttpHeaders({ 'session-id': sessionId }))
+      this.api.get<{ playerId: number; notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean; notifyShopPurchases: boolean; hasCompletedOnboarding?: boolean }>(`/players/${playerId}/settings`, new HttpHeaders({ 'session-id': sessionId }))
     );
   }
 
-  async updateNotificationSettings(playerId: number, settings: Partial<{ notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean; hasCompletedOnboarding?: boolean }>): Promise<void> {
+  async updateNotificationSettings(playerId: number, settings: Partial<{ notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean; notifyShopPurchases: boolean; hasCompletedOnboarding?: boolean }>): Promise<void> {
     const sessionId = this.getSessionId();
     if (!sessionId) throw new Error('Not authenticated');
     await firstValueFrom(

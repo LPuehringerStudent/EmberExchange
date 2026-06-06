@@ -1030,7 +1030,8 @@ authRouter.post("/auth/register", datacenterGuard, registerRateLimiter.middlewar
                 "system",
                 "Welcome to Ember Exchange!",
                 "Your adventure begins now. Verify your email to start trading!",
-                {}
+                {},
+                { priority: 'normal' }
             );
         } catch {
             // Ignore notification errors

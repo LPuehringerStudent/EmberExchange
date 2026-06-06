@@ -92,8 +92,8 @@ Addresses the core concern that the site is overwhelming for non-gamers and firs
 
 | Epic | Source | Priority | Status |
 |------|--------|----------|--------|
-| **Security Hardening — June 3 Audit Remediation** | **SECURITY_AUDIT_2026-06-03** | **P0** | **Planned** |
-| **First Impressions & Onboarding** | **Teacher feedback** | **P0** | **Planned** |
+| **Security Hardening — June 3 Audit Remediation** | **SECURITY_AUDIT_2026-06-03** | **P0** | **Done** |
+| **First Impressions & Onboarding** | **Teacher feedback** | **P0** | **Done** |
 | Investing | New | Medium | Planned |
 | Factory | PB-79 | Low | Deferred |
 | Stove Loadouts & Passive Bonuses | PB-78 | Medium | Deferred |
