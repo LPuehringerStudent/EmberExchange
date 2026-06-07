@@ -1103,6 +1103,13 @@ export class DB {
             )
         `);
 
+        // Migration: add sparks and spins reward columns to existing RedeemCode tables
+        await connection.query(`
+            ALTER TABLE RedeemCode
+            ADD COLUMN IF NOT EXISTS rewardSparks INTEGER NOT NULL DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS rewardSpins INTEGER NOT NULL DEFAULT 0
+        `).catch(() => {});
+
         await connection.query(`
             CREATE TABLE IF NOT EXISTS PlayerRedeemedCode (
                 redeemedId SERIAL PRIMARY KEY,
