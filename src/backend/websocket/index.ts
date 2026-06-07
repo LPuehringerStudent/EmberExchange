@@ -113,7 +113,11 @@ export function setupWebSocketServer(server: http.Server): void {
             } else {
                 wsConnectionsByIp.set(clientIp, count - 1);
             }
-            await handleDisconnect(activeSocketId);
+            try {
+                await handleDisconnect(activeSocketId);
+            } catch (err) {
+                console.error(`[WebSocket] handleDisconnect error for socket ${activeSocketId}:`, err);
+            }
         });
 
         ws.on("error", (err) => {
