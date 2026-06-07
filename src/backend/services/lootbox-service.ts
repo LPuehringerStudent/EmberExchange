@@ -295,8 +295,8 @@ export class LootboxService extends ServiceBase {
 
         // 2c. Update pity counter
         const rarityPriority: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3, limited: 4, secret: 5 };
-        if ((rarityPriority[rarity.toLowerCase()] ?? 0) >= 2) {
-            // Epic or better — reset counter
+        if ((rarityPriority[rarity.toLowerCase()] ?? 0) >= 3) {
+            // Legendary or better — reset counter (so legendary pity can actually be reached)
             await pityService.resetCounter(playerId, lootbox.lootboxTypeId);
         } else {
             await pityService.incrementCounter(playerId, lootbox.lootboxTypeId);
