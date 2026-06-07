@@ -776,6 +776,14 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerDailySpin (
+                playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
+                lastSpinAt TEXT,
+                totalSpins INTEGER NOT NULL DEFAULT 0
+            )
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS PlayerQuest (
                 questId SERIAL PRIMARY KEY,
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
