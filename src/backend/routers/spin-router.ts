@@ -97,7 +97,7 @@ spinRouter.post("/spin", requireAuth, async (req, res) => {
             return;
         }
         const result = await spinService.spin(req.playerId!);
-        await unit.complete();
+        await unit.complete(true);
         res.status(StatusCodes.OK).json(result);
     } catch (err: any) {
         console.error("[SPIN] Spin error:", err);

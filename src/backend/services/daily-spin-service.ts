@@ -108,7 +108,7 @@ export class DailySpinService {
 
         if (prize.id.startsWith("coins_")) {
             await playerService.addCoinsAtomic(playerId, amount);
-            await coinService.create(playerId, amount, "daily_spin", `Won ${prize.label} from Lucky Wheel`);
+            await coinService.create(playerId, amount, "daily_reward", `Won ${prize.label} from Lucky Wheel`);
         } else if (prize.id === "sparks") {
             const player = await playerService.getInfoByID(playerId);
             const newBalance = (player?.sparks ?? 0) + amount;
@@ -117,8 +117,6 @@ export class DailySpinService {
             const lootboxService = new LootboxService(this.unit);
             // Use lootbox type 1 (basic/standard) as the daily spin reward
             await lootboxService.createLootbox(1, playerId, "reward");
-            const player = await playerService.getInfoByID(playerId);
-            await playerService.updatePlayerLootboxCount(playerId, (player?.lootboxCount ?? 0) + 1);
         }
 
         // Update spin record

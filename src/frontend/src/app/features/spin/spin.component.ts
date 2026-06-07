@@ -128,7 +128,7 @@ export class SpinComponent implements OnInit, OnDestroy {
           if (winningIndex === -1) winningIndex = 0;
 
           const fullRotations = 5 + Math.floor(Math.random() * 4);
-          const segmentCenter = winningIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
+          const segmentCenter = winningIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2 - 90;
           const targetRotation = 270 - segmentCenter + fullRotations * 360;
 
           this.wheelRotation.set(targetRotation);
