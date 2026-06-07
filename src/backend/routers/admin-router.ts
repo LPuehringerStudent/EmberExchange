@@ -725,10 +725,14 @@ adminRouter.delete("/admin/redeem-codes/:id", async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid code ID" });
             return;
         }
-        const success = await service.deleteCode(Number(id));
-        if (success) {
+        const result = await service.deleteCode(Number(id));
+        if (result.success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Code deleted" });
+        } else if (result.error) {
+            await unit.complete(false);
+            res.status(StatusCodes.BAD_REQUEST).json({ error: result.error });
+            return;
         } else {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Code not found" });
         }

@@ -59,6 +59,9 @@ export class RedeemCodeService {
     }
 
     async createCode(data: RedeemCodeInput): Promise<number> {
+        if (data.maxUses !== null && data.maxUses !== undefined && data.maxUses < 1) {
+            throw new Error("maxUses must be at least 1 or left empty for unlimited");
+        }
         const stmt = this.unit.prepare<{ codeId: number }>(
             `INSERT INTO RedeemCode (code, rewardCoins, rewardLootboxes, rewardSparks, rewardSpins, maxUses, expiresAt, isActive, createdAt)
              VALUES (@code, @rewardCoins, @rewardLootboxes, @rewardSparks, @rewardSpins, @maxUses, @expiresAt, @isActive, @createdAt)
@@ -83,6 +86,10 @@ export class RedeemCodeService {
         const existing = await this.getCodeById(codeId);
         if (!existing) return false;
 
+        if (data.maxUses !== null && data.maxUses !== undefined && data.maxUses < 1) {
+            throw new Error("maxUses must be at least 1 or left empty for unlimited");
+        }
+
         const fields: string[] = [];
         const params: Record<string, unknown> = { codeId };
 
@@ -105,13 +112,23 @@ export class RedeemCodeService {
         return result.changes === 1;
     }
 
-    async deleteCode(codeId: number): Promise<boolean> {
+    async deleteCode(codeId: number): Promise<{ success: boolean; error?: string }> {
+        // Check if code has any redemptions
+        const redemptionStmt = this.unit.prepare<{ cnt: number }>(
+            `SELECT COUNT(*)::int as cnt FROM PlayerRedeemedCode WHERE codeId = @codeId`,
+            { codeId }
+        );
+        const redemptionResult = await redemptionStmt.get();
+        if (redemptionResult && redemptionResult.cnt > 0) {
+            return { success: false, error: "Cannot delete a code that has already been redeemed" };
+        }
+
         const stmt = this.unit.prepare(
             `DELETE FROM RedeemCode WHERE codeId = @codeId`,
             { codeId }
         );
         const result = await stmt.run();
-        return result.changes === 1;
+        return { success: result.changes === 1 };
     }
 
     async redeemCode(playerId: number, rawCode: string): Promise<RedeemResult> {
@@ -160,12 +177,19 @@ export class RedeemCodeService {
             return { success: false, error: "Player not found" };
         }
 
-        // Record redemption
-        await this.unit.prepare(
-            `INSERT INTO PlayerRedeemedCode (codeId, playerId, redeemedAt)
-             VALUES (@codeId, @playerId, @redeemedAt)`,
-            { codeId: row.codeId, playerId, redeemedAt: new Date().toISOString() }
-        ).run();
+        // Record redemption (with graceful handling of race conditions)
+        try {
+            await this.unit.prepare(
+                `INSERT INTO PlayerRedeemedCode (codeId, playerId, redeemedAt)
+                 VALUES (@codeId, @playerId, @redeemedAt)`,
+                { codeId: row.codeId, playerId, redeemedAt: new Date().toISOString() }
+            ).run();
+        } catch (err: any) {
+            if (err?.code === "23505" || err?.message?.includes("unique constraint") || err?.message?.includes("UNIQUE")) {
+                return { success: false, error: "You have already redeemed this code" };
+            }
+            throw err;
+        }
 
         // Increment used count
         await this.unit.prepare(

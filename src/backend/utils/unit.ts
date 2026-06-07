@@ -155,6 +155,7 @@ const COLUMN_MAP: Record<string, string> = {
     "currentvalue": "currentValue",
     "rewardcoins": "rewardCoins",
     "redeemedid": "redeemedId",
+    "redeemedat": "redeemedAt",
     "rewardlootboxes": "rewardLootboxes",
     "rewardsparks": "rewardSparks",
     "rewardspins": "rewardSpins",
