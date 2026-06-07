@@ -86,6 +86,7 @@ export class BlackjackComponent {
   });
 
   readonly isBetting = computed(() => this.phase() === 'betting');
+  readonly isInsurance = computed(() => this.phase() === 'insurance');
   readonly isPlaying = computed(() => this.phase() === 'playing');
   readonly isDealerTurn = computed(() => this.phase() === 'dealer');
   readonly isShowdown = computed(() => this.phase() === 'showdown');
@@ -120,6 +121,7 @@ export class BlackjackComponent {
       const chips = Number(p['stack'] ?? 0);
       const result = String(p['result'] ?? 'playing');
       const isCurrentTurn = playerId === activePlayer;
+      const handResultsArr = p['handResults'] as string[] | undefined;
 
       const handsArr = p['hands'] as string[][] | undefined;
       const betsArr = p['bets'] as number[] | undefined;
@@ -130,11 +132,12 @@ export class BlackjackComponent {
           suit: this.cardSuit(c),
           faceUp: c !== 'back',
         }));
+        const handResult = handResultsArr?.[idx] ?? result;
         return {
           handId: `${playerId}-${idx}`,
           cards,
           bet: betsArr?.[idx] ?? 0,
-          status: this.determineHandStatus(cards, result),
+          status: this.determineHandStatus(cards, handResult),
           value: this.calculateHandValue(cards),
           isCurrentTurn: isCurrentTurn && idx === activeHandIndex,
         };
@@ -232,6 +235,7 @@ export class BlackjackComponent {
   readonly phaseLabel = computed(() => {
     const labels: Record<string, string> = {
       betting: 'Place Your Bets',
+      insurance: 'Insurance?',
       playing: 'Your Turn',
       dealer: 'Dealer Playing',
       showdown: 'Showdown',
@@ -257,7 +261,11 @@ export class BlackjackComponent {
       lastPhase = currentPhase;
 
       // Phase announcements
-      if (currentPhase === 'dealer') {
+      if (currentPhase === 'insurance') {
+        this.announcementText.set('Dealer shows Ace — Insurance?');
+        this.showAnnouncement.set(true);
+        setTimeout(() => this.showAnnouncement.set(false), 2000);
+      } else if (currentPhase === 'dealer') {
         this.announcementText.set("Dealer's Turn");
         this.showAnnouncement.set(true);
         setTimeout(() => this.showAnnouncement.set(false), 1500);
@@ -321,6 +329,14 @@ export class BlackjackComponent {
 
   executeSplit(): void {
     this.ws.sendAction('split', {});
+  }
+
+  executeInsurance(): void {
+    this.ws.sendAction('insurance', {});
+  }
+
+  executeDeclineInsurance(): void {
+    this.ws.sendAction('decline_insurance', {});
   }
 
   canAction(type: string): boolean {
