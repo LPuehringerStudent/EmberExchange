@@ -333,6 +333,8 @@ shopRouter.post("/shop/redeem", requireAuth, async (req, res) => {
                 message: "Code redeemed successfully",
                 rewardCoins: result.rewardCoins,
                 rewardLootboxes: result.rewardLootboxes,
+                rewardSparks: result.rewardSparks,
+                rewardSpins: result.rewardSpins,
             });
         } else {
             await unit.complete(false);

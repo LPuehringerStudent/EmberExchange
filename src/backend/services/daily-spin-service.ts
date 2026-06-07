@@ -19,13 +19,15 @@ export interface SpinResult {
     prize: SpinPrize;
     amount: number;
     totalSpins: number;
-    nextSpinAt: string;
+    nextSpinAt: string | null;
+    bonusSpins: number;
 }
 
 export interface SpinStatus {
     canSpin: boolean;
     nextSpinAt: string | null;
     totalSpins: number;
+    bonusSpins: number;
 }
 
 // 7-tier prize wheel — weights sum to 100
@@ -77,7 +79,7 @@ export class DailySpinService {
             }
         }
 
-        return { canSpin, nextSpinAt, totalSpins };
+        return { canSpin, nextSpinAt, totalSpins, bonusSpins };
     }
 
     /**
@@ -181,8 +183,25 @@ export class DailySpinService {
             // Ignore achievement errors
         }
 
-        const nextSpinAt = new Date(now.getTime() + COOLDOWN_HOURS * 60 * 60 * 1000).toISOString();
+        // Determine next spin availability based on remaining bonus spins / cooldown
+        const remainingBonus = currentBonus > 0 ? currentBonus - 1 : 0;
+        let nextSpinAt: string | null = null;
 
-        return { prize, amount, totalSpins: newTotal, nextSpinAt };
+        if (remainingBonus === 0) {
+            // No bonus spins left — check regular cooldown
+            const rowAfter = await this.unit.prepare<
+                { lastSpinAt: string | null }
+            >(
+                `SELECT lastSpinAt FROM PlayerDailySpin WHERE playerId = @playerId`,
+                { playerId }
+            ).get();
+            const lastSpin = rowAfter?.lastSpinAt ? new Date(rowAfter.lastSpinAt) : null;
+            if (lastSpin) {
+                nextSpinAt = new Date(lastSpin.getTime() + COOLDOWN_HOURS * 60 * 60 * 1000).toISOString();
+            }
+            // If lastSpinAt is null, nextSpinAt stays null (player can spin immediately)
+        }
+
+        return { prize, amount, totalSpins: newTotal, nextSpinAt, bonusSpins: remainingBonus };
     }
 }

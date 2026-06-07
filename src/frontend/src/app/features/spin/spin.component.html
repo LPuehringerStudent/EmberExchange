@@ -125,6 +125,12 @@
           }
         </button>
 
+        @if (bonusSpins() > 0) {
+          <p class="bonus-spins">
+            🎫 Bonus spins: <strong>{{ bonusSpins() }}</strong>
+          </p>
+        }
+
         @if (!canSpin() && countdown()) {
           <p class="countdown">{{ countdown() }}</p>
         }

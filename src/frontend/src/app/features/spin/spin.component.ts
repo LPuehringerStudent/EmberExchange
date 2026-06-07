@@ -34,6 +34,7 @@ export class SpinComponent implements OnInit, OnDestroy {
   canSpin = signal(false);
   nextSpinAt = signal<string | null>(null);
   totalSpins = signal(0);
+  bonusSpins = signal(0);
   isSpinning = signal(false);
   wheelRotation = signal(0);
   showResult = signal(false);
@@ -63,7 +64,9 @@ export class SpinComponent implements OnInit, OnDestroy {
         this.canSpin.set(status.canSpin);
         this.nextSpinAt.set(status.nextSpinAt);
         this.totalSpins.set(status.totalSpins);
+        this.bonusSpins.set(status.bonusSpins);
         this.spinStatusLoaded.set(true);
+        this.stopCountdown();
         if (!status.canSpin && status.nextSpinAt) {
           this.startCountdown(status.nextSpinAt);
         }
@@ -137,15 +140,25 @@ export class SpinComponent implements OnInit, OnDestroy {
           setTimeout(() => {
             try {
               this.isSpinning.set(false);
-              this.canSpin.set(false);
               this.lastPrize.set(result);
               this.showResult.set(true);
               this.totalSpins.set(result.totalSpins);
+              this.bonusSpins.set(result.bonusSpins);
               this.spinHistory.update(h => [result, ...h].slice(0, 5));
 
-              if (result.nextSpinAt) {
+              this.stopCountdown();
+              if (result.bonusSpins > 0) {
+                // Still have bonus spins — no cooldown
+                this.canSpin.set(true);
+                this.nextSpinAt.set(null);
+              } else if (result.nextSpinAt) {
+                this.canSpin.set(false);
                 this.nextSpinAt.set(result.nextSpinAt);
                 this.startCountdown(result.nextSpinAt);
+              } else {
+                // No bonus spins and no cooldown set — can spin immediately
+                this.canSpin.set(true);
+                this.nextSpinAt.set(null);
               }
 
               this.toast.success(`You won ${result.prize.label}!`);

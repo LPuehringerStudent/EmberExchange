@@ -604,13 +604,15 @@ export interface SpinResult {
     prize: SpinPrize;
     amount: number;
     totalSpins: number;
-    nextSpinAt: string;
+    nextSpinAt: string | null;
+    bonusSpins: number;
 }
 
 export interface SpinStatus {
     canSpin: boolean;
     nextSpinAt: string | null;
     totalSpins: number;
+    bonusSpins: number;
 }
 
 
