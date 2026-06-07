@@ -48,7 +48,7 @@ interface PlayerStove {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShopComponent implements OnInit {
-  activeTab = signal<'daily' | 'stoves' | 'lootboxes' | 'sell'>('daily');
+  activeTab = signal<'daily' | 'stoves' | 'lootboxes' | 'sell' | 'codes'>('daily');
   shopItems = signal<ShopItem[]>([]);
   dailyStatus = signal<DailyStatus | null>(null);
   coins = signal<number>(0);
@@ -61,6 +61,8 @@ export class ShopComponent implements OnInit {
   countdown = signal<string>('');
   playerStoves = signal<PlayerStove[]>([]);
   sellLoadingStoves = signal<boolean>(false);
+  redeemCodeInput = signal<string>('');
+  redeemLoading = signal<boolean>(false);
 
   private authService = inject(AuthService);
   private api = inject(ApiService);
@@ -175,12 +177,52 @@ export class ShopComponent implements OnInit {
     }
   }
 
-  async setTab(tab: 'daily' | 'stoves' | 'lootboxes' | 'sell'): Promise<void> {
+  async setTab(tab: 'daily' | 'stoves' | 'lootboxes' | 'sell' | 'codes'): Promise<void> {
     this.activeTab.set(tab);
     this.errorMessage.set('');
     this.successMessage.set('');
     if (tab === 'sell') {
       await this.loadPlayerStoves();
+    }
+  }
+
+  async redeemCode(): Promise<void> {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+    const code = this.redeemCodeInput().trim();
+    if (!code) {
+      this.errorMessage.set('Please enter a code');
+      return;
+    }
+
+    const sessionId = this.authService.getSessionId();
+    if (!sessionId) {
+      this.errorMessage.set('Not authenticated');
+      return;
+    }
+
+    this.redeemLoading.set(true);
+    try {
+      const result = await firstValueFrom(
+        this.api.post<{ message: string; rewardCoins: number; rewardLootboxes: number; rewardSparks: number; rewardSpins: number }>(
+          '/shop/redeem', { code }, new HttpHeaders({ 'session-id': sessionId })
+        )
+      );
+      const rewardText = [
+        result.rewardCoins > 0 ? `${result.rewardCoins} coins` : '',
+        result.rewardLootboxes > 0 ? `${result.rewardLootboxes} lootbox${result.rewardLootboxes > 1 ? 'es' : ''}` : '',
+        result.rewardSparks > 0 ? `${result.rewardSparks} sparks` : '',
+        result.rewardSpins > 0 ? `${result.rewardSpins} spin${result.rewardSpins > 1 ? 's' : ''}` : ''
+      ].filter(Boolean).join(' + ');
+      this.successMessage.set(`Code redeemed! You received ${rewardText}`);
+      this.toastService.success('Code redeemed', `You received ${rewardText}`);
+      this.coins.set(this.coins() + (result.rewardCoins ?? 0));
+      this.redeemCodeInput.set('');
+      await this.authService.refreshUser();
+    } catch (err) {
+      this.errorMessage.set(err instanceof Error ? err.message : 'Failed to redeem code');
+    } finally {
+      this.redeemLoading.set(false);
     }
   }
 

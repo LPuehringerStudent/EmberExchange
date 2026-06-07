@@ -89,6 +89,20 @@ export interface AdminRequestLog {
   createdAt: string;
 }
 
+export interface RedeemCode {
+  codeId: number;
+  code: string;
+  rewardCoins: number;
+  rewardLootboxes: number;
+  rewardSparks: number;
+  rewardSpins: number;
+  maxUses: number | null;
+  usedCount: number;
+  expiresAt: string | null;
+  isActive: number;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private api = inject(ApiService);
@@ -199,6 +213,28 @@ export class AdminService {
     const query = params.toString() ? `?${params.toString()}` : '';
     return firstValueFrom(
       this.api.get<AdminRequestLog[]>(`/admin/request-logs${query}`, this.getHeaders())
+    );
+  }
+
+  async getRedeemCodes(): Promise<RedeemCode[]> {
+    return firstValueFrom(this.api.get<RedeemCode[]>('/admin/redeem-codes', this.getHeaders()));
+  }
+
+  async createRedeemCode(data: Omit<RedeemCode, 'codeId' | 'usedCount' | 'createdAt'>): Promise<{ codeId: number; code: string }> {
+    return firstValueFrom(
+      this.api.post<{ codeId: number; code: string }>('/admin/redeem-codes', data, this.getHeaders())
+    );
+  }
+
+  async updateRedeemCode(codeId: number, updates: Partial<Omit<RedeemCode, 'codeId' | 'usedCount' | 'createdAt'>>): Promise<void> {
+    await firstValueFrom(
+      this.api.patch<void>(`/admin/redeem-codes/${codeId}`, updates, this.getHeaders())
+    );
+  }
+
+  async deleteRedeemCode(codeId: number): Promise<void> {
+    await firstValueFrom(
+      this.api.delete<void>(`/admin/redeem-codes/${codeId}`, this.getHeaders())
     );
   }
 }

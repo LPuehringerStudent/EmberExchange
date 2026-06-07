@@ -50,20 +50,23 @@ export class DailySpinService {
      */
     async getStatus(playerId: number): Promise<SpinStatus> {
         const row = await this.unit.prepare<
-            { lastSpinAt: string | null; totalSpins: number }
+            { lastSpinAt: string | null; totalSpins: number; bonusSpins: number }
         >(
-            `SELECT lastSpinAt, totalSpins FROM PlayerDailySpin WHERE playerId = @playerId`,
+            `SELECT lastSpinAt, totalSpins, bonusSpins FROM PlayerDailySpin WHERE playerId = @playerId`,
             { playerId }
         ).get();
 
         const totalSpins = row?.totalSpins ?? 0;
+        const bonusSpins = row?.bonusSpins ?? 0;
         const lastSpinAt = row?.lastSpinAt ? new Date(row.lastSpinAt) : null;
         const now = new Date();
 
         let canSpin = false;
         let nextSpinAt: string | null = null;
 
-        if (!lastSpinAt) {
+        if (bonusSpins > 0) {
+            canSpin = true;
+        } else if (!lastSpinAt) {
             canSpin = true;
         } else {
             const hoursSince = (now.getTime() - lastSpinAt.getTime()) / (1000 * 60 * 60);
@@ -123,14 +126,29 @@ export class DailySpinService {
         const now = new Date();
         const nowIso = now.toISOString();
         const newTotal = status.totalSpins + 1;
+        const currentBonus = (await this.unit.prepare<{ bonusSpins: number }>(
+            `SELECT bonusSpins FROM PlayerDailySpin WHERE playerId = @playerId`,
+            { playerId }
+        ).get())?.bonusSpins ?? 0;
 
-        await this.unit.prepare(
-            `INSERT INTO PlayerDailySpin (playerId, lastSpinAt, totalSpins)
-             VALUES (@playerId, @lastSpinAt, @totalSpins)
-             ON CONFLICT (playerId)
-             DO UPDATE SET lastSpinAt = @lastSpinAt, totalSpins = @totalSpins`,
-            { playerId, lastSpinAt: nowIso, totalSpins: newTotal }
-        ).run();
+        if (currentBonus > 0) {
+            // Consume a bonus spin without touching the cooldown
+            await this.unit.prepare(
+                `INSERT INTO PlayerDailySpin (playerId, lastSpinAt, totalSpins, bonusSpins)
+                 VALUES (@playerId, (SELECT lastSpinAt FROM PlayerDailySpin WHERE playerId = @playerId), @totalSpins, @bonusSpins)
+                 ON CONFLICT (playerId)
+                 DO UPDATE SET totalSpins = @totalSpins, bonusSpins = @bonusSpins`,
+                { playerId, totalSpins: newTotal, bonusSpins: currentBonus - 1 }
+            ).run();
+        } else {
+            await this.unit.prepare(
+                `INSERT INTO PlayerDailySpin (playerId, lastSpinAt, totalSpins, bonusSpins)
+                 VALUES (@playerId, @lastSpinAt, @totalSpins, 0)
+                 ON CONFLICT (playerId)
+                 DO UPDATE SET lastSpinAt = @lastSpinAt, totalSpins = @totalSpins`,
+                { playerId, lastSpinAt: nowIso, totalSpins: newTotal }
+            ).run();
+        }
 
         // Notification
         try {

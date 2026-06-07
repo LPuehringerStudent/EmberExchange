@@ -781,9 +781,15 @@ export class DB {
             CREATE TABLE IF NOT EXISTS PlayerDailySpin (
                 playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
                 lastSpinAt TEXT,
-                totalSpins INTEGER NOT NULL DEFAULT 0
+                totalSpins INTEGER NOT NULL DEFAULT 0,
+                bonusSpins INTEGER NOT NULL DEFAULT 0
             )
         `);
+
+        await connection.query(`
+            ALTER TABLE PlayerDailySpin
+            ADD COLUMN IF NOT EXISTS bonusSpins INTEGER NOT NULL DEFAULT 0
+        `).catch(() => {});
 
         await connection.query(`
             CREATE TABLE IF NOT EXISTS PlayerQuest (
@@ -1082,6 +1088,32 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS RedeemCode (
+                codeId SERIAL PRIMARY KEY,
+                code TEXT NOT NULL UNIQUE,
+                rewardCoins INTEGER NOT NULL DEFAULT 0,
+                rewardLootboxes INTEGER NOT NULL DEFAULT 0,
+                rewardSparks INTEGER NOT NULL DEFAULT 0,
+                rewardSpins INTEGER NOT NULL DEFAULT 0,
+                maxUses INTEGER,
+                usedCount INTEGER NOT NULL DEFAULT 0,
+                expiresAt TEXT,
+                isActive INTEGER NOT NULL DEFAULT 1,
+                createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerRedeemedCode (
+                redeemedId SERIAL PRIMARY KEY,
+                codeId INTEGER NOT NULL REFERENCES RedeemCode(codeId),
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                redeemedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (codeId, playerId)
+            )
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS PlayerDailyReward (
                 playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
                 lastClaimAt TEXT,
@@ -1293,6 +1325,8 @@ export class DB {
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_minigame_player_result ON MiniGameSession(playerId, result)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_lootbox_player_opened ON Lootbox(playerId, openedAt)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_shoppurchase_player ON ShopPurchase(playerId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_redeemcode_code ON RedeemCode(code)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerredeemedcode_player ON PlayerRedeemedCode(playerId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_gloryshowcase_stove ON GloryShowcase(stoveId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_chatmessage_sender ON ChatMessage(senderId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_gloryvisit_visited ON GloryVisit(visitedPlayerId)`);
@@ -1401,6 +1435,8 @@ export async function resetDatabase(connection: PoolClient): Promise<void> {
         DROP TABLE IF EXISTS StoveType CASCADE;
         DROP TABLE IF EXISTS Game CASCADE;
         DROP TABLE IF EXISTS SupportTicket CASCADE;
+        DROP TABLE IF EXISTS PlayerRedeemedCode CASCADE;
+        DROP TABLE IF EXISTS RedeemCode CASCADE;
         DROP TABLE IF EXISTS ShopPurchase CASCADE;
         DROP TABLE IF EXISTS ShopListing CASCADE;
         DROP TABLE IF EXISTS EventLog CASCADE;

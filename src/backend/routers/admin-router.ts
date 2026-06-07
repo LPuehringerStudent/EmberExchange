@@ -1,6 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { AdminService } from "../services/admin-service";
+import { RedeemCodeService } from "../services/redeem-code-service";
 import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -628,6 +629,108 @@ adminRouter.post("/admin/stove-types", async (req, res) => {
             res.status(StatusCodes.CREATED).json({ typeId: id, name });
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create stove type" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+// ─── Redeem Code Management ─────────────────────────────────
+
+adminRouter.get("/admin/redeem-codes", async (_req, res) => {
+    const unit = await Unit.create(true);
+    const service = new RedeemCodeService(unit);
+    try {
+        const codes = await service.listCodes();
+        res.status(StatusCodes.OK).json(codes);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+adminRouter.post("/admin/redeem-codes", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new RedeemCodeService(unit);
+    let ok = false;
+    try {
+        const { code, rewardCoins, rewardLootboxes, rewardSparks, rewardSpins, maxUses, expiresAt, isActive } = req.body;
+        if (isNullOrWhiteSpace(code)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "code is required" });
+            return;
+        }
+        const id = await service.createCode({
+            code,
+            rewardCoins: typeof rewardCoins === "number" ? rewardCoins : 0,
+            rewardLootboxes: typeof rewardLootboxes === "number" ? rewardLootboxes : 0,
+            rewardSparks: typeof rewardSparks === "number" ? rewardSparks : 0,
+            rewardSpins: typeof rewardSpins === "number" ? rewardSpins : 0,
+            maxUses: typeof maxUses === "number" ? maxUses : null,
+            expiresAt: typeof expiresAt === "string" ? expiresAt : null,
+            isActive: typeof isActive === "boolean" ? isActive : true,
+        });
+        ok = true;
+        res.status(StatusCodes.CREATED).json({ codeId: id, code: code.trim().toUpperCase() });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+adminRouter.patch("/admin/redeem-codes/:id", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new RedeemCodeService(unit);
+    const id = req.params.id;
+    let ok = false;
+    try {
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid code ID" });
+            return;
+        }
+        const data: Partial<{ code: string; rewardCoins: number; rewardLootboxes: number; rewardSparks: number; rewardSpins: number; maxUses: number | null; expiresAt: string | null; isActive: boolean }> = {};
+        if (req.body.code !== undefined) data.code = req.body.code;
+        if (req.body.rewardCoins !== undefined) data.rewardCoins = req.body.rewardCoins;
+        if (req.body.rewardLootboxes !== undefined) data.rewardLootboxes = req.body.rewardLootboxes;
+        if (req.body.rewardSparks !== undefined) data.rewardSparks = req.body.rewardSparks;
+        if (req.body.rewardSpins !== undefined) data.rewardSpins = req.body.rewardSpins;
+        if (req.body.maxUses !== undefined) data.maxUses = req.body.maxUses;
+        if (req.body.expiresAt !== undefined) data.expiresAt = req.body.expiresAt;
+        if (req.body.isActive !== undefined) data.isActive = req.body.isActive;
+
+        const success = await service.updateCode(Number(id), data);
+        if (success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ message: "Code updated" });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Code not found" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+adminRouter.delete("/admin/redeem-codes/:id", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new RedeemCodeService(unit);
+    const id = req.params.id;
+    let ok = false;
+    try {
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid code ID" });
+            return;
+        }
+        const success = await service.deleteCode(Number(id));
+        if (success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ message: "Code deleted" });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Code not found" });
         }
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
