@@ -18,7 +18,13 @@
 
 .forgery-table-img {
   filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.25));
-  transition: filter 0.3s ease;
+  transition: filter 0.5s ease;
+}
+
+.merge-charging .forgery-table-img,
+.merge-igniting .forgery-table-img,
+.merge-converging .forgery-table-img {
+  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.4)) brightness(0.7);
 }
 
 .forgery-table-glow {
@@ -29,6 +35,44 @@
 @keyframes glow-pulse {
   0%, 100% { opacity: 0.25; transform: scale(1); }
   50% { opacity: 0.45; transform: scale(1.05); }
+}
+
+/* ─── Merge Ambient Glow ─── */
+.merge-ambient-glow {
+  background: radial-gradient(circle at center, rgba(0, 140, 255, 0.4) 0%, rgba(0, 80, 200, 0.15) 40%, transparent 70%);
+  transition: opacity 0.8s ease;
+}
+
+/* ─── Charging Ring ─── */
+.charging-ring {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 180, 255, 0.6);
+  box-shadow: 0 0 20px rgba(0, 180, 255, 0.3), inset 0 0 20px rgba(0, 180, 255, 0.1);
+  animation: charging-pulse 0.7s ease-in-out infinite alternate;
+  z-index: 8;
+}
+
+@keyframes charging-pulse {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.4; }
+  100% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.9; }
+}
+
+/* ─── Convergence Core ─── */
+.convergence-core {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(0, 180, 255, 0.6) 30%, transparent 70%);
+  animation: converge-swell 1s ease-in-out forwards;
+  z-index: 15;
+}
+
+@keyframes converge-swell {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2); opacity: 0.8; }
 }
 
 /* ─── Slots ─── */
@@ -46,7 +90,12 @@
 .forge-slot--filled .forge-slot__content {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   border: 2px solid rgba(255, 255, 255, 0.15);
-  transition: box-shadow 0.2s ease;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.forge-slot__content.fade-out {
+  opacity: 0;
+  transform: scale(0.85);
 }
 
 .forge-slot--empty .forge-slot__placeholder {
@@ -68,40 +117,82 @@
   opacity: 1;
 }
 
-/* ─── Merge Animation ─── */
-.forge-slot--burning {
-  animation: slot-burn 0.4s ease forwards;
+/* ─── Flame Animation ─── */
+.forge-slot__flame {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+  box-shadow: 0 0 24px rgba(0, 150, 255, 0.6), 0 0 48px rgba(0, 100, 255, 0.3);
 }
 
-@keyframes slot-burn {
+.forge-slot--burning .forge-slot__flame {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.forge-slot--igniting {
+  animation: slot-ignite-bounce 0.4s ease forwards;
+}
+
+@keyframes slot-ignite-bounce {
   0% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.15); }
+  40% { transform: translate(-50%, -50%) scale(1.12); }
   100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-.forge-slot__flame {
-  box-shadow: 0 0 24px rgba(0, 150, 255, 0.6), 0 0 48px rgba(0, 100, 255, 0.3);
-  animation: flame-flicker 0.3s ease-in-out infinite alternate;
+.forge-slot__flame img {
+  animation: flame-flicker 0.25s ease-in-out infinite alternate;
 }
 
 @keyframes flame-flicker {
-  0% { filter: brightness(1); }
-  100% { filter: brightness(1.15); }
+  0% { filter: brightness(1) saturate(1); }
+  100% { filter: brightness(1.2) saturate(1.15); }
 }
 
-.merge-glow-overlay {
+/* Flame ring that expands outward */
+.flame-ring {
+  border: 2px solid rgba(0, 180, 255, 0.7);
+  box-shadow: 0 0 12px rgba(0, 180, 255, 0.4), inset 0 0 12px rgba(0, 180, 255, 0.2);
+  animation: flame-ring-expand 0.6s ease-out forwards;
+}
+
+@keyframes flame-ring-expand {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+/* ─── Merge Flash Overlay ─── */
+.merge-flash-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.9) 0%, rgba(100, 180, 255, 0.5) 40%, transparent 70%);
-  animation: merge-glow-flash 0.8s ease-out forwards;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  animation: flash-bg 0.9s ease-out forwards;
   pointer-events: none;
 }
 
-@keyframes merge-glow-flash {
-  0% { opacity: 0; transform: scale(0.8); }
-  30% { opacity: 1; transform: scale(1.1); }
-  100% { opacity: 0; transform: scale(1.2); }
+@keyframes flash-bg {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.merge-flash-core {
+  width: 100vw;
+  height: 100vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(180, 220, 255, 0.8) 20%, rgba(100, 180, 255, 0.3) 50%, transparent 70%);
+  animation: flash-core 0.9s ease-out forwards;
+}
+
+@keyframes flash-core {
+  0% { transform: scale(0); opacity: 0; }
+  20% { transform: scale(0.6); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.9; }
+  100% { transform: scale(2); opacity: 0; }
 }
 
 /* ─── Forge Button ─── */
@@ -183,6 +274,10 @@
   animation: panel-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.result-stove-image {
+  animation: stove-materialize 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -197,6 +292,12 @@
   0% { opacity: 0; transform: scale(0.8); }
   60% { transform: scale(1.05); }
   100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes stove-materialize {
+  0% { opacity: 0; transform: scale(0.3) rotate(-8deg); filter: brightness(2) blur(4px); }
+  60% { transform: scale(1.08) rotate(1deg); filter: brightness(1.1) blur(0); }
+  100% { opacity: 1; transform: scale(1) rotate(0); filter: brightness(1) blur(0); }
 }
 
 /* ─── Dark Mode ─── */

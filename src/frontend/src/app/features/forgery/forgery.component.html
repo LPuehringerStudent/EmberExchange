@@ -37,7 +37,13 @@
 
     <!-- ─── Forging Table ─── -->
     <section class="forgery-table-section flex flex-col items-center mb-10">
-      <div class="forgery-table-wrap relative" style="width: min(31.25rem, 90vw); aspect-ratio: 1;">
+      <div
+        class="forgery-table-wrap relative"
+        [class.merge-charging]="mergePhase() === 'charging'"
+        [class.merge-igniting]="mergePhase() === 'igniting'"
+        [class.merge-converging]="mergePhase() === 'converging'"
+        style="width: min(31.25rem, 90vw); aspect-ratio: 1;"
+      >
         <!-- Background Image -->
         <img
           src="/assets/forging-table.png"
@@ -49,6 +55,12 @@
         <!-- Glow behind table -->
         <div class="forgery-table-glow absolute inset-[-20px] rounded-full opacity-30 pointer-events-none"></div>
 
+        <!-- Merge ambient glow (progressive blue) -->
+        <div
+          class="merge-ambient-glow absolute inset-[-30px] rounded-full pointer-events-none"
+          [style.opacity]="mergePhase() === 'charging' ? 0.3 : mergePhase() === 'igniting' ? 0.2 + (mergeAnimSlot() + 1) * 0.1 : mergePhase() === 'converging' ? 0.8 : 0"
+        ></div>
+
         <!-- Slots -->
         @for (slot of slots(); track $index; let i = $index) {
           <div
@@ -59,14 +71,25 @@
             [class.forge-slot--filled]="slot.stove"
             [class.forge-slot--empty]="!slot.stove"
             [class.forge-slot--burning]="mergeAnimating() && mergeAnimSlot() >= i"
-            (click)="slot.stove && removeStove(slot.stove.stoveId)"
+            [class.forge-slot--igniting]="mergeAnimating() && mergeAnimSlot() === i"
+            (click)="slot.stove && !mergeAnimating() && removeStove(slot.stove.stoveId)"
             [attr.aria-label]="slot.stove ? 'Remove ' + slot.stove.stoveName : 'Empty forge slot'"
           >
-            @if (slot.stove && !(mergeAnimating() && mergeAnimSlot() >= i)) {
-              <div class="forge-slot__content relative w-full h-full rounded-xl overflow-hidden shadow-lg">
+            @if (slot.stove) {
+              <!-- Stove content (fades out during burn) -->
+              <div
+                class="forge-slot__content relative w-full h-full rounded-xl overflow-hidden shadow-lg"
+                [class.fade-out]="mergeAnimating() && mergeAnimSlot() >= i"
+              >
                 <img [src]="slot.stove.imageUrl" [alt]="slot.stove.stoveName" class="w-full h-full object-cover" />
-                <div class="forge-slot__overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-1.5">
-                  <span class="text-[0.625rem] font-bold text-white truncate w-full">{{ slot.stove.stoveName }}</span>
+                <div class="forge-slot__overlay absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col items-start justify-end p-1.5 gap-0.5">
+                  <span class="text-[0.625rem] font-bold text-white truncate w-full leading-tight">{{ slot.stove.stoveName }}</span>
+                  <div class="flex items-center gap-1">
+                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.color]="getHeatColor(slot.stove.heatLevel)">
+                      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/>
+                    </svg>
+                    <span class="text-[0.5625rem] font-bold text-white/90">{{ slot.stove.heatLevel | number:'1.0-1' }}</span>
+                  </div>
                 </div>
                 <button
                   class="forge-slot__remove absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-red-500/80 transition-colors"
@@ -78,16 +101,33 @@
                   </svg>
                 </button>
               </div>
-            } @else if (mergeAnimating() && mergeAnimSlot() >= i) {
-              <div class="forge-slot__flame relative w-full h-full rounded-xl overflow-hidden">
+            }
+
+            <!-- Blue fire overlay (fades in during burn) -->
+            @if (mergeAnimating() && mergeAnimSlot() >= i) {
+              <div class="forge-slot__flame absolute inset-0 rounded-xl overflow-hidden">
                 <img [src]="blueFireGif" alt="" class="w-full h-full object-cover" />
+                <!-- Blue glow ring -->
+                <div class="flame-ring absolute inset-[-4px] rounded-xl pointer-events-none"></div>
               </div>
-            } @else {
+            }
+
+            @if (!slot.stove) {
               <div class="forge-slot__placeholder flex items-center justify-center w-full h-full rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--bg-card)]/60">
                 <span class="text-lg font-bold text-[var(--text-muted)] opacity-40">{{ i + 1 }}</span>
               </div>
             }
           </div>
+        }
+
+        <!-- Charging ring around center -->
+        @if (mergePhase() === 'charging') {
+          <div class="charging-ring absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+        }
+
+        <!-- Convergence beam (blue energy to center) -->
+        @if (mergePhase() === 'converging') {
+          <div class="convergence-core absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
         }
 
         <!-- Center Forge Button -->
@@ -97,12 +137,18 @@
             [disabled]="!canForge() || forging() || mergeAnimating()"
             class="forge-btn relative px-8 py-4 rounded-2xl font-bold text-white text-sm uppercase tracking-[0.12em] border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden"
           >
-            @if (forging()) {
+            @if (forging() && !mergeAnimating()) {
               <span class="flex items-center gap-2">
                 <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 12a9 9 0 1 1-6.219-8.56" stroke-linecap="round"/>
                 </svg>
                 Forging...
+              </span>
+            } @else if (mergeAnimating()) {
+              <span class="flex flex-col items-center gap-1">
+                <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" stroke-linecap="round"/>
+                </svg>
               </span>
             } @else {
               <span class="flex flex-col items-center gap-1">
@@ -200,7 +246,17 @@
               <!-- Info -->
               <div class="text-center">
                 <p class="text-xs font-semibold text-[var(--text-primary)] truncate">{{ stove.stoveName }}</p>
-                <p class="text-[0.625rem] font-bold uppercase tracking-wider mt-0.5" [class]="getRarityText(stove.rarity)">{{ stove.rarity }}</p>
+                <div class="flex items-center justify-center gap-1.5 mt-1">
+                  <span class="text-[0.625rem] font-bold uppercase tracking-wider" [class]="getRarityText(stove.rarity)">{{ stove.rarity }}</span>
+                  <span class="text-[0.5rem] text-[var(--text-muted)]">&bull;</span>
+                  <div class="flex items-center gap-0.5">
+                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.color]="getHeatColor(stove.heatLevel)">
+                      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/>
+                    </svg>
+                    <span class="text-[0.625rem] font-semibold" [style.color]="getHeatColor(stove.heatLevel)">{{ stove.heatLevel | number:'1.0-1' }}</span>
+                  </div>
+                </div>
+                <p class="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">{{ stove.collection }}</p>
               </div>
             </div>
           }
@@ -209,9 +265,11 @@
     </section>
   </main>
 
-  <!-- ─── Merge Glow Overlay ─── -->
-  @if (mergeGlow()) {
-    <div class="merge-glow-overlay" aria-hidden="true"></div>
+  <!-- ─── Merge Flash Overlay ─── -->
+  @if (mergePhase() === 'flash') {
+    <div class="merge-flash-overlay" aria-hidden="true">
+      <div class="merge-flash-core"></div>
+    </div>
   }
 
   <!-- ─── Result Overlay ─── -->
@@ -223,13 +281,13 @@
         @if (result()?.success && result()?.newStove; as newStove) {
           <!-- Success -->
           <div class="success-animation mb-6">
-            <div class="w-24 h-24 mx-auto rounded-2xl overflow-hidden shadow-xl mb-4" [class]="'shadow-' + getRarityGlow(newStove.rarity)">
+            <div class="result-stove-image w-28 h-28 mx-auto rounded-2xl overflow-hidden shadow-xl mb-4" [class]="'shadow-' + getRarityGlow(newStove.rarity)">
               @if (newStove.imageUrl) {
                 <img [src]="newStove.imageUrl" [alt]="newStove.name" class="w-full h-full object-cover" />
               }
             </div>
-            <h2 class="text-2xl font-extrabold text-[var(--text-primary)] mb-1" style="font-family: var(--font-display)">Forge Successful!</h2>
-            <p class="text-sm text-[var(--text-muted)]">A new stove has been forged from the flames</p>
+            <h2 class="text-2xl font-extrabold text-[var(--text-primary)] mb-1" style="font-family: var(--font-display)">Forge Successful</h2>
+            <p class="text-sm text-[var(--text-muted)]">A new stove rises from the forge</p>
           </div>
 
           <div class="result-stove-info bg-[var(--bg-sidebar)] rounded-2xl p-5 mb-6 border border-[var(--border)]">

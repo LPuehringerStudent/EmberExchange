@@ -30,6 +30,8 @@ interface ForgeSlot {
   stove: ShowedStove | null;
 }
 
+type MergePhase = 'charging' | 'igniting' | 'converging' | 'flash' | null;
+
 @Component({
   selector: 'app-forgery',
   standalone: true,
@@ -59,7 +61,7 @@ export class ForgeryComponent {
   // ─── Merge Animation State ───
   mergeAnimating = signal(false);
   mergeAnimSlot = signal<number>(-1);
-  mergeGlow = signal(false);
+  mergePhase = signal<MergePhase>(null);
   mergeResultData = signal<ForgeryResult | null>(null);
   readonly blueFireGif = 'assets/animation/blue-fire.gif';
 
@@ -148,7 +150,8 @@ export class ForgeryComponent {
                     ...stove,
                     stoveName: type.name,
                     rarity: type.rarity,
-                    imageUrl: type.imageUrl ?? ''
+                    imageUrl: type.imageUrl ?? '',
+                    collection: type.collection ?? 'Unknown'
                   }))
                 )
               )
@@ -253,30 +256,40 @@ export class ForgeryComponent {
   private startMergeAnimation(result: ForgeryResult): void {
     this.mergeAnimating.set(true);
     this.mergeAnimSlot.set(-1);
-    this.mergeGlow.set(false);
+    this.mergePhase.set('charging');
     this.mergeResultData.set(result);
 
-    // Light up slots one by one, 1 second apart
-    for (let i = 0; i < 6; i++) {
-      setTimeout(() => {
-        this.mergeAnimSlot.set(i);
-      }, i * 1000);
-    }
-
-    // After all slots lit, wait 3 seconds, then glow and show result
+    // Phase 1: Charging (0-700ms) — energy builds up
     setTimeout(() => {
-      this.mergeGlow.set(true);
-      // Flash glow for 800ms then reveal result
+      this.mergePhase.set('igniting');
+
+      // Phase 2: Ignite slots one by one, 750ms apart with smooth transitions
+      for (let i = 0; i < 6; i++) {
+        setTimeout(() => {
+          this.mergeAnimSlot.set(i);
+        }, 700 + i * 750);
+      }
+
+      // Phase 3: All ignited — convergence to center (after last ignition + 1.5s)
       setTimeout(() => {
-        this.mergeGlow.set(false);
-        this.mergeAnimating.set(false);
-        this.mergeAnimSlot.set(-1);
-        this.slots.set(Array.from({ length: 6 }, () => ({ stove: null })));
-        this.result.set(this.mergeResultData());
-        this.showResult.set(true);
-        this.loadStoves();
-      }, 800);
-    }, 6 * 1000 + 3000);
+        this.mergePhase.set('converging');
+      }, 700 + 6 * 750 + 1500);
+
+      // Phase 4: Flash explosion (after convergence + 1s)
+      setTimeout(() => {
+        this.mergePhase.set('flash');
+        // End flash and reveal result
+        setTimeout(() => {
+          this.mergePhase.set(null);
+          this.mergeAnimating.set(false);
+          this.mergeAnimSlot.set(-1);
+          this.slots.set(Array.from({ length: 6 }, () => ({ stove: null })));
+          this.result.set(this.mergeResultData());
+          this.showResult.set(true);
+          this.loadStoves();
+        }, 900);
+      }, 700 + 6 * 750 + 1500 + 1000);
+    }, 100);
   }
 
   closeResult(): void {
@@ -335,5 +348,13 @@ export class ForgeryComponent {
       [Rarity.SECRET]: 'text-emerald-500',
     };
     return map[rarity] || 'text-gray-500';
+  }
+
+  getHeatColor(heat: number): string {
+    if (heat >= 80) return '#ffd700';
+    if (heat >= 60) return '#ff4500';
+    if (heat >= 40) return '#f59e0b';
+    if (heat >= 20) return '#dc2626';
+    return '#64748b';
   }
 }
