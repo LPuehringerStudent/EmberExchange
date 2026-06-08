@@ -4,6 +4,7 @@ import { checkPlayerBanned } from "../middleware/ban-check";
 import { sanitizeText } from "../utils/sanitize";
 import { ChatMessageService } from "../services/chat-message-service";
 import { NotificationService } from "../services/notification-service";
+import { QuestService } from "../services/quest-service";
 import { connectionManager } from "../websocket/connection-manager";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -49,7 +50,8 @@ chatMessageRouter.get("/chat-messages", requireAuth, async (req, res) => {
         const response = await service.getAllForPlayer(req.playerId!);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -82,14 +84,15 @@ chatMessageRouter.get("/chat-messages", requireAuth, async (req, res) => {
 chatMessageRouter.get("/chat-messages/global", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
         const response = await service.getGlobalMessages(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -156,7 +159,8 @@ chatMessageRouter.get("/chat-messages/:id", requireAuth, async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -218,7 +222,8 @@ chatMessageRouter.get("/players/:playerId/sent-messages", requireAuth, async (re
         const response = await service.getBySender(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -280,7 +285,8 @@ chatMessageRouter.get("/players/:playerId/received-messages", requireAuth, async
         const response = await service.getByReceiver(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -342,7 +348,8 @@ chatMessageRouter.get("/players/:playerId/unread-messages", requireAuth, async (
         const response = await service.getUnreadByReceiver(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -396,7 +403,7 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", requi
     const service = new ChatMessageService(unit);
     const player1Id = req.params.player1Id;
     const player2Id = req.params.player2Id;
-    const limit = Math.min(Number(req.query.limit) || 20, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
@@ -419,7 +426,8 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", requi
         const response = await service.getConversationPaginated(p1, p2, limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -518,6 +526,14 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
         const [success, id] = await service.create(senderId, receiverId ?? null, safeContent, msgType, msgData);
 
         if (success) {
+            // Track quest progress
+            try {
+                const questService = new QuestService(unit);
+                await questService.trackProgress(senderId, 'send_messages', 1);
+            } catch {
+                // Ignore quest tracking errors
+            }
+
             // Push to recipient if online
             let pushed = false;
             if (receiverId && typeof receiverId === "number") {
@@ -527,7 +543,7 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
                         messageId: id,
                         senderId,
                         receiverId,
-                        content,
+                        content: safeContent,
                         sentAt: new Date().toISOString(),
                         isRead: false,
                         messageType: msgType,
@@ -537,14 +553,19 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
 
                 // If offline, create notification
                 if (!pushed) {
-                    const notificationService = new NotificationService(unit);
-                    await notificationService.create(
-                        receiverId,
-                        "chat_message",
-                        "New message",
-                        content.length > 60 ? content.slice(0, 60) + "..." : content,
-                        { senderId, messageId: id }
-                    );
+                    try {
+                        const notificationService = new NotificationService(unit);
+                        await notificationService.create(
+                            receiverId,
+                            "chat_message",
+                            "New message",
+                            content.length > 60 ? content.slice(0, 60) + "..." : content,
+                            { senderId, messageId: id },
+                            { priority: 'normal' }
+                        );
+                    } catch {
+                        // Ignore notification errors
+                    }
                 }
             }
             ok = true;
@@ -556,7 +577,8 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -635,7 +657,8 @@ chatMessageRouter.patch("/chat-messages/:id/read", requireAuth, async (req, res)
             res.status(StatusCodes.NOT_FOUND).json({ error: "Message not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -713,7 +736,8 @@ chatMessageRouter.delete("/chat-messages/:id", requireAuth, async (req, res) => 
             res.status(StatusCodes.NOT_FOUND).json({ error: "Message not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -773,7 +797,8 @@ chatMessageRouter.get("/players/:playerId/unread-count", requireAuth, async (req
         const count = await service.countUnread(Number(playerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

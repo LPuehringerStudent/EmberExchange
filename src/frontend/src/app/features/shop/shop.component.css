@@ -7,7 +7,30 @@
 .inline-error   { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger-text); }
 
 /* Tabs */
+.tab-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #e85d04, #f48c06);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 3px 3px 0 0;
+}
+
 .tab-btn.active { background: linear-gradient(135deg,#e85d04 0%,#f48c06 100%); color: #fff; box-shadow: 0 4px 12px rgba(232,93,4,.3); }
+
+.tab-btn.active::after {
+  transform: scaleX(1);
+}
 
 /* Calendar & day cards */
 .day-card.claimed  { background: rgba(34,197,94,.1); border-color: #22c55e; opacity: .85; }
@@ -19,16 +42,16 @@
 .claim-btn:disabled { background: var(--btn-secondary-bg); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
 
 /* Item card + rarity variants */
-.item-card { background: var(--surface-bg); box-shadow: 0 4px 12px var(--shadow-color); }
-.item-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px var(--shadow-color); }
+.item-card { background: var(--surface-bg); box-shadow: 0 4px 12px var(--shadow-color); transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease; }
+.item-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px var(--shadow-color); }
 .item-card.rarity-common    { border-color: #cbd5e1; }
 .item-card.rarity-uncommon  { border-color: #22c55e; }
 .item-card.rarity-rare      { border-color: #3b82f6; }
 .item-card.rarity-epic      { border-color: #a855f7; }
 .item-card.rarity-legendary { border-color: #f59e0b; box-shadow: 0 4px 16px rgba(245,158,11,.15); }
-.item-card.rarity-legendary:hover { box-shadow: 0 12px 32px rgba(245,158,11,.25); }
+.item-card.rarity-legendary:hover { box-shadow: 0 16px 40px rgba(245,158,11,.25); }
 .item-card.rarity-secret    { border-color: #d946ef; box-shadow: 0 4px 16px rgba(217,70,239,.15); }
-.item-card.rarity-secret:hover    { box-shadow: 0 12px 32px rgba(217,70,239,.25); }
+.item-card.rarity-secret:hover    { box-shadow: 0 16px 40px rgba(217,70,239,.25); }
 
 /* Featured badge */
 .featured-badge { background: linear-gradient(135deg,#e85d04 0%,#f48c06 100%); color: #fff; }

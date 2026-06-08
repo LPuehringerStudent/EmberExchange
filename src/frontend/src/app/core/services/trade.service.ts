@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import { AuthService } from './auth.service';
 import type { TradeRow as Trade } from '@shared/model';
 
 export type { Trade };
@@ -21,9 +23,15 @@ export interface SuccessMessage {
 @Injectable({ providedIn: 'root' })
 export class TradeService {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
+
+  private getHeaders(): HttpHeaders | undefined {
+    const sessionId = this.auth.getSessionId();
+    return sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+  }
 
   getAllTrades(): Observable<Trade[]> {
-    return this.api.get<Trade[]>('/trades');
+    return this.api.get<Trade[]>('/trades', this.getHeaders());
   }
 
   getTradeById(id: number): Observable<Trade> {
@@ -35,11 +43,11 @@ export class TradeService {
   }
 
   getTradesByBuyerId(buyerId: number): Observable<Trade[]> {
-    return this.api.get<Trade[]>(`/players/${buyerId}/trades`);
+    return this.api.get<Trade[]>(`/players/${buyerId}/trades`, this.getHeaders());
   }
 
   executeTrade(listingId: number, buyerId: number): Observable<ExecuteTradeResponse> {
-    return this.api.post<ExecuteTradeResponse>('/trades', { listingId, buyerId });
+    return this.api.post<ExecuteTradeResponse>('/trades', { listingId, buyerId }, this.getHeaders());
   }
 
   getRecentTrades(limit?: number): Observable<Trade[]> {
@@ -48,7 +56,7 @@ export class TradeService {
   }
 
   deleteTrade(id: number): Observable<SuccessMessage> {
-    return this.api.delete<SuccessMessage>(`/trades/${id}`);
+    return this.api.delete<SuccessMessage>(`/trades/${id}`, this.getHeaders());
   }
 
   countTrades(): Observable<CountResponse> {
@@ -56,6 +64,6 @@ export class TradeService {
   }
 
   countTradesByBuyer(buyerId: number): Observable<CountResponse> {
-    return this.api.get<CountResponse>(`/players/${buyerId}/trades/count`);
+    return this.api.get<CountResponse>(`/players/${buyerId}/trades/count`, this.getHeaders());
   }
 }

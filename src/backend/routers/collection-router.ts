@@ -27,7 +27,8 @@ collectionRouter.get("/player/collections", requireAuth, async (req, res) => {
         const collections = await collectionService.getPlayerCollections(req.playerId!);
         res.status(StatusCodes.OK).json(collections);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

@@ -16,6 +16,7 @@ import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { requireAuth } from "../middleware/require-auth";
 import { requireAdmin } from "../middleware/admin";
+import { readRateLimiter } from "../middleware/rate-limiter";
 import { PunishmentService } from "../services/punishment-service";
 
 export const tradeRouter = express.Router();
@@ -58,14 +59,15 @@ function getClientIp(req: express.Request): string {
 tradeRouter.get("/trades", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
         const response = await service.getAllTrades(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -103,16 +105,17 @@ tradeRouter.get("/trades", requireAuth, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades/recent", async (req, res) => {
+tradeRouter.get("/trades/recent", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
-    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
 
     try {
         const response = await service.getRecentTrades(limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -140,7 +143,7 @@ tradeRouter.get("/trades/recent", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades/count", async (_req, res) => {
+tradeRouter.get("/trades/count", readRateLimiter.middleware(), async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
 
@@ -148,7 +151,8 @@ tradeRouter.get("/trades/count", async (_req, res) => {
         const count = await service.countTrades();
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -195,7 +199,7 @@ tradeRouter.get("/trades/count", async (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades/:id", async (req, res) => {
+tradeRouter.get("/trades/:id", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const id = req.params.id;
@@ -213,7 +217,8 @@ tradeRouter.get("/trades/:id", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -260,7 +265,7 @@ tradeRouter.get("/trades/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/listings/:listingId/trade", async (req, res) => {
+tradeRouter.get("/listings/:listingId/trade", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const listingId = req.params.listingId;
@@ -278,7 +283,8 @@ tradeRouter.get("/listings/:listingId/trade", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -340,7 +346,8 @@ tradeRouter.get("/players/:buyerId/trades", requireAuth, async (req, res) => {
         const response = await service.getTradesByBuyerId(Number(buyerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -486,8 +493,7 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
         }
         const sellerCredited = await playerService.addCoinsAtomic(listing.sellerId, listing.price);
         if (!sellerCredited) {
-            // This should never happen if seller exists, but roll back buyer if it does
-            await playerService.addCoinsAtomic(buyerId, listing.price);
+            // Transaction rollback will automatically restore buyer's coins
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to credit seller" });
             await unit.complete(false);
             return;
@@ -503,7 +509,7 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
         // Transfer ownership of the item (stove or lootbox)
         let itemDescription: string;
         if (listing.stoveId !== undefined && listing.stoveId !== null) {
-            const transferSuccess = await stoveService.updateOwner(listing.stoveId, buyerId);
+            const transferSuccess = await stoveService.updateOwner(listing.stoveId, buyerId, listing.sellerId);
             if (!transferSuccess) {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer stove ownership" });
                 return;
@@ -525,7 +531,7 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
             itemDescription = `stove #${listing.stoveId}`;
         } else if (listing.lootboxId !== undefined && listing.lootboxId !== null) {
             const lootboxService = new LootboxService(unit);
-            const transferSuccess = await lootboxService.updateLootboxOwner(listing.lootboxId, buyerId);
+            const transferSuccess = await lootboxService.updateLootboxOwner(listing.lootboxId, buyerId, listing.sellerId);
             if (!transferSuccess) {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer lootbox ownership" });
                 return;
@@ -575,14 +581,16 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
                     "trade_offer",
                     "Trade completed",
                     `You purchased ${itemDescription} for ${listing.price} coal`,
-                    { tradeId: id, listingId, price: listing.price }
+                    { tradeId: id, listingId, price: listing.price },
+                    { priority: 'high' }
                 );
                 await notificationService.create(
                     listing.sellerId,
                     "trade_offer",
                     "Item sold",
                     `Your ${itemDescription} sold for ${listing.price} coal`,
-                    { tradeId: id, listingId, price: listing.price }
+                    { tradeId: id, listingId, price: listing.price },
+                    { priority: 'high' }
                 );
             } catch {
                 // Ignore notification errors
@@ -603,7 +611,8 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to record trade" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -672,7 +681,8 @@ tradeRouter.delete("/trades/:id", requireAdmin, async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Trade not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -732,7 +742,8 @@ tradeRouter.get("/players/:buyerId/trades/count", requireAuth, async (req, res) 
         const count = await service.countTradesByBuyer(Number(buyerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

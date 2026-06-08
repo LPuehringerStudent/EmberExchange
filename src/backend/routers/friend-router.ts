@@ -44,7 +44,8 @@ friendRouter.get("/friends/list", requireAuth, async (req, res) => {
         const friends = await friendService.getFriends(req.playerId!);
         res.status(StatusCodes.OK).json(friends);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -80,7 +81,8 @@ friendRouter.get("/friends/pending", requireAuth, async (req, res) => {
         const pending = await friendService.getPendingRequests(req.playerId!);
         res.status(StatusCodes.OK).json(pending);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -116,7 +118,8 @@ friendRouter.get("/friends/sent", requireAuth, async (req, res) => {
         const sent = await friendService.getSentRequests(req.playerId!);
         res.status(StatusCodes.OK).json(sent);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -179,13 +182,18 @@ friendRouter.post("/friends/request", requireAuth, async (req, res) => {
 
         const [success, friendId] = await friendService.sendRequest(req.playerId!, addresseeId);
         if (success) {
-            await notificationService.create(
-                addresseeId,
-                "friend_request",
-                "New friend request",
-                `${req.playerId!} sent you a friend request`,
-                { requesterId: req.playerId!, friendId }
-            );
+            try {
+                await notificationService.create(
+                    addresseeId,
+                    "friend_request",
+                    "New friend request",
+                    `${req.playerId!} sent you a friend request`,
+                    { requesterId: req.playerId!, friendId },
+                    { priority: 'normal' }
+                );
+            } catch {
+                // Ignore notification errors
+            }
             ok = true;
             res.status(StatusCodes.CREATED).json({ friendId, message: "Friend request sent" });
         } else {
@@ -195,7 +203,8 @@ friendRouter.post("/friends/request", requireAuth, async (req, res) => {
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -267,7 +276,8 @@ friendRouter.post("/friends/respond", requireAuth, async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Friend request not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -329,7 +339,8 @@ friendRouter.delete("/friends/:id", requireAuth, async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Friend relationship not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -400,7 +411,8 @@ friendRouter.post("/friends/block", requireAuth, async (req, res) => {
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);

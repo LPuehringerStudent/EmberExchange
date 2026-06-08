@@ -148,6 +148,16 @@
             </div>
           }
 
+          @if (isInsurance() && isHeroTurn()) {
+            <div class="bj-controls__group flex flex-col items-center gap-2">
+              <span class="text-sm font-semibold text-[var(--text-muted)]">Dealer shows Ace — Take Insurance?</span>
+              <div class="flex items-center gap-3">
+                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeInsurance()" [disabled]="!canAction('insurance')">Take Insurance</button>
+                <button class="bj-btn bj-btn--action py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeDeclineInsurance()" [disabled]="!canAction('decline_insurance')">Decline</button>
+              </div>
+            </div>
+          }
+
           @if (isPlaying() && isHeroTurn()) {
             <div class="bj-controls__group flex items-center gap-3">
               <button class="bj-btn bj-btn--action py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeHit()" [disabled]="!canAction('hit')">Hit</button>

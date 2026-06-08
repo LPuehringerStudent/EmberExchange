@@ -156,6 +156,36 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Global cursor & selection */
+button, [role="button"] {
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Themed scrollbars */
@@ -284,20 +314,26 @@ body {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   background: linear-gradient(135deg, #e85d04 0%, #f48c06 100%);
   color: white;
   box-shadow: 0 4px 14px rgba(232, 93, 4, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(232, 93, 4, 0.4);
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: 0 8px 24px rgba(232, 93, 4, 0.45);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
+  filter: grayscale(0.3);
 }
 
 .btn-secondary {
@@ -311,13 +347,24 @@ body {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   background: var(--btn-secondary-bg);
   color: var(--btn-secondary-text);
 }
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--btn-secondary-hover);
+  transform: scale(1.02);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
 }
 
 .btn-danger {
@@ -331,14 +378,24 @@ body {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   color: white;
 }
 
 .btn-danger:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
 }
 
 /* Rarity Badges (base + tier colors) */
@@ -483,6 +540,19 @@ body {
   box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
+.input-group input.error,
+input.input-error {
+  border-color: var(--danger-text) !important;
+  background: var(--danger-bg) !important;
+  box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.08) !important;
+}
+
+.input-group input.error:focus,
+input.input-error:focus {
+  border-color: var(--danger-text) !important;
+  box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.12) !important;
+}
+
 .input-group input::placeholder {
   color: var(--text-tertiary);
 }
@@ -591,6 +661,33 @@ body {
   background: linear-gradient(90deg, var(--surface-bg-secondary) 25%, var(--surface-hover) 50%, var(--surface-bg-secondary) 75%);
   background-size: 200px 100%;
   animation: shimmer 1.5s infinite;
+}
+
+/* Skeleton card utilities */
+.skeleton-card {
+  background: var(--surface-bg);
+  border-radius: 16px;
+  border: 2px solid var(--border-color);
+  overflow: hidden;
+}
+
+.skeleton-img {
+  height: 160px;
+  width: 100%;
+}
+
+.skeleton-line {
+  height: 16px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
+
+.skeleton-line.medium {
+  width: 80%;
 }
 
 /* =====================================

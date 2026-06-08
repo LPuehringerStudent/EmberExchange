@@ -23,12 +23,15 @@ const COLUMN_MAP: Record<string, string> = {
     "bannerid": "bannerId",
     "averagetimetosellhours": "averageTimeToSellHours",
     "bestdroprarity": "bestDropRarity",
+    "bonusspins": "bonusSpins",
+    "codeid": "codeId",
     "buyerid": "buyerId",
     "coinpayout": "coinPayout",
     "coins": "coins",
     "collection": "collection",
     "minheat": "minHeat",
     "maxheat": "maxHeat",
+    "maxuses": "maxUses",
     "heatlevel": "heatLevel",
     "rerollcount": "reRollCount",
     "totalstovescrafted": "totalStovesCrafted",
@@ -83,6 +86,7 @@ const COLUMN_MAP: Record<string, string> = {
     "joinedat": "joinedAt",
     "lastloginat": "lastLoginAt",
     "lastsaleprice": "lastSalePrice",
+    "lastspinat": "lastSpinAt",
     "lastprice": "lastPrice",
     "listedat": "listedAt",
     "listedpercent": "listedPercent",
@@ -150,6 +154,11 @@ const COLUMN_MAP: Record<string, string> = {
     "winteropens": "winterOpens",
     "currentvalue": "currentValue",
     "rewardcoins": "rewardCoins",
+    "redeemedid": "redeemedId",
+    "redeemedat": "redeemedAt",
+    "rewardlootboxes": "rewardLootboxes",
+    "rewardsparks": "rewardSparks",
+    "rewardspins": "rewardSpins",
     "rewardxp": "rewardXP",
     "rewardlootboxtypeid": "rewardLootboxTypeId",
     "iscompleted": "isCompleted",
@@ -231,6 +240,8 @@ const COLUMN_MAP: Record<string, string> = {
     "totalsalesrevenue": "totalSalesRevenue",
     "totalsessionminutes": "totalSessionMinutes",
     "totalsessions": "totalSessions",
+    "totalspins": "totalSpins",
+    "usedcount": "usedCount",
     "totalstovesacquired": "totalStovesAcquired",
     "totalstovesfromlootboxes": "totalStovesFromLootboxes",
     "totalstovesinexistence": "totalStovesInExistence",
@@ -527,6 +538,22 @@ export class DB {
             )
         `);
 
+        await connection.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes WHERE indexname = 'idx_listing_active_stove'
+                ) THEN
+                    CREATE UNIQUE INDEX idx_listing_active_stove ON Listing(stoveId) WHERE status = 'active';
+                END IF;
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes WHERE indexname = 'idx_listing_active_lootbox'
+                ) THEN
+                    CREATE UNIQUE INDEX idx_listing_active_lootbox ON Listing(lootboxId) WHERE status = 'active';
+                END IF;
+            END $$;
+        `);
+
         // Migration: add lootboxId column to existing Listing tables
         await connection.query(`
             DO $$
@@ -776,11 +803,26 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerDailySpin (
+                playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
+                lastSpinAt TEXT,
+                totalSpins INTEGER NOT NULL DEFAULT 0,
+                bonusSpins INTEGER NOT NULL DEFAULT 0
+            )
+        `);
+
+        await connection.query(`
+            ALTER TABLE PlayerDailySpin
+            ADD COLUMN IF NOT EXISTS bonusSpins INTEGER NOT NULL DEFAULT 0
+        `).catch(() => {});
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS PlayerQuest (
                 questId SERIAL PRIMARY KEY,
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 questType TEXT NOT NULL CHECK (questType IN ('daily', 'weekly')),
                 templateId TEXT NOT NULL,
+                label TEXT,
                 targetValue INTEGER NOT NULL,
                 currentValue INTEGER NOT NULL DEFAULT 0,
                 rewardCoins INTEGER NOT NULL DEFAULT 0,
@@ -792,6 +834,7 @@ export class DB {
                 createdAt TEXT NOT NULL
             )
         `);
+        await connection.query(`ALTER TABLE PlayerQuest ADD COLUMN IF NOT EXISTS label TEXT`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerquest_player ON PlayerQuest(playerId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerquest_expires ON PlayerQuest(expiresAt)`);
 
@@ -1017,9 +1060,16 @@ export class DB {
                 notifyFriendRequests INTEGER NOT NULL DEFAULT 1,
                 notifyChatMessages INTEGER NOT NULL DEFAULT 1,
                 notifyTradeOffers INTEGER NOT NULL DEFAULT 1,
-                notifyDailyReward INTEGER NOT NULL DEFAULT 1
+                notifyDailyReward INTEGER NOT NULL DEFAULT 1,
+                notifyShopPurchases INTEGER NOT NULL DEFAULT 1,
+                hasCompletedOnboarding INTEGER NOT NULL DEFAULT 0
             )
         `);
+
+        await connection.query(`
+            ALTER TABLE PlayerSettings
+            ADD COLUMN IF NOT EXISTS notifyShopPurchases INTEGER NOT NULL DEFAULT 1
+        `).catch(() => {});
 
         await connection.query(`
             CREATE TABLE IF NOT EXISTS TwoFactorChallenge (
@@ -1063,6 +1113,39 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS RedeemCode (
+                codeId SERIAL PRIMARY KEY,
+                code TEXT NOT NULL UNIQUE,
+                rewardCoins INTEGER NOT NULL DEFAULT 0,
+                rewardLootboxes INTEGER NOT NULL DEFAULT 0,
+                rewardSparks INTEGER NOT NULL DEFAULT 0,
+                rewardSpins INTEGER NOT NULL DEFAULT 0,
+                maxUses INTEGER,
+                usedCount INTEGER NOT NULL DEFAULT 0,
+                expiresAt TEXT,
+                isActive INTEGER NOT NULL DEFAULT 1,
+                createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Migration: add sparks and spins reward columns to existing RedeemCode tables
+        await connection.query(`
+            ALTER TABLE RedeemCode
+            ADD COLUMN IF NOT EXISTS rewardSparks INTEGER NOT NULL DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS rewardSpins INTEGER NOT NULL DEFAULT 0
+        `).catch(() => {});
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerRedeemedCode (
+                redeemedId SERIAL PRIMARY KEY,
+                codeId INTEGER NOT NULL REFERENCES RedeemCode(codeId),
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                redeemedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (codeId, playerId)
+            )
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS PlayerDailyReward (
                 playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
                 lastClaimAt TEXT,
@@ -1074,17 +1157,36 @@ export class DB {
             CREATE TABLE IF NOT EXISTS Notification (
                 notificationId SERIAL PRIMARY KEY,
                 playerId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
-                type TEXT NOT NULL CHECK (type IN ('friend_request', 'chat_message', 'trade_offer', 'daily_reward', 'system')),
+                type TEXT NOT NULL CHECK (type IN ('friend_request', 'chat_message', 'trade_offer', 'daily_reward', 'system', 'quest_complete')),
                 title TEXT NOT NULL,
                 message TEXT NOT NULL,
                 data JSONB NOT NULL DEFAULT '{}',
                 isRead INTEGER NOT NULL DEFAULT 0,
-                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                priority TEXT NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high')),
+                groupKey TEXT,
+                count INTEGER NOT NULL DEFAULT 1,
+                expiresAt TIMESTAMPTZ,
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         `);
 
         await connection.query(`
             CREATE INDEX IF NOT EXISTS idx_notification_player_unread ON Notification(playerId, isRead)
+        `);
+
+        // Migration: notification system v2
+        await connection.query(`
+            ALTER TABLE Notification
+            ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'normal',
+            ADD COLUMN IF NOT EXISTS groupKey TEXT,
+            ADD COLUMN IF NOT EXISTS count INTEGER NOT NULL DEFAULT 1,
+            ADD COLUMN IF NOT EXISTS expiresAt TIMESTAMPTZ,
+            ADD COLUMN IF NOT EXISTS updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        `).catch(() => {});
+
+        await connection.query(`
+            CREATE INDEX IF NOT EXISTS idx_notification_player_group ON Notification(playerId, type, groupKey, isRead, updatedAt)
         `);
 
         await connection.query(`
@@ -1255,6 +1357,8 @@ export class DB {
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_minigame_player_result ON MiniGameSession(playerId, result)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_lootbox_player_opened ON Lootbox(playerId, openedAt)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_shoppurchase_player ON ShopPurchase(playerId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_redeemcode_code ON RedeemCode(code)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerredeemedcode_player ON PlayerRedeemedCode(playerId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_gloryshowcase_stove ON GloryShowcase(stoveId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_chatmessage_sender ON ChatMessage(senderId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_gloryvisit_visited ON GloryVisit(visitedPlayerId)`);
@@ -1363,6 +1467,8 @@ export async function resetDatabase(connection: PoolClient): Promise<void> {
         DROP TABLE IF EXISTS StoveType CASCADE;
         DROP TABLE IF EXISTS Game CASCADE;
         DROP TABLE IF EXISTS SupportTicket CASCADE;
+        DROP TABLE IF EXISTS PlayerRedeemedCode CASCADE;
+        DROP TABLE IF EXISTS RedeemCode CASCADE;
         DROP TABLE IF EXISTS ShopPurchase CASCADE;
         DROP TABLE IF EXISTS ShopListing CASCADE;
         DROP TABLE IF EXISTS EventLog CASCADE;
@@ -1456,19 +1562,19 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
 
     async function insertPlayerSettings(): Promise<void> {
         const settings = [
-            { playerId: 1, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
-            { playerId: 2, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
-            { playerId: 3, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
-            { playerId: 4, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 },
-            { playerId: 5, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1 }
+            { playerId: 1, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 },
+            { playerId: 2, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 },
+            { playerId: 3, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 },
+            { playerId: 4, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 },
+            { playerId: 5, notifyFriendRequests: 1, notifyChatMessages: 1, notifyTradeOffers: 1, notifyDailyReward: 1, notifyShopPurchases: 1, hasCompletedOnboarding: 0 }
         ];
         for (const setting of settings) {
             const stmt = unit.prepare<
                 unknown,
-                { playerId: number; notifyFriendRequests: number; notifyChatMessages: number; notifyTradeOffers: number; notifyDailyReward: number }
+                { playerId: number; notifyFriendRequests: number; notifyChatMessages: number; notifyTradeOffers: number; notifyDailyReward: number; notifyShopPurchases: number; hasCompletedOnboarding: number }
             >(
-                `insert into PlayerSettings (playerId, notifyFriendRequests, notifyChatMessages, notifyTradeOffers, notifyDailyReward)
-                 values (@playerId, @notifyFriendRequests, @notifyChatMessages, @notifyTradeOffers, @notifyDailyReward)`,
+                `insert into PlayerSettings (playerId, notifyFriendRequests, notifyChatMessages, notifyTradeOffers, notifyDailyReward, notifyShopPurchases, hasCompletedOnboarding)
+                 values (@playerId, @notifyFriendRequests, @notifyChatMessages, @notifyTradeOffers, @notifyDailyReward, @notifyShopPurchases, @hasCompletedOnboarding)`,
                 setting
             );
             await stmt.run();

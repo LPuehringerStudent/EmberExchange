@@ -117,8 +117,8 @@ export class RouletteEngine implements GameEngine {
       }
 
       const amount = action.amount ?? 0;
-      if (amount <= 0) {
-        return this._invalid("Bet must be positive", fullState);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return this._invalid("Bet must be a positive finite number", fullState);
       }
 
       const totalBet = player.bets.reduce((sum, b) => sum + b.amount, 0);
@@ -139,8 +139,8 @@ export class RouletteEngine implements GameEngine {
         return this._invalid(`Invalid bet type: ${betType}`, fullState);
       }
 
-      if (betType === "straight" && (number === undefined || number < 0 || number > 36)) {
-        return this._invalid("Straight bet requires a number 0-36", fullState);
+      if (betType === "straight" && (typeof number !== "number" || !Number.isInteger(number) || number < 0 || number > 36)) {
+        return this._invalid("Straight bet requires an integer number 0-36", fullState);
       }
 
       player.stack -= amount;

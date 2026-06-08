@@ -1,5 +1,6 @@
 import { Unit } from "../utils/unit";
 import { SessionService } from "../services/session-service";
+import { PlayerService } from "../services/player-service";
 
 export interface AuthenticatedPlayer {
     playerId: number;
@@ -23,6 +24,14 @@ export async function authenticateSession(sessionId: string | null): Promise<Aut
         const now = new Date();
         const expiresAt = new Date(session.expiresAt);
         if (expiresAt < now) {
+            return null;
+        }
+
+        // Reject banned players at the WebSocket layer
+        const playerService = new PlayerService(unit);
+        const player = await playerService.getInfoByID(session.playerId);
+        if (player?.bannedAt) {
+            await sessionService.invalidateSession(sessionId);
             return null;
         }
 

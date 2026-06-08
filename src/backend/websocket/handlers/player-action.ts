@@ -254,7 +254,14 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
         }
 
         ok = true;
-    } catch (err) {
+    } catch (err: any) {
+        if (err?.code === "40001") {
+            connectionManager.sendToSocket(socketId, {
+                type: "error",
+                payload: { code: ErrorCode.VERSION_MISMATCH, message: "Optimistic lock failed", recoverable: true }
+            });
+            return;
+        }
         console.error(`[action:${actionType}] UNHANDLED ERROR in player-action handler:`, err);
         connectionManager.sendToSocket(socketId, {
             type: "error",

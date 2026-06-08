@@ -7,6 +7,7 @@ import { ListingService } from '@core/services/listing.service';
 import { AuthService } from '@core/services/auth.service';
 import { PityService, PityProgress } from '@core/services/pity.service';
 import { firstValueFrom } from 'rxjs';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 
 export interface DropRateEntry {
   rarity: string;
@@ -100,7 +101,7 @@ const WINTER_DROPS: DragonDrop[] = [
   selector: 'app-lootbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './lootbox.component.html',
-  imports: [NgOptimizedImage],
+  imports: [NgOptimizedImage, InfoTooltipComponent],
   styleUrls: ['./lootbox.component.css']
 })
 export class LootboxComponent implements AfterViewInit, OnInit {
@@ -389,6 +390,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
       this.lootboxCount.update(count => Math.max(0, count - 1));
       void this.authService.refreshUser();
+      await this.loadPityData(); // refresh pity counter immediately
 
       // Remove opened lootbox from available list
       this.availableLootboxes.set(available.filter(lb => lb.lootboxId !== target.lootboxId));

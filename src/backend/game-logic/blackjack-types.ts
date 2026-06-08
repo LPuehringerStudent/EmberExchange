@@ -3,6 +3,7 @@ export type Card = string; // e.g. "Ah", "Td", "2s" — same format as poker
 export type BlackjackPhase =
   | "betting"
   | "dealing"
+  | "insurance"
   | "player_turn"
   | "dealer_turn"
   | "settled";
@@ -24,6 +25,8 @@ export interface BlackjackPlayerState {
   bets: number[];       // bet per hand, aligned with hands[]
   stack: number;
   result: HandResult;
+  insuranceBet?: number;
+  handResults?: HandResult[];
 }
 
 export interface BlackjackState {
@@ -58,6 +61,8 @@ export interface BlackjackPlayerStateView {
   bets: number[];
   stack: number;
   result: HandResult;
+  insuranceBet?: number;
+  handResults?: HandResult[];
 }
 
 export interface BlackjackStateView {

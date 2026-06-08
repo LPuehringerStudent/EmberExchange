@@ -7,6 +7,7 @@ import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { ListingRow } from "../../shared/model";
 import { checkPlayerBanned } from "../middleware/ban-check";
 import { requireAuth } from "../middleware/require-auth";
+import { readRateLimiter } from "../middleware/rate-limiter";
 import { PunishmentService } from "../services/punishment-service";
 
 export const listingRouter = express.Router();
@@ -46,17 +47,18 @@ function getClientIp(req: express.Request): string {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/listings", async (req, res) => {
+listingRouter.get("/listings", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
         const response = await service.getAllListings(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -86,10 +88,10 @@ listingRouter.get("/listings", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/listings/active", async (req, res) => {
+listingRouter.get("/listings/active", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
@@ -113,7 +115,8 @@ listingRouter.get("/listings/active", async (req, res) => {
         }
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -160,7 +163,7 @@ listingRouter.get("/listings/active", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/listings/:id", async (req, res) => {
+listingRouter.get("/listings/:id", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const id = req.params.id;
@@ -178,7 +181,8 @@ listingRouter.get("/listings/:id", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -241,7 +245,8 @@ listingRouter.get("/players/:sellerId/listings", requireAuth, async (req, res) =
         const response = await service.getListingsBySellerId(parsedSellerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -304,7 +309,8 @@ listingRouter.get("/players/:sellerId/listings/active", requireAuth, async (req,
         const response = await service.getActiveListingsBySellerId(parsedSellerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -351,7 +357,7 @@ listingRouter.get("/players/:sellerId/listings/active", requireAuth, async (req,
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/stoves/:stoveId/listing", async (req, res) => {
+listingRouter.get("/stoves/:stoveId/listing", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const stoveId = req.params.stoveId;
@@ -369,13 +375,14 @@ listingRouter.get("/stoves/:stoveId/listing", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
 });
 
-listingRouter.get("/lootboxes/:lootboxId/listing", async (req, res) => {
+listingRouter.get("/lootboxes/:lootboxId/listing", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const lootboxId = req.params.lootboxId;
@@ -393,7 +400,8 @@ listingRouter.get("/lootboxes/:lootboxId/listing", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -531,8 +539,8 @@ listingRouter.post("/listings", requireAuth, async (req, res) => {
             return;
         }
 
-        if (price < 1) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive number" });
+        if (!Number.isFinite(price) || !Number.isInteger(price) || price < 1 || price > 2147483647) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive integer" });
             return;
         }
 
@@ -608,8 +616,13 @@ listingRouter.post("/listings", requireAuth, async (req, res) => {
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create listing" });
         }
-    } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } catch (err: any) {
+        if (err?.code === '23505') {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Item is already listed" });
+        } else {
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+        }
     } finally {
         await unit.complete(ok);
     }
@@ -702,8 +715,8 @@ listingRouter.patch("/listings/:id/price", requireAuth, async (req, res) => {
         }
 
         const { price } = req.body;
-        if (typeof price !== "number" || price < 1) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive number" });
+        if (typeof price !== "number" || !Number.isFinite(price) || !Number.isInteger(price) || price < 1 || price > 2147483647) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive integer" });
             return;
         }
 
@@ -715,7 +728,8 @@ listingRouter.patch("/listings/:id/price", requireAuth, async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Active listing not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -801,7 +815,8 @@ listingRouter.patch("/listings/:id/cancel", requireAuth, async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Active listing not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -887,7 +902,8 @@ listingRouter.delete("/listings/:id", requireAuth, async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Listing not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -947,7 +963,8 @@ listingRouter.get("/players/:sellerId/active-listings/count", requireAuth, async
         const count = await service.countActiveListingsBySeller(Number(sellerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

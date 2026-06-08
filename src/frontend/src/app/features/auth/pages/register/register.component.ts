@@ -44,9 +44,11 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   passwordStrength = signal(0);
   strengthLabel = signal('Cold Ash');
   strengthColor = signal('#6c757d');
+  shakeForm = signal(false);
 
   @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('registerFormEl', { static: false }) registerFormEl!: ElementRef<HTMLFormElement>;
+  @ViewChild('trackContainer', { static: true }) trackContainer!: ElementRef<HTMLDivElement>;
 
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -78,10 +80,14 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     if (this.currentStep() === 1) {
       if (!this.username().trim() || !this.email().trim()) {
         this.errorMessage.set('Fill all fields');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
       if (!this.isValidEmail(this.email())) {
         this.errorMessage.set('Enter a valid E-Mail address');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
     }
@@ -89,14 +95,20 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     if (this.currentStep() === 2) {
       if (!this.password() || !this.confirmPassword()) {
         this.errorMessage.set('Both password fields required');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
       if (this.password() !== this.confirmPassword()) {
         this.errorMessage.set('Passwords do not match');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
       if (this.password().length < 8) {
         this.errorMessage.set('Password too weak — must be at least 8 characters');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
     }
@@ -113,13 +125,6 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       this.fetchPowChallenge().catch(() => {
         this.errorMessage.set('Failed to load security challenge. Please refresh.');
       });
-      // Start behavioral tracking on the final form
-      setTimeout(() => {
-        if (this.registerFormEl?.nativeElement) {
-          this.behaviorTracker.reset();
-          this.behaviorTracker.startTracking(this.registerFormEl.nativeElement);
-        }
-      }, 0);
     }
   }
 
@@ -135,6 +140,8 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     if (!this.acceptedTerms()) {
       this.errorMessage.set('You must accept the terms and conditions');
+      this.shakeForm.set(true);
+      setTimeout(() => this.shakeForm.set(false), 500);
       return;
     }
 
@@ -167,7 +174,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     // Collect behavior token
     const behaviorToken = this.behaviorTracker.getToken() ?? undefined;
-    this.behaviorTracker.stopTracking(this.registerFormEl.nativeElement);
+    this.behaviorTracker.stopTracking(this.trackContainer.nativeElement);
 
     try {
       const result = await this.authService.register(
@@ -227,7 +234,11 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Behavioral tracking will be started when the user reaches step 3
+    // Start behavioral tracking on the persistent container so all steps are captured
+    if (this.trackContainer?.nativeElement) {
+      this.behaviorTracker.reset();
+      this.behaviorTracker.startTracking(this.trackContainer.nativeElement);
+    }
   }
 
   private renderTurnstile(): void {

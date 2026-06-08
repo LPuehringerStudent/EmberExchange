@@ -1,0 +1,57 @@
+:host {
+  display: inline;
+  cursor: help;
+}
+
+.tooltip-host {
+  display: inline;
+  border-bottom: 1px dashed var(--text-muted, rgba(255,255,255,0.3));
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-bottom-color: var(--accent-color, #e85d04);
+  }
+}
+
+.tooltip-hint {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-color, #e85d04);
+  margin-left: 4px;
+  vertical-align: super;
+  opacity: 0.6;
+}
+
+.tooltip-box {
+  position: fixed;
+  max-width: 280px;
+  width: max-content;
+  min-width: 160px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(30, 30, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f0f0f0;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.05);
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateY(4px);
+  backdrop-filter: blur(4px);
+
+  @media (max-width: 400px) {
+    max-width: calc(100vw - 32px);
+    min-width: auto;
+  }
+}
+
+.tooltip-box.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}

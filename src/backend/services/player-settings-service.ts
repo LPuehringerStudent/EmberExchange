@@ -9,7 +9,7 @@ export class PlayerSettingsService extends ServiceBase {
 
     async getSettings(playerId: number): Promise<PlayerSettingsRow | null> {
         const stmt = this.unit.prepare<
-            { playerid: number; notifyfriendrequests: number; notifychatmessages: number; notifytradeoffers: number; notifydailyreward: number }
+            { playerid: number; notifyfriendrequests: number; notifychatmessages: number; notifytradeoffers: number; notifydailyreward: number; notifyshoppurchases: number; hascompletedonboarding: number }
         >(
             "SELECT * FROM PlayerSettings WHERE playerId = @playerId",
             { playerId }
@@ -21,7 +21,9 @@ export class PlayerSettingsService extends ServiceBase {
             notifyFriendRequests: !!row.notifyfriendrequests,
             notifyChatMessages: !!row.notifychatmessages,
             notifyTradeOffers: !!row.notifytradeoffers,
-            notifyDailyReward: !!row.notifydailyreward
+            notifyDailyReward: !!row.notifydailyreward,
+            notifyShopPurchases: !!row.notifyshoppurchases,
+            hasCompletedOnboarding: !!row.hascompletedonboarding
         };
     }
 
@@ -31,8 +33,8 @@ export class PlayerSettingsService extends ServiceBase {
             return existing;
         }
         const stmt = this.unit.prepare(
-            `INSERT INTO PlayerSettings (playerId, notifyFriendRequests, notifyChatMessages, notifyTradeOffers, notifyDailyReward)
-             VALUES (@playerId, 1, 1, 1, 1)`,
+            `INSERT INTO PlayerSettings (playerId, notifyFriendRequests, notifyChatMessages, notifyTradeOffers, notifyDailyReward, notifyShopPurchases, hasCompletedOnboarding)
+             VALUES (@playerId, 1, 1, 1, 1, 1, 0)`,
             { playerId }
         );
         await stmt.run();
@@ -41,7 +43,9 @@ export class PlayerSettingsService extends ServiceBase {
             notifyFriendRequests: true,
             notifyChatMessages: true,
             notifyTradeOffers: true,
-            notifyDailyReward: true
+            notifyDailyReward: true,
+            notifyShopPurchases: true,
+            hasCompletedOnboarding: false
         };
     }
 
@@ -67,6 +71,14 @@ export class PlayerSettingsService extends ServiceBase {
         if (settings.notifyDailyReward !== undefined) {
             fields.push("notifyDailyReward = @notifyDailyReward");
             params.notifyDailyReward = settings.notifyDailyReward ? 1 : 0;
+        }
+        if (settings.notifyShopPurchases !== undefined) {
+            fields.push("notifyShopPurchases = @notifyShopPurchases");
+            params.notifyShopPurchases = settings.notifyShopPurchases ? 1 : 0;
+        }
+        if (settings.hasCompletedOnboarding !== undefined) {
+            fields.push("hasCompletedOnboarding = @hasCompletedOnboarding");
+            params.hasCompletedOnboarding = settings.hasCompletedOnboarding ? 1 : 0;
         }
         if (fields.length === 0) {
             return false;

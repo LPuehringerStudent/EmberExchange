@@ -462,7 +462,8 @@ export type ServerMessageType =
     | 'error'
     | 'event_replay'
     | 'chat_message'
-    | 'trade_offer_update';
+    | 'trade_offer_update'
+    | 'notification';
 
 export enum ErrorCode {
     INVALID_STATE = 'INVALID_STATE',
@@ -508,6 +509,8 @@ export interface PlayerSettings {
     notifyChatMessages: boolean;
     notifyTradeOffers: boolean;
     notifyDailyReward: boolean;
+    notifyShopPurchases: boolean;
+    hasCompletedOnboarding?: boolean;
 }
 
 export interface PlayerSettingsRow extends PlayerSettings {
@@ -529,21 +532,29 @@ export interface AchievementDefinition {
     achievementId: string;
     label: string;
     description: string;
-    category: 'lootbox' | 'trade' | 'mini-game' | 'prestige' | 'wealth' | 'collection' | 'social' | 'general' | 'forging' | 'shop';
+    category: 'lootbox' | 'trade' | 'mini-game' | 'prestige' | 'wealth' | 'collection' | 'social' | 'general' | 'forging' | 'shop' | 'spin';
     rewardCoins?: number;
     rewardXP?: number;
     tier: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'secret';
 }
 
+export type NotificationType = 'friend_request' | 'chat_message' | 'trade_offer' | 'daily_reward' | 'system' | 'quest_complete';
+export type NotificationPriority = 'low' | 'normal' | 'high';
+
 // Notification
 export interface Notification {
     playerId: number;
-    type: 'friend_request' | 'chat_message' | 'trade_offer' | 'daily_reward' | 'system';
+    type: NotificationType;
     title: string;
     message: string;
     data: Record<string, unknown>;
     isRead: boolean;
+    priority: NotificationPriority;
+    groupKey: string | null;
+    count: number;
+    expiresAt: Date | null;
     createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface NotificationRow extends Notification {
@@ -569,6 +580,39 @@ export interface PlayerDailyReward {
     playerId: number;
     lastClaimAt: Date | null;
     streakCount: number;
+}
+
+export interface PlayerDailySpin {
+    playerId: number;
+    lastSpinAt: Date | null;
+    totalSpins: number;
+}
+
+export interface PlayerDailySpinRow extends PlayerDailySpin {}
+
+export interface SpinPrize {
+    id: string;
+    label: string;
+    icon: string;
+    minAmount: number;
+    maxAmount: number;
+    color: string;
+    weight: number;
+}
+
+export interface SpinResult {
+    prize: SpinPrize;
+    amount: number;
+    totalSpins: number;
+    nextSpinAt: string | null;
+    bonusSpins: number;
+}
+
+export interface SpinStatus {
+    canSpin: boolean;
+    nextSpinAt: string | null;
+    totalSpins: number;
+    bonusSpins: number;
 }
 
 

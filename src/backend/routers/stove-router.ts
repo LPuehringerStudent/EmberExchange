@@ -42,14 +42,15 @@ function isConstraintError(err: unknown): boolean {
 stoveRouter.get("/stoves", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
         const response = await service.getAllStoves(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -114,7 +115,8 @@ stoveRouter.get("/stoves/:id", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -177,7 +179,8 @@ stoveRouter.get("/players/:playerId/stoves", requireAuth, async (req, res) => {
         const response = await service.getStovesByOwnerId(parsedPlayerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -234,7 +237,8 @@ stoveRouter.get("/stove-types/:typeId/stoves", async (req, res) => {
         const response = await service.getStovesByTypeId(Number(typeId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -314,7 +318,8 @@ stoveRouter.post("/stoves", requireAdmin, async (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create stove" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -406,7 +411,8 @@ stoveRouter.patch("/stoves/:id/owner", requireAdmin, async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Stove not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -484,7 +490,8 @@ stoveRouter.delete("/stoves/:id", requireAdmin, async (req, res) => {
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -546,7 +553,8 @@ stoveRouter.get("/players/:playerId/stoves/count", requireAuth, async (req, res)
         const count = await service.countStovesByOwner(parsedPlayerId);
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -601,7 +609,8 @@ stoveRouter.get("/stove-types/:typeId/stoves/count", async (req, res) => {
         const count = await service.countStovesByType(Number(typeId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

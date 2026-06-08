@@ -41,7 +41,7 @@ describe('GloryCustomizationService', () => {
       const unit = mockUnitSequence([
         mockStmt({ currentOwnerId: playerId }), // ownership check
         mockStmt({ count: 0 }), // duplicate check
-        mockStmt(),             // upsert
+        mockStmt(), // upsert
       ]);
       const service = new GloryCustomizationService(unit);
 

@@ -13,6 +13,25 @@
 
 /* ── Tab buttons ─────────────────────────────────────────────── */
 
+.tab-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #e85d04, #f48c06);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 3px 3px 0 0;
+}
+
 .tab-btn:hover {
   border-color: rgba(232, 93, 4, 0.35);
   color: var(--accent);
@@ -23,6 +42,10 @@
   color: #ffffff;
   border-color: transparent;
   box-shadow: 0 4px 16px rgba(232, 93, 4, 0.30);
+}
+
+.tab-btn.active::after {
+  transform: scaleX(1);
 }
 
 
@@ -44,6 +67,15 @@
  * box-shadow is added here for the rarity glow variants.
  */
 
+.listing-card {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease;
+}
+
+.listing-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px var(--shadow-color);
+}
+
 /* Rarity border colours */
 .listing-card.rarity-common    { border-color: #94a3b8; }
 .listing-card.rarity-uncommon  { border-color: #22c55e; }
@@ -51,6 +83,13 @@
 .listing-card.rarity-epic      { border-color: #a855f7; }
 .listing-card.rarity-legendary { border-color: #f59e0b; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15); }
 .listing-card.rarity-secret    { border-color: #d946ef; box-shadow: 0 4px 20px rgba(217, 70, 239, 0.15); }
+
+.listing-card.rarity-common:hover    { box-shadow: 0 12px 32px rgba(148, 163, 184, 0.2); }
+.listing-card.rarity-uncommon:hover  { box-shadow: 0 12px 32px rgba(34, 197, 94, 0.2); }
+.listing-card.rarity-rare:hover      { box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2); }
+.listing-card.rarity-epic:hover      { box-shadow: 0 12px 32px rgba(168, 85, 247, 0.2); }
+.listing-card.rarity-legendary:hover { box-shadow: 0 16px 40px rgba(245, 158, 11, 0.25); }
+.listing-card.rarity-secret:hover    { box-shadow: 0 16px 40px rgba(217, 70, 239, 0.25); }
 
 /* Rarity top-accent line */
 .rarity-line-common    { background: #94a3b8; }

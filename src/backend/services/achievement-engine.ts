@@ -89,6 +89,13 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     { achievementId: 'popular', label: 'Popular', description: 'Receive 10+ profile visits', category: 'social', rewardCoins: 100, rewardXP: 25, tier: 'uncommon' },
     { achievementId: 'famous', label: 'Famous', description: 'Receive 100+ profile visits', category: 'social', rewardCoins: 1000, rewardXP: 200, tier: 'epic' },
     { achievementId: 'celebrity', label: 'Celebrity', description: 'Receive 1,000+ profile visits', category: 'social', rewardCoins: 10000, rewardXP: 2000, tier: 'legendary' },
+
+    // ── Spin ──────────────────────────────────────────────────
+    { achievementId: 'first_spin', label: 'First Spin', description: 'Spin the Lucky Wheel for the first time', category: 'spin', rewardCoins: 50, rewardXP: 10, tier: 'common' },
+    { achievementId: 'spin_10', label: 'Wheel Regular', description: 'Spin the Lucky Wheel 10 times', category: 'spin', rewardCoins: 200, rewardXP: 50, tier: 'uncommon' },
+    { achievementId: 'spin_50', label: 'Wheel Addict', description: 'Spin the Lucky Wheel 50 times', category: 'spin', rewardCoins: 1000, rewardXP: 200, tier: 'rare' },
+    { achievementId: 'spin_jackpot', label: 'Wheel Jackpot', description: 'Win 1,000+ coins in a single spin', category: 'spin', rewardCoins: 500, rewardXP: 100, tier: 'epic' },
+    { achievementId: 'spin_lootbox', label: 'Lucky Box', description: 'Win a lootbox from the Lucky Wheel', category: 'spin', rewardCoins: 100, rewardXP: 25, tier: 'uncommon' },
 ];
 
 export class AchievementEngine extends ServiceBase {
@@ -507,6 +514,23 @@ export class AchievementEngine extends ServiceBase {
         const streak = (await streakStmt.get())?.streakCount ?? 0;
         if (streak >= 7) await this.unlock(playerId, 'streak_master');
 
+        await this.maybeCheckCosmeticUnlocks(playerId);
+    }
+
+    // ── Spin achievements ────────────────────────────────────
+
+    async checkSpinAchievements(playerId: number, totalSpins?: number, prizeId?: string, amount?: number): Promise<void> {
+        if (totalSpins !== undefined) {
+            if (totalSpins >= 1) await this.unlock(playerId, 'first_spin');
+            if (totalSpins >= 10) await this.unlock(playerId, 'spin_10');
+            if (totalSpins >= 50) await this.unlock(playerId, 'spin_50');
+        }
+        if (prizeId === 'coins_max' && amount !== undefined && amount >= 1000) {
+            await this.unlock(playerId, 'spin_jackpot');
+        }
+        if (prizeId === 'lootbox') {
+            await this.unlock(playerId, 'spin_lootbox');
+        }
         await this.maybeCheckCosmeticUnlocks(playerId);
     }
 

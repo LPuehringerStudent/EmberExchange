@@ -365,7 +365,7 @@ export class Poker {
     setTimeout(() => {
       this.isLoading.set(false);
       this.gameStarted.set(true);
-      this.ws.sendAction('next_hand', {});
+      this.ws.sendStartGame();
     }, 2500);
   }
 

@@ -49,20 +49,33 @@
   background: linear-gradient(180deg, #2d3436 0%, #696c70 120%);
   border-right: 3px solid var(--accent);
   transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .sidebar.open {
   transform: translateX(0);
 }
 .sidebar a {
   border-left: 4px solid transparent;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+.sidebar a::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(232, 93, 4, 0.1);
+  transform: translateX(-100%);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: -1;
 }
 .sidebar a:hover {
-  background: rgba(232, 93, 4, 0.15);
   border-left-color: var(--accent);
   padding-left: 36px;
   color: white;
+}
+.sidebar a:hover::before {
+  transform: translateX(0);
 }
 /* Overlay - fade animation */
 .overlay {
@@ -88,6 +101,23 @@
 .content > * {
   min-height: calc(100vh - 64px);
   display: block;
+  animation: routeFadeIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes routeFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Coin balance pulse animation */
+.coin-pulse {
+  animation: coinPop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes coinPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 /* Shell-specific accents */
 .btn-login {

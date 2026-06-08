@@ -267,7 +267,7 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
     } catch (err) {
         await lookupUnit.complete(false);
         console.error("[Auth] Login DB error during player lookup:", (err as Error).message);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         return;
     }
 
@@ -374,7 +374,7 @@ authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, heade
     } catch (err) {
         await unit.complete(false);
         console.error("[Auth] Login error during session creation:", (err as Error).message);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         return;
     } finally {
         if (ok) await unit.complete(true);
@@ -525,7 +525,8 @@ authRouter.patch("/auth/me", authRateLimiter.middleware(), requireAuth, async (r
             }
             res.status(StatusCodes.CONFLICT).json({ error: message });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -629,7 +630,8 @@ authRouter.patch("/auth/password", authRateLimiter.middleware(), requireAuth, as
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update password" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -686,7 +688,8 @@ authRouter.delete("/auth/me", authRateLimiter.middleware(), requireAuth, async (
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -802,7 +805,8 @@ authRouter.get("/auth/sessions", async (req, res) => {
         }));
         res.status(StatusCodes.OK).json(sanitized);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -870,7 +874,8 @@ authRouter.delete("/auth/sessions", async (req, res) => {
         ok = true;
         res.status(StatusCodes.OK).json({ message: "All other devices logged out", closed });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -990,20 +995,17 @@ authRouter.post("/auth/register", datacenterGuard, registerRateLimiter.middlewar
     let ok = false;
 
     try {
-        // Check if email already exists
+        // Check if email or username already exists
         const existingByEmail = await playerService.getPlayerByEmail(email);
         if (existingByEmail) {
-            // Block re-registration regardless of verification status to prevent email squatting.
-            // Unverified accounts are no longer deleted — they must verify or wait for token expiry.
-            res.status(StatusCodes.CONFLICT).json({ error: "An account with this email already exists. Please log in instead." });
+            res.status(StatusCodes.CONFLICT).json({ error: "This account information is already in use." });
             await unit.complete(false);
             return;
         }
 
-        // Check if username already exists
         const existingByUsername = await playerService.getPlayerByUsername(username);
         if (existingByUsername) {
-            res.status(StatusCodes.CONFLICT).json({ error: "Username already taken. Please choose another." });
+            res.status(StatusCodes.CONFLICT).json({ error: "This account information is already in use." });
             await unit.complete(false);
             return;
         }
@@ -1030,7 +1032,8 @@ authRouter.post("/auth/register", datacenterGuard, registerRateLimiter.middlewar
                 "system",
                 "Welcome to Ember Exchange!",
                 "Your adventure begins now. Verify your email to start trading!",
-                {}
+                {},
+                { priority: 'normal' }
             );
         } catch {
             // Ignore notification errors
@@ -1081,7 +1084,8 @@ authRouter.post("/auth/register", datacenterGuard, registerRateLimiter.middlewar
             }
             res.status(StatusCodes.CONFLICT).json({ error: message });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -1159,7 +1163,8 @@ authRouter.get("/auth/verify-email/:token", authRateLimiter.middleware(), async 
             message: "Email verified! Welcome to Ember Exchange."
         });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -1239,7 +1244,8 @@ authRouter.post("/auth/resend-verification", authRateLimiter.middleware(), turns
 
         res.status(StatusCodes.OK).json({ message: "If an unverified account exists, a verification email has been sent." });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -1313,7 +1319,8 @@ authRouter.get("/auth/me", async (req, res) => {
         const { violationCount, lastViolationAt, ...playerSafe } = player;
         res.status(StatusCodes.OK).json(playerSafe);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -1386,7 +1393,8 @@ authRouter.post("/auth/logout", async (req, res) => {
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -1439,7 +1447,8 @@ authRouter.get("/auth/2fa/status", async (req, res) => {
         const enabled = await twoFactorService.isEnabled(session.playerId);
         res.status(StatusCodes.OK).json({ enabled });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -1496,7 +1505,8 @@ authRouter.post("/auth/2fa/setup", authRateLimiter.middleware(), requireAuth, as
         res.status(StatusCodes.OK).json({ secret: result.secret, qrCodeDataUrl: result.qrCodeDataUrl });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -1562,7 +1572,8 @@ authRouter.post("/auth/2fa/confirm", authRateLimiter.middleware(), requireAuth, 
         res.status(StatusCodes.OK).json({ message: result.message });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -1653,7 +1664,8 @@ authRouter.post("/auth/2fa/verify", twoFactorRateLimiter.middleware(), async (re
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -1717,7 +1729,8 @@ authRouter.delete("/auth/2fa", authRateLimiter.middleware(), requireAuth, async 
         ok = true;
         res.status(StatusCodes.OK).json({ message: "Two-factor authentication disabled" });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }

@@ -34,14 +34,15 @@ export const dailyStatisticsRouter = express.Router();
 dailyStatisticsRouter.get("/daily-statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
-    const limit = Math.min(Number(req.query.limit) || 500, 500);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 500, 1), 500);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
         const response = await service.getAll(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -87,7 +88,8 @@ dailyStatisticsRouter.get("/daily-statistics/today", async (_req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -140,7 +142,8 @@ dailyStatisticsRouter.get("/daily-statistics/summary", async (req, res) => {
         const response = await service.getSummary(days);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -203,7 +206,8 @@ dailyStatisticsRouter.get("/daily-statistics/range", async (req, res) => {
         const response = await service.getByDateRange(from, to);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -272,7 +276,8 @@ dailyStatisticsRouter.get("/daily-statistics/:date", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -415,7 +420,8 @@ dailyStatisticsRouter.delete("/daily-statistics/:date", requireAdmin, async (req
             res.status(StatusCodes.NOT_FOUND).json({ error: "Statistics not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }

@@ -35,14 +35,15 @@ export const priceHistoryRouter = express.Router();
 priceHistoryRouter.get("/price-history", requireAdmin, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PriceHistoryService(unit);
-    const limit = Math.min(Number(req.query.limit) || 500, 500);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 500, 1), 500);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
         const response = await service.getAllPriceHistory(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -107,7 +108,8 @@ priceHistoryRouter.get("/price-history/:id", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -164,7 +166,8 @@ priceHistoryRouter.get("/stove-types/:typeId/price-history", async (req, res) =>
         const response = await service.getPriceHistoryByTypeId(Number(typeId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -254,7 +257,8 @@ priceHistoryRouter.post("/price-history", requireAdmin, async (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to record sale" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -330,7 +334,8 @@ priceHistoryRouter.get("/stove-types/:typeId/price-stats", async (req, res) => {
 
         res.status(StatusCodes.OK).json({ typeId: typeIdNum, average, min, max, count, median });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -402,7 +407,8 @@ priceHistoryRouter.get("/stove-types/:typeId/recent-prices", async (req, res) =>
         const response = await service.getRecentPrices(Number(typeId), limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -471,7 +477,8 @@ priceHistoryRouter.delete("/price-history/:id", requireAdmin, async (req, res) =
             res.status(StatusCodes.NOT_FOUND).json({ error: "Price history record not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }

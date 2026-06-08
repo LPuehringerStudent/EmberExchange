@@ -1,6 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { AdminService } from "../services/admin-service";
+import { RedeemCodeService } from "../services/redeem-code-service";
 import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -47,7 +48,8 @@ adminRouter.get("/admin/stats", async (_req, res) => {
         const stats = await service.getSystemStats();
         res.status(StatusCodes.OK).json(stats);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -100,7 +102,8 @@ adminRouter.get("/admin/players", async (req, res) => {
         const result = await service.getPlayers(page, limit, filters);
         res.status(StatusCodes.OK).json(result);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -141,7 +144,8 @@ adminRouter.get("/admin/players/:id", async (req, res) => {
         }
         res.status(StatusCodes.OK).json(detail);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -200,7 +204,8 @@ adminRouter.post("/admin/players/:id/coins", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -214,7 +219,7 @@ adminRouter.get("/admin/request-logs", async (req, res) => {
         const path = req.query.path as string | undefined;
         const since = req.query.since as string | undefined;
         const until = req.query.until as string | undefined;
-        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 500;
+        const limit = Math.max(req.query.limit ? parseInt(req.query.limit as string, 10) : 500, 1);
 
         const logs = await queryRequestLogs(unit, {
             playerId: playerId && !isNaN(playerId) ? playerId : undefined,
@@ -226,7 +231,8 @@ adminRouter.get("/admin/request-logs", async (req, res) => {
         });
         res.status(StatusCodes.OK).json(logs);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -241,7 +247,8 @@ adminRouter.get("/admin/banned-ips", async (_req, res) => {
         const bans = await service.getBannedIPs();
         res.status(StatusCodes.OK).json(bans);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -251,11 +258,12 @@ adminRouter.get("/admin/violations", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PunishmentService(unit);
     try {
-        const limit = Math.min(Number(req.query.limit) || 100, 500);
+        const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
         const log = await service.getViolationLog(limit);
         res.status(StatusCodes.OK).json(log);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -286,7 +294,8 @@ adminRouter.post("/admin/banned-ips", async (req, res) => {
         ok = true;
         res.status(StatusCodes.OK).json({ message: `IP ${ip} banned` });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -310,7 +319,8 @@ adminRouter.post("/admin/banned-ips/unban", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "IP not found in ban list" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -334,7 +344,8 @@ adminRouter.post("/admin/players/:id/unban", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found or not banned" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -436,7 +447,7 @@ adminRouter.delete("/admin/players/:id", async (req, res) => {
         const playerId = Number(id);
 
         // Prevent self-deletion
-        if (req.playerId === playerId) {
+        if ((req as any).adminPlayerId === playerId) {
             res.status(StatusCodes.FORBIDDEN).json({ error: "You cannot delete your own account" });
             return;
         }
@@ -456,7 +467,8 @@ adminRouter.delete("/admin/players/:id", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -485,7 +497,8 @@ adminRouter.post("/admin/players/:id/ban", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -510,7 +523,8 @@ adminRouter.get("/admin/stove-types", async (_req, res) => {
         const types = await service.getStoveTypes();
         res.status(StatusCodes.OK).json(types);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -567,7 +581,8 @@ adminRouter.patch("/admin/stove-types/:id", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Stove type not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -630,7 +645,118 @@ adminRouter.post("/admin/stove-types", async (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create stove type" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+// ─── Redeem Code Management ─────────────────────────────────
+
+adminRouter.get("/admin/redeem-codes", async (_req, res) => {
+    const unit = await Unit.create(true);
+    const service = new RedeemCodeService(unit);
+    try {
+        const codes = await service.listCodes();
+        res.status(StatusCodes.OK).json(codes);
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    } finally {
+        await unit.complete();
+    }
+});
+
+adminRouter.post("/admin/redeem-codes", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new RedeemCodeService(unit);
+    let ok = false;
+    try {
+        const { code, rewardCoins, rewardLootboxes, rewardSparks, rewardSpins, maxUses, expiresAt, isActive } = req.body;
+        if (isNullOrWhiteSpace(code)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "code is required" });
+            return;
+        }
+        const id = await service.createCode({
+            code,
+            rewardCoins: typeof rewardCoins === "number" ? rewardCoins : 0,
+            rewardLootboxes: typeof rewardLootboxes === "number" ? rewardLootboxes : 0,
+            rewardSparks: typeof rewardSparks === "number" ? rewardSparks : 0,
+            rewardSpins: typeof rewardSpins === "number" ? rewardSpins : 0,
+            maxUses: typeof maxUses === "number" ? maxUses : null,
+            expiresAt: typeof expiresAt === "string" ? expiresAt : null,
+            isActive: typeof isActive === "boolean" ? isActive : true,
+        });
+        ok = true;
+        res.status(StatusCodes.CREATED).json({ codeId: id, code: code.trim().toUpperCase() });
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+adminRouter.patch("/admin/redeem-codes/:id", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new RedeemCodeService(unit);
+    const id = req.params.id;
+    let ok = false;
+    try {
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid code ID" });
+            return;
+        }
+        const data: Partial<{ code: string; rewardCoins: number; rewardLootboxes: number; rewardSparks: number; rewardSpins: number; maxUses: number | null; expiresAt: string | null; isActive: boolean }> = {};
+        if (req.body.code !== undefined) data.code = req.body.code;
+        if (req.body.rewardCoins !== undefined) data.rewardCoins = req.body.rewardCoins;
+        if (req.body.rewardLootboxes !== undefined) data.rewardLootboxes = req.body.rewardLootboxes;
+        if (req.body.rewardSparks !== undefined) data.rewardSparks = req.body.rewardSparks;
+        if (req.body.rewardSpins !== undefined) data.rewardSpins = req.body.rewardSpins;
+        if (req.body.maxUses !== undefined) data.maxUses = req.body.maxUses;
+        if (req.body.expiresAt !== undefined) data.expiresAt = req.body.expiresAt;
+        if (req.body.isActive !== undefined) data.isActive = req.body.isActive;
+
+        const success = await service.updateCode(Number(id), data);
+        if (success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ message: "Code updated" });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Code not found" });
+        }
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+adminRouter.delete("/admin/redeem-codes/:id", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new RedeemCodeService(unit);
+    const id = req.params.id;
+    let ok = false;
+    try {
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid code ID" });
+            return;
+        }
+        const result = await service.deleteCode(Number(id));
+        if (result.success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ message: "Code deleted" });
+        } else if (result.error) {
+            await unit.complete(false);
+            res.status(StatusCodes.BAD_REQUEST).json({ error: result.error });
+            return;
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Code not found" });
+        }
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }

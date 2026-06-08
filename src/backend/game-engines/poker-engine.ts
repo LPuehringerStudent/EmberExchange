@@ -120,10 +120,19 @@ export class PokerEngine implements GameEngine {
     bbPlayer.totalBet = bbAmount;
     if (bbPlayer.stack === 0) bbPlayer.allIn = true;
 
+    // Set first actor, skipping players who are all-in from posting blinds
     const firstActor = this._getFirstToActPreflop(
       dealerPosition,
       players.length
     );
+    let activePlayer = -1;
+    for (let i = 0; i < players.length; i++) {
+      const candidate = pokerPlayers[(firstActor + i) % players.length];
+      if (!candidate.folded && !candidate.allIn) {
+        activePlayer = candidate.playerId;
+        break;
+      }
+    }
 
     const state: PokerState = {
       status: "active",
@@ -138,7 +147,7 @@ export class PokerEngine implements GameEngine {
       ],
       currentBet: bbAmount,
       dealerPosition,
-      activePlayer: pokerPlayers[firstActor].playerId,
+      activePlayer,
       players: pokerPlayers,
       playersToAct: pokerPlayers
         .filter((p) => !p.folded && !p.allIn)
@@ -329,14 +338,12 @@ export class PokerEngine implements GameEngine {
           (pid) => pid !== playerId
         );
         // Re-open action for others who haven't folded or gone all-in
-        state.playersToAct.push(
-          ...state.players
-            .filter(
-              (p) =>
-                !p.folded && !p.allIn && p.playerId !== playerId
-            )
-            .map((p) => p.playerId)
-        );
+        state.playersToAct = state.players
+          .filter(
+            (p) =>
+              !p.folded && !p.allIn && p.playerId !== playerId
+          )
+          .map((p) => p.playerId);
         state.log.push({
           playerId,
           action: "raise",
@@ -361,14 +368,12 @@ export class PokerEngine implements GameEngine {
           (pid) => pid !== playerId
         );
         if (wasRaise) {
-          state.playersToAct.push(
-            ...state.players
-              .filter(
-                (p) =>
-                  !p.folded && !p.allIn && p.playerId !== playerId
-              )
-              .map((p) => p.playerId)
-          );
+          state.playersToAct = state.players
+            .filter(
+              (p) =>
+                !p.folded && !p.allIn && p.playerId !== playerId
+            )
+            .map((p) => p.playerId);
         }
         state.log.push({
           playerId,

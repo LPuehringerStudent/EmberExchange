@@ -13,6 +13,7 @@ export class NotificationsComponent implements OnInit {
   chatMessages = signal<boolean>(true);
   tradeOffers = signal<boolean>(true);
   dailyReward = signal<boolean>(true);
+  shopPurchases = signal<boolean>(true);
 
   loading = signal<boolean>(false);
   success = signal<string>('');
@@ -34,6 +35,7 @@ export class NotificationsComponent implements OnInit {
       this.chatMessages.set(settings.notifyChatMessages);
       this.tradeOffers.set(settings.notifyTradeOffers);
       this.dailyReward.set(settings.notifyDailyReward);
+      this.shopPurchases.set(settings.notifyShopPurchases);
     } catch (err) {
       console.error('Failed to load notification settings:', err);
     }
@@ -52,7 +54,8 @@ export class NotificationsComponent implements OnInit {
         notifyFriendRequests: this.friendRequests(),
         notifyChatMessages: this.chatMessages(),
         notifyTradeOffers: this.tradeOffers(),
-        notifyDailyReward: this.dailyReward()
+        notifyDailyReward: this.dailyReward(),
+        notifyShopPurchases: this.shopPurchases()
       });
       this.success.set('Notification preferences saved');
     } catch (err) {

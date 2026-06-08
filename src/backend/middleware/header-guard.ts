@@ -14,6 +14,7 @@ export function headerGuard(req: Request, res: Response, next: NextFunction): vo
     const headerValue = req.headers[antiBotConfig.requiredHeader.toLowerCase()];
 
     if (headerValue !== antiBotConfig.requiredHeaderValue) {
+        console.log(`[Debug] headerGuard blocked ${req.method} ${req.path} — expected ${antiBotConfig.requiredHeader}=${antiBotConfig.requiredHeaderValue}, got ${headerValue}`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }

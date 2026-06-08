@@ -1,0 +1,118 @@
+.how-it-works-page {
+  background: linear-gradient(180deg, var(--body-bg) 0%, var(--surface-bg) 100%);
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 4rem;
+}
+
+@media (min-width: 768px) {
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .steps-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.step-card {
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.step-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px var(--shadow-color);
+}
+
+.step-number {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #f48c06);
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(232, 93, 4, 0.3);
+}
+
+.step-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  border: 1px solid;
+}
+
+.step-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.step-desc {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.cta-section {
+  text-align: center;
+  padding: 2rem;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+  background: linear-gradient(135deg, var(--accent), #f48c06);
+  box-shadow: 0 4px 16px rgba(232, 93, 4, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(232, 93, 4, 0.45);
+}
+
+.cta-sub {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

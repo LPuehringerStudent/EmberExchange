@@ -159,8 +159,8 @@ describe("WebSocket Integration", () => {
 
     function connectWs(sessionId?: string): Promise<WebSocket> {
         return new Promise((resolve, reject) => {
-            const url = sessionId ? `${baseUrl}/ws?sessionId=${sessionId}` : `${baseUrl}/ws`;
-            const ws = new WebSocket(url);
+            const url = `${baseUrl}/ws`;
+            const ws = sessionId ? new WebSocket(url, sessionId) : new WebSocket(url);
             const timeout = setTimeout(() => {
                 ws.terminate();
                 reject(new Error("WS connect timeout"));
@@ -224,6 +224,7 @@ describe("WebSocket Integration", () => {
     async function createRoom(gameType = "test"): Promise<string> {
         const res = await request(app)
             .post("/api/rooms")
+            .set("session-id", testSessionId)
             .send({ maxPlayers: 4, gameType });
         expect(res.status).toBe(201);
         const roomId = res.body.roomId as string;

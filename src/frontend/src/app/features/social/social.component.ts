@@ -198,12 +198,19 @@ export class SocialComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Refresh to get the real message with proper ID and timestamp
+    // Refresh to sync any messages we might have missed (merge, don't replace)
     try {
       const msgs = await firstValueFrom(
         this.chatService.getConversationPaginated(this.currentPlayerId(), otherId, 50, 0)
       );
-      this.messages.set(msgs);
+      this.messages.update(current => {
+        const currentIds = new Set(current.map(m => m.messageId));
+        const newMsgs = msgs.filter(m => !currentIds.has(m.messageId));
+        if (newMsgs.length === 0) return current;
+        return [...current, ...newMsgs].sort((a, b) =>
+          new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
+        );
+      });
     } catch (err) {
       console.error('Failed to refresh conversation:', err);
     }
@@ -346,6 +353,20 @@ export class SocialComponent implements OnInit, OnDestroy {
   }
 
   private handleIncomingMessage(msg: ChatMessageRow): void {
+    // If this is our own message (WS ack), replace the optimistic version
+    if (msg.senderId === this.currentPlayerId()) {
+      this.messages.update(msgs => {
+        const idx = msgs.findIndex(m => m.messageId === 0 && m.content === msg.content);
+        if (idx !== -1) {
+          const updated = [...msgs];
+          updated[idx] = msg;
+          return updated;
+        }
+        return msgs;
+      });
+      return;
+    }
+
     // Skip duplicates
     const exists = this.messages().some(m => m.messageId === msg.messageId);
     if (exists) return;

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from './auth.service';
-import type { ChatMessageRow } from '@shared/model';
+import type { ChatMessageRow, NotificationRow } from '@shared/model';
 
 export type WsConnectionState = 'closed' | 'connecting' | 'open' | 'reconnecting';
 
@@ -38,6 +38,7 @@ export class WebSocketService {
   readonly stateBlob = signal<Record<string, unknown> | null>(null);
   readonly incomingChatMessage = signal<ChatMessageRow | null>(null);
   readonly incomingTradeUpdate = signal<{ messageId: number; status: string } | null>(null);
+  readonly incomingNotification = signal<Partial<NotificationRow> | null>(null);
 
   connect(): void {
     if (this.ws) {
@@ -252,6 +253,10 @@ export class WebSocketService {
       case 'trade_offer_update': {
         const update = payload as { messageId: number; status: string };
         this.incomingTradeUpdate.set(update);
+        break;
+      }
+      case 'notification': {
+        this.incomingNotification.set(payload as Partial<NotificationRow>);
         break;
       }
     }

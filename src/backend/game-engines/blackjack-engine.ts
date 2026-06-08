@@ -6,6 +6,7 @@ import {
   BlackjackPlayerState,
   BlackjackStateView,
   Card,
+  HandResult,
 } from "../game-logic/blackjack-types";
 import {
   createDeck,
@@ -97,11 +98,88 @@ export class BlackJackEngine implements GameEngine {
         timestamp: Date.now(),
       });
 
-      // If all players have bet, deal cards
-      if (state.players.every((p) => p.bets[0] > 0)) {
+      // If all active players have bet, deal cards
+      if (state.players.every((p) => p.bets[0] > 0 || p.stack <= 0)) {
         this._dealCards(state);
       }
 
+      return this._success(state);
+    }
+
+    // Handle insurance phase
+    if (state.phase === "insurance") {
+      if (state.activePlayer !== playerId) {
+        return this._invalid("Not your turn", fullState);
+      }
+
+      if (action.type === "insurance") {
+        const bet = player.bets[0];
+        const insuranceBet = Math.floor(bet / 2);
+        if (insuranceBet > player.stack) {
+          return this._invalid("Insufficient stack for insurance", fullState);
+        }
+        player.insuranceBet = insuranceBet;
+        player.stack -= insuranceBet;
+        state.log.push({
+          playerId,
+          action: "insurance",
+          amount: insuranceBet,
+          timestamp: Date.now(),
+        });
+      } else if (action.type === "decline_insurance") {
+        player.insuranceBet = 0;
+        state.log.push({
+          playerId,
+          action: "decline_insurance",
+          timestamp: Date.now(),
+        });
+      } else {
+        return this._invalid(
+          "Only insurance or decline_insurance allowed",
+          fullState
+        );
+      }
+
+      // Advance to next player for insurance
+      const currentIdx = state.players.findIndex(
+        (p) => p.playerId === playerId
+      );
+      for (let i = currentIdx + 1; i < state.players.length; i++) {
+        const nextPlayer = state.players[i];
+        if (nextPlayer.bets[0] > 0) {
+          state.activePlayer = nextPlayer.playerId;
+          return this._success(state);
+        }
+      }
+
+      // All players have responded to insurance — reveal dealer hand
+      const dealerHasBlackjack = isBlackjack(state.dealerHand);
+      if (dealerHasBlackjack) {
+        // Pay insurance 2:1
+        for (const p of state.players) {
+          if (p.insuranceBet && p.insuranceBet > 0) {
+            p.stack += p.insuranceBet * 2; // 2:1 payout
+          }
+        }
+        this._settle(state);
+      } else {
+        // Insurance loses, continue to player_turn
+        for (const p of state.players) {
+          if (p.insuranceBet && p.insuranceBet > 0) {
+            // Insurance bet already deducted, nothing to do
+          }
+        }
+        state.phase = "player_turn";
+        const firstPlayer = state.players.find(
+          (p) => p.result !== "blackjack" && p.hands[0]?.length > 0
+        );
+        if (firstPlayer) {
+          state.activePlayer = firstPlayer.playerId;
+          state.activeHandIndex = 0;
+        } else {
+          this._playDealer(state);
+        }
+      }
       return this._success(state);
     }
 
@@ -118,7 +196,7 @@ export class BlackJackEngine implements GameEngine {
 
     switch (action.type) {
       case "hit": {
-        hand.push(state.deck.pop()!);
+        hand.push(this._drawCard(state));
         state.log.push({
           playerId,
           action: "hit",
@@ -152,7 +230,7 @@ export class BlackJackEngine implements GameEngine {
         }
         player.bets[handIdx] = bet * 2;
         player.stack -= bet;
-        hand.push(state.deck.pop()!);
+        hand.push(this._drawCard(state));
         state.log.push({
           playerId,
           action: "double",
@@ -175,8 +253,8 @@ export class BlackJackEngine implements GameEngine {
         player.stack -= bet;
         const cardA = hand[0];
         const cardB = hand[1];
-        player.hands[handIdx] = [cardA, state.deck.pop()!];
-        player.hands.splice(handIdx + 1, 0, [cardB, state.deck.pop()!]);
+        player.hands[handIdx] = [cardA, this._drawCard(state)];
+        player.hands.splice(handIdx + 1, 0, [cardB, this._drawCard(state)]);
         player.bets.splice(handIdx + 1, 0, bet);
         state.log.push({
           playerId,
@@ -218,6 +296,8 @@ export class BlackJackEngine implements GameEngine {
         bets: p.bets,
         stack: p.stack,
         result: p.result,
+        insuranceBet: p.insuranceBet,
+        handResults: p.handResults,
       })),
       activePlayer: state.activePlayer,
       activeHandIndex: state.activeHandIndex,
@@ -245,6 +325,16 @@ export class BlackJackEngine implements GameEngine {
           minAmount: state.currentBet,
           maxAmount: player.stack,
         },
+      ];
+    }
+
+    if (state.phase === "insurance") {
+      if (state.activePlayer !== playerId || player.bets[0] === 0) {
+        return [];
+      }
+      return [
+        { type: "insurance" },
+        { type: "decline_insurance" },
       ];
     }
 
@@ -297,6 +387,8 @@ export class BlackJackEngine implements GameEngine {
             bets: [0],
             stack: p.stack,
             result: "playing",
+            insuranceBet: 0,
+            handResults: undefined,
           };
         }),
       activePlayer: -1,
@@ -347,25 +439,45 @@ export class BlackJackEngine implements GameEngine {
   }
 
   private _dealCards(state: BlackjackState): void {
-    // Deal 2 cards to each player
+    // Deal 2 cards to each player who placed a bet
     for (const player of state.players) {
-      player.hands[0] = [state.deck.pop()!, state.deck.pop()!];
-      if (isBlackjack(player.hands[0])) {
-        player.result = "blackjack";
+      if (player.bets[0] > 0) {
+        player.hands[0] = [this._drawCard(state), this._drawCard(state)];
+        if (isBlackjack(player.hands[0])) {
+          player.result = "blackjack";
+        }
       }
     }
     // Deal 2 to dealer
-    state.dealerHand = [state.deck.pop()!, state.deck.pop()!];
+    state.dealerHand = [this._drawCard(state), this._drawCard(state)];
 
+    const dealerUpcard = state.dealerHand[0];
+    const dealerHasBlackjack = isBlackjack(state.dealerHand);
+
+    // If dealer shows Ace, offer insurance before revealing hole card
+    if (dealerUpcard[0] === "A") {
+      state.phase = "insurance";
+      const firstBettingPlayer = state.players.find((p) => p.bets[0] > 0);
+      state.activePlayer = firstBettingPlayer?.playerId ?? -1;
+      return;
+    }
+
+    // If dealer has blackjack with 10-value upcard, settle immediately
+    if (dealerHasBlackjack) {
+      this._settle(state);
+      return;
+    }
+
+    // Normal play
     state.phase = "player_turn";
-
-    // Find first player who isn't blackjack
-    const firstPlayer = state.players.find((p) => p.result !== "blackjack");
+    const firstPlayer = state.players.find(
+      (p) => p.result !== "blackjack" && p.hands[0]?.length > 0
+    );
     if (firstPlayer) {
       state.activePlayer = firstPlayer.playerId;
       state.activeHandIndex = 0;
     } else {
-      // All players have blackjack — skip to dealer
+      // All players have blackjack or couldn't bet — skip to dealer
       this._playDealer(state);
     }
   }
@@ -391,7 +503,10 @@ export class BlackJackEngine implements GameEngine {
     );
     for (let i = currentIdx + 1; i < state.players.length; i++) {
       const nextPlayer = state.players[i];
-      if (nextPlayer.result === "playing") {
+      if (
+        nextPlayer.result === "playing" &&
+        nextPlayer.hands[0]?.length > 0
+      ) {
         state.activePlayer = nextPlayer.playerId;
         state.activeHandIndex = 0;
         return;
@@ -406,17 +521,17 @@ export class BlackJackEngine implements GameEngine {
     state.phase = "dealer_turn";
     state.activePlayer = -1;
 
-    // If all players busted, dealer doesn't need to play
+    // If all non-blackjack players busted, dealer doesn't need to play
     const anyPlayerAlive = state.players.some(
       (p) =>
-        p.result === "playing" ||
-        p.result === "blackjack"
+        p.result === "blackjack" ||
+        p.hands.some((h) => h.length > 0 && !isBust(h))
     );
 
     if (anyPlayerAlive) {
       // Reveal hole card (already in state, just advance phase)
       while (dealerShouldHit(state.dealerHand)) {
-        state.dealerHand.push(state.deck.pop()!);
+        state.dealerHand.push(this._drawCard(state));
       }
     }
 
@@ -431,17 +546,25 @@ export class BlackJackEngine implements GameEngine {
     state.winners = [];
 
     for (const player of state.players) {
+      // Skip players who didn't bet (broke or didn't participate)
+      if (player.bets[0] === 0) {
+        continue;
+      }
+
+      player.handResults = [];
+
       for (let i = 0; i < player.hands.length; i++) {
         const hand = player.hands[i];
         const bet = player.bets[i];
         const hv = handValue(hand);
+        let handResult: HandResult;
 
         if (player.result === "blackjack") {
           if (dealerBlackjack) {
-            player.result = "push";
+            handResult = "push";
             player.stack += bet; // return bet
           } else {
-            player.result = "won";
+            handResult = "won";
             const payout = Math.floor(bet * 2.5); // 3:2 payout
             player.stack += payout;
             state.winners.push({
@@ -450,17 +573,19 @@ export class BlackJackEngine implements GameEngine {
               handName: "Blackjack",
             });
           }
+          player.handResults.push(handResult);
           continue;
         }
 
         if (hv.bust) {
-          player.result = "bust";
+          handResult = "bust";
           // bet already taken
+          player.handResults.push(handResult);
           continue;
         }
 
         if (dealerBust) {
-          player.result = "won";
+          handResult = "won";
           const payout = bet * 2;
           player.stack += payout;
           state.winners.push({
@@ -468,6 +593,7 @@ export class BlackJackEngine implements GameEngine {
             amount: bet,
             handName: handName(hand),
           });
+          player.handResults.push(handResult);
           continue;
         }
 
@@ -475,7 +601,7 @@ export class BlackJackEngine implements GameEngine {
         const pTotal = hv.total;
 
         if (pTotal > dTotal) {
-          player.result = "won";
+          handResult = "won";
           const payout = bet * 2;
           player.stack += payout;
           state.winners.push({
@@ -484,11 +610,25 @@ export class BlackJackEngine implements GameEngine {
             handName: handName(hand),
           });
         } else if (pTotal < dTotal) {
-          player.result = "lost";
+          handResult = "lost";
           // bet already taken
         } else {
-          player.result = "push";
+          handResult = "push";
           player.stack += bet; // return bet
+        }
+        player.handResults.push(handResult);
+      }
+
+      // Aggregate result for backward compatibility
+      if (player.handResults.length > 0) {
+        if (player.handResults.some((r) => r === "won")) {
+          player.result = "won";
+        } else if (player.handResults.some((r) => r === "push")) {
+          player.result = "push";
+        } else if (player.handResults.every((r) => r === "bust")) {
+          player.result = "bust";
+        } else {
+          player.result = "lost";
         }
       }
     }
@@ -498,5 +638,12 @@ export class BlackJackEngine implements GameEngine {
     if (hand.length === 0) return [];
     if (hand.length === 1) return [hand[0]];
     return [hand[0], "back"];
+  }
+
+  private _drawCard(state: BlackjackState): Card {
+    if (state.deck.length === 0) {
+      state.deck = shuffleDeck(createDeck());
+    }
+    return state.deck.pop()!;
   }
 }

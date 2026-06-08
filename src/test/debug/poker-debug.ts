@@ -52,13 +52,16 @@ async function main() {
     await unit.complete(true);
 
     // Create room
-    const roomRes = await request(app).post("/api/rooms").send({ maxPlayers: 4, gameType: "poker" });
+    const roomRes = await request(app)
+        .post("/api/rooms")
+        .set("session-id", `s1_${suffix}`)
+        .send({ maxPlayers: 4, gameType: "poker" });
     const roomId = roomRes.body.roomId;
     console.log("Room:", roomId);
 
     // Connect WS
-    const ws1 = new WebSocket(`${baseUrl}/ws?sessionId=s1_${suffix}`);
-    const ws2 = new WebSocket(`${baseUrl}/ws?sessionId=s2_${suffix}`);
+    const ws1 = new WebSocket(`${baseUrl}/ws`, `s1_${suffix}`);
+    const ws2 = new WebSocket(`${baseUrl}/ws`, `s2_${suffix}`);
 
     await Promise.all([
         new Promise<void>((r) => ws1.on("open", () => r())),

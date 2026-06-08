@@ -21,9 +21,9 @@ export class PlayerStatisticsService extends ServiceBase {
         const player = await this.getPlayer(playerId);
         if (!player || player.username === '__shop__') return null;
 
-        // Count lootboxes opened
+        // Count lootboxes opened (openedAt is set)
         const lootboxStmt = this.unit.prepare<{ count: number }>(
-            "SELECT COUNT(*)::INTEGER as count FROM Lootbox WHERE playerId = @playerId",
+            "SELECT COUNT(*)::INTEGER as count FROM Lootbox WHERE playerId = @playerId AND openedAt IS NOT NULL",
             { playerId }
         );
         const lootboxesOpened = (await lootboxStmt.get())?.count ?? 0;
@@ -94,7 +94,7 @@ export class PlayerStatisticsService extends ServiceBase {
 
         // Best drop rarity from actual lootbox drops
         const bestRarityStmt = this.unit.prepare<{ bestRarity: string }>(
-            `SELECT st.rarity as bestRarity
+            `SELECT st.rarity as "bestRarity"
              FROM LootboxDrop ld
              JOIN Lootbox lb ON ld.lootboxId = lb.lootboxId
              JOIN Stove sv ON ld.stoveId = sv.stoveId
@@ -134,6 +134,15 @@ export class PlayerStatisticsService extends ServiceBase {
         // Calculate market activity score (simple formula)
         const marketActivityScore = (listingsCreated * 10) + (listingsSold * 20) + (purchasesMade * 15);
 
+        // Count actual stoves received from lootbox drops
+        const stovesFromLootboxesStmt = this.unit.prepare<{ count: number }>(
+            `SELECT COUNT(*)::INTEGER as count FROM LootboxDrop ld
+             JOIN Lootbox lb ON ld.lootboxId = lb.lootboxId
+             WHERE lb.playerId = @playerId`,
+            { playerId }
+        );
+        const stovesFromLootboxes = (await stovesFromLootboxesStmt.get())?.count ?? 0;
+
         return {
             statId: playerId,
             playerId: player.playerId,
@@ -147,7 +156,7 @@ export class PlayerStatisticsService extends ServiceBase {
             totalLootboxesFree: lootboxesOpened,
             totalCoinsSpentOnLootboxes: 0,
             bestDropRarity: bestDropRarity as any,
-            totalStovesFromLootboxes: lootboxesOpened,
+            totalStovesFromLootboxes: stovesFromLootboxes,
             totalListingsCreated: listingsCreated,
             totalListingsSold: listingsSold,
             totalListingsCancelled: 0,
@@ -203,19 +212,20 @@ export class PlayerStatisticsService extends ServiceBase {
                 p.playerId,
                 p.coins,
                 p.username,
-                (SELECT COUNT(*)::INTEGER FROM Lootbox l WHERE l.playerId = p.playerId) as lootboxesOpened,
+                (SELECT COUNT(*)::INTEGER FROM Lootbox l WHERE l.playerId = p.playerId AND l.openedAt IS NOT NULL) as lootboxesOpened,
                 (SELECT COUNT(*)::INTEGER FROM Listing lc WHERE lc.sellerId = p.playerId) as listingsCreated,
                 (SELECT COUNT(*)::INTEGER FROM Listing ls JOIN Trade t ON ls.listingId = t.listingId WHERE ls.sellerId = p.playerId AND ls.status = 'sold') as listingsSold,
                 (SELECT COALESCE(SUM(ls2.price)::INTEGER, 0) FROM Listing ls2 JOIN Trade t2 ON ls2.listingId = t2.listingId WHERE ls2.sellerId = p.playerId AND ls2.status = 'sold') as salesRevenue,
                 (SELECT COUNT(*)::INTEGER FROM Trade t3 JOIN Listing l3 ON t3.listingId = l3.listingId WHERE t3.buyerId = p.playerId) as purchasesMade,
                 (SELECT COALESCE(SUM(l4.price)::INTEGER, 0) FROM Trade t4 JOIN Listing l4 ON t4.listingId = l4.listingId WHERE t4.buyerId = p.playerId) as purchaseSpending,
                 (SELECT COUNT(*)::INTEGER FROM MiniGameSession mgs WHERE mgs.playerId = p.playerId) as miniGamesPlayed,
+                (SELECT COUNT(*)::INTEGER FROM LootboxDrop ld2 JOIN Lootbox lb2 ON ld2.lootboxId = lb2.lootboxId WHERE lb2.playerId = p.playerId) as stovesFromLootboxes,
                 (SELECT COUNT(*)::INTEGER FROM Stove s WHERE s.currentOwnerId = p.playerId) as stovesOwned,
                 (SELECT COALESCE(SUM(COALESCE(ph.salePrice, 500)), 0)::INTEGER FROM Stove s2 LEFT JOIN (SELECT DISTINCT ON (typeId) typeId, salePrice FROM PriceHistory ORDER BY typeId, saleDate DESC) ph ON s2.typeId = ph.typeId WHERE s2.currentOwnerId = p.playerId) as stoveValue,
                 (SELECT COUNT(*)::INTEGER FROM LoginHistory lh WHERE lh.playerId = p.playerId) as totalLogins,
                 (SELECT COALESCE(SUM(amount)::INTEGER, 0) FROM CoinTransaction ct WHERE ct.playerId = p.playerId AND ct.amount > 0) as totalCoinsEarned,
                 (SELECT COALESCE(SUM(ABS(amount))::INTEGER, 0) FROM CoinTransaction ct WHERE ct.playerId = p.playerId AND ct.amount < 0) as totalCoinsSpent,
-                (SELECT st.rarity FROM LootboxDrop ld JOIN Lootbox lb ON ld.lootboxId = lb.lootboxId JOIN Stove sv ON ld.stoveId = sv.stoveId JOIN StoveType st ON sv.typeId = st.typeId WHERE lb.playerId = p.playerId ORDER BY CASE st.rarity WHEN 'common' THEN 0 WHEN 'uncommon' THEN 1 WHEN 'rare' THEN 2 WHEN 'epic' THEN 3 WHEN 'legendary' THEN 4 WHEN 'limited' THEN 5 ELSE -1 END DESC LIMIT 1) as bestDropRarity
+                (SELECT st.rarity FROM LootboxDrop ld JOIN Lootbox lb ON ld.lootboxId = lb.lootboxId JOIN Stove sv ON ld.stoveId = sv.stoveId JOIN StoveType st ON sv.typeId = st.typeId WHERE lb.playerId = p.playerId ORDER BY CASE st.rarity WHEN 'common' THEN 0 WHEN 'uncommon' THEN 1 WHEN 'rare' THEN 2 WHEN 'epic' THEN 3 WHEN 'legendary' THEN 4 WHEN 'limited' THEN 5 WHEN 'secret' THEN 6 ELSE -1 END DESC LIMIT 1) as bestDropRarity
             FROM Player p
             WHERE p.isAdmin = 0 AND p.username != '__shop__'
         `;
@@ -240,7 +250,7 @@ export class PlayerStatisticsService extends ServiceBase {
                 totalLootboxesFree: r.lootboxesOpened,
                 totalCoinsSpentOnLootboxes: 0,
                 bestDropRarity: r.bestDropRarity ?? null,
-                totalStovesFromLootboxes: r.lootboxesOpened,
+                totalStovesFromLootboxes: r.stovesFromLootboxes ?? 0,
                 totalListingsCreated: r.listingsCreated,
                 totalListingsSold: r.listingsSold,
                 totalListingsCancelled: 0,
@@ -264,7 +274,7 @@ export class PlayerStatisticsService extends ServiceBase {
                 totalGlobalMessages: 0,
                 totalPrivateMessages: 0,
                 currentStoveCount: r.stovesOwned,
-                totalStovesAcquired: (r.lootboxesOpened ?? 0) + (r.purchasesMade ?? 0),
+                totalStovesAcquired: (r.stovesFromLootboxes ?? 0) + (r.purchasesMade ?? 0),
                 totalStovesSold: r.listingsSold,
                 totalStovesTraded: 0,
                 totalStovesCrafted: 0,

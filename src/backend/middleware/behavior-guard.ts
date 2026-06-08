@@ -68,12 +68,14 @@ export function behaviorGuard(req: Request, res: Response, next: NextFunction): 
     const rawToken = body?.behaviorToken;
 
     if (typeof rawToken !== "string" || rawToken.length === 0) {
+        console.log(`[Debug] behaviorGuard blocked ${req.method} ${req.path} — missing or empty behaviorToken`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
 
     const snap = decodeToken(rawToken);
     if (!snap) {
+        console.log(`[Debug] behaviorGuard blocked ${req.method} ${req.path} — malformed behaviorToken`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
@@ -84,36 +86,42 @@ export function behaviorGuard(req: Request, res: Response, next: NextFunction): 
 
     // 1. Mouse activity — bots often have zero or very low mouse movement
     if (snap.mm < MIN_MOUSE_MOVES) {
+        console.log(`[Debug] behaviorGuard blocked ${req.method} ${req.path} — mouse moves too low: ${snap.mm} < ${MIN_MOUSE_MOVES}`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
 
     // 2. Mouse distance — ensure movement was real, not just a single pixel twitch
     if (snap.md < MIN_MOUSE_DISTANCE_SQ) {
+        console.log(`[Debug] behaviorGuard blocked ${req.method} ${req.path} — mouse distance too low: ${snap.md} < ${MIN_MOUSE_DISTANCE_SQ}`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
 
     // 3. Keystrokes — humans type; bots may paste or pre-fill
     if (totalKeystrokes(snap.ks) < MIN_KEYSTROKES) {
+        console.log(`[Debug] behaviorGuard blocked ${req.method} ${req.path} — keystrokes too low: ${totalKeystrokes(snap.ks)} < ${MIN_KEYSTROKES}`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
 
     // 4. Field interaction breadth — humans touch multiple fields
     if (snap.fs.length < MIN_FIELDS_TOUCHED || snap.fc < MIN_FIELDS_TOUCHED) {
+        console.log(`[Debug] behaviorGuard blocked ${req.method} ${req.path} — fields too low: fs.length=${snap.fs.length}, fc=${snap.fc}, min=${MIN_FIELDS_TOUCHED}`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
 
     // 5. Interaction duration — humans need time to read and type
     if (snap.it < MIN_INTERACTION_TIME_MS || snap.it > MAX_INTERACTION_TIME_MS) {
+        console.log(`[Debug] behaviorGuard blocked ${req.method} ${req.path} — interaction time bad: ${snap.it}ms (valid: ${MIN_INTERACTION_TIME_MS}-${MAX_INTERACTION_TIME_MS})`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
 
     // 6. Focus/blur balance — humans tab/shift-tab; bots often focus once and submit
     if (Math.abs(snap.fc - snap.bl) > MAX_FOCUS_BLUR_DELTA) {
+        console.log(`[Debug] behaviorGuard blocked ${req.method} ${req.path} — focus/blur imbalance: fc=${snap.fc}, bl=${snap.bl}, delta=${Math.abs(snap.fc - snap.bl)}`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }
@@ -121,6 +129,7 @@ export function behaviorGuard(req: Request, res: Response, next: NextFunction): 
     // 7. Token freshness — prevent replay of old tokens
     const now = Date.now();
     if (snap.ts > now || snap.ts < now - MAX_INTERACTION_TIME_MS) {
+        console.log(`[Debug] behaviorGuard blocked ${req.method} ${req.path} — stale token: ts=${snap.ts}, now=${now}`);
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid request" });
         return;
     }

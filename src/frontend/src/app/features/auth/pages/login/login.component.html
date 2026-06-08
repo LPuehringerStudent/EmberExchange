@@ -11,7 +11,7 @@
   </div>
 
   <!-- Stove/Forge Login Card -->
-  <div class="relative z-10 w-full max-w-[420px] bg-surface/95 backdrop-blur-lg rounded-[20px] p-10 border-2 border-accent/30 shadow-[0_20px_60px_rgba(0,0,0,0.4),0_0_0_1px_rgba(232,93,4,0.1),inset_0_1px_0_rgba(255,255,255,0.2)]">
+  <div class="relative z-10 w-full max-w-[420px] bg-surface/95 backdrop-blur-lg rounded-[20px] p-6 sm:p-10 border-2 border-accent/30 shadow-[0_20px_60px_rgba(0,0,0,0.4),0_0_0_1px_rgba(232,93,4,0.1),inset_0_1px_0_rgba(255,255,255,0.2)]">
     <!-- Header with Stove Icon -->
     <div class="text-center mb-8">
       <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-accent to-[#f48c06] rounded-[20px] flex items-center justify-center relative shadow-[0_8px_30px_rgba(232,93,4,0.4)]">
@@ -31,7 +31,7 @@
 
     <!-- Login Form -->
     @if (!show2FA()) {
-      <form #loginFormEl [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+      <form #loginFormEl [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5" [class.animate-shake]="shakeForm()">
         <!-- Error Message -->
         @if (errorMessage()) {
           <div class="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm animate-shake">

@@ -4,6 +4,7 @@ import { checkPlayerBanned } from "../middleware/ban-check";
 import { ShopService } from "../services/shop-service";
 import { ShopRotationService } from "../services/shop-rotation-service";
 import { QuestService } from "../services/quest-service";
+import { RedeemCodeService } from "../services/redeem-code-service";
 import { requireAuth } from "../middleware/require-auth";
 import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
@@ -38,7 +39,8 @@ shopRouter.get("/shop/items", async (req, res) => {
         const items = await shopService.getShopItems();
         res.status(StatusCodes.OK).json(items);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -105,7 +107,8 @@ shopRouter.post("/shop/buy", requireAuth, async (req, res) => {
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -139,7 +142,8 @@ shopRouter.get("/shop/daily-status", requireAuth, async (req, res) => {
         const status = await shopService.getDailyRewardStatus(req.playerId!);
         res.status(StatusCodes.OK).json(status);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -230,7 +234,8 @@ shopRouter.post("/shop/sell", requireAuth, async (req, res) => {
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -270,7 +275,80 @@ shopRouter.post("/shop/rotate", requireAdmin, async (req, res) => {
         res.status(StatusCodes.OK).json(result);
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    }
+});
+
+/**
+ * @openapi
+ * /shop/redeem:
+ *   post:
+ *     summary: Redeem a code
+ *     description: Redeems a promotional code for coins and/or lootboxes
+ *     tags:
+ *       - Shop
+ *     parameters:
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               code:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Code redeemed successfully
+ *       400:
+ *         description: Invalid code or already redeemed
+ *       401:
+ *         description: Invalid session
+ *       500:
+ *         description: Server error
+ */
+shopRouter.post("/shop/redeem", requireAuth, async (req, res) => {
+    const { code } = req.body;
+    if (!code || typeof code !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "code is required" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const redeemService = new RedeemCodeService(unit);
+
+    try {
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
+            await unit.complete(false);
+            return;
+        }
+
+        const result = await redeemService.redeemCode(req.playerId!, code);
+        if (result.success) {
+            await unit.complete(true);
+            res.status(StatusCodes.OK).json({
+                message: "Code redeemed successfully",
+                rewardCoins: result.rewardCoins,
+                rewardLootboxes: result.rewardLootboxes,
+                rewardSparks: result.rewardSparks,
+                rewardSpins: result.rewardSpins,
+            });
+        } else {
+            await unit.complete(false);
+            res.status(StatusCodes.BAD_REQUEST).json({ error: result.error });
+        }
+    } catch (err) {
+        await unit.complete(false);
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -306,6 +384,7 @@ shopRouter.post("/shop/claim-daily", requireAuth, async (req, res) => {
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });

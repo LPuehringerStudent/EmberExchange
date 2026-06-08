@@ -36,6 +36,7 @@ import { coinTransactionRouter } from "./routers/coin-transaction-router";
 import { authRouter } from "./routers/auth-router";
 import { oauthRouter } from "./routers/oauth-router";
 import { shopRouter } from "./routers/shop-router";
+import { spinRouter } from "./routers/spin-router";
 import { roomRouter } from "./routers/room-router";
 import { gameRouter } from "./routers/game-router";
 import { supportRouter } from "./routers/support-router";
@@ -96,8 +97,13 @@ const allowedOrigins = new Set([
 ]);
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, same-origin)
-        if (!origin || allowedOrigins.has(origin)) {
+        // Allow requests with no origin in dev only (mobile apps, curl, same-origin)
+        if (!origin) {
+            const allowNull = process.env.NODE_ENV !== "production";
+            callback(null, allowNull);
+            return;
+        }
+        if (allowedOrigins.has(origin)) {
             callback(null, true);
             return;
         }
@@ -206,6 +212,7 @@ app.use("/api", coinTransactionRouter);
 app.use("/api", authRouter);
 app.use("/api", oauthRouter);
 app.use("/api", shopRouter);
+app.use("/api", spinRouter);
 app.use("/api", roomRouter);
 app.use("/api", gameRouter);
 app.use("/api", supportRouter);

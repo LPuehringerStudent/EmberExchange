@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { checkPlayerBanned } from "../middleware/ban-check";
 import { requireAuth } from "../middleware/require-auth";
 import { requireAdmin } from "../middleware/admin";
+import { readRateLimiter } from "../middleware/rate-limiter";
 import { PlayerService } from "../services/player-service";
 import { SessionService } from "../services/session-service";
 import { PlayerSettingsService } from "../services/player-settings-service";
@@ -62,7 +63,7 @@ function getClientIp(req: express.Request): string {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.get("/players", async (_req, res) => {
+playerRouter.get("/players", readRateLimiter.middleware(), async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerService(unit);
 
@@ -70,7 +71,8 @@ playerRouter.get("/players", async (_req, res) => {
         const response = await service.getAllPublicPlayers();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -323,7 +325,8 @@ playerRouter.patch("/players/:id/profile", async (req, res) => {
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -398,7 +401,8 @@ playerRouter.get("/players/:id/settings", async (req, res) => {
         const settings = await settingsService.ensureSettings(playerId);
         res.status(StatusCodes.OK).json(settings);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -490,13 +494,14 @@ playerRouter.patch("/players/:id/settings", async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "No valid fields to update" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
 });
 
-playerRouter.get("/players/:id", async (req, res) => {
+playerRouter.get("/players/:id", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerService(unit);
     const id = req.params.id;
@@ -516,7 +521,8 @@ playerRouter.get("/players/:id", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -568,7 +574,7 @@ playerRouter.get("/players/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.get("/players/lookup/:username", async (req, res) => {
+playerRouter.get("/players/lookup/:username", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerService(unit);
     const username = req.params.username;
@@ -579,14 +585,15 @@ playerRouter.get("/players/lookup/:username", async (req, res) => {
             return;
         }
 
-        const player = await service.getPlayerByUsername(username);
+        const player = await service.getPlayerByUsername(username as string);
         if (player === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         } else {
             res.status(StatusCodes.OK).json({ playerId: player.playerId, username: player.username });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -700,7 +707,7 @@ async function buildGloryProfile(
     };
 }
 
-playerRouter.get("/players/:id/glory", async (req, res) => {
+playerRouter.get("/players/:id/glory", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const playerService = new PlayerService(unit);
     const id = req.params.id;
@@ -738,7 +745,8 @@ playerRouter.get("/players/:id/glory", async (req, res) => {
 
         res.status(StatusCodes.OK).json(profile);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -771,7 +779,7 @@ playerRouter.get("/players/:id/glory", async (req, res) => {
  *       500:
  *         description: Server error
  */
-playerRouter.get("/players/username/:username/glory", async (req, res) => {
+playerRouter.get("/players/username/:username/glory", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const playerService = new PlayerService(unit);
     const username = req.params.username;
@@ -782,7 +790,7 @@ playerRouter.get("/players/username/:username/glory", async (req, res) => {
             return;
         }
 
-        const player = await playerService.getPlayerByUsername(username);
+        const player = await playerService.getPlayerByUsername(username as string);
         if (!player || player.username === '__shop__') {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             return;
@@ -809,7 +817,8 @@ playerRouter.get("/players/username/:username/glory", async (req, res) => {
 
         res.status(StatusCodes.OK).json(profile);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -943,7 +952,8 @@ playerRouter.patch("/players/:id/coins", requireAdmin, async (req, res) => {
             }
             res.status(StatusCodes.CONFLICT).json({ error: message });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -1056,7 +1066,8 @@ playerRouter.patch("/players/:id/lootboxes", requireAuth, async (req, res) => {
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -1149,7 +1160,8 @@ playerRouter.delete("/players/:id", requireAuth, async (req, res) => {
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);

@@ -8,6 +8,7 @@ import { AuthService } from '@core/services/auth.service';
 import { StoveService } from '@core/services/stove.service';
 import { ForgeryService } from '@core/services/forgery.service';
 import { ShowedStove, Rarity, ForgeryResult } from '@shared/model';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 
 const RARITY_ORDER: Rarity[] = [
   Rarity.COMMON,
@@ -33,7 +34,7 @@ interface ForgeSlot {
   selector: 'app-forgery',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, InfoTooltipComponent],
   templateUrl: './forgery.component.html',
   styleUrls: ['./forgery.component.css']
 })

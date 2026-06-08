@@ -45,7 +45,8 @@ lootboxTypeRouter.get("/lootbox-types", async (_req, res) => {
         const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -83,7 +84,8 @@ lootboxTypeRouter.get("/lootbox-types/available", async (_req, res) => {
         const response = await service.getAvailable();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -138,7 +140,8 @@ lootboxTypeRouter.get("/lootbox-types/count", async (_req, res) => {
         const count = await service.count();
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -162,7 +165,8 @@ lootboxTypeRouter.get("/lootbox-types/:id", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -281,7 +285,8 @@ lootboxTypeRouter.post("/lootbox-types", requireAdmin, async (req, res) => {
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -392,7 +397,8 @@ lootboxTypeRouter.patch("/lootbox-types/:id", requireAdmin, async (req, res) => 
             res.status(StatusCodes.NOT_FOUND).json({ error: "Lootbox type not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -477,7 +483,8 @@ lootboxTypeRouter.patch("/lootbox-types/:id/availability", requireAdmin, async (
             res.status(StatusCodes.NOT_FOUND).json({ error: "Lootbox type not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -553,7 +560,8 @@ lootboxTypeRouter.delete("/lootbox-types/:id", requireAdmin, async (req, res) =>
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);

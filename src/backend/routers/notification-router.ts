@@ -36,7 +36,8 @@ notificationRouter.get("/notifications", requireAuth, async (req, res) => {
         const notifications = await notificationService.getByPlayerId(req.playerId!);
         res.status(StatusCodes.OK).json(notifications);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -72,7 +73,8 @@ notificationRouter.get("/notifications/unread-count", requireAuth, async (req, r
         const count = await notificationService.getUnreadCount(req.playerId!);
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -125,7 +127,8 @@ notificationRouter.patch("/notifications/:id/read", requireAuth, async (req, res
             res.status(StatusCodes.NOT_FOUND).json({ error: "Notification not found or does not belong to you" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -163,7 +166,8 @@ notificationRouter.patch("/notifications/read-all", requireAuth, async (req, res
         ok = true;
         res.status(StatusCodes.OK).json({ message: "All notifications marked as read", count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -216,7 +220,8 @@ notificationRouter.delete("/notifications/:id", requireAuth, async (req, res) =>
             res.status(StatusCodes.NOT_FOUND).json({ error: "Notification not found or does not belong to you" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
