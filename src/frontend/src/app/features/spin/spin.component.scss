@@ -2,30 +2,32 @@
 $gold: #f59e0b;
 $gold-light: #fbbf24;
 $gold-dark: #d97706;
-$bg-dark: #0f0f1a;
-$bg-card: rgba(20, 20, 35, 0.85);
+$accent: #e85d04;
 
 // ── Page Layout ────────────────────────────────────────────
+:host {
+  display: block;
+}
+
 .spin-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
   position: relative;
   overflow-x: hidden;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1.5rem;
 }
 
 .spin-container {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 37.5rem;
+  max-width: 38rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 // ── Ember Background ───────────────────────────────────────
@@ -41,7 +43,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
   position: absolute;
   width: 0.25rem;
   height: 0.25rem;
-  background: $gold;
+  background: $accent;
   border-radius: 50%;
   opacity: 0;
   animation: ember-float 6s ease-in-out infinite;
@@ -60,35 +62,38 @@ $bg-card: rgba(20, 20, 35, 0.85);
 // ── Header ─────────────────────────────────────────────────
 .spin-header {
   text-align: center;
-  margin-bottom: 0.5rem;
 
   .title {
     font-size: 2rem;
     font-weight: 800;
-    color: #fff;
+    color: #f0f0f5;
     margin: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    text-shadow: 0 2px 10px rgba($gold, 0.4);
+    gap: 0.625rem;
+    letter-spacing: -0.02em;
 
     .fire-icon {
-      font-size: 2.2rem;
+      width: 2.25rem;
+      height: 2.25rem;
+      fill: $accent;
       animation: fire-pulse 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 8px rgba($accent, 0.5));
     }
   }
 
   .subtitle {
-    color: #94a3b8;
-    font-size: 0.95rem;
+    color: #a0a0b8;
+    font-size: 0.9375rem;
     margin: 0.5rem 0 0;
+    font-weight: 500;
   }
 }
 
 @keyframes fire-pulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  50% { transform: scale(1.12); }
 }
 
 // ── Loading Skeleton ───────────────────────────────────────
@@ -100,19 +105,19 @@ $bg-card: rgba(20, 20, 35, 0.85);
   width: 100%;
 
   .skeleton-wheel {
-    width: 17.5rem;
-    height: 17.5rem;
+    width: 18rem;
+    height: 18rem;
     border-radius: 50%;
-    background: linear-gradient(90deg, #1e1e2e 25%, #2a2a3e 50%, #1e1e2e 75%);
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s infinite;
   }
 
   .skeleton-button {
-    width: 11.25rem;
+    width: 12rem;
     height: 3.5rem;
     border-radius: 624.9375rem;
-    background: linear-gradient(90deg, #1e1e2e 25%, #2a2a3e 50%, #1e1e2e 75%);
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s infinite;
   }
@@ -128,7 +133,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
   width: 100%;
   transition: opacity 0.3s ease;
 
@@ -148,7 +153,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
 
 .pointer {
   position: absolute;
-  top: -1rem;
+  top: -1.25rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -162,9 +167,9 @@ $bg-card: rgba(20, 20, 35, 0.85);
 .pointer-triangle {
   width: 0;
   height: 0;
-  border-left: 14px solid transparent;
-  border-right: 14px solid transparent;
-  border-top: 22px solid $gold;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-top: 24px solid $gold;
 }
 
 @keyframes pointer-shake {
@@ -182,14 +187,14 @@ $bg-card: rgba(20, 20, 35, 0.85);
   will-change: transform;
   transition: transform 4s cubic-bezier(0.1, 0.9, 0.2, 1);
   box-shadow:
-    0 0 2.5rem rgba($gold, 0.3),
-    0 0 5rem rgba($gold, 0.1),
+    0 0 2.5rem rgba($gold, 0.25),
+    0 0 5rem rgba($gold, 0.08),
     inset 0 0 1.25rem rgba(0,0,0,0.5);
 
   &.spinning {
     box-shadow:
-      0 0 3.75rem rgba($gold, 0.5),
-      0 0 7.5rem rgba($gold, 0.2),
+      0 0 4rem rgba($gold, 0.45),
+      0 0 8rem rgba($gold, 0.15),
       inset 0 0 1.25rem rgba(0,0,0,0.5);
   }
 }
@@ -205,28 +210,29 @@ $bg-card: rgba(20, 20, 35, 0.85);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.875rem;
   width: 100%;
 }
 
 .spin-btn {
   position: relative;
-  padding: 1rem 3rem;
+  padding: 1rem 3.5rem;
   font-size: 1.25rem;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, $gold 0%, $gold-dark 100%);
+  background: linear-gradient(135deg, $accent 0%, #c44a03 100%);
   border: none;
   border-radius: 624.9375rem;
   cursor: pointer;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba($gold, 0.4), 0 0 0 2px rgba($gold-light, 0.3);
+  box-shadow: 0 4px 20px rgba($accent, 0.4), 0 0 0 2px rgba($accent, 0.25);
   transition: all 0.3s ease;
   animation: pulse-glow 2s ease-in-out infinite;
+  letter-spacing: 0.05em;
 
   &:hover:not(:disabled) {
     transform: scale(1.05);
-    box-shadow: 0 6px 30px rgba($gold, 0.6), 0 0 0 3px rgba($gold-light, 0.5);
+    box-shadow: 0 6px 30px rgba($accent, 0.6), 0 0 0 3px rgba($accent, 0.4);
   }
 
   &:disabled {
@@ -242,15 +248,29 @@ $bg-card: rgba(20, 20, 35, 0.85);
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
     transform: translateX(-100%);
     animation: shine-sweep 3s ease-in-out infinite;
   }
 }
 
+.spin-btn-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+}
+
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 4px 20px rgba($gold, 0.4), 0 0 0 2px rgba($gold-light, 0.3); }
-  50% { box-shadow: 0 4px 30px rgba($gold, 0.6), 0 0 0 3px rgba($gold-light, 0.5); }
+  0%, 100% { box-shadow: 0 4px 20px rgba($accent, 0.4), 0 0 0 2px rgba($accent, 0.25); }
+  50% { box-shadow: 0 4px 30px rgba($accent, 0.6), 0 0 0 3px rgba($accent, 0.4); }
 }
 
 @keyframes shine-sweep {
@@ -267,29 +287,60 @@ $bg-card: rgba(20, 20, 35, 0.85);
   text-shadow: 0 0 10px rgba($gold, 0.3);
 }
 
+.bonus-spins {
+  color: #a0a0b8;
+  font-size: 0.9375rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+
+  strong {
+    color: #f0f0f5;
+  }
+
+  .inline-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    fill: $gold;
+  }
+}
+
 .total-spins {
-  color: #64748b;
+  color: #6c6c85;
   font-size: 0.875rem;
   margin: 0;
 
   strong {
-    color: #cbd5e1;
+    color: #a0a0b8;
   }
 }
 
 // ── History ────────────────────────────────────────────────
 .history-section {
   width: 100%;
-  background: $bg-card;
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 1rem;
-  padding: 1rem 1.25rem;
-  border: 1px solid rgba(255,255,255,0.05);
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(0.625rem);
 
   h3 {
     color: #e2e8f0;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     font-weight: 700;
-    margin: 0 0 0.75rem;
+    margin: 0 0 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .section-icon {
+      width: 1.125rem;
+      height: 1.125rem;
+      fill: $accent;
+    }
   }
 }
 
@@ -302,14 +353,36 @@ $bg-card: rgba(20, 20, 35, 0.85);
 .history-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
+  gap: 0.875rem;
+  padding: 0.625rem 0.875rem;
   background: rgba(255,255,255,0.03);
   border-radius: 0.625rem;
   border-left: 3px solid var(--prize-color);
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: rgba(255,255,255,0.05);
+  }
 
   .history-icon {
-    font-size: 1.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      fill: #e2e8f0;
+    }
+
+    .history-gif {
+      width: 1.5rem;
+      height: 1.5rem;
+      object-fit: contain;
+    }
   }
 
   .history-label {
@@ -320,19 +393,20 @@ $bg-card: rgba(20, 20, 35, 0.85);
   }
 
   .history-rarity {
-    font-size: 0.7rem;
+    font-size: 0.6875rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 0.2rem 0.5rem;
+    padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
+    flex-shrink: 0;
 
     &.rarity-common { color: #94a3b8; background: rgba(148,163,184,0.15); }
     &.rarity-uncommon { color: #22c55e; background: rgba(34,197,94,0.15); }
     &.rarity-rare { color: #3b82f6; background: rgba(59,130,246,0.15); }
     &.rarity-epic { color: #a855f7; background: rgba(168,85,247,0.15); }
     &.rarity-legendary { color: #f59e0b; background: rgba(245,158,11,0.15); }
-    &.rarity-mythic { color: #e85d04; background: rgba(232,93,4,0.15); }
+    &.rarity-mythic { color: $accent; background: rgba($accent, 0.15); }
     &.rarity-secret { color: #ffd700; background: rgba(255,215,0,0.15); }
   }
 }
@@ -357,12 +431,12 @@ $bg-card: rgba(20, 20, 35, 0.85);
 
 .result-card {
   position: relative;
-  background: linear-gradient(145deg, #1a1a2e, #0f0f1a);
+  background: linear-gradient(145deg, rgba(26,26,46,0.95), rgba(15,15,26,0.98));
   border-radius: 1.5rem;
   padding: 2.5rem 2rem;
   text-align: center;
   width: 90%;
-  max-width: 22.5rem;
+  max-width: 22rem;
   border: 1px solid rgba(255,255,255,0.08);
   animation: card-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   overflow: hidden;
@@ -382,9 +456,26 @@ $bg-card: rgba(20, 20, 35, 0.85);
 }
 
 .result-icon {
-  font-size: 4rem;
-  margin-bottom: 0.5rem;
+  width: 5rem;
+  height: 5rem;
+  margin: 0 auto 0.75rem;
   animation: icon-bounce 0.6s ease 0.3s both;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    fill: #f0f0f5;
+    filter: drop-shadow(0 0 12px rgba(255,255,255,0.2));
+  }
+
+  .result-gif {
+    width: 5rem;
+    height: 5rem;
+    object-fit: contain;
+  }
 }
 
 @keyframes icon-bounce {
@@ -397,6 +488,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
   font-size: 1.75rem;
   font-weight: 800;
   margin: 0 0 0.25rem;
+  letter-spacing: -0.01em;
 }
 
 .result-prize {
@@ -418,7 +510,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
   &.rarity-rare { color: #3b82f6; }
   &.rarity-epic { color: #a855f7; }
   &.rarity-legendary { color: #f59e0b; }
-  &.rarity-mythic { color: #e85d04; }
+  &.rarity-mythic { color: $accent; }
   &.rarity-secret { color: #ffd700; }
 }
 
@@ -427,16 +519,16 @@ $bg-card: rgba(20, 20, 35, 0.85);
   font-size: 1.1rem;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, $gold 0%, $gold-dark 100%);
+  background: linear-gradient(135deg, $accent 0%, #c44a03 100%);
   border: none;
   border-radius: 624.9375rem;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba($gold, 0.4);
+  box-shadow: 0 4px 20px rgba($accent, 0.4);
   transition: all 0.2s ease;
 
   &:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 25px rgba($gold, 0.6);
+    box-shadow: 0 6px 25px rgba($accent, 0.6);
   }
 }
 
@@ -499,14 +591,15 @@ $bg-card: rgba(20, 20, 35, 0.85);
 // ── Mobile Responsiveness ──────────────────────────────────
 @media (max-width: 480px) {
   .spin-page {
-    padding: 1rem 0.75rem;
+    padding: 1.5rem 1rem;
   }
 
   .spin-header .title {
     font-size: 1.5rem;
 
     .fire-icon {
-      font-size: 1.75rem;
+      width: 1.75rem;
+      height: 1.75rem;
     }
   }
 
@@ -529,7 +622,13 @@ $bg-card: rgba(20, 20, 35, 0.85);
   }
 
   .result-icon {
-    font-size: 3rem;
+    width: 4rem;
+    height: 4rem;
+
+    .result-gif {
+      width: 4rem;
+      height: 4rem;
+    }
   }
 
   .result-title {

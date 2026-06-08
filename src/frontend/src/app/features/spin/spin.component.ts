@@ -4,6 +4,17 @@ import { SpinService } from '../../core/services/spin.service';
 import { ToastService } from '../../core/services/toast.service';
 import type { SpinStatus, SpinResult, SpinPrize } from '@shared/model';
 
+/* ─── SVG Path data for wheel segment icons ─── */
+const ICON_PATHS: Record<string, string> = {
+  coins:   'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z',
+  sparks:  'M7 2v11h3v9l7-12h-4l4-8z',
+  fire:    'M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z',
+  clock:   'M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v7l5.25 3.15.75-1.23-4.5-2.67z',
+  ticket:  'M22 10V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-2-1.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm0 7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z',
+  gift:    'M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z',
+  star:    'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',
+};
+
 // 8 segments: 7 prizes + 1 "Try Again" (visual only, mapped to coins_small)
 const WHEEL_SEGMENTS: SpinPrize[] = [
   { id: 'coins_small',  label: '50 Coal',    icon: 'coins',  minAmount: 50,   maxAmount: 100,  color: '#94a3b8', weight: 25 },
@@ -17,6 +28,7 @@ const WHEEL_SEGMENTS: SpinPrize[] = [
 ];
 
 const SEGMENT_ANGLE = 360 / WHEEL_SEGMENTS.length; // 45 degrees
+const LOOTBOX_GIF = 'assets/animation/chest-idle.gif';
 
 @Component({
   selector: 'app-spin',
@@ -46,6 +58,8 @@ export class SpinComponent implements OnInit, OnDestroy {
 
   segments = WHEEL_SEGMENTS;
   segmentAngle = SEGMENT_ANGLE;
+  iconPaths = ICON_PATHS;
+  lootboxGif = LOOTBOX_GIF;
 
   private countdownInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -114,11 +128,9 @@ export class SpinComponent implements OnInit, OnDestroy {
     this.showResult.set(false);
     this.lastPrize.set(null);
 
-    // Call backend first to get the actual result
     this.spinService.spin().subscribe({
       next: (result: SpinResult) => {
         try {
-          // Defensive: validate the response has the shape we expect
           if (!result?.prize?.id) {
             console.error('[SPIN] Invalid result shape:', result);
             this.isSpinning.set(false);
@@ -126,7 +138,6 @@ export class SpinComponent implements OnInit, OnDestroy {
             return;
           }
 
-          // Find the segment index for the winning prize
           let winningIndex = WHEEL_SEGMENTS.findIndex((s, i) => s.id === result.prize.id && (result.prize.id !== 'coins_small' || i < 7));
           if (winningIndex === -1) winningIndex = 0;
 
@@ -136,7 +147,6 @@ export class SpinComponent implements OnInit, OnDestroy {
 
           this.wheelRotation.set(targetRotation);
 
-          // After animation completes (4s)
           setTimeout(() => {
             try {
               this.isSpinning.set(false);
@@ -148,7 +158,6 @@ export class SpinComponent implements OnInit, OnDestroy {
 
               this.stopCountdown();
               if (result.bonusSpins > 0) {
-                // Still have bonus spins — no cooldown
                 this.canSpin.set(true);
                 this.nextSpinAt.set(null);
               } else if (result.nextSpinAt) {
@@ -156,7 +165,6 @@ export class SpinComponent implements OnInit, OnDestroy {
                 this.nextSpinAt.set(result.nextSpinAt);
                 this.startCountdown(result.nextSpinAt);
               } else {
-                // No bonus spins and no cooldown set — can spin immediately
                 this.canSpin.set(true);
                 this.nextSpinAt.set(null);
               }
@@ -186,13 +194,10 @@ export class SpinComponent implements OnInit, OnDestroy {
     this.showResult.set(false);
   }
 
-  getIconSvg(icon: string): string {
-    switch (icon) {
-      case 'coins': return '🪙';
-      case 'sparks': return '⚡';
-      case 'box': return '🎁';
-      default: return '✨';
-    }
+  getIconType(icon: string): string {
+    if (icon === 'box') return 'lootbox';
+    if (icon === 'sparks') return 'sparks';
+    return 'coins';
   }
 
   getRarityLabel(prizeId: string): string {
