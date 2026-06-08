@@ -8,30 +8,48 @@ import {
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/services/auth.service';
 import { ListingService, Listing } from '@core/services/listing.service';
 import { TradeService } from '@core/services/trade.service';
 import { StoveService, StoveType, Stove } from '@core/services/stove.service';
 import { LootboxService, LootboxType } from '@core/services/lootbox.service';
 import { PriceHistoryService } from '@core/services/price-history.service';
-import { firstValueFrom } from 'rxjs';
+import { ChatMessageService } from '@core/services/chat-message.service';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
 
+/* ─── Local Types ─── */
 
-/* ============================================================
-   LOCAL TYPES
-   ============================================================ */
-
-/** A single data-point in the 30-day price history chart */
 interface PricePoint {
-  date:  string;
+  date: string;
   price: number;
 }
 
+interface ChartSegment {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  isUp: boolean;
+}
 
-/* ============================================================
-   COMPONENT
-   ============================================================ */
+interface ChartPoint {
+  x: number;
+  y: number;
+  price: number;
+  date: string;
+}
+
+interface ChartModel {
+  viewBox: string;
+  segments: ChartSegment[];
+  areaPath: string;
+  points: ChartPoint[];
+  minPrice: number;
+  maxPrice: number;
+  priceRange: number;
+}
 
 @Component({
   selector: 'app-marketplace',
@@ -41,128 +59,126 @@ interface PricePoint {
   styleUrls: ['./marketplace.component.css'],
 })
 export class MarketplaceComponent implements OnInit {
-
-  /* ── Tab state (signal so computed() can track it) ─────────── */
+  /* ── Tab state ── */
   readonly activeTab = signal<'all' | 'my'>('all');
 
-
-  /* ── Listing data ─────────────────────────────────────────── */
-  allListings  = signal<Listing[]>([]);
-  myListings   = signal<Listing[]>([]);
-  loading      = signal<boolean>(true);
-  error        = signal<string | null>(null);
+  /* ── Listing data ── */
+  allListings = signal<Listing[]>([]);
+  myListings = signal<Listing[]>([]);
+  recentSales = signal<Listing[]>([]);
+  loading = signal<boolean>(true);
+  error = signal<string | null>(null);
   processingId = signal<number | null>(null);
 
-
-  /* ── User context ──────────────────────────────────────────── */
+  /* ── User context ── */
   playerId: number | null = null;
   coins = signal<number>(0);
 
-
-  /* ── Item metadata maps ────────────────────────────────────── */
-  stoveTypes   = signal<Map<number, StoveType>>(new Map());
-  stoves       = signal<Map<number, Stove>>(new Map());
+  /* ── Item metadata ── */
+  stoveTypes = signal<Map<number, StoveType>>(new Map());
+  stoves = signal<Map<number, Stove>>(new Map());
   lootboxTypes = signal<Map<number, LootboxType>>(new Map());
 
-
-  /* ── Detail modal state ────────────────────────────────────── */
-
-  /**
-   * The listing currently open in the detail modal.
-   * null = modal is closed.
-   */
+  /* ── Detail modal state ── */
   readonly selectedListing = signal<Listing | null>(null);
-
-  /**
-   * 30-day price history shown in the modal chart.
-   *
-   * Currently generated from mock data. When the backend
-   * exposes a price-history endpoint, replace the mock block
-   * in openDetails() with:
-   *   const pts = await firstValueFrom(this._listingService.getPriceHistory(listing.listingId));
-   *   this.priceHistory.set(pts);
-   */
   readonly priceHistory = signal<PricePoint[]>([]);
+  readonly hoverIndex = signal<number>(-1);
 
+  /* ── Confirmation popup state ── */
+  readonly confirmModal = signal<boolean>(false);
+  readonly confirmListing = signal<Listing | null>(null);
+  readonly confirmType = signal<'buy' | 'cancel' | null>(null);
 
-  /* ── Derived / computed state ──────────────────────────────── */
+  /* ── Message seller state ── */
+  readonly messageMode = signal<boolean>(false);
+  readonly messageText = signal<string>('');
+  readonly messageSent = signal<boolean>(false);
 
-  /** Currently visible listings based on the active tab. */
+  /* ── Derived state ── */
   readonly currentListings = computed(() =>
     this.activeTab() === 'all' ? this.allListings() : this.myListings()
   );
 
-  /** Lowest price across all active listings (shown in header stat). */
   readonly lowestPrice = computed(() => {
     const list = this.allListings();
-    return list.length ? Math.min(...list.map(l => l.price)) : 0;
+    return list.length ? Math.min(...list.map((l) => l.price)) : 0;
   });
 
-  /**
-   * SVG chart data computed from priceHistory.
-   * Canvas dimensions: 420 × 100 px with 10px horizontal and 8px vertical padding.
-   *
-   * Returns:
-   *   points — polyline points string for the price line
-   *   area   — polygon points string for the filled area beneath the line
-   *   avgY   — Y coordinate of the average-price dashed horizontal line
-   *   minPrice / maxPrice — used for axis labels
-   */
-  readonly chartData = computed(() => {
+  readonly chartModel = computed<ChartModel | null>(() => {
     const history = this.priceHistory();
-    if (history.length < 2) {
-      return { points: '', area: '', avgY: '50', minPrice: 0, maxPrice: 0 };
+    if (history.length < 2) return null;
+
+    const prices = history.map((h) => h.price);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const padding = (max - min) * 0.05 || max * 0.05;
+    const minPrice = Math.max(0, min - padding);
+    const maxPrice = max + padding;
+    const range = maxPrice - minPrice || 1;
+
+    const width = 420;
+    const height = 100;
+    const px = 10;
+    const py = 8;
+
+    const points = history.map((h, i) => ({
+      x: px + (i / (history.length - 1)) * (width - px * 2),
+      y: py + (1 - (h.price - minPrice) / range) * (height - py * 2),
+      price: h.price,
+      date: h.date,
+    }));
+
+    const segments: ChartSegment[] = [];
+    for (let i = 1; i < points.length; i++) {
+      segments.push({
+        x1: points[i - 1].x,
+        y1: points[i - 1].y,
+        x2: points[i].x,
+        y2: points[i].y,
+        isUp: points[i].price >= points[i - 1].price,
+      });
     }
 
-    const W = 420, H = 100, PX = 10, PY = 8;
-    const prices = history.map(h => h.price);
-    const min    = Math.min(...prices);
-    const max    = Math.max(...prices);
-    const range  = max - min || 1;
-    const avg    = prices.reduce((s, p) => s + p, 0) / prices.length;
-
-    /* Map each data-point to an SVG coordinate */
-    const coords = history.map((h, i) => {
-      const x = PX + (i / (history.length - 1)) * (W - PX * 2);
-      const y = PY + (1 - (h.price - min) / range) * (H - PY * 2);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    });
-
-    /* Area polygon closes back to the bottom of the chart */
-    const firstX   = coords[0].split(',')[0];
-    const lastX    = coords[coords.length - 1].split(',')[0];
-    const bottomY  = (H - PY).toFixed(1);
-    const avgY     = (PY + (1 - (avg - min) / range) * (H - PY * 2)).toFixed(1);
+    const areaPath =
+      `M ${points[0].x} ${height} ` +
+      points.map((p) => `L ${p.x} ${p.y}`).join(' ') +
+      ` L ${points[points.length - 1].x} ${height} Z`;
 
     return {
-      points:   coords.join(' '),
-      area:     `${coords.join(' ')} ${lastX},${bottomY} ${firstX},${bottomY}`,
-      avgY,
-      minPrice: min,
-      maxPrice: max,
+      viewBox: `0 0 ${width} ${height}`,
+      segments,
+      areaPath,
+      points,
+      minPrice,
+      maxPrice,
+      priceRange: range,
     };
   });
 
-  /** Average price across the 30-day history (shown as a stat in the modal). */
+  readonly hoveredPoint = computed(() => {
+    const model = this.chartModel();
+    const index = this.hoverIndex();
+    if (!model || index < 0 || index >= model.points.length) return null;
+    return model.points[index];
+  });
+
   readonly averageHistoryPrice = computed(() => {
     const h = this.priceHistory();
     if (!h.length) return 0;
     return Math.round(h.reduce((s, p) => s + p.price, 0) / h.length);
   });
 
-
-  /* ── Services ─────────────────────────────────────────────── */
-  private _authService    = inject(AuthService);
-  private _router         = inject(Router);
+  /* ── Services ── */
+  private _authService = inject(AuthService);
+  private _router = inject(Router);
   private _listingService = inject(ListingService);
-  private _tradeService   = inject(TradeService);
-  private _stoveService   = inject(StoveService);
+  private _tradeService = inject(TradeService);
+  private _stoveService = inject(StoveService);
   private _lootboxService = inject(LootboxService);
   private _priceHistoryService = inject(PriceHistoryService);
+  private _chatService = inject(ChatMessageService);
 
-
-  /* ── Lifecycle ─────────────────────────────────────────────── */
-
+  /* ── Lifecycle ── */
   ngOnInit(): void {
     const user = this._authService.getCurrentUser();
     if (!user) {
@@ -174,9 +190,7 @@ export class MarketplaceComponent implements OnInit {
     void this.loadData();
   }
 
-
-  /* ── Data loading ──────────────────────────────────────────── */
-
+  /* ── Data loading ── */
   async loadData(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
@@ -207,6 +221,17 @@ export class MarketplaceComponent implements OnInit {
       for (const lt of lootboxTypeList) lootboxTypeMap.set(lt.lootboxTypeId, lt);
       this.lootboxTypes.set(lootboxTypeMap);
 
+      /* Attempt to load recent sales */
+      await this.loadRecentSales();
+
+      /* Keep detail panel in sync after reload */
+      const selected = this.selectedListing();
+      if (selected) {
+        const updated =
+          all.find((l) => l.listingId === selected.listingId) ||
+          mine.find((l) => l.listingId === selected.listingId);
+        this.selectedListing.set(updated ?? null);
+      }
     } catch (err) {
       console.error('Failed to load marketplace:', err);
       this.error.set('Failed to load marketplace listings. Please try again.');
@@ -215,16 +240,25 @@ export class MarketplaceComponent implements OnInit {
     }
   }
 
+  async loadRecentSales(): Promise<void> {
+    try {
+      const sold = await firstValueFrom(
+        this._listingService.getSoldListings?.() ?? of([])
+      );
+      this.recentSales.set((sold as Listing[]).slice(0, 10));
+    } catch {
+      this.recentSales.set([]);
+    }
+  }
 
-  /* ── Detail modal ──────────────────────────────────────────── */
-
-  /**
-   * Opens the detail modal for a listing and fetches real price
-   * history from the backend for stove listings.
-   */
+  /* ── Detail panel ── */
   async openDetails(listing: Listing): Promise<void> {
     this.selectedListing.set(listing);
     this.priceHistory.set([]);
+    this.hoverIndex.set(-1);
+    this.messageMode.set(false);
+    this.messageText.set('');
+    this.messageSent.set(false);
 
     if (listing.stoveId) {
       const stove = this.stoves().get(listing.stoveId);
@@ -234,57 +268,126 @@ export class MarketplaceComponent implements OnInit {
           const history = await firstValueFrom(
             this._priceHistoryService.getPriceHistoryByTypeId(typeId)
           );
-          // Sort oldest → newest and take the last 30 entries
-          const sorted = history
-            .slice()
-            .sort((a, b) => new Date(a.saleDate).getTime() - new Date(b.saleDate).getTime());
 
-          const points: PricePoint[] = sorted.map(h => ({
-            date: new Date(h.saleDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            price: h.salePrice,
+          /*
+           * Build average price per day from raw sale records.
+           * Multiple sales on the same day are averaged together,
+           * giving a proper market trend line instead of spiky
+           * individual sale prices.
+           */
+          const bucketed = this.bucketByDay(history);
+          const sorted = bucketed.sort(
+            (a, b) => new Date(a.saleDate).getTime() - new Date(b.saleDate).getTime()
+          );
+
+          const points: PricePoint[] = sorted.map((h) => ({
+            date: new Date(h.saleDate).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+            }),
+            price: h.avgPrice,
           }));
 
-          // If we have fewer than 2 real data-points, append the current listing price
-          // so the chart always has something meaningful to show.
+          /* If we have fewer than 2 data points, append current listing price */
           if (points.length < 2) {
             points.push({
-              date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              date: new Date().toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              }),
               price: listing.price,
             });
           }
           this.priceHistory.set(points);
         } catch (err) {
           console.error('Failed to load price history:', err);
-          // Fallback: just the current listing price
-          this.priceHistory.set([{
-            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            price: listing.price,
-          }]);
+          this.priceHistory.set([
+            {
+              date: new Date().toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              }),
+              price: listing.price,
+            },
+          ]);
         }
       }
     } else if (listing.lootboxId) {
-      // Price history is not yet tracked for lootbox types on the backend;
-      // show a single data-point so the chart renders gracefully.
-      this.priceHistory.set([{
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        price: listing.price,
-      }]);
+      this.priceHistory.set([
+        {
+          date: new Date().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          }),
+          price: listing.price,
+        },
+      ]);
     }
+  }
+
+  /**
+   * Groups raw price-history records by day and computes the average
+   * sale price for each day. This smooths out the chart so spikes from
+   * individual high/low sales don't distort the trend.
+   */
+  private bucketByDay(
+    records: { saleDate: Date | string; salePrice: number }[]
+  ): { saleDate: string; avgPrice: number }[] {
+    const map = new Map<string, number[]>();
+
+    for (const r of records) {
+      const day = new Date(r.saleDate).toISOString().slice(0, 10); // YYYY-MM-DD
+      const arr = map.get(day) ?? [];
+      arr.push(r.salePrice);
+      map.set(day, arr);
+    }
+
+    const result: { saleDate: string; avgPrice: number }[] = [];
+    for (const [day, prices] of map) {
+      const avg = Math.round(prices.reduce((s, p) => s + p, 0) / prices.length);
+      result.push({ saleDate: day, avgPrice: avg });
+    }
+
+    return result;
   }
 
   closeDetails(): void {
     this.selectedListing.set(null);
     this.priceHistory.set([]);
+    this.hoverIndex.set(-1);
+    this.messageMode.set(false);
   }
 
-  /** Stops a click inside the modal panel from bubbling to the backdrop. */
-  preventClose(event: MouseEvent): void {
-    event.stopPropagation();
+  /* ── Confirmation popup ── */
+  showConfirm(listing: Listing, type: 'buy' | 'cancel'): void {
+    this.confirmListing.set(listing);
+    this.confirmType.set(type);
+    this.confirmModal.set(true);
   }
 
+  closeConfirm(): void {
+    this.confirmModal.set(false);
+    this.confirmListing.set(null);
+    this.confirmType.set(null);
+  }
 
-  /* ── Trade actions ─────────────────────────────────────────── */
+  async executeConfirmedAction(): Promise<void> {
+    const listing = this.confirmListing();
+    const type = this.confirmType();
+    if (!listing || !type) return;
 
+    if (type === 'buy') {
+      await this.buyListing(listing);
+    } else {
+      await this.cancelListing(listing);
+    }
+
+    if (!this.error()) {
+      this.closeConfirm();
+    }
+  }
+
+  /* ── Trade actions ── */
   async buyListing(listing: Listing): Promise<void> {
     if (this.playerId === null || listing.status !== 'active') return;
 
@@ -298,7 +401,6 @@ export class MarketplaceComponent implements OnInit {
       await firstValueFrom(this._tradeService.executeTrade(listing.listingId, this.playerId));
       await this._authService.refreshUser();
       this.coins.set(this._authService.getCurrentUser()?.coins ?? 0);
-      this.closeDetails();
       await this.loadData();
     } catch (err: unknown) {
       const e = err as { message?: string; error?: { error?: string } };
@@ -314,7 +416,6 @@ export class MarketplaceComponent implements OnInit {
     this.processingId.set(listing.listingId);
     try {
       await firstValueFrom(this._listingService.cancelListing(listing.listingId));
-      this.closeDetails();
       await this.loadData();
     } catch (err: unknown) {
       const e = err as { message?: string; error?: { error?: string } };
@@ -324,11 +425,58 @@ export class MarketplaceComponent implements OnInit {
     }
   }
 
+  /* ── Message seller ── */
+  toggleMessageMode(): void {
+    this.messageMode.update((v) => !v);
+    this.messageSent.set(false);
+  }
 
-  /* ── Item data helpers (unchanged from original) ───────────── */
+  async sendMessageToSeller(): Promise<void> {
+    const listing = this.selectedListing();
+    const text = this.messageText().trim();
+    if (!listing || !text || !this.playerId) return;
 
-  isStoveListing(listing: Listing): boolean   { return !!listing.stoveId; }
-  isLootboxListing(listing: Listing): boolean { return !!listing.lootboxId; }
+    this.processingId.set(-1);
+    try {
+      await firstValueFrom(
+        this._chatService.sendChatMessage(this.playerId, text, listing.sellerId)
+      );
+      this.messageSent.set(true);
+      this.messageText.set('');
+      setTimeout(() => this.messageSent.set(false), 3000);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      this.error.set('Failed to send message. You may need to be friends with this player first.');
+    } finally {
+      this.processingId.set(null);
+    }
+  }
+
+  /* ── Chart interaction ── */
+  onChartMouseMove(event: MouseEvent): void {
+    const svg = event.currentTarget as SVGSVGElement;
+    const rect = svg.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const model = this.chartModel();
+    if (!model || model.points.length === 0) return;
+
+    const ratio = Math.max(0, Math.min(1, x / rect.width));
+    const index = Math.round(ratio * (model.points.length - 1));
+    this.hoverIndex.set(index);
+  }
+
+  onChartMouseLeave(): void {
+    this.hoverIndex.set(-1);
+  }
+
+  /* ── Helpers ── */
+  isStoveListing(listing: Listing): boolean {
+    return !!listing.stoveId;
+  }
+
+  isLootboxListing(listing: Listing): boolean {
+    return !!listing.lootboxId;
+  }
 
   getItemName(listing: Listing): string {
     if (listing.stoveId) {
@@ -336,8 +484,25 @@ export class MarketplaceComponent implements OnInit {
       if (!stove) return `Stove #${listing.stoveId}`;
       return this.stoveTypes().get(stove.typeId)?.name ?? `Stove #${listing.stoveId}`;
     }
-    if (listing.lootboxId) return `Lootbox #${listing.lootboxId}`;
+    if (listing.lootboxId) {
+      const type = this.lootboxTypes().get(listing.lootboxId);
+      return type?.name ?? `Lootbox #${listing.lootboxId}`;
+    }
     return 'Unknown Item';
+  }
+
+  getItemDescription(listing: Listing): string {
+    if (listing.stoveId) {
+      const stove = this.stoves().get(listing.stoveId);
+      if (!stove) return 'A mysterious stove.';
+      const type = this.stoveTypes().get(stove.typeId);
+      return `A ${type?.rarity ?? 'common'} stove from the ${type?.collection ?? 'Unknown'} collection.`;
+    }
+    if (listing.lootboxId) {
+      const type = this.lootboxTypes().get(listing.lootboxId);
+      return type?.description ?? 'A sealed lootbox.';
+    }
+    return '';
   }
 
   getRarity(listing: Listing): string {
@@ -347,6 +512,28 @@ export class MarketplaceComponent implements OnInit {
       return this.stoveTypes().get(stove.typeId)?.rarity?.toLowerCase() ?? 'common';
     }
     return 'common';
+  }
+
+  getRarityColor(listing: Listing): string {
+    const rarity = this.getRarity(listing);
+    switch (rarity) {
+      case 'common':
+        return '#94a3b8';
+      case 'uncommon':
+        return '#22c55e';
+      case 'rare':
+        return '#3b82f6';
+      case 'epic':
+        return '#a855f7';
+      case 'legendary':
+        return '#f59e0b';
+      case 'limited':
+        return '#ef4444';
+      case 'secret':
+        return '#d946ef';
+      default:
+        return '#94a3b8';
+    }
   }
 
   getHeatLevel(listing: Listing): number | null {
@@ -360,11 +547,21 @@ export class MarketplaceComponent implements OnInit {
       if (!stove) return '';
       return this.stoveTypes().get(stove.typeId)?.imageUrl ?? '';
     }
+    if (listing.lootboxId) {
+      const type = this.lootboxTypes().get(listing.lootboxId);
+      if (!type) return '';
+      const name = type.name.toLowerCase();
+      if (name.includes('dragon')) return 'assets/animation/dragon-chest-idle-animation.gif';
+      if (name.includes('winter')) return 'assets/animation/winter-chest-idle-animation.gif';
+      if (name.includes('legendary')) return 'assets/animation/legendary-chest-idle-animation.gif';
+      if (name.includes('golden')) return 'assets/animation/chest-idle-gold.gif';
+      return 'assets/animation/chest-idle.gif';
+    }
     return '';
   }
 
   getItemMeta(listing: Listing): string {
-    if (listing.stoveId)   return `Stove #${listing.stoveId}`;
+    if (listing.stoveId) return `Stove #${listing.stoveId}`;
     if (listing.lootboxId) return `Lootbox #${listing.lootboxId}`;
     return '';
   }
@@ -373,11 +570,37 @@ export class MarketplaceComponent implements OnInit {
     return this.playerId !== null && listing.sellerId === this.playerId;
   }
 
-  formatPrice(price: number): string { return price.toLocaleString(); }
+  formatPrice(price: number): string {
+    return price.toLocaleString();
+  }
+
+  /**
+   * Compact notation for chart axis labels.
+   * 1,234 → 1.2k
+   * 1,234,567 → 1.2M
+   * 1,234,567,890 → 1.2B
+   */
+  formatCompact(value: number): string {
+    const abs = Math.abs(value);
+    if (abs >= 1_000_000_000) {
+      return (value / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+    }
+    if (abs >= 1_000_000) {
+      return (value / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (abs >= 1_000) {
+      return (value / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return value.toFixed(0);
+  }
 
   formatDate(dateString: Date | string): string {
     return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     });
   }
+
+  protected readonly Math = Math;
 }

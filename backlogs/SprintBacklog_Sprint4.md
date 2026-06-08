@@ -1,6 +1,6 @@
 # Sprint Backlog — Sprint 4
 
-**Sprint Duration:** ~3 weeks (April 16, 2026 – May 7, 2026)
+**Sprint Duration:** ~3 weeks 
 **Actual Hours:** ~40–45 hours
 **Team Size:** 4 developers
 

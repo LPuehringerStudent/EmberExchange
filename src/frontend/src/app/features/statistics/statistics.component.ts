@@ -35,7 +35,7 @@ export class StatisticsComponent implements OnInit {
   dailySummary = { totalLootboxes: 0, totalSales: 0, totalVolume: 0, avgPlayers: 0 };
   stoveTypeStats: StoveTypeStatistics[] = [];
   marketSummary = { totalStoves: 0, totalListed: 0, totalSales: 0, avgListedPercent: 0 };
-  
+
   // Current user data
   myStats: PlayerStatistics | null = null;
   currentUserId: number | null = null;
@@ -73,7 +73,7 @@ export class StatisticsComponent implements OnInit {
       firstValueFrom(this._stoveTypeStatsService.getAllStoveTypeStatistics()),
       firstValueFrom(this._stoveTypeStatsService.getMarketSummary())
     ];
-    
+
     // Add current user stats if logged in
     if (this.currentUserId !== null) {
       promises.push(firstValueFrom(this._playerStatsService.getPlayerStatistics(this.currentUserId)));

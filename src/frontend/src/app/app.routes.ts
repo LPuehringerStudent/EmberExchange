@@ -131,13 +131,13 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'investing',
+    loadComponent: () => import('./features/investing/investing').then(m => m.Investing),
+  },
+  {
     path: '**',
     loadComponent: () => import('./shared/components/not-found.component').then(m => m.NotFoundComponent)
   },
-  {
-    path: 'merging',
-    loadComponent: () => import('./features/merging/merging').then(m => m.Merging),
-    canActivate: [authGuard]
-  },
+
 
 ];

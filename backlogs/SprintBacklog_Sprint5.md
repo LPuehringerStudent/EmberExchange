@@ -1,6 +1,6 @@
 # Sprint Backlog — Sprint 5
 
-**Sprint Duration:** ~4 weeks (May 14, 2026 – June 11, 2026)  
+**Sprint Duration:** ~3 weeks 
 **Team Size:** 4 developers  
 
 ---
@@ -188,7 +188,7 @@
 | **Marketplace + Pity + Sparks** | — | **~6h** | **Complete** |
 | **Update Log** | — | **~2.75h** | **Complete** |
 | **Admin Panel** | — | **~6h** | **Complete** |
-| **TOTAL** | **41.5h** | **~80.25h** | |
+
 
 ### By Developer
 

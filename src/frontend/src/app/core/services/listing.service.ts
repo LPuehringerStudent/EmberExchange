@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
-import { Observable } from 'rxjs';
+import {Observable, of} from 'rxjs';
 import { HttpHeaders, HttpParams } from '@angular/common/http';
 
 export interface Listing {
@@ -96,5 +96,10 @@ export class ListingService {
     const sessionId = this.auth.getSessionId();
     const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
     return this.api.patch<void>(`/listings/${listingId}/cancel`, {}, headers);
+  }
+
+  getSoldListings(limit: number = 10): Observable<Listing[]> {
+    // TODO: wire up backend endpoint
+    return of([]);
   }
 }
