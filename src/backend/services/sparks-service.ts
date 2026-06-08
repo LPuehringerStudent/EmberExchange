@@ -89,6 +89,19 @@ export class SparksService {
         const newBalance = (player.sparks ?? 0) + sparksAwarded;
 
         // Clean up dependent records before deleting stove
+        // PinnedStove has a hard FK reference — must delete first
+        await this.unit.prepare(
+            `DELETE FROM PinnedStove WHERE stoveId = @stoveId`,
+            { stoveId }
+        ).run();
+
+        // Cancelled listings still reference the stove; remove them so the stove can be deleted.
+        // (Active listings are already blocked above; sold listings stay for trade history.)
+        await this.unit.prepare(
+            `DELETE FROM Listing WHERE stoveId = @stoveId AND status = 'cancelled'`,
+            { stoveId }
+        ).run();
+
         await this.unit.prepare(
             `DELETE FROM LootboxDrop WHERE stoveId = @stoveId`,
             { stoveId }

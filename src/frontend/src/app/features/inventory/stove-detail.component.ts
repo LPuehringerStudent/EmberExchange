@@ -76,23 +76,39 @@ const REROLL_BASE_COST: Record<string, number> = {
             </div>
           </div>
 
+          <!-- Error / Loading -->
+          @if (detailError()) {
+            <div class="px-3.5 py-2.5 bg-red-500/[0.08] border border-red-500/20 rounded-xl text-red-500 text-[13px] font-medium">
+              {{ detailError() }}
+            </div>
+          }
+          @if (detailLoading()) {
+            <div class="flex items-center justify-center gap-2 py-2">
+              <span class="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></span>
+              <span class="text-sm text-text-secondary">Processing...</span>
+            </div>
+          }
+
           <!-- Actions -->
           @if (!isListed()) {
             <div class="flex flex-col gap-2">
               <!-- Action buttons row -->
               <div class="grid grid-cols-3 gap-2">
                 <button (click)="toggleAction('sell')" [class.ring-2]="activeAction() === 'sell'"
-                  class="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-gradient-to-br from-[#e85d04] to-[#f48c06] text-white text-xs font-semibold border-none cursor-pointer transition-all hover:-translate-y-0.5">
+                  [disabled]="detailLoading()"
+                  class="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-gradient-to-br from-[#e85d04] to-[#f48c06] text-white text-xs font-semibold border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
                   Sell
                 </button>
                 <button (click)="toggleAction('salvage')" [class.ring-2]="activeAction() === 'salvage'"
-                  class="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-gradient-to-br from-[#ff5722] to-[#ff7043] text-white text-xs font-semibold border-none cursor-pointer transition-all hover:-translate-y-0.5">
+                  [disabled]="detailLoading()"
+                  class="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-gradient-to-br from-[#ff5722] to-[#ff7043] text-white text-xs font-semibold border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                   Salvage
                 </button>
                 <button (click)="toggleAction('reroll')" [class.ring-2]="activeAction() === 'reroll'"
-                  class="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#60a5fa] text-white text-xs font-semibold border-none cursor-pointer transition-all hover:-translate-y-0.5">
+                  [disabled]="detailLoading()"
+                  class="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#60a5fa] text-white text-xs font-semibold border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 0 1-15.357-2m15.357 2H15"/></svg>
                   <app-info-tooltip text="A currency you get by breaking down unwanted stoves. Spend Sparks to re-roll a stove's Heat."><span class="inline-flex items-center gap-1">Re-Roll</span></app-info-tooltip>
                 </button>
@@ -168,6 +184,8 @@ export class StoveDetailComponent {
   stove = input.required<ShowedStove>();
   sparksBalance = input.required<number>();
   isListed = input.required<boolean>();
+  detailError = input<string | null>(null);
+  detailLoading = input<boolean>(false);
 
   onClose = output<void>();
   onSell = output<number>();

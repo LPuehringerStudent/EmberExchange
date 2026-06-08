@@ -190,6 +190,8 @@
     [stove]="detailStove"
     [sparksBalance]="sparks"
     [isListed]="isStoveListed(detailStove.stoveId)"
+    [detailError]="detailError"
+    [detailLoading]="detailLoading"
     (onClose)="closeDetailModal()"
     (onSell)="onDetailSell($event)"
     (onSalvage)="onDetailSalvage()"
