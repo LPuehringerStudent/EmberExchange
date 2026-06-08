@@ -151,6 +151,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/legal/pages/privacy/privacy.component').then(m => m.PrivacyComponent)
   },
   {
+    path: 'investing',
+    loadComponent: () => import('./features/investing/investing').then(m => m.Investing),
+  },
+  {
     path: '**',
     loadComponent: () => import('./shared/components/not-found.component').then(m => m.NotFoundComponent)
   }
