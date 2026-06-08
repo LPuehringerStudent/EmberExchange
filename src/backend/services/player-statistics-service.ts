@@ -94,7 +94,7 @@ export class PlayerStatisticsService extends ServiceBase {
 
         // Best drop rarity from actual lootbox drops
         const bestRarityStmt = this.unit.prepare<{ bestRarity: string }>(
-            `SELECT st.rarity as bestRarity
+            `SELECT st.rarity as "bestRarity"
              FROM LootboxDrop ld
              JOIN Lootbox lb ON ld.lootboxId = lb.lootboxId
              JOIN Stove sv ON ld.stoveId = sv.stoveId
