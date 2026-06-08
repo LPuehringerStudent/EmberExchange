@@ -20,6 +20,7 @@ interface InvestableAsset {
   rarity: string;
   currentPrice: number;
   previousPrice: number;
+  basePrice: number;
   imageUrl: string;
   heatLevel?: number;
   collection?: string;
@@ -751,7 +752,7 @@ export class Investing implements OnInit {
         const base = getStoveBasePrice(type.rarity);
         const heat = (type.minHeat + type.maxHeat) / 2;
         const price = Math.round(base * (1 + heat * 2.5) * 100) / 100;
-        const prev = price * (0.92 + Math.random() * 0.16);
+        const prev = Math.round(price * 0.98 * 100) / 100;
 
         return {
           id: type.typeId,
@@ -761,12 +762,13 @@ export class Investing implements OnInit {
           category: 'stove' as const,
           rarity: type.rarity,
           currentPrice: price,
-          previousPrice: Math.round(prev * 100) / 100,
+          previousPrice: prev,
+          basePrice: base,
           imageUrl: type.imageUrl ?? '',
           collection: type.collection ?? 'Unknown',
           typeId: type.typeId,
           totalSupply: 10000,
-          volume24h: Math.floor(Math.random() * 500000) + 50000,
+          volume24h: 250000,
         } satisfies InvestableAsset;
       });
 
@@ -778,50 +780,39 @@ export class Investing implements OnInit {
   }
 
   private async loadLootboxes(): Promise<void> {
-    const user = this.authService.getCurrentUser();
-    if (!user) {
-      this.lootboxAssets.set([]);
-      return;
-    }
-
     try {
-      const [lootboxes, types] = await Promise.all([
-        firstValueFrom(this.lootboxService.getLootboxesByPlayerId(user.playerId)),
-        firstValueFrom(this.lootboxService.getAllLootboxTypes()),
-      ]);
-
-      const typeMap = new Map<number, LootboxTypeRow>();
-      for (const t of types) {
-        typeMap.set(t.lootboxTypeId, t);
+      const types = await firstValueFrom(this.lootboxService.getAllLootboxTypes());
+      if (types.length === 0) {
+        this.lootboxAssets.set([]);
+        return;
       }
 
-      const assets = lootboxes.map((lb: LootboxRow) => {
-        const type = typeMap.get(lb.lootboxTypeId);
-        const name = type?.name ?? `Lootbox #${lb.lootboxTypeId}`;
+      const assets = types.map((type: LootboxTypeRow) => {
+        const name = type.name;
         const base = getLootboxBasePrice(name);
-        const price = Math.round(base * (0.9 + Math.random() * 0.2) * 100) / 100;
-        const prev = price * (0.92 + Math.random() * 0.16);
+        const price = base;
+        const prev = Math.round(price * 0.98 * 100) / 100;
 
         return {
-          id: lb.lootboxId,
+          id: type.lootboxTypeId,
           ticker: generateTicker(name, 'lootbox'),
           name,
-          description: type?.description ?? `A sealed ${name} lootbox.`,
+          description: type.description ?? `A sealed ${name} lootbox.`,
           category: 'lootbox' as const,
           rarity: 'lootbox',
           currentPrice: price,
-          previousPrice: Math.round(prev * 100) / 100,
+          previousPrice: prev,
+          basePrice: base,
           imageUrl: this.getLootboxImage(name),
-          typeId: lb.lootboxTypeId,
-          acquiredHow: lb.acquiredHow,
+          typeId: type.lootboxTypeId,
           totalSupply: 50000,
-          volume24h: Math.floor(Math.random() * 800000) + 100000,
+          volume24h: 450000,
         } satisfies InvestableAsset;
       });
 
       this.lootboxAssets.set(assets);
     } catch (err) {
-      console.error('Failed to load lootboxes:', err);
+      console.error('Failed to load lootbox types:', err);
       this.lootboxAssets.set([]);
     }
   }
@@ -858,8 +849,8 @@ export class Investing implements OnInit {
       }
     }
 
-    /* Fallback to mock history */
-    const history = this.generateMockHistory(asset.currentPrice, this.timeRange());
+    /* Fallback to flat base-price history */
+    const history = this.generateFlatHistory(asset.basePrice, this.timeRange());
     this.priceHistory.set(history);
   }
 
@@ -906,7 +897,7 @@ export class Investing implements OnInit {
     return filtered.length >= 2 ? filtered : points;
   }
 
-  private generateMockHistory(currentPrice: number, range: TimeRange): PricePoint[] {
+  private generateFlatHistory(basePrice: number, range: TimeRange): PricePoint[] {
     const now = new Date();
     let count: number;
     let intervalMs: number;
@@ -927,17 +918,11 @@ export class Investing implements OnInit {
     }
 
     const points: PricePoint[] = [];
-    let price = currentPrice * (0.88 + Math.random() * 0.12);
-
     for (let i = count - 1; i >= 0; i--) {
       const timestamp = new Date(now.getTime() - i * intervalMs);
-      const volatility = range === '1d' ? 0.008 : range === '1w' ? 0.015 : 0.03;
-      const change = (Math.random() - 0.48) * currentPrice * volatility;
-      price = Math.max(currentPrice * 0.4, price + change);
-      points.push({ timestamp, price: Math.round(price * 100) / 100 });
+      points.push({ timestamp, price: basePrice });
     }
 
-    points[points.length - 1].price = currentPrice;
     return points;
   }
 }
