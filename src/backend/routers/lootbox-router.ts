@@ -4,6 +4,9 @@ import { LootboxService } from "../services/lootbox-service";
 import { ListingService } from "../services/listing-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { checkPlayerBanned } from "../middleware/ban-check";
+import { requireAdmin } from "../middleware/admin";
+import { requireAuth } from "../middleware/require-auth";
 
 export const lootboxRouter = express.Router();
 
@@ -37,12 +40,14 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.get("/lootboxes", async (_req, res) => {
+lootboxRouter.get("/lootboxes", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LootboxService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllLootboxes();
+        const response = await service.getAllLootboxes(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -97,7 +102,7 @@ lootboxRouter.get("/lootboxes/recent", async (req, res) => {
     const service = new LootboxService(unit);
 
     try {
-        const limit = req.query.limit ? Number(req.query.limit) : 20;
+        const limit = Math.min(100, req.query.limit ? Number(req.query.limit) : 20);
         const rows = await service.getRecentPulls(limit);
 
         // Format relative timestamps on the backend so the frontend stays simple
@@ -234,7 +239,7 @@ lootboxRouter.get("/lootboxes/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.get("/players/:playerId/lootboxes", async (req, res) => {
+lootboxRouter.get("/players/:playerId/lootboxes", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LootboxService(unit);
     const playerId = req.params.playerId;
@@ -245,7 +250,13 @@ lootboxRouter.get("/players/:playerId/lootboxes", async (req, res) => {
             return;
         }
 
-        const response = await service.getLootboxesByPlayerId(Number(playerId));
+        const parsedPlayerId = Number(playerId);
+        if (req.playerId !== parsedPlayerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const response = await service.getLootboxesByPlayerId(parsedPlayerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -308,7 +319,7 @@ lootboxRouter.get("/players/:playerId/lootboxes", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.post("/lootboxes", async (req, res) => {
+lootboxRouter.post("/lootboxes", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxService(unit);
     let ok = false;
@@ -395,10 +406,11 @@ lootboxRouter.post("/lootboxes", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.post("/lootboxes/:id/open", async (req, res) => {
+lootboxRouter.post("/lootboxes/:id/open", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxService(unit);
     const id = req.params.id;
+    const playerId = req.playerId!;
     let ok = false;
 
     try {
@@ -407,13 +419,20 @@ lootboxRouter.post("/lootboxes/:id/open", async (req, res) => {
             return;
         }
 
-        const { playerId } = req.body;
-        if (typeof playerId !== "number") {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "playerId is required" });
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            await unit.complete(false);
             return;
         }
 
         const lootboxId = Number(id);
+
+        // Verify ownership
+        const lootbox = await service.getLootboxById(lootboxId);
+        if (!lootbox || lootbox.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Lootbox not found or does not belong to you" });
+            await unit.complete(false);
+            return;
+        }
 
         // Check if lootbox is listed before attempting to open
         const listingService = new ListingService(unit);
@@ -493,10 +512,11 @@ lootboxRouter.post("/lootboxes/:id/open", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxRouter.delete("/lootboxes/:id", async (req, res) => {
+lootboxRouter.delete("/lootboxes/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxService(unit);
     const id = req.params.id;
+    const playerId = req.playerId!;
     let ok = false;
 
     try {
@@ -505,7 +525,17 @@ lootboxRouter.delete("/lootboxes/:id", async (req, res) => {
             return;
         }
 
-        const success = await service.deleteLootbox(Number(id));
+        const lootboxId = Number(id);
+
+        // Verify ownership before deleting
+        const lootbox = await service.getLootboxById(lootboxId);
+        if (!lootbox || lootbox.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Lootbox not found or does not belong to you" });
+            await unit.complete(false);
+            return;
+        }
+
+        const success = await service.deleteLootbox(lootboxId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Lootbox deleted" });

@@ -30,6 +30,7 @@ const COLUMN_MAP: Record<string, string> = {
     "minheat": "minHeat",
     "maxheat": "maxHeat",
     "heatlevel": "heatLevel",
+    "rerollcount": "reRollCount",
     "totalstovescrafted": "totalStovesCrafted",
     "coinsspentonlootboxestoday": "coinsSpentOnLootboxesToday",
     "content": "content",
@@ -50,6 +51,7 @@ const COLUMN_MAP: Record<string, string> = {
     "description": "description",
     "dropid": "dropId",
     "email": "email",
+    "emailverified": "emailVerified",
     "entryid": "entryId",
     "eventname": "eventName",
     "addresseeid": "addresseeId",
@@ -70,6 +72,8 @@ const COLUMN_MAP: Record<string, string> = {
     "imageurl": "imageUrl",
     "isactive": "isActive",
     "isadmin": "isAdmin",
+    "bannedat": "bannedAt",
+    "banreason": "banReason",
     "ispublic": "isPublic",
     "isavailable": "isAvailable",
     "isread": "isRead",
@@ -135,6 +139,21 @@ const COLUMN_MAP: Record<string, string> = {
     "pricetrend7d": "priceTrend7d",
     "provider": "provider",
     "providerid": "providerId",
+    "questid": "questId",
+    "questtype": "questType",
+    "templateid": "templateId",
+    "targetvalue": "targetValue",
+    "standardopens": "standardOpens",
+    "goldenopens": "goldenOpens",
+    "legendaryopens": "legendaryOpens",
+    "dragonopens": "dragonOpens",
+    "winteropens": "winterOpens",
+    "currentvalue": "currentValue",
+    "rewardcoins": "rewardCoins",
+    "rewardxp": "rewardXP",
+    "rewardlootboxtypeid": "rewardLootboxTypeId",
+    "iscompleted": "isCompleted",
+    "isclaimed": "isClaimed",
     "rareststoveowned": "rarestStoveOwned",
     "rarity": "rarity",
     "rarityrank": "rarityRank",
@@ -236,6 +255,9 @@ const COLUMN_MAP: Record<string, string> = {
     "uniqueplayersloggedin": "uniquePlayersLoggedIn",
     "updatedat": "updatedAt",
     "username": "username",
+    "verifiedat": "verifiedAt",
+    "violationcount": "violationCount",
+    "lastviolationat": "lastViolationAt",
     "visitedat": "visitedAt",
     "visitedplayerid": "visitedPlayerId",
     "visitorplayerid": "visitorPlayerId",
@@ -322,7 +344,12 @@ export class DB {
     public static getPool(): Pool {
         if (!DB.pool) {
             const connectionString = process.env.DATABASE_URL || "postgresql://localhost:5432/emberexchange";
-            DB.pool = new Pool({ connectionString });
+            DB.pool = new Pool({
+                connectionString,
+                max: 20,
+                idleTimeoutMillis: 30000,
+                connectionTimeoutMillis: 5000,
+            });
         }
         return DB.pool;
     }
@@ -342,6 +369,7 @@ export class DB {
                 email TEXT NOT NULL UNIQUE,
                 motto TEXT NOT NULL DEFAULT '',
                 coins INTEGER NOT NULL DEFAULT 0,
+                sparks INTEGER NOT NULL DEFAULT 0,
                 lootboxCount INTEGER NOT NULL DEFAULT 0,
                 isAdmin INTEGER NOT NULL DEFAULT 0,
                 isPublic INTEGER NOT NULL DEFAULT 1,
@@ -356,9 +384,86 @@ export class DB {
         `);
 
         await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS sparks INTEGER NOT NULL DEFAULT 0
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS bannedAt TEXT
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS banReason TEXT
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS emailVerified INTEGER NOT NULL DEFAULT 0
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS verifiedAt TEXT
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS violationCount INTEGER NOT NULL DEFAULT 0
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS lastViolationAt TEXT
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS BannedIP (
+                ip TEXT PRIMARY KEY,
+                reason TEXT NOT NULL,
+                bannedAt TEXT NOT NULL,
+                expiresAt TEXT,
+                violationType TEXT
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS ViolationLog (
+                violationId SERIAL PRIMARY KEY,
+                ip TEXT NOT NULL,
+                playerId INTEGER REFERENCES Player(playerId),
+                type TEXT NOT NULL,
+                details TEXT,
+                createdAt TEXT NOT NULL
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS SecurityEvent (
+                eventId SERIAL PRIMARY KEY,
+                ipAddress TEXT NOT NULL,
+                userAgent TEXT,
+                playerId INTEGER REFERENCES Player(playerId),
+                eventType TEXT NOT NULL,
+                path TEXT,
+                method TEXT,
+                details TEXT,
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS RequestLog (
+                logId SERIAL PRIMARY KEY,
+                ipAddress TEXT NOT NULL,
+                userAgent TEXT,
+                playerId INTEGER REFERENCES Player(playerId),
+                method TEXT NOT NULL,
+                path TEXT NOT NULL,
+                statusCode INTEGER NOT NULL,
+                durationMs INTEGER NOT NULL,
+                createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS StoveType (
                 typeId SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
+                name TEXT NOT NULL UNIQUE,
                 imageUrl TEXT NOT NULL,
                 rarity TEXT NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary', 'limited', 'secret')),
                 lootboxWeight INTEGER NOT NULL,
@@ -374,7 +479,8 @@ export class DB {
                 typeId INTEGER NOT NULL REFERENCES StoveType(typeId),
                 currentOwnerId INTEGER NOT NULL REFERENCES Player(playerId),
                 mintedAt TEXT NOT NULL,
-                heatLevel REAL NOT NULL DEFAULT 0.0
+                heatLevel REAL NOT NULL DEFAULT 0.0,
+                reRollCount INTEGER NOT NULL DEFAULT 0
             )
         `);
 
@@ -467,6 +573,16 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS EmailVerificationToken (
+                token TEXT PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
+                email TEXT NOT NULL,
+                createdAt TEXT NOT NULL,
+                expiresAt TEXT NOT NULL
+            )
+        `);
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS PriceHistory (
                 historyId SERIAL PRIMARY KEY,
                 typeId INTEGER NOT NULL REFERENCES StoveType(typeId),
@@ -554,6 +670,14 @@ export class DB {
         } catch {
             // Column may already exist
         }
+        try {
+            await connection.query(`
+                ALTER TABLE Stove
+                ADD COLUMN IF NOT EXISTS reRollCount INTEGER NOT NULL DEFAULT 0
+            `);
+        } catch {
+            // Column may already exist
+        }
         // Randomize heatLevel for existing stoves that still have the default 0.0
         try {
             const stovesToUpdate = await connection.query<
@@ -575,6 +699,23 @@ export class DB {
             }
         } catch {
             // Migration may have already run or no stoves to update
+        }
+        // Ensure StoveType.name is unique (prevents duplicate stove types on re-seed)
+        // Use a savepoint so failure doesn't abort the entire transaction
+        try {
+            await connection.query(`SAVEPOINT sp_stovetype_unique`);
+            await connection.query(`
+                ALTER TABLE StoveType
+                ADD CONSTRAINT stovetype_name_unique UNIQUE (name)
+            `);
+            await connection.query(`RELEASE SAVEPOINT sp_stovetype_unique`);
+        } catch {
+            try {
+                await connection.query(`ROLLBACK TO SAVEPOINT sp_stovetype_unique`);
+            } catch {
+                // Savepoint may not exist
+            }
+            // Constraint may already exist or duplicates still exist
         }
         try {
             await connection.query(`
@@ -622,6 +763,37 @@ export class DB {
         await connection.query(`
             CREATE INDEX IF NOT EXISTS idx_friend_addressee ON Friend(addresseeId, status)
         `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerPity (
+                playerId INTEGER PRIMARY KEY REFERENCES Player(playerId),
+                standardOpens INTEGER NOT NULL DEFAULT 0,
+                goldenOpens INTEGER NOT NULL DEFAULT 0,
+                legendaryOpens INTEGER NOT NULL DEFAULT 0,
+                dragonOpens INTEGER NOT NULL DEFAULT 0,
+                winterOpens INTEGER NOT NULL DEFAULT 0
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerQuest (
+                questId SERIAL PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                questType TEXT NOT NULL CHECK (questType IN ('daily', 'weekly')),
+                templateId TEXT NOT NULL,
+                targetValue INTEGER NOT NULL,
+                currentValue INTEGER NOT NULL DEFAULT 0,
+                rewardCoins INTEGER NOT NULL DEFAULT 0,
+                rewardXP INTEGER NOT NULL DEFAULT 0,
+                rewardLootboxTypeId INTEGER,
+                isCompleted INTEGER NOT NULL DEFAULT 0,
+                isClaimed INTEGER NOT NULL DEFAULT 0,
+                expiresAt TEXT NOT NULL,
+                createdAt TEXT NOT NULL
+            )
+        `);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerquest_player ON PlayerQuest(playerId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerquest_expires ON PlayerQuest(expiresAt)`);
 
         await connection.query(`
             CREATE TABLE IF NOT EXISTS PlayerStatistics (
@@ -1069,6 +1241,25 @@ export class DB {
             )
         `);
 
+        // Performance indexes
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_stove_owner ON Stove(currentOwnerId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_stove_type ON Stove(typeId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_stovetype_rarity ON StoveType(rarity)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_stovetype_collection ON StoveType(collection)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_ownership_player ON Ownership(playerId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_ownership_how ON Ownership(playerId, acquiredHow)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_listing_seller ON Listing(sellerId, status)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_listing_status ON Listing(status)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_trade_buyer ON Trade(buyerId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_minigame_player ON MiniGameSession(playerId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_minigame_player_result ON MiniGameSession(playerId, result)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_lootbox_player_opened ON Lootbox(playerId, openedAt)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_shoppurchase_player ON ShopPurchase(playerId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_gloryshowcase_stove ON GloryShowcase(stoveId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_chatmessage_sender ON ChatMessage(senderId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_gloryvisit_visited ON GloryVisit(visitedPlayerId)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerachievement_lookup ON PlayerAchievement(playerId, achievementId)`);
+
         // Add 2FA columns to Player if they don't exist (idempotent migration)
         await connection.query(`
             ALTER TABLE Player
@@ -1092,7 +1283,7 @@ export class Unit {
     public static async create(readOnly: boolean): Promise<Unit> {
         const client = await DB.createDBConnection();
         if (!readOnly) {
-            await client.query("BEGIN");
+            await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
         }
         return new Unit(client, !readOnly);
     }
@@ -1117,31 +1308,33 @@ export class Unit {
 
     public async savepoint(name: string): Promise<void> {
         if (this.inTransaction) {
+            // Validate name is a simple identifier to prevent SQL injection
+            if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+                throw new Error("Invalid savepoint name");
+            }
             await this.client.query(`SAVEPOINT ${name}`);
         }
     }
 
     public async rollbackToSavepoint(name: string): Promise<void> {
         if (this.inTransaction) {
+            // Validate name is a simple identifier to prevent SQL injection
+            if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+                throw new Error("Invalid savepoint name");
+            }
             await this.client.query(`ROLLBACK TO SAVEPOINT ${name}`);
         }
     }
 
     public async complete(commit: boolean | null = null): Promise<void> {
-        if (this.completed) {
-            return;
-        }
+        if (this.completed) return;
         this.completed = true;
 
         try {
             if (this.inTransaction) {
-                if (commit === true) {
-                    await this.client.query("COMMIT");
-                } else if (commit === false) {
-                    await this.client.query("ROLLBACK");
-                } else {
-                    throw new Error("transaction has been opened, requires information if commit or rollback needed");
-                }
+                if (commit === true) await this.client.query("COMMIT");
+                else if (commit === false) await this.client.query("ROLLBACK");
+                else throw new Error("transaction has been opened, requires information if commit or rollback needed");
             }
         } finally {
             this.client.release();
@@ -1236,8 +1429,10 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
     }
 
     async function insertPlayers(): Promise<void> {
+        // SECURITY: No admin account in seed data. Create admins manually via the
+        // admin panel or database. The previous seed had a weak admin password
+        // (321admin) and 999,999 coins — a trivial exploit vector.
         const players = [
-            { username: "admin", password: "321admin", email: "admin@emberexchange.com", coins: 999999, lootboxCount: 100, isAdmin: 1 },
             { username: "player1", password: "pass123", email: "player1@example.com", coins: 5000, lootboxCount: 10, isAdmin: 0 },
             { username: "player2", password: "pass456", email: "player2@example.com", coins: 3500, lootboxCount: 10, isAdmin: 0 },
             { username: "trader_joe", password: "trade789", email: "trader@example.com", coins: 10000, lootboxCount: 10, isAdmin: 0 },
@@ -1333,7 +1528,7 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
             { name: "Snowman Stove", imageUrl: "/assets/stove_sprites/winter_stove/snowman_stove.png", rarity: "common", lootboxWeight: 65, collection: "Winter", minHeat: 0.0, maxHeat: 0.85 },
             { name: "Lantern Stove", imageUrl: "/assets/stove_sprites/winter_stove/lantern_stove.png", rarity: "rare", lootboxWeight: 40, collection: "Winter", minHeat: 0.0, maxHeat: 0.80 },
             { name: "Pinetree Stove", imageUrl: "/assets/stove_sprites/winter_stove/pinetree_stove.png", rarity: "epic", lootboxWeight: 35, collection: "Winter", minHeat: 0.0, maxHeat: 0.75 },
-            { name: "Festival Stove", imageUrl: "/assets/stove_sprites/winter_stove/festival_stove.png", rarity: "secret", lootboxWeight: 15, collection: "Winter", minHeat: 0.0, maxHeat: 0.60 },
+            { name: "Festival Stove", imageUrl: "/assets/stove_sprites/winter_stove/festival_stove.png", rarity: "secret", lootboxWeight: 15, collection: "Winter", minHeat: 0.0, maxHeat: 0.25 },
             { name: "Snowgod Stove", imageUrl: "/assets/stove_sprites/winter_stove/snowgod_stove.png", rarity: "epic", lootboxWeight: 4, collection: "Winter", minHeat: 0.0, maxHeat: 0.45 },
             { name: "Ultimate Snowman Stove", imageUrl: "/assets/stove_sprites/winter_stove/ultimate_snowman_stove.png", rarity: "legendary", lootboxWeight: 3, collection: "Winter", minHeat: 0.0, maxHeat: 0.40 }
         ];
@@ -1343,8 +1538,15 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
                 unknown,
                 { name: string; imageUrl: string; rarity: string; lootboxWeight: number; collection: string; minHeat: number; maxHeat: number }
             >(
-                `insert into StoveType (name, imageUrl, rarity, lootboxWeight, collection, minHeat, maxHeat) 
-                 values (@name, @imageUrl, @rarity, @lootboxWeight, @collection, @minHeat, @maxHeat)`,
+                `insert into StoveType (name, imageUrl, rarity, lootboxWeight, collection, minHeat, maxHeat)
+                 values (@name, @imageUrl, @rarity, @lootboxWeight, @collection, @minHeat, @maxHeat)
+                 on conflict (name) do update set
+                     imageUrl = excluded.imageUrl,
+                     rarity = excluded.rarity,
+                     lootboxWeight = excluded.lootboxWeight,
+                     collection = excluded.collection,
+                     minHeat = excluded.minHeat,
+                     maxHeat = excluded.maxHeat`,
                 stove
             );
             await stmt.run();
@@ -1801,7 +2003,8 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
     async function insertGames(): Promise<void> {
         const games = [
             { name: "Poker", slug: "poker", gameType: "poker", minPlayers: 2, maxPlayers: 6, ruleset: "No-Limit Texas Hold'em", description: "Classic Texas Hold'em poker with no betting limits.", genre: "card", tags: JSON.stringify(["poker", "cards", "multiplayer"]), isActive: 1 },
-            { name: "Blackjack", slug: "blackjack", gameType: "blackjack", minPlayers: 1, maxPlayers: 5, ruleset: "Standard American casino blackjack", description: "Standard American casino blackjack.", genre: "card", tags: JSON.stringify(["blackjack", "cards", "casino"]), isActive: 1 }
+            { name: "Blackjack", slug: "blackjack", gameType: "blackjack", minPlayers: 1, maxPlayers: 5, ruleset: "Standard American casino blackjack", description: "Standard American casino blackjack.", genre: "card", tags: JSON.stringify(["blackjack", "cards", "casino"]), isActive: 1 },
+            { name: "Roulette", slug: "roulette", gameType: "roulette", minPlayers: 1, maxPlayers: 6, ruleset: "European Roulette", description: "Bet on numbers, colors, or ranges and watch the wheel spin.", genre: "casino", tags: JSON.stringify(["roulette", "casino", "multiplayer"]), isActive: 1 }
         ];
         for (const game of games) {
             const stmt = unit.prepare<unknown, { name: string; slug: string; gameType: string; minPlayers: number; maxPlayers: number; ruleset: string; description: string; genre: string; tags: string; isActive: number }>(

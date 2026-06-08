@@ -100,6 +100,19 @@ describe('ForgeryService', () => {
             expect(result.error).toContain('same rarity');
         });
 
+        it('rejects Legendary stoves as input', async () => {
+            const inputs = Array.from({ length: 6 }, (_, i) =>
+                makeInputStove(i + 1, Rarity.LEGENDARY, 'Special', 0.1)
+            );
+            const unit = mockUnitSequence([
+                mockStmt(null, inputs),
+            ]);
+            const service = new ForgeryService(unit);
+            const result = await service.forge(1, [1, 2, 3, 4, 5, 6]);
+            expect(result.success).toBe(false);
+            expect(result.error).toContain('Cannot forge Legendary, Limited, or Secret');
+        });
+
         it('rejects Limited stoves as input', async () => {
             const inputs = Array.from({ length: 6 }, (_, i) =>
                 makeInputStove(i + 1, Rarity.LIMITED, 'Special', 0.1)
@@ -110,7 +123,7 @@ describe('ForgeryService', () => {
             const service = new ForgeryService(unit);
             const result = await service.forge(1, [1, 2, 3, 4, 5, 6]);
             expect(result.success).toBe(false);
-            expect(result.error).toContain('Cannot forge Limited or Secret');
+            expect(result.error).toContain('Cannot forge Legendary, Limited, or Secret');
         });
 
         it('rejects Secret stoves as input', async () => {
@@ -123,7 +136,7 @@ describe('ForgeryService', () => {
             const service = new ForgeryService(unit);
             const result = await service.forge(1, [1, 2, 3, 4, 5, 6]);
             expect(result.success).toBe(false);
-            expect(result.error).toContain('Cannot forge Limited or Secret');
+            expect(result.error).toContain('Cannot forge Legendary, Limited, or Secret');
         });
     });
 
@@ -245,30 +258,18 @@ describe('ForgeryService', () => {
             expect(result.newStove!.rarity).toBe(Rarity.LEGENDARY);
         });
 
-        it('upgrades Legendary → Limited', async () => {
+        it('rejects Legendary → Limited upgrade', async () => {
             const legendaryInputs = Array.from({ length: 6 }, (_, i) =>
                 makeInputStove(i + 1, Rarity.LEGENDARY, 'Special', 0.1)
             );
-            const limitedType = {
-                typeId: 400,
-                name: 'One of a Kind',
-                imageUrl: '',
-                rarity: Rarity.LIMITED,
-                lootboxWeight: 1,
-                collection: 'Special',
-                minHeat: 0.0,
-                maxHeat: 0.40,
-            };
             const unit = mockUnitSequence([
                 mockStmt(null, legendaryInputs),
-                mockStmt(null, [limitedType]),
-                mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt(),
             ]);
             const service = new ForgeryService(unit, () => 0);
             const result = await service.forge(1, [1, 2, 3, 4, 5, 6]);
 
-            expect(result.success).toBe(true);
-            expect(result.newStove!.rarity).toBe(Rarity.LIMITED);
+            expect(result.success).toBe(false);
+            expect(result.error).toContain('Cannot forge Legendary, Limited, or Secret');
         });
     });
 

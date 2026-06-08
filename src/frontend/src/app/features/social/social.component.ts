@@ -106,7 +106,14 @@ export class SocialComponent implements OnInit, OnDestroy {
     if (!user) return;
 
     try {
-      const stoves = await firstValueFrom(this.stoveService.getStovesByPlayerId(user.playerId));
+      const [stoves, lootboxes, lootboxTypes] = await Promise.all([
+        firstValueFrom(this.stoveService.getStovesByPlayerId(user.playerId)),
+        firstValueFrom(this.lootboxService.getLootboxesByPlayerId(user.playerId)),
+        firstValueFrom(this.lootboxService.getAllLootboxTypes())
+      ]);
+
+      const typeMap = new Map(lootboxTypes.map(t => [t.lootboxTypeId, t.name]));
+
       const tradeableStoves: TradeableItem[] = stoves.map(s => ({
         id: s.stoveId,
         name: (s as unknown as Record<string, string>)['name'] || `Stove #${s.stoveId}`,
@@ -115,8 +122,15 @@ export class SocialComponent implements OnInit, OnDestroy {
         imageUrl: (s as unknown as Record<string, string>)['imageUrl']
       }));
 
-      // Lootboxes would need type name resolution; skip for now
-      this.tradeItems.set(tradeableStoves);
+      const tradeableLootboxes: TradeableItem[] = lootboxes.map(lb => ({
+        id: lb.lootboxId,
+        name: typeMap.get(lb.lootboxTypeId) || `Lootbox #${lb.lootboxId}`,
+        type: 'lootbox' as const,
+        rarity: undefined,
+        imageUrl: undefined
+      }));
+
+      this.tradeItems.set([...tradeableStoves, ...tradeableLootboxes]);
     } catch (err) {
       console.error('Failed to load inventory:', err);
     }
@@ -319,6 +333,12 @@ export class SocialComponent implements OnInit, OnDestroy {
       if (msg) {
         this.handleIncomingMessage(msg);
         this.ws.incomingChatMessage.set(null);
+      }
+
+      const tradeUpdate = this.ws.incomingTradeUpdate();
+      if (tradeUpdate) {
+        this.refreshMessages();
+        this.ws.incomingTradeUpdate.set(null);
       }
     }, 100);
 

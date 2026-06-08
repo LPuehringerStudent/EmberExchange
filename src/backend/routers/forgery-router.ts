@@ -1,7 +1,8 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { ForgeryService } from "../services/forgery-service";
-import { SessionService } from "../services/session-service";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 
 export const forgeryRouter = express.Router();
@@ -60,13 +61,7 @@ export const forgeryRouter = express.Router();
  *       500:
  *         description: Server error
  */
-forgeryRouter.post("/forgery", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+forgeryRouter.post("/forgery", requireAuth, async (req, res) => {
     const { stoveIds } = req.body;
     if (!Array.isArray(stoveIds) || stoveIds.length !== 6 || !stoveIds.every((id: unknown) => typeof id === "number")) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "stoveIds must be an array of exactly 6 integers" });
@@ -74,18 +69,15 @@ forgeryRouter.post("/forgery", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const forgeryService = new ForgeryService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             await unit.complete(false);
             return;
         }
 
-        const result = await forgeryService.forge(session.playerId, stoveIds);
+        const result = await forgeryService.forge(req.playerId!, stoveIds);
         if (result.success) {
             await unit.complete(true);
             res.status(StatusCodes.OK).json(result);

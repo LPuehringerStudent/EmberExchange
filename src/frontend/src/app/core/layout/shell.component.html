@@ -8,6 +8,9 @@
   <a routerLink="/glory" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Hall of Glory</a>
   <a routerLink="/social" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Social</a>
   <a routerLink="/support" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Support</a>
+  @if (isAdmin()) {
+    <a routerLink="/admin" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-accent font-medium no-underline">Admin Panel</a>
+  }
   @if (!isLoggedIn()) {
     <a routerLink="/" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Login</a>
   } @else {
@@ -48,6 +51,13 @@
         <span>{{ coins().toLocaleString() }} Coal</span>
       </div>
 
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[13px] font-semibold bg-[rgba(255,87,34,0.15)]">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#ff5722]">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+        <span>{{ sparks().toLocaleString() }} Sparks</span>
+      </div>
+
       <app-notification-bell />
 
       <!-- Account Popup -->
@@ -75,6 +85,9 @@
             <li class="block py-2.5 px-4 rounded-lg text-sm text-text-primary cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/profile">Profile</li>
             <li class="block py-2.5 px-4 rounded-lg text-sm text-text-primary cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/inventory">Inventory</li>
             <li class="block py-2.5 px-4 rounded-lg text-sm text-text-primary cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/settings">Settings</li>
+            @if (isAdmin()) {
+              <li class="block py-2.5 px-4 rounded-lg text-sm text-accent cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/admin">Admin Panel</li>
+            }
             <li class="my-2 border-none account-menu-divider"></li>
             <li class="block py-2.5 px-4 rounded-lg text-sm text-white cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item logout logoutFR" (click)="logout()">Logout</li>
           </ul>
@@ -87,7 +100,33 @@
   </div>
 </header>
 
+<!-- Email Verification Banner -->
+@if (showVerifyBanner()) {
+  <div class="fixed top-16 left-0 right-0 z-[999] bg-accent/15 border-b-2 border-accent px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <svg class="w-5 h-5 text-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <span class="text-sm text-text-primary">
+        <strong>Please verify your email</strong> to secure your account. Current email: <code class="text-accent">{{ currentUser()?.email }}</code>
+      </span>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <button (click)="resendVerification()" class="px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-semibold hover:opacity-90 transition-opacity">
+        Resend Email
+      </button>
+      <button (click)="navigateToSettings()" class="px-3 py-1.5 rounded-lg border border-accent text-accent text-xs font-semibold hover:bg-accent/10 transition-colors">
+        Change Email
+      </button>
+      <button (click)="dismissBanner()" class="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors" title="Dismiss">
+        ✕
+      </button>
+    </div>
+  </div>
+}
+
 <!-- Main content -->
-<main class="mt-16 min-h-[calc(100vh-64px)] w-full content">
+<main class="mt-16 min-h-[calc(100vh-64px)] w-full content"
+      [class.mt-24]="showVerifyBanner()">
   <router-outlet></router-outlet>
 </main>

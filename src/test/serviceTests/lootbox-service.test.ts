@@ -325,24 +325,29 @@ describe('LootboxService', () => {
       // Call sequence:
       // (1) verify lootbox → sampleLootbox
       // (2) isLootboxListed count → { count: 0 }
-      // (3) pickStoveTypeByRarity all → [sampleStoveType]
-      // (4) INSERT Stove run
-      // (5) markOpened run
-      // (6) INSERT LootboxDrop run
-      // (7) decrement lootboxCount run
+      // (3) PityService.getCounters
+      // (4) pickStoveTypeByRarity all → [sampleStoveType]
+      // (5) INSERT Stove run
+      // (6) markOpened run
+      // (7) INSERT LootboxDrop run
+      // (8) decrement lootboxCount run
+      // (9) PityService.resetCounter
       const verifyStmt = mockStmt(sampleLootbox);
       const notListedStmt = mockStmt({ count: 0 });
+      const pityStmt = mockStmt(null, []);
       const stoveTypesStmt = mockStmt(null, [sampleStoveType]);
       const insertStmt = mockStmt(null, [], { changes: 1 });
 
       const unit = mockUnitSequence([
         verifyStmt,      // verify ownership
         notListedStmt,   // isLootboxListed
+        pityStmt,        // PityService.getCounters
         stoveTypesStmt,  // pickStoveTypeByRarity
         insertStmt,      // INSERT Stove
         insertStmt,      // UPDATE Lootbox openedAt
         insertStmt,      // INSERT LootboxDrop
         insertStmt,      // UPDATE Player lootboxCount
+        insertStmt,      // PityService.resetCounter
       ]);
       (unit as any).getLastRowId = jest.fn()
           .mockResolvedValueOnce(55)   // stoveId
@@ -365,6 +370,100 @@ describe('LootboxService', () => {
       const emptyStoveTypes = mockStmt(null, []); // no matching stove type
 
       const unit = mockUnitSequence([verifyStmt, notListedStmt, emptyStoveTypes]);
+      const service = new LootboxService(unit);
+
+      const [success, result] = await service.openLootbox(1, 10);
+
+      expect(success).toBe(false);
+      expect(result).toBeNull();
+    });
+
+    it('opens Dragon Crate with rarity-weighted dragon stove drop', async () => {
+      const dragonLootbox = { ...sampleLootbox, lootboxTypeId: 4 };
+      const dragonStoveType = {
+        typeId: 7,
+        name: 'Dragon Stove',
+        rarity: 'legendary',
+        imageUrl: '/assets/dragon.png',
+        minHeat: 0,
+        maxHeat: 1,
+      };
+      const verifyStmt = mockStmt(dragonLootbox);
+      const notListedStmt = mockStmt({ count: 0 });
+      const pityStmt = mockStmt(null, []); // no existing pity row
+      const stoveTypesStmt = mockStmt(null, [dragonStoveType]);
+      const insertStmt = mockStmt(null, [], { changes: 1 });
+
+      const unit = mockUnitSequence([
+        verifyStmt,
+        notListedStmt,
+        pityStmt,        // PityService.getCounters
+        stoveTypesStmt,  // pickDragonStoveTypeByRarity
+        insertStmt,      // INSERT Stove
+        insertStmt,      // UPDATE Lootbox openedAt
+        insertStmt,      // INSERT LootboxDrop
+        insertStmt,      // UPDATE Player lootboxCount
+        insertStmt,      // PityService.resetCounter
+      ]);
+      (unit as any).getLastRowId = jest.fn()
+        .mockResolvedValueOnce(55)
+        .mockResolvedValueOnce(7);
+
+      const service = new LootboxService(unit);
+      const [success, result] = await service.openLootbox(1, 10);
+
+      expect(success).toBe(true);
+      expect(result).not.toBeNull();
+      expect(result?.stoveName).toBe('Dragon Stove');
+    });
+
+    it('opens Winter Crate with rarity-weighted winter stove drop', async () => {
+      const winterLootbox = { ...sampleLootbox, lootboxTypeId: 5 };
+      const winterStoveType = {
+        typeId: 25,
+        name: 'Festival Stove',
+        rarity: 'secret',
+        imageUrl: '/assets/festival.png',
+        minHeat: 0,
+        maxHeat: 0.6,
+      };
+      const verifyStmt = mockStmt(winterLootbox);
+      const notListedStmt = mockStmt({ count: 0 });
+      const pityStmt = mockStmt(null, []); // no existing pity row
+      const stoveTypesStmt = mockStmt(null, [winterStoveType]);
+      const insertStmt = mockStmt(null, [], { changes: 1 });
+
+      const unit = mockUnitSequence([
+        verifyStmt,
+        notListedStmt,
+        pityStmt,        // PityService.getCounters
+        stoveTypesStmt,  // pickWinterStoveTypeByRarity
+        insertStmt,      // INSERT Stove
+        insertStmt,      // UPDATE Lootbox openedAt
+        insertStmt,      // INSERT LootboxDrop
+        insertStmt,      // UPDATE Player lootboxCount
+        insertStmt,      // PityService.resetCounter
+      ]);
+      (unit as any).getLastRowId = jest.fn()
+        .mockResolvedValueOnce(55)
+        .mockResolvedValueOnce(7);
+
+      const service = new LootboxService(unit);
+      const [success, result] = await service.openLootbox(1, 10);
+
+      expect(success).toBe(true);
+      expect(result).not.toBeNull();
+      expect(result?.stoveName).toBe('Festival Stove');
+    });
+
+    it('returns [false, null] when Dragon Crate rolls a rarity with no matching dragon stoves', async () => {
+      const dragonLootbox = { ...sampleLootbox, lootboxTypeId: 4 };
+      const verifyStmt = mockStmt(dragonLootbox);
+      const notListedStmt = mockStmt({ count: 0 });
+      const pityStmt = mockStmt(null, []);
+      const emptyStoveTypes = mockStmt(null, []);
+
+      const unit = mockUnitSequence([verifyStmt, notListedStmt, pityStmt, emptyStoveTypes]);
       const service = new LootboxService(unit);
 
       const [success, result] = await service.openLootbox(1, 10);

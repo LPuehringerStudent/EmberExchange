@@ -1,8 +1,9 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { FriendService } from "../services/friend-service";
-import { SessionService } from "../services/session-service";
 import { NotificationService } from "../services/notification-service";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 
@@ -35,25 +36,12 @@ function isConstraintError(err: unknown): boolean {
  *       500:
  *         description: Server error
  */
-friendRouter.get("/friends/list", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+friendRouter.get("/friends/list", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
-    const sessionService = new SessionService(unit);
     const friendService = new FriendService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
-        const friends = await friendService.getFriends(session.playerId);
+        const friends = await friendService.getFriends(req.playerId!);
         res.status(StatusCodes.OK).json(friends);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -84,25 +72,12 @@ friendRouter.get("/friends/list", async (req, res) => {
  *       500:
  *         description: Server error
  */
-friendRouter.get("/friends/pending", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+friendRouter.get("/friends/pending", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
-    const sessionService = new SessionService(unit);
     const friendService = new FriendService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
-        const pending = await friendService.getPendingRequests(session.playerId);
+        const pending = await friendService.getPendingRequests(req.playerId!);
         res.status(StatusCodes.OK).json(pending);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -133,25 +108,12 @@ friendRouter.get("/friends/pending", async (req, res) => {
  *       500:
  *         description: Server error
  */
-friendRouter.get("/friends/sent", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+friendRouter.get("/friends/sent", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
-    const sessionService = new SessionService(unit);
     const friendService = new FriendService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
-        const sent = await friendService.getSentRequests(session.playerId);
+        const sent = await friendService.getSentRequests(req.playerId!);
         res.status(StatusCodes.OK).json(sent);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -197,13 +159,7 @@ friendRouter.get("/friends/sent", async (req, res) => {
  *       500:
  *         description: Server error
  */
-friendRouter.post("/friends/request", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+friendRouter.post("/friends/request", requireAuth, async (req, res) => {
     const { addresseeId } = req.body;
     if (typeof addresseeId !== "number") {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "addresseeId is required" });
@@ -211,27 +167,24 @@ friendRouter.post("/friends/request", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const friendService = new FriendService(unit);
     const notificationService = new NotificationService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             await unit.complete(false);
             return;
         }
 
-        const [success, friendId] = await friendService.sendRequest(session.playerId, addresseeId);
+        const [success, friendId] = await friendService.sendRequest(req.playerId!, addresseeId);
         if (success) {
             await notificationService.create(
                 addresseeId,
                 "friend_request",
                 "New friend request",
-                `${session.playerId} sent you a friend request`,
-                { requesterId: session.playerId, friendId }
+                `${req.playerId!} sent you a friend request`,
+                { requesterId: req.playerId!, friendId }
             );
             ok = true;
             res.status(StatusCodes.CREATED).json({ friendId, message: "Friend request sent" });
@@ -289,13 +242,7 @@ friendRouter.post("/friends/request", async (req, res) => {
  *       500:
  *         description: Server error
  */
-friendRouter.post("/friends/respond", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+friendRouter.post("/friends/respond", requireAuth, async (req, res) => {
     const { friendId, accept } = req.body;
     if (typeof friendId !== "number" || typeof accept !== "boolean") {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "friendId and accept are required" });
@@ -303,19 +250,16 @@ friendRouter.post("/friends/respond", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const friendService = new FriendService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             await unit.complete(false);
             return;
         }
 
-        const success = await friendService.respondToRequest(friendId, session.playerId, accept);
+        const success = await friendService.respondToRequest(friendId, req.playerId!, accept);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: accept ? "Friend request accepted" : "Friend request declined" });
@@ -360,13 +304,7 @@ friendRouter.post("/friends/respond", async (req, res) => {
  *       500:
  *         description: Server error
  */
-friendRouter.delete("/friends/:id", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+friendRouter.delete("/friends/:id", requireAuth, async (req, res) => {
     const id = req.params.id;
     if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "ID must be a valid number" });
@@ -374,19 +312,16 @@ friendRouter.delete("/friends/:id", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const friendService = new FriendService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             await unit.complete(false);
             return;
         }
 
-        const success = await friendService.removeFriend(Number(id), session.playerId);
+        const success = await friendService.removeFriend(Number(id), req.playerId!);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Friend removed" });
@@ -395,6 +330,78 @@ friendRouter.delete("/friends/:id", async (req, res) => {
         }
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+/**
+ * @openapi
+ * /friends/block:
+ *   post:
+ *     summary: Block a player
+ *     description: Blocks a player from sending friend requests or chat messages
+ *     tags:
+ *       - Friends
+ *     parameters:
+ *       - name: session-id
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - playerId
+ *             properties:
+ *               playerId:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Player blocked
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Invalid session
+ *       409:
+ *         description: Cannot block yourself
+ *       500:
+ *         description: Server error
+ */
+friendRouter.post("/friends/block", requireAuth, async (req, res) => {
+    const { playerId } = req.body;
+    if (typeof playerId !== "number") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "playerId is required" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const friendService = new FriendService(unit);
+    let ok = false;
+
+    try {
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
+            await unit.complete(false);
+            return;
+        }
+
+        const [success, friendId] = await friendService.blockPlayer(req.playerId!, playerId);
+        if (success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ friendId, message: "Player blocked" });
+        } else {
+            res.status(StatusCodes.CONFLICT).json({ error: "Cannot block yourself" });
+        }
+    } catch (err) {
+        if (isConstraintError(err)) {
+            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
+        } else {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        }
     } finally {
         await unit.complete(ok);
     }

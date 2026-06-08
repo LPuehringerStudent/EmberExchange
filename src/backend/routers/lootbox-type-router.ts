@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { LootboxTypeService } from "../services/lootbox-type-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const lootboxTypeRouter = express.Router();
 
@@ -233,7 +234,7 @@ lootboxTypeRouter.get("/lootbox-types/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxTypeRouter.post("/lootbox-types", async (req, res) => {
+lootboxTypeRouter.post("/lootbox-types", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxTypeService(unit);
     let ok = false;
@@ -349,7 +350,7 @@ lootboxTypeRouter.post("/lootbox-types", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxTypeRouter.patch("/lootbox-types/:id", async (req, res) => {
+lootboxTypeRouter.patch("/lootbox-types/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxTypeService(unit);
     const id = req.params.id;
@@ -450,7 +451,7 @@ lootboxTypeRouter.patch("/lootbox-types/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxTypeRouter.patch("/lootbox-types/:id/availability", async (req, res) => {
+lootboxTypeRouter.patch("/lootbox-types/:id/availability", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxTypeService(unit);
     const id = req.params.id;
@@ -529,7 +530,7 @@ lootboxTypeRouter.patch("/lootbox-types/:id/availability", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxTypeRouter.delete("/lootbox-types/:id", async (req, res) => {
+lootboxTypeRouter.delete("/lootbox-types/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxTypeService(unit);
     const id = req.params.id;

@@ -5,6 +5,7 @@ import { LootBoxHelper, LootItem } from './lootbox-helper';
 import { LootboxService, Lootbox, LootboxType } from '@core/services/lootbox.service';
 import { ListingService } from '@core/services/listing.service';
 import { AuthService } from '@core/services/auth.service';
+import { PityService, PityProgress } from '@core/services/pity.service';
 import { firstValueFrom } from 'rxjs';
 
 export interface DropRateEntry {
@@ -48,12 +49,19 @@ const DROP_RATES: Record<number, DropRateEntry[]> = {
     { rarity: 'legendary', rate: '30%' },
     { rarity: 'secret', rate: '5%' },
   ],
+  4: [ // Dragon Crate
+    { rarity: 'common', rate: '30%' },
+    { rarity: 'rare', rate: '30%' },
+    { rarity: 'epic', rate: '25%' },
+    { rarity: 'legendary', rate: '12%' },
+    { rarity: 'secret', rate: '3%' },
+  ],
   5: [ // Winter Crate
-    { rarity: 'common', rate: '50%' },
+    { rarity: 'common', rate: '49%' },
     { rarity: 'rare', rate: '30%' },
     { rarity: 'epic', rate: '15%' },
     { rarity: 'legendary', rate: '5%' },
-    { rarity: 'secret', rate: '0%' },
+    { rarity: 'secret', rate: '1%' },
   ],
 };
 
@@ -115,6 +123,9 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   lootboxTypes       = signal<Map<number, LootboxType>>(new Map());
   isLoading          = signal<boolean>(false);
 
+  // Pity state
+  pityCounters = signal<Record<number, PityProgress>>({});
+
   items: LootItem[] = [];
   finalItem: LootItem | null = null;
   playerId: number | null = null;
@@ -133,6 +144,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   private lootBoxHelper = new LootBoxHelper();
   private lootboxApi    = inject(LootboxService);
   private listingApi    = inject(ListingService);
+  private pityApi       = inject(PityService);
   private cdr           = inject(ChangeDetectorRef);
   private authService   = inject(AuthService);
   private router        = inject(Router);
@@ -154,6 +166,22 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     }
 
     await this.loadLootboxData();
+    await this.loadPityData();
+  }
+
+  async loadPityData(): Promise<void> {
+    try {
+      const counters = await firstValueFrom(this.pityApi.getPityCounters());
+      this.pityCounters.set({
+        1: counters.standard,
+        2: counters.golden,
+        3: counters.legendary,
+        4: counters.dragon,
+        5: counters.winter,
+      });
+    } catch (err) {
+      console.error('Failed to load pity data:', err);
+    }
   }
 
   ngAfterViewInit(): void {}
@@ -233,19 +261,10 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getDropRate(rarity: string): string {
     const typeId = this.getSelectedLootboxTypeId() ?? 1; // default to Standard
-    if (typeId === 4 || typeId === 5) return '100%';
     const table = this.dropRates[typeId];
     if (!table) return '-';
     const entry = table.find(r => r.rarity === rarity);
     return entry?.rate ?? '-';
-  }
-
-  getDragonDropRate(): string {
-    return '100%';
-  }
-
-  getWinterDropRate(): string {
-    return '100%';
   }
 
   getAcquisitionLabel(how: string): string {
@@ -276,6 +295,11 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     if (box) {
       this.selectedTypeName.set(this.getLootboxTypeName(box.lootboxTypeId));
     }
+  }
+
+  getPityForSelected(): PityProgress | undefined {
+    const typeId = this.getSelectedLootboxTypeId() ?? 1;
+    return this.pityCounters()[typeId];
   }
 
   canOpen(): boolean {

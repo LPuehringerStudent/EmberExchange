@@ -1,10 +1,11 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { SupportService } from "../services/support-service";
-import { SessionService } from "../services/session-service";
 import { PlayerService } from "../services/player-service";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { sanitizeText } from "../utils/sanitize";
 
 export const supportRouter = express.Router();
 
@@ -75,32 +76,14 @@ export const supportRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-supportRouter.post("/support", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+supportRouter.post("/support", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const supportService = new SupportService(unit);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
-        if (new Date(session.expiresAt) < new Date()) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Session expired" });
-            return;
-        }
-
-        const player = await playerService.getInfoByID(session.playerId);
+        const player = await playerService.getInfoByID(req.playerId!);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             return;
@@ -112,8 +95,16 @@ supportRouter.post("/support", async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "title is required" });
             return;
         }
+        if (title.length > 200) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "title too long (max 200 characters)" });
+            return;
+        }
         if (isNullOrWhiteSpace(description)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "description is required" });
+            return;
+        }
+        if (description.length > 5000) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "description too long (max 5000 characters)" });
             return;
         }
         if (!["bug", "feature", "support"].includes(type)) {
@@ -125,10 +116,13 @@ supportRouter.post("/support", async (req, res) => {
             return;
         }
 
+        const safeTitle = sanitizeText(title.trim(), 200) ?? title.trim().slice(0, 200);
+        const safeDescription = sanitizeText(description.trim(), 5000) ?? description.trim().slice(0, 5000);
+
         const [success, ticketId] = await supportService.create(
             player.playerId,
-            title.trim(),
-            description.trim(),
+            safeTitle,
+            safeDescription,
             type,
             priority
         );

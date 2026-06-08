@@ -71,6 +71,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/update-log/update-log.component').then(m => m.UpdateLogComponent)
   },
   {
+    path: 'quests',
+    loadComponent: () => import('./features/quests/quests.component').then(m => m.QuestsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'collections',
+    loadComponent: () => import('./features/collections/collections.component').then(m => m.CollectionsComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'glory',
     loadComponent: () => import('./features/hall-of-glory/hall-of-glory.component').then(m => m.HallOfGloryComponent),
     canActivate: [authGuard]
@@ -94,6 +104,10 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'admin',
+    loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
+  },
+  {
     path: 'signup',
     loadComponent: () => import('./shared/components/not-found.component').then(m => m.NotFoundComponent)
   },
@@ -110,6 +124,22 @@ export const routes: Routes = [
   {
     path: 'oauth/callback',
     loadComponent: () => import('./features/auth/pages/oauth-callback/oauth-callback.component').then(m => m.OAuthCallbackComponent)
+  },
+  {
+    path: 'check-email',
+    loadComponent: () => import('./features/auth/pages/check-email/check-email.component').then(m => m.CheckEmailComponent)
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
+  },
+  {
+    path: 'terms',
+    loadComponent: () => import('./features/legal/pages/terms/terms.component').then(m => m.TermsComponent)
+  },
+  {
+    path: 'privacy',
+    loadComponent: () => import('./features/legal/pages/privacy/privacy.component').then(m => m.PrivacyComponent)
   },
   {
     path: '**',

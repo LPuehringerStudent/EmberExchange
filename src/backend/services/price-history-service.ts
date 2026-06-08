@@ -11,9 +11,10 @@ export class PriceHistoryService extends ServiceBase {
      * Retrieves all price history records from the database.
      * @returns An array of all PriceHistoryRow objects.
      */
-    async getAllPriceHistory(): Promise<PriceHistoryRow[]> {
+    async getAllPriceHistory(limit: number = 500, offset: number = 0): Promise<PriceHistoryRow[]> {
         const stmt = this.unit.prepare<PriceHistoryRow>(
-            "SELECT * FROM PriceHistory"
+            "SELECT * FROM PriceHistory LIMIT @limit OFFSET @offset",
+            { limit, offset }
         );
         return await stmt.all();
     }

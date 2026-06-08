@@ -1,72 +1,100 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import type { ListingRow as Listing } from '@shared/model';
+import { AuthService } from './auth.service';
+import { Observable } from 'rxjs';
+import { HttpHeaders, HttpParams } from '@angular/common/http';
 
-export type { Listing };
+export interface Listing {
+  listingId: number;
+  stoveId: number;
+  lootboxId: number | null;
+  stoveName: string;
+  rarity: string;
+  heatLevel: number;
+  collection: string | null;
+  imageUrl: string | null;
+  price: number;
+  sellerName: string;
+  sellerId: number;
+  status: string;
+  listedAt: string;
+  createdAt: string;
+}
+
+export interface FilterParams {
+  rarity?: string;
+  collection?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: 'price_asc' | 'price_desc' | 'newest';
+  itemType?: 'stove' | 'lootbox';
+  search?: string;
+}
+
+export interface CreateListingRequest {
+  sellerId: number;
+  price: number;
+  stoveId?: number;
+  lootboxId?: number;
+}
 
 export interface CreateListingResponse {
   listingId: number;
-  message: string;
 }
 
-export interface CountResponse {
-  count: number;
-}
-
-export interface SuccessMessage {
-  message: string;
+export interface PurchaseResult {
+  success: boolean;
+  error?: string;
+  coins?: number;
+  xp?: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ListingService {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
 
-  getAllListings(): Observable<Listing[]> {
-    return this.api.get<Listing[]>('/listings');
-  }
-
-  getActiveListings(): Observable<Listing[]> {
-    return this.api.get<Listing[]>('/listings/active');
-  }
-
-  getListingById(id: number): Observable<Listing> {
-    return this.api.get<Listing>(`/listings/${id}`);
-  }
-
-  getListingsBySellerId(sellerId: number): Observable<Listing[]> {
-    return this.api.get<Listing[]>(`/players/${sellerId}/listings`);
-  }
-
-  getActiveListingsBySellerId(sellerId: number): Observable<Listing[]> {
-    return this.api.get<Listing[]>(`/players/${sellerId}/listings/active`);
-  }
-
-  getActiveListingByStoveId(stoveId: number): Observable<Listing> {
-    return this.api.get<Listing>(`/stoves/${stoveId}/listing`);
-  }
-
-  getActiveListingByLootboxId(lootboxId: number): Observable<Listing> {
-    return this.api.get<Listing>(`/lootboxes/${lootboxId}/listing`);
+  getActiveListings(filter?: FilterParams): Observable<Listing[]> {
+    let params = new HttpParams();
+    if (filter?.rarity) params = params.set('rarity', filter.rarity);
+    if (filter?.collection) params = params.set('collection', filter.collection);
+    if (filter?.minPrice !== undefined) params = params.set('minPrice', filter.minPrice.toString());
+    if (filter?.maxPrice !== undefined) params = params.set('maxPrice', filter.maxPrice.toString());
+    if (filter?.sort) params = params.set('sortBy', filter.sort);
+    if (filter?.itemType) params = params.set('itemType', filter.itemType);
+    if (filter?.search) params = params.set('search', filter.search);
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.get<Listing[]>('/listings/active', headers, params);
   }
 
   createListing(sellerId: number, price: number, stoveId?: number, lootboxId?: number): Observable<CreateListingResponse> {
-    return this.api.post<CreateListingResponse>('/listings', { sellerId, price, stoveId, lootboxId });
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.post<CreateListingResponse>('/listings', { sellerId, price, stoveId, lootboxId }, headers);
   }
 
-  updateListingPrice(id: number, price: number): Observable<SuccessMessage> {
-    return this.api.patch<SuccessMessage>(`/listings/${id}/price`, { price });
+  buyListing(listingId: number): Observable<PurchaseResult> {
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.post<PurchaseResult>(`/listings/${listingId}/buy`, {}, headers);
   }
 
-  cancelListing(id: number): Observable<SuccessMessage> {
-    return this.api.patch<SuccessMessage>(`/listings/${id}/cancel`, {});
+  getListingsBySellerId(sellerId: number): Observable<Listing[]> {
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.get<Listing[]>(`/players/${sellerId}/listings`, headers);
   }
 
-  deleteListing(id: number): Observable<SuccessMessage> {
-    return this.api.delete<SuccessMessage>(`/listings/${id}`);
+  getActiveListingsBySellerId(sellerId: number): Observable<Listing[]> {
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.get<Listing[]>(`/players/${sellerId}/listings/active`, headers);
   }
 
-  countActiveListingsBySeller(sellerId: number): Observable<CountResponse> {
-    return this.api.get<CountResponse>(`/players/${sellerId}/active-listings/count`);
+  cancelListing(listingId: number): Observable<void> {
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.patch<void>(`/listings/${listingId}/cancel`, {}, headers);
   }
 }

@@ -8,7 +8,7 @@ import { handleRequestSync } from "./handlers/request-sync";
 import { handleStartGame } from "./handlers/start-game";
 import { handleChatMessage } from "./handlers/chat-message";
 
-export async function handleMessage(socketId: string, data: unknown): Promise<void> {
+export async function handleMessage(socketId: string, clientIp: string, data: unknown): Promise<void> {
     const msg = data as Partial<ClientMessage> & Record<string, unknown>;
     if (!msg || typeof msg !== "object") {
         sendError(socketId, ErrorCode.INVALID_STATE, "Invalid message format");
@@ -28,8 +28,8 @@ export async function handleMessage(socketId: string, data: unknown): Promise<vo
         return;
     }
 
-    // Rate limit
-    if (!rateLimiter.checkLimit(socketId)) {
+    // Rate limit by IP (not socketId) to prevent connection cycling evasion
+    if (!rateLimiter.checkLimit(clientIp)) {
         sendError(socketId, ErrorCode.RATE_LIMITED, "Too many messages");
         return;
     }

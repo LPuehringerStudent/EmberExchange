@@ -4,10 +4,11 @@ import { RoomService } from "../services/room-service";
 import { RoomPlayerService } from "../services/room-player-service";
 import { GameStateService } from "../services/game-state-service";
 import { StatusCodes } from "http-status-codes";
+import { requireAuth } from "../middleware/require-auth";
 
 export const roomRouter = express.Router();
 
-roomRouter.post("/rooms", async (req, res) => {
+roomRouter.post("/rooms", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     let ok = false;
     try {

@@ -1,8 +1,11 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { ShopService } from "../services/shop-service";
 import { ShopRotationService } from "../services/shop-rotation-service";
-import { SessionService } from "../services/session-service";
+import { QuestService } from "../services/quest-service";
+import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
 
 export const shopRouter = express.Router();
@@ -76,13 +79,7 @@ shopRouter.get("/shop/items", async (req, res) => {
  *       500:
  *         description: Server error
  */
-shopRouter.post("/shop/buy", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+shopRouter.post("/shop/buy", requireAuth, async (req, res) => {
     const { listingId } = req.body;
     if (!listingId || typeof listingId !== "number") {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "listingId is required" });
@@ -90,18 +87,15 @@ shopRouter.post("/shop/buy", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const shopService = new ShopService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             await unit.complete(false);
             return;
         }
 
-        const result = await shopService.purchaseItem(session.playerId, listingId);
+        const result = await shopService.purchaseItem(req.playerId!, listingId);
         if (result.success) {
             await unit.complete(true);
             res.status(StatusCodes.OK).json({ message: "Purchase successful", itemId: result.itemId });
@@ -137,25 +131,12 @@ shopRouter.post("/shop/buy", async (req, res) => {
  *       500:
  *         description: Server error
  */
-shopRouter.get("/shop/daily-status", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+shopRouter.get("/shop/daily-status", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
-    const sessionService = new SessionService(unit);
     const shopService = new ShopService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
-        const status = await shopService.getDailyRewardStatus(session.playerId);
+        const status = await shopService.getDailyRewardStatus(req.playerId!);
         res.status(StatusCodes.OK).json(status);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -223,13 +204,7 @@ shopRouter.get("/shop/daily-status", async (req, res) => {
  *       500:
  *         description: Server error
  */
-shopRouter.post("/shop/sell", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+shopRouter.post("/shop/sell", requireAuth, async (req, res) => {
     const { stoveId } = req.body;
     if (!stoveId || typeof stoveId !== "number") {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "stoveId is required" });
@@ -237,18 +212,15 @@ shopRouter.post("/shop/sell", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const shopService = new ShopService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             await unit.complete(false);
             return;
         }
 
-        const result = await shopService.sellStove(session.playerId, stoveId);
+        const result = await shopService.sellStove(req.playerId!, stoveId);
         if (result.success) {
             await unit.complete(true);
             res.status(StatusCodes.OK).json({ message: "Sold to shop", coinsReceived: result.coinsReceived });
@@ -288,24 +260,10 @@ shopRouter.post("/shop/sell", async (req, res) => {
  *       500:
  *         description: Server error
  */
-shopRouter.post("/shop/rotate", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+shopRouter.post("/shop/rotate", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
         const rotationService = new ShopRotationService(unit);
         const result = await rotationService.rotate();
         await unit.complete(true);
@@ -316,27 +274,26 @@ shopRouter.post("/shop/rotate", async (req, res) => {
     }
 });
 
-shopRouter.post("/shop/claim-daily", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+shopRouter.post("/shop/claim-daily", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const shopService = new ShopService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             await unit.complete(false);
             return;
         }
 
-        const result = await shopService.claimDailyReward(session.playerId);
+        const result = await shopService.claimDailyReward(req.playerId!);
         if (result.success) {
+            // Track quest progress
+            try {
+                const questService = new QuestService(unit);
+                await questService.trackProgress(req.playerId!, 'claim_daily', 1);
+            } catch {
+                // Ignore quest tracking errors
+            }
+
             await unit.complete(true);
             res.status(StatusCodes.OK).json({
                 message: `Claimed day ${result.newStreak} reward`,

@@ -44,8 +44,8 @@ const service = new GitHubService();
  */
 githubRouter.get("/github/commits", async (req, res) => {
     try {
-        const page = parseInt(req.query.page as string) || 1;
-        const perPage = parseInt(req.query.per_page as string) || 30;
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const perPage = Math.min(100, Math.max(1, parseInt(req.query.per_page as string) || 30));
         const commits = await service.getCommits(page, perPage);
         res.status(StatusCodes.OK).json(commits);
     } catch (err) {

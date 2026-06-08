@@ -4,6 +4,7 @@ import { PriceHistoryService } from "../services/price-history-service";
 import { StoveTypeService } from "../services/stove-type-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const priceHistoryRouter = express.Router();
 
@@ -31,12 +32,14 @@ export const priceHistoryRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.get("/price-history", async (_req, res) => {
+priceHistoryRouter.get("/price-history", requireAdmin, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PriceHistoryService(unit);
+    const limit = Math.min(Number(req.query.limit) || 500, 500);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllPriceHistory();
+        const response = await service.getAllPriceHistory(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -216,7 +219,7 @@ priceHistoryRouter.get("/stove-types/:typeId/price-history", async (req, res) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.post("/price-history", async (req, res) => {
+priceHistoryRouter.post("/price-history", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PriceHistoryService(unit);
     let ok = false;
@@ -382,7 +385,7 @@ priceHistoryRouter.get("/stove-types/:typeId/recent-prices", async (req, res) =>
     const service = new PriceHistoryService(unit);
     const typeId = req.params.typeId;
     const limitParam = req.query.limit;
-    const limit = limitParam !== undefined ? parseInt(limitParam as string) : 10;
+    const limit = Math.min(100, limitParam !== undefined ? parseInt(limitParam as string) : 10);
 
     try {
         if (isNullOrWhiteSpace(typeId) || isNaN(Number(typeId))) {
@@ -448,7 +451,7 @@ priceHistoryRouter.get("/stove-types/:typeId/recent-prices", async (req, res) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-priceHistoryRouter.delete("/price-history/:id", async (req, res) => {
+priceHistoryRouter.delete("/price-history/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PriceHistoryService(unit);
     const id = req.params.id;

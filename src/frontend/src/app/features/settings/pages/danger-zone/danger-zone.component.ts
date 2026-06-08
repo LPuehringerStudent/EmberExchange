@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, computed } from '@angular/core';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
@@ -15,6 +15,7 @@ export class DangerZoneComponent {
   deleteConfirmText = new FormControl('');
   deleteLoading = signal<boolean>(false);
   deleteError = signal<string>('');
+  emailVerified = computed(() => this._authService.isEmailVerified());
 
   private _authService = inject(AuthService);
   private _router = inject(Router);

@@ -4,6 +4,7 @@ import { StoveTypeService } from "../services/stove-type-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { Rarity } from "../../shared/model";
+import { requireAdmin } from "../middleware/admin";
 
 export const stoveTypeRouter = express.Router();
 
@@ -37,12 +38,14 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeRouter.get("/stove-types", async (_req, res) => {
+stoveTypeRouter.get("/stove-types", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveTypeService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllStoveTypes();
+        const response = await service.getAllStoveTypes(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -241,7 +244,7 @@ stoveTypeRouter.get("/stove-types/rarity/:rarity", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeRouter.post("/stove-types", async (req, res) => {
+stoveTypeRouter.post("/stove-types", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveTypeService(unit);
     let ok = false;
@@ -344,7 +347,7 @@ stoveTypeRouter.post("/stove-types", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeRouter.patch("/stove-types/:id/weight", async (req, res) => {
+stoveTypeRouter.patch("/stove-types/:id/weight", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveTypeService(unit);
     const id = req.params.id;
@@ -432,7 +435,7 @@ stoveTypeRouter.patch("/stove-types/:id/weight", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeRouter.patch("/stove-types/:id/image", async (req, res) => {
+stoveTypeRouter.patch("/stove-types/:id/image", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveTypeService(unit);
     const id = req.params.id;
@@ -513,7 +516,7 @@ stoveTypeRouter.patch("/stove-types/:id/image", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeRouter.delete("/stove-types/:id", async (req, res) => {
+stoveTypeRouter.delete("/stove-types/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveTypeService(unit);
     const id = req.params.id;

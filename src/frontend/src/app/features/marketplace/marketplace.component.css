@@ -1,39 +1,268 @@
-/* Tabs */
+/*
+ * ============================================================
+ * MARKETPLACE STYLES
+ * ============================================================
+ *
+ * Extends the same ambient layers used in the main dashboard:
+ *   .bg-mesh / .mesh-blob / .ember-particle / .grain-overlay
+ *   are already defined in main-menu.component.css (or global).
+ * This file adds marketplace-specific overrides and new rules.
+ * ============================================================
+ */
+
+
+/* ── Tab buttons ─────────────────────────────────────────────── */
+
 .tab-btn:hover {
-  background: var(--surface-hover);
+  border-color: rgba(232, 93, 4, 0.35);
   color: var(--accent);
 }
 
 .tab-btn.active {
   background: linear-gradient(135deg, #e85d04 0%, #f48c06 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(232, 93, 4, 0.3);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(232, 93, 4, 0.30);
 }
 
-/* Listing cards */
-.listing-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+
+/* ── View Details button ─────────────────────────────────────── */
+
+.btn-details {
+  white-space: nowrap;
 }
 
-.listing-card.rarity-common    { border-color: #94a3b8; background: linear-gradient(135deg, var(--surface-bg) 0%, var(--surface-bg-secondary) 100%); }
-.listing-card.rarity-uncommon  { border-color: #22c55e; background: linear-gradient(135deg, var(--surface-bg) 0%, var(--surface-bg-secondary) 100%); }
-.listing-card.rarity-rare      { border-color: #3b82f6; background: linear-gradient(135deg, var(--surface-bg) 0%, var(--surface-bg-secondary) 100%); }
-.listing-card.rarity-epic      { border-color: #a855f7; background: linear-gradient(135deg, var(--surface-bg) 0%, var(--surface-bg-secondary) 100%); }
-.listing-card.rarity-legendary { border-color: #f59e0b; background: linear-gradient(135deg, var(--surface-bg) 0%, var(--surface-bg-secondary) 100%); box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2); }
-.listing-card.rarity-secret    { border-color: #d946ef; background: linear-gradient(135deg, var(--surface-bg) 0%, var(--surface-bg-secondary) 100%); box-shadow: 0 4px 16px rgba(217, 70, 239, 0.2); }
+.btn-details:hover {
+  transform: translateX(2px);
+}
 
-/* Rarity badges */
-.rarity-badge.common    { background: #94a3b8; color: white; }
-.rarity-badge.uncommon  { background: #22c55e; color: white; }
-.rarity-badge.rare      { background: #3b82f6; color: white; }
-.rarity-badge.epic      { background: #a855f7; color: white; }
-.rarity-badge.legendary { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: #7c2d12; }
-.rarity-badge.secret    { background: linear-gradient(135deg, #d946ef 0%, #f0abfc 100%); color: white; }
 
-/* Status badges */
+/* ── Listing cards ───────────────────────────────────────────── */
+/*
+ * Cards use a border-2 that is set via the rarity-* modifier below.
+ * The hover lift is handled by Tailwind (hover:-translate-y-1).
+ * box-shadow is added here for the rarity glow variants.
+ */
+
+/* Rarity border colours */
+.listing-card.rarity-common    { border-color: #94a3b8; }
+.listing-card.rarity-uncommon  { border-color: #22c55e; }
+.listing-card.rarity-rare      { border-color: #3b82f6; }
+.listing-card.rarity-epic      { border-color: #a855f7; }
+.listing-card.rarity-legendary { border-color: #f59e0b; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15); }
+.listing-card.rarity-secret    { border-color: #d946ef; box-shadow: 0 4px 20px rgba(217, 70, 239, 0.15); }
+
+/* Rarity top-accent line */
+.rarity-line-common    { background: #94a3b8; }
+.rarity-line-uncommon  { background: #22c55e; }
+.rarity-line-rare      { background: #3b82f6; }
+.rarity-line-epic      { background: #a855f7; }
+.rarity-line-legendary { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.rarity-line-secret    { background: linear-gradient(90deg, #d946ef, #f0abfc); }
+
+
+/* ── Rarity badges ───────────────────────────────────────────── */
+
+.rarity-badge.common    { background: rgba(148, 163, 184, 0.18); color: #94a3b8; }
+.rarity-badge.uncommon  { background: rgba(34, 197, 94, 0.18);   color: #22c55e; }
+.rarity-badge.rare      { background: rgba(59, 130, 246, 0.18);  color: #60a5fa; }
+.rarity-badge.epic      { background: rgba(168, 85, 247, 0.18);  color: #c084fc; }
+.rarity-badge.legendary { background: rgba(245, 158, 11, 0.18);  color: #fbbf24; }
+.rarity-badge.secret    { background: rgba(217, 70, 239, 0.18);  color: #f0abfc; }
+
+
+/* ── Status badges (My Listings) ─────────────────────────────── */
+
 .status-badge.sold      { background: #22c55e; }
 .status-badge.cancelled { background: #dc3545; }
 
-/* Lootbox badge */
-.lootbox-badge { background: #8b5cf6; }
+
+/* ── Lootbox badge ───────────────────────────────────────────── */
+
+.lootbox-badge { background: rgba(139, 92, 246, 0.85); }
+
+
+/* ── Heat-tier badge (stoves) ────────────────────────────────── */
+/*
+ * .heat-badge is used next to cards; .heat-{tier} colours are
+ * expected to be defined globally. The positioning below works
+ * for both the card thumbnail and the modal.
+ */
+.heat-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+
+
+/* ── Detail modal ────────────────────────────────────────────── */
+/*
+ * The backdrop is a fixed full-screen overlay.
+ * The panel scales in with a smooth entrance animation.
+ */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  animation: backdrop-enter 0.20s ease;
+}
+
+.modal-panel {
+  animation: panel-enter 0.25s cubic-bezier(0.34, 1.30, 0.64, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Scrollbar inside modal (matches main-menu feed-content style) */
+.modal-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color, #2a2a3e) transparent;
+}
+.modal-panel::-webkit-scrollbar       { width: 5px; }
+.modal-panel::-webkit-scrollbar-track { background: transparent; }
+.modal-panel::-webkit-scrollbar-thumb { background: var(--border-color, #2a2a3e); border-radius: 10px; }
+
+.modal-item-panel {
+  min-height: 320px;
+}
+
+@keyframes backdrop-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes panel-enter {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+
+
+/* ── Price history chart ─────────────────────────────────────── */
+/*
+ * The SVG uses preserveAspectRatio="none" so it stretches to fill
+ * its container. The chart-line animation draws the line left-to-right
+ * using a clip trick — no JS path length needed.
+ */
+.chart-container {
+  min-height: 80px;
+}
+
+.chart-svg {
+  display: block;
+  height: 100px;
+  overflow: visible;
+}
+
+/* Filled area under the price line — fades in */
+.chart-area {
+  animation: chart-fade 0.5s ease 0.1s both;
+}
+
+/* Price line — reveals left-to-right */
+.chart-line {
+  animation: chart-reveal 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.15s both;
+  /* clip-path reveals the line from left to right */
+  clip-path: inset(0 100% 0 0);
+}
+
+@keyframes chart-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0%   0 0); }
+}
+
+@keyframes chart-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Current-price dot pulses once to draw attention */
+.chart-dot {
+  animation: dot-pop 0.4s cubic-bezier(0.34, 1.5, 0.64, 1) 0.9s both;
+}
+
+@keyframes dot-pop {
+  from { r: 0;   opacity: 0; }
+  to   { r: 3.5; opacity: 1; }
+}
+
+
+/* ── Entrance animations ─────────────────────────────────────── */
+/*
+ * Mirrors .dashboard-header and .stat-pill animations in main-menu.css
+ * so the marketplace page feels cohesive on load.
+ */
+.dashboard-header {
+  animation: fade-in-up 0.55s ease-out both;
+}
+
+.stat-pill:nth-child(1) { animation: fade-in-up 0.5s ease-out 0.08s both; }
+.stat-pill:nth-child(2) { animation: fade-in-up 0.5s ease-out 0.16s both; }
+.stat-pill:nth-child(3) { animation: fade-in-up 0.5s ease-out 0.24s both; }
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+
+/* ── Action buttons ──────────────────────────────────────────── */
+
+.btn-primary {
+  background: linear-gradient(135deg, #e85d04 0%, #f48c06 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.12s;
+}
+.btn-primary:hover:not(:disabled)  { opacity: 0.88; }
+.btn-primary:active:not(:disabled) { transform: scale(0.97); }
+.btn-primary:disabled              { opacity: 0.45; cursor: not-allowed; }
+
+.btn-secondary {
+  background: var(--surface-secondary, #1e1e30);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color, #2a2a3e);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-secondary:hover   { opacity: 0.85; }
+.btn-secondary:disabled{ opacity: 0.45; cursor: not-allowed; }
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.90);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.12s;
+}
+.btn-danger:hover:not(:disabled)  { background: #dc2626; }
+.btn-danger:active:not(:disabled) { transform: scale(0.97); }
+.btn-danger:disabled              { opacity: 0.45; cursor: not-allowed; }
+
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  /* Full-width modal on mobile */
+  .modal-panel {
+    border-radius: 20px 20px 0 0;
+  }
+  .modal-backdrop {
+    align-items: flex-end;
+  }
+}

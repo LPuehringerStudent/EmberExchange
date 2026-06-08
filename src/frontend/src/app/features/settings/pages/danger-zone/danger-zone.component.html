@@ -2,12 +2,21 @@
   <h1 class="text-danger-text">Danger Zone</h1>
   <p class="subtitle">Irreversible and destructive actions</p>
 
+  @if (!emailVerified()) {
+    <div class="flex items-center gap-3 p-4 rounded-xl mb-5 bg-accent/10 border border-accent/30 text-text-primary text-sm">
+      <svg class="w-5 h-5 text-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <span><strong>Email verification required.</strong> Please verify your email before deleting your account.</span>
+    </div>
+  }
+
   <div class="flex items-center justify-between p-6 bg-danger-bg rounded-xl mt-5 gap-5 flex-wrap">
     <div>
       <h3 class="m-0 mb-2 text-danger-text text-lg">Delete Account</h3>
       <p class="m-0 text-danger-text-secondary text-sm leading-relaxed">Once you delete your account, there is no going back. This will permanently delete your account, all your stoves, listings, and game history.</p>
     </div>
-    <button class="btn-danger shrink-0" (click)="openDeleteModal()">Delete Account</button>
+    <button class="btn-danger shrink-0" (click)="openDeleteModal()" [disabled]="!emailVerified()">Delete Account</button>
   </div>
 </div>
 

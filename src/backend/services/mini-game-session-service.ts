@@ -2,6 +2,7 @@ import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { MiniGameSessionRow } from "../../shared/model";
 import { PlayerPrestigeService } from "./player-prestige-service";
+import { QuestService } from "./quest-service";
 
 export class MiniGameSessionService extends ServiceBase {
     constructor(unit: Unit) {
@@ -12,9 +13,10 @@ export class MiniGameSessionService extends ServiceBase {
      * Retrieves all mini-game sessions.
      * @returns Array of all MiniGameSessionRow objects.
      */
-    async getAll(): Promise<MiniGameSessionRow[]> {
+    async getAll(limit: number = 100, offset: number = 0): Promise<MiniGameSessionRow[]> {
         const stmt = this.unit.prepare<MiniGameSessionRow>(
-            "SELECT * FROM MiniGameSession ORDER BY finishedAt DESC"
+            "SELECT * FROM MiniGameSession ORDER BY finishedAt DESC LIMIT @limit OFFSET @offset",
+            { limit, offset }
         );
         return await stmt.all();
     }
@@ -95,6 +97,21 @@ export class MiniGameSessionService extends ServiceBase {
                 await engine.checkWealthAchievements(playerId);
             } catch {
                 try { await this.unit.rollbackToSavepoint('achievements'); } catch { /* ignore */ }
+            }
+        }
+
+        // Track quest progress
+        if (success) {
+            try {
+                const questService = new QuestService(this.unit);
+                if (result.toLowerCase() === 'win') {
+                    await questService.trackProgress(playerId, 'win_minigame', 1);
+                }
+                if (coinPayout > 0) {
+                    await questService.trackProgress(playerId, 'earn_minigame_coins', coinPayout);
+                }
+            } catch {
+                // Ignore quest tracking errors
             }
         }
 

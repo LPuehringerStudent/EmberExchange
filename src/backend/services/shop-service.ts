@@ -69,17 +69,50 @@ export class ShopService {
     }
 
     private async applyDailyLimits(items: ShopItemDisplay[]): Promise<ShopItemDisplay[]> {
-        for (const item of items) {
-            if (item.itemType === 'lootbox') {
-                const dailyLimit = await this.getLootboxDailyLimit(item.itemId);
-                if (dailyLimit !== null && dailyLimit > 0) {
-                    const purchased = await this.getDailyPurchaseCount(item.listingId);
-                    item.stock = Math.max(0, dailyLimit - purchased);
-                } else if (dailyLimit === null) {
-                    item.stock = -1; // unlimited
-                }
+        // Collect all lootbox items that need daily limit checks
+        const lootboxItems = items.filter(i => i.itemType === 'lootbox');
+        if (lootboxItems.length === 0) return items;
+
+        // Fetch all daily limits in one query
+        const lootboxTypeIds = lootboxItems.map(i => i.itemId);
+        const placeholders = lootboxTypeIds.map((_, i) => `@ltid${i}`).join(", ");
+        const limitParams: Record<string, number> = {};
+        lootboxTypeIds.forEach((id, i) => { limitParams[`ltid${i}`] = id; });
+
+        const limitsStmt = this.unit.prepare<{ lootboxTypeId: number; dailyLimit: number | null }>(
+            `SELECT lootboxTypeId, dailyLimit FROM LootboxType WHERE lootboxTypeId IN (${placeholders})`,
+            limitParams
+        );
+        const limits = await limitsStmt.all();
+        const limitMap = new Map(limits.map(l => [l.lootboxTypeId, l.dailyLimit]));
+
+        // Fetch all daily purchase counts in one query
+        const listingIds = lootboxItems.map(i => i.listingId);
+        const today = new Date().toISOString().split("T")[0];
+        const lpPlaceholders = listingIds.map((_, i) => `@lid${i}`).join(", ");
+        const purchaseParams: Record<string, unknown> = { today };
+        listingIds.forEach((id, i) => { purchaseParams[`lid${i}`] = id; });
+
+        const purchaseStmt = this.unit.prepare<{ listingId: number; count: number }>(
+            `SELECT listingId, COUNT(*)::INTEGER as count FROM ShopPurchase
+             WHERE listingId IN (${lpPlaceholders}) AND SUBSTRING(purchasedAt, 1, 10) = @today
+             GROUP BY listingId`,
+            purchaseParams
+        );
+        const purchases = await purchaseStmt.all();
+        const purchaseMap = new Map(purchases.map(p => [p.listingId, p.count]));
+
+        // Apply limits
+        for (const item of lootboxItems) {
+            const dailyLimit = limitMap.get(item.itemId) ?? null;
+            if (dailyLimit !== null && dailyLimit > 0) {
+                const purchased = purchaseMap.get(item.listingId) ?? 0;
+                item.stock = Math.max(0, dailyLimit - purchased);
+            } else if (dailyLimit === null) {
+                item.stock = -1; // unlimited
             }
         }
+
         return items;
     }
 
@@ -229,9 +262,11 @@ export class ShopService {
             return { success: false, error: "Insufficient coins" };
         }
 
-        // Deduct coins
-        const newBalance = player.coins - listing.price;
-        await playerService.updatePlayerCoins(playerId, newBalance);
+        // Atomically deduct coins (prevents race-condition overspending)
+        const deducted = await playerService.deductCoinsAtomic(playerId, listing.price);
+        if (!deducted) {
+            return { success: false, error: "Insufficient coins (concurrent transaction)" };
+        }
 
         // Log transaction
         await coinService.create(
@@ -244,15 +279,19 @@ export class ShopService {
         let createdItemId: number | undefined;
 
         if (listing.itemType === "stove") {
-            // Fetch stove type heat range
-            const typeStmt = this.unit.prepare<{ minHeat: number; maxHeat: number }>(
-                "SELECT minHeat, maxHeat FROM StoveType WHERE typeId = @typeId",
+            // Fetch stove type heat range and rarity
+            const typeStmt = this.unit.prepare<{ minHeat: number; maxHeat: number; rarity: string }>(
+                "SELECT minHeat, maxHeat, rarity FROM StoveType WHERE typeId = @typeId",
                 { typeId: listing.itemId }
             );
             const typeRow = await typeStmt.get();
-            const heatLevel = typeRow
+            let heatLevel = typeRow
                 ? typeRow.minHeat + Math.random() * (typeRow.maxHeat - typeRow.minHeat)
                 : 0.0;
+            // Secret stoves should never be extinguished (heat > 0.55)
+            if (typeRow && typeRow.rarity.toLowerCase() === 'secret') {
+                heatLevel = Math.min(heatLevel, 0.55);
+            }
 
             // Create a new stove instance
             const stoveStmt = this.unit.prepare<{ stoveId: number }, { typeId: number; playerId: number; mintedAt: string; heatLevel: number }>(
@@ -299,11 +338,17 @@ export class ShopService {
         ).run();
 
         // Decrement stock if not unlimited (-1) and not a daily-limited lootbox
+        // Atomic: only decrement if stock is still > 0
         if (listing.itemType !== 'lootbox' && listing.stock > 0) {
-            await this.unit.prepare(
-                `UPDATE ShopListing SET stock = stock - 1 WHERE listingId = @listingId`,
+            const stockResult = await this.unit.prepare(
+                `UPDATE ShopListing SET stock = stock - 1 WHERE listingId = @listingId AND stock > 0`,
                 { listingId }
             ).run();
+            if (stockResult.changes !== 1) {
+                // Stock ran out between check and update — refund the buyer
+                await playerService.addCoinsAtomic(playerId, listing.price);
+                return { success: false, error: "Item just went out of stock" };
+            }
         }
 
         // Create purchase notification
@@ -316,8 +361,17 @@ export class ShopService {
                 `You purchased ${listing.name} from the shop for ${listing.price} coal`,
                 { listingId, itemType: listing.itemType, itemName: listing.name, price: listing.price }
             );
-        } catch {
-            // Ignore notification errors
+        } catch (e) {
+            console.error("[SHOP] Notification creation failed:", e);
+        }
+
+        // Check shop achievements
+        try {
+            const { AchievementEngine } = await import("./achievement-engine");
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkShopAchievements(playerId);
+        } catch (e) {
+            console.error("[SHOP] Achievement check failed:", e);
         }
 
         return { success: true, itemId: createdItemId };
@@ -438,7 +492,7 @@ export class ShopService {
         ).run();
 
         // Add coins to player
-        await playerService.updatePlayerCoins(playerId, player.coins + sellPrice);
+        await playerService.addCoinsAtomic(playerId, sellPrice);
 
         // Log transaction
         await coinService.create(
@@ -455,24 +509,48 @@ export class ShopService {
         const playerService = new PlayerService(this.unit);
         const coinService = new CoinTransactionService(this.unit);
 
-        const status = await this.getDailyRewardStatus(playerId);
+        // Lock the reward row to prevent concurrent duplicate claims
+        const lockRow = await this.unit.prepare<
+            { lastClaimAt: string | null; streakCount: number }
+        >(
+            `SELECT lastClaimAt, streakCount FROM PlayerDailyReward WHERE playerId = @playerId FOR UPDATE`,
+            { playerId }
+        ).get();
 
-        if (!status.canClaim) {
-            return { success: false, reward: status.reward, newStreak: status.streakCount, error: "Daily reward already claimed" };
+        const now = new Date();
+        let streakCount = lockRow?.streakCount ?? 0;
+        let lastClaimAt = lockRow?.lastClaimAt ? new Date(lockRow.lastClaimAt) : null;
+
+        // Re-check eligibility after locking (prevents race conditions)
+        let canClaim = false;
+        if (!lastClaimAt) {
+            canClaim = true;
+        } else {
+            const hoursSinceClaim = (now.getTime() - lastClaimAt.getTime()) / (1000 * 60 * 60);
+            canClaim = hoursSinceClaim >= 24;
+            if (hoursSinceClaim > 48) {
+                streakCount = 0; // reset streak
+            }
+        }
+
+        if (!canClaim) {
+            const dayIndex = Math.min(streakCount + 1, 7);
+            const nextClaimAt = lastClaimAt ? new Date(lastClaimAt.getTime() + 24 * 60 * 60 * 1000) : null;
+            return { success: false, reward: REWARD_TABLE[dayIndex], newStreak: streakCount, error: "Daily reward already claimed" };
         }
 
         const player = await playerService.getInfoByID(playerId);
         if (!player) {
-            return { success: false, reward: status.reward, newStreak: status.streakCount, error: "Player not found" };
+            return { success: false, reward: REWARD_TABLE[1], newStreak: 0, error: "Player not found" };
         }
 
-        const newStreak = status.streakCount + 1;
+        const newStreak = streakCount + 1;
         const dayIndex = Math.min(newStreak, 7);
         const reward = REWARD_TABLE[dayIndex];
 
         // Award coins
         if (reward.coins > 0) {
-            await playerService.updatePlayerCoins(playerId, player.coins + reward.coins);
+            await playerService.addCoinsAtomic(playerId, reward.coins);
             await coinService.create(
                 playerId,
                 reward.coins,
@@ -493,14 +571,14 @@ export class ShopService {
             await playerService.updatePlayerLootboxCount(playerId, player.lootboxCount + reward.lootboxes);
         }
 
-        // Upsert PlayerDailyReward
-        const now = new Date().toISOString();
+        // Upsert PlayerDailyReward atomically
+        const nowIso = now.toISOString();
         await this.unit.prepare(
             `INSERT INTO PlayerDailyReward (playerId, lastClaimAt, streakCount)
              VALUES (@playerId, @lastClaimAt, @streakCount)
              ON CONFLICT (playerId)
              DO UPDATE SET lastClaimAt = @lastClaimAt, streakCount = @streakCount`,
-            { playerId, lastClaimAt: now, streakCount: newStreak }
+            { playerId, lastClaimAt: nowIso, streakCount: newStreak }
         ).run();
 
         // Award XP

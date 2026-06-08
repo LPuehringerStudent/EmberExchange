@@ -1,8 +1,11 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { StoveService } from "../services/stove-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
+import { requireAuth } from "../middleware/require-auth";
 
 export const stoveRouter = express.Router();
 
@@ -36,12 +39,14 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/stoves", async (_req, res) => {
+stoveRouter.get("/stoves", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllStoves();
+        const response = await service.getAllStoves(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -152,7 +157,7 @@ stoveRouter.get("/stoves/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/players/:playerId/stoves", async (req, res) => {
+stoveRouter.get("/players/:playerId/stoves", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveService(unit);
     const playerId = req.params.playerId;
@@ -163,7 +168,13 @@ stoveRouter.get("/players/:playerId/stoves", async (req, res) => {
             return;
         }
 
-        const response = await service.getStovesByOwnerId(Number(playerId));
+        const parsedPlayerId = Number(playerId);
+        if (req.playerId !== parsedPlayerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const response = await service.getStovesByOwnerId(parsedPlayerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -277,7 +288,7 @@ stoveRouter.get("/stove-types/:typeId/stoves", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.post("/stoves", async (req, res) => {
+stoveRouter.post("/stoves", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveService(unit);
     let ok = false;
@@ -287,6 +298,10 @@ stoveRouter.post("/stoves", async (req, res) => {
 
         if (typeof typeId !== "number" || typeof currentOwnerId !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "typeId and currentOwnerId are required" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, currentOwnerId, res)) {
             return;
         }
 
@@ -361,7 +376,7 @@ stoveRouter.post("/stoves", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.patch("/stoves/:id/owner", async (req, res) => {
+stoveRouter.patch("/stoves/:id/owner", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveService(unit);
     const id = req.params.id;
@@ -376,6 +391,10 @@ stoveRouter.patch("/stoves/:id/owner", async (req, res) => {
         const { newOwnerId } = req.body;
         if (typeof newOwnerId !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "newOwnerId is required" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, newOwnerId, res)) {
             return;
         }
 
@@ -442,7 +461,7 @@ stoveRouter.patch("/stoves/:id/owner", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.delete("/stoves/:id", async (req, res) => {
+stoveRouter.delete("/stoves/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveService(unit);
     const id = req.params.id;
@@ -507,7 +526,7 @@ stoveRouter.delete("/stoves/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveRouter.get("/players/:playerId/stoves/count", async (req, res) => {
+stoveRouter.get("/players/:playerId/stoves/count", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveService(unit);
     const playerId = req.params.playerId;
@@ -518,7 +537,13 @@ stoveRouter.get("/players/:playerId/stoves/count", async (req, res) => {
             return;
         }
 
-        const count = await service.countStovesByOwner(Number(playerId));
+        const parsedPlayerId = Number(playerId);
+        if (req.playerId !== parsedPlayerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const count = await service.countStovesByOwner(parsedPlayerId);
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

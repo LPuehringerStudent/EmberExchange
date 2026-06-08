@@ -35,14 +35,24 @@ export async function handleLeaveRoom(socketId: string, payload: Record<string, 
 
         const existingPlayer = await roomPlayerService.getPlayerInRoom(roomId, meta.playerId);
 
+        // If player was never in this room, don't broadcast anything
+        if (!existingPlayer) {
+            ok = true;
+            await unit.complete(true);
+            connectionManager.sendToSocket(socketId, {
+                type: "error",
+                payload: { code: ErrorCode.INVALID_STATE, message: "You are not in this room", recoverable: true }
+            });
+            return;
+        }
+
         const state = await gameStateService.getState(roomId);
         if (state) {
             await syncPlayerCoinsFromState(unit, state.stateBlob as Record<string, unknown>);
         }
 
-        if (existingPlayer) {
-            await roomPlayerService.removePlayer(existingPlayer.roomPlayerId);
-        }
+        await roomPlayerService.removePlayer(existingPlayer.roomPlayerId);
+
         if (state) {
             const playersInRoom = await roomPlayerService.getPlayersInRoom(roomId);
             const baseBlob = (typeof state.stateBlob === "object" && state.stateBlob !== null)

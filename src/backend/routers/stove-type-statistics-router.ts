@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { StoveTypeStatisticsService } from "../services/stove-type-statistics-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const stoveTypeStatisticsRouter = express.Router();
 
@@ -123,7 +124,7 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/market-summary", async (_r
 stoveTypeStatisticsRouter.get("/stove-type-statistics/leaderboard/sales", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
 
     try {
         const response = await service.getTopBySales(limit);
@@ -169,7 +170,7 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/leaderboard/sales", async 
 stoveTypeStatisticsRouter.get("/stove-type-statistics/most-viewed", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
 
     try {
         const response = await service.getMostViewed(limit);
@@ -361,7 +362,7 @@ stoveTypeStatisticsRouter.get("/stove-types/:stoveTypeId/statistics", async (req
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics", async (req, res) => {
+stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveTypeStatisticsService(unit);
     const stoveTypeId = req.params.stoveTypeId;
@@ -436,7 +437,7 @@ stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics", async (re
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics/increment-views", async (req, res) => {
+stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics/increment-views", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveTypeStatisticsService(unit);
     const stoveTypeId = req.params.stoveTypeId;
@@ -503,7 +504,7 @@ stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics/increment-v
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-stoveTypeStatisticsRouter.delete("/stove-types/:stoveTypeId/statistics", async (req, res) => {
+stoveTypeStatisticsRouter.delete("/stove-types/:stoveTypeId/statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new StoveTypeStatisticsService(unit);
     const stoveTypeId = req.params.stoveTypeId;

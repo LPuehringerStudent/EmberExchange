@@ -17,137 +17,161 @@ function mockUnitSequence(stmts: ReturnType<typeof mockStmt>[]) {
             callIndex++;
             return stmt;
         }),
-        getLastRowId: jest.fn().mockResolvedValue(1),
+        getLastRowId: jest.fn().mockResolvedValue(42),
     } as unknown as Unit;
 }
 
 describe('TradeOfferService', () => {
-    const senderId = 1;
-    const accepterId = 2;
-
     describe('acceptTradeOffer', () => {
-        it('accepts a pending stove trade offer successfully', async () => {
+        it('accepts a valid stove trade offer', async () => {
             const message = {
-                messageId: 10,
-                senderId,
-                receiverId: accepterId,
+                messageId: 1,
+                senderId: 2,
+                receiverId: 1,
                 messageType: 'trade_offer',
-                data: { itemType: 'stove', itemId: 5, price: 1000, status: 'pending' },
+                data: { itemType: 'stove', itemId: 10, price: 500, status: 'pending' },
             };
             const unit = mockUnitSequence([
                 mockStmt(message), // getById
-                mockStmt({ currentOwnerId: senderId }), // stove ownership
-                mockStmt({ playerId: accepterId, username: 'buyer', coins: 2000 }), // accepter
-                mockStmt({ playerId: senderId, username: 'seller', coins: 500 }), // sender
-                mockStmt(null, [], { changes: 1 }), // deduct accepter coins
-                mockStmt(null, [], { changes: 1 }), // add sender coins
-                mockStmt(null, [], { changes: 1 }), // transfer stove
-                mockStmt(null, [], { changes: 1 }), // insert ownership
-                mockStmt(null, [], { changes: 1 }), // coin tx accepter
-                mockStmt(null, [], { changes: 1 }), // coin tx sender
-                mockStmt(null, [], { changes: 1 }), // update message status
+                mockStmt({ currentOwnerId: 2 }), // stove ownership
+                mockStmt({ count: 0 }), // listing check
+                mockStmt({ playerId: 1, username: 'buyer', coins: 1000 }), // accepter
+                mockStmt({ playerId: 2, username: 'seller', coins: 500 }), // sender
+                mockStmt(), // update accepter coins
+                mockStmt(), // update sender coins
+                mockStmt(), // update stove owner
+                mockStmt(), // insert ownership
+                mockStmt(), // coin tx buyer
+                mockStmt(), // coin tx seller
+                mockStmt(), // update message status
             ]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.acceptTradeOffer(10, accepterId);
+            const result = await service.acceptTradeOffer(1, 1);
 
             expect(result.success).toBe(true);
         });
 
-        it('accepts a pending lootbox trade offer successfully', async () => {
+        it('accepts a valid lootbox trade offer', async () => {
             const message = {
-                messageId: 11,
-                senderId,
-                receiverId: accepterId,
+                messageId: 2,
+                senderId: 2,
+                receiverId: 1,
                 messageType: 'trade_offer',
-                data: { itemType: 'lootbox', itemId: 7, price: 500, status: 'pending' },
+                data: { itemType: 'lootbox', itemId: 5, price: 200, status: 'pending' },
             };
             const unit = mockUnitSequence([
-                mockStmt(message),
-                mockStmt({ playerId: senderId }), // lootbox ownership
-                mockStmt({ playerId: accepterId, username: 'buyer', coins: 1000 }),
-                mockStmt({ playerId: senderId, username: 'seller', coins: 300 }),
-                mockStmt(null, [], { changes: 1 }),
-                mockStmt(null, [], { changes: 1 }),
-                mockStmt(null, [], { changes: 1 }), // transfer lootbox
-                mockStmt(null, [], { changes: 1 }),
-                mockStmt(null, [], { changes: 1 }),
-                mockStmt(null, [], { changes: 1 }),
+                mockStmt(message), // getById
+                mockStmt({ playerId: 5 }), // lootbox ownership (sender owns it via playerId=5? No, the query checks playerId field)
+                mockStmt({ playerId: 1, username: 'buyer', coins: 500 }), // accepter
+                mockStmt({ playerId: 2, username: 'seller', coins: 100 }), // sender
+                mockStmt(), // update accepter coins
+                mockStmt(), // update sender coins
+                mockStmt(), // update lootbox owner
+                mockStmt(), // coin tx buyer
+                mockStmt(), // coin tx seller
+                mockStmt(), // update message status
             ]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.acceptTradeOffer(11, accepterId);
+            // Fix: lootbox ownership check returns { playerId: 2 } for sender
+            const unit2 = mockUnitSequence([
+                mockStmt(message),
+                mockStmt({ playerId: 2 }), // sender owns lootbox
+                mockStmt({ count: 0 }), // listing check
+                mockStmt({ playerId: 1, username: 'buyer', coins: 500 }),
+                mockStmt({ playerId: 2, username: 'seller', coins: 100 }),
+                mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt(),
+            ]);
+            const service2 = new TradeOfferService(unit2);
+            const result = await service2.acceptTradeOffer(2, 1);
 
             expect(result.success).toBe(true);
         });
 
-        it('rejects when message not found', async () => {
+        it('rejects when trade offer not found', async () => {
             const unit = mockUnitSequence([mockStmt(null)]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.acceptTradeOffer(999, accepterId);
+            const result = await service.acceptTradeOffer(999, 1);
 
             expect(result.success).toBe(false);
             expect(result.error).toBe('Trade offer not found');
         });
 
         it('rejects when message is not a trade offer', async () => {
-            const message = { messageId: 10, senderId, receiverId: accepterId, messageType: 'text', data: {} };
+            const message = { messageId: 1, senderId: 2, receiverId: 1, messageType: 'text', data: {} };
             const unit = mockUnitSequence([mockStmt(message)]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.acceptTradeOffer(10, accepterId);
+            const result = await service.acceptTradeOffer(1, 1);
 
             expect(result.success).toBe(false);
             expect(result.error).toBe('Not a trade offer');
         });
 
-        it('rejects when accepter is not the recipient', async () => {
-            const message = { messageId: 10, senderId, receiverId: 3, messageType: 'trade_offer', data: { itemType: 'stove', itemId: 5, price: 100, status: 'pending' } };
+        it('rejects when user is not the recipient', async () => {
+            const message = {
+                messageId: 1, senderId: 2, receiverId: 3,
+                messageType: 'trade_offer',
+                data: { itemType: 'stove', itemId: 10, price: 500, status: 'pending' },
+            };
             const unit = mockUnitSequence([mockStmt(message)]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.acceptTradeOffer(10, accepterId);
+            const result = await service.acceptTradeOffer(1, 1);
 
             expect(result.success).toBe(false);
             expect(result.error).toBe('You are not the recipient of this offer');
         });
 
         it('rejects when offer already responded to', async () => {
-            const message = { messageId: 10, senderId, receiverId: accepterId, messageType: 'trade_offer', data: { itemType: 'stove', itemId: 5, price: 100, status: 'accepted' } };
+            const message = {
+                messageId: 1, senderId: 2, receiverId: 1,
+                messageType: 'trade_offer',
+                data: { itemType: 'stove', itemId: 10, price: 500, status: 'accepted' },
+            };
             const unit = mockUnitSequence([mockStmt(message)]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.acceptTradeOffer(10, accepterId);
+            const result = await service.acceptTradeOffer(1, 1);
 
             expect(result.success).toBe(false);
             expect(result.error).toBe('Trade offer has already been responded to');
         });
 
         it('rejects when sender no longer owns the item', async () => {
-            const message = { messageId: 10, senderId, receiverId: accepterId, messageType: 'trade_offer', data: { itemType: 'stove', itemId: 5, price: 100, status: 'pending' } };
+            const message = {
+                messageId: 1, senderId: 2, receiverId: 1,
+                messageType: 'trade_offer',
+                data: { itemType: 'stove', itemId: 10, price: 500, status: 'pending' },
+            };
             const unit = mockUnitSequence([
                 mockStmt(message),
-                mockStmt({ currentOwnerId: 99 }), // different owner
+                mockStmt({ currentOwnerId: 3 }), // someone else owns it now
             ]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.acceptTradeOffer(10, accepterId);
+            const result = await service.acceptTradeOffer(1, 1);
 
             expect(result.success).toBe(false);
             expect(result.error).toBe('Sender no longer owns this item');
         });
 
         it('rejects when accepter has insufficient coins', async () => {
-            const message = { messageId: 10, senderId, receiverId: accepterId, messageType: 'trade_offer', data: { itemType: 'stove', itemId: 5, price: 1000, status: 'pending' } };
+            const message = {
+                messageId: 1, senderId: 2, receiverId: 1,
+                messageType: 'trade_offer',
+                data: { itemType: 'stove', itemId: 10, price: 500, status: 'pending' },
+            };
             const unit = mockUnitSequence([
                 mockStmt(message),
-                mockStmt({ currentOwnerId: senderId }),
-                mockStmt({ playerId: accepterId, username: 'buyer', coins: 500 }), // not enough
+                mockStmt({ currentOwnerId: 2 }),
+                mockStmt({ playerId: 1, username: 'buyer', coins: 100 }), // not enough
             ]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.acceptTradeOffer(10, accepterId);
+            const result = await service.acceptTradeOffer(1, 1);
 
             expect(result.success).toBe(false);
             expect(result.error).toBe('Insufficient coins');
@@ -156,34 +180,57 @@ describe('TradeOfferService', () => {
 
     describe('declineTradeOffer', () => {
         it('declines a pending trade offer', async () => {
-            const message = { messageId: 10, senderId, receiverId: accepterId, messageType: 'trade_offer', data: { status: 'pending' } };
+            const message = {
+                messageId: 1, senderId: 2, receiverId: 1,
+                messageType: 'trade_offer',
+                data: { itemType: 'stove', itemId: 10, price: 500, status: 'pending' },
+            };
             const unit = mockUnitSequence([
                 mockStmt(message),
-                mockStmt(null, [], { changes: 1 }),
+                mockStmt(), // update status
             ]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.declineTradeOffer(10, accepterId);
+            const result = await service.declineTradeOffer(1, 1);
 
             expect(result.success).toBe(true);
         });
 
-        it('rejects when message not found', async () => {
+        it('rejects when trade offer not found', async () => {
             const unit = mockUnitSequence([mockStmt(null)]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.declineTradeOffer(999, accepterId);
+            const result = await service.declineTradeOffer(999, 1);
 
             expect(result.success).toBe(false);
             expect(result.error).toBe('Trade offer not found');
         });
 
-        it('rejects when already responded to', async () => {
-            const message = { messageId: 10, senderId, receiverId: accepterId, messageType: 'trade_offer', data: { status: 'declined' } };
+        it('rejects when user is not the recipient', async () => {
+            const message = {
+                messageId: 1, senderId: 2, receiverId: 3,
+                messageType: 'trade_offer',
+                data: { status: 'pending' },
+            };
             const unit = mockUnitSequence([mockStmt(message)]);
             const service = new TradeOfferService(unit);
 
-            const result = await service.declineTradeOffer(10, accepterId);
+            const result = await service.declineTradeOffer(1, 1);
+
+            expect(result.success).toBe(false);
+            expect(result.error).toBe('You are not the recipient of this offer');
+        });
+
+        it('rejects when offer already responded to', async () => {
+            const message = {
+                messageId: 1, senderId: 2, receiverId: 1,
+                messageType: 'trade_offer',
+                data: { status: 'declined' },
+            };
+            const unit = mockUnitSequence([mockStmt(message)]);
+            const service = new TradeOfferService(unit);
+
+            const result = await service.declineTradeOffer(1, 1);
 
             expect(result.success).toBe(false);
             expect(result.error).toBe('Trade offer has already been responded to');

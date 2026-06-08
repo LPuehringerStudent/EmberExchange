@@ -1,6 +1,6 @@
 # EmberExchange
 
-A virtual marketplace and collection game for trading unique stoves, with real-time multiplayer card games. Built in SYP (System Planning) 2026.
+A virtual marketplace and collection game for trading unique stoves, with real-time multiplayer card games. Built for SYP 2026.
 
 ## What is this?
 
@@ -14,7 +14,7 @@ EmberExchange is a full-stack web app where players can:
 
 ## Tech Stack
 
-- **Backend:** Express.js 5.2 + TypeScript 5.7
+- **Backend:** Express.js 5.2 + TypeScript 5.9
 - **Frontend:** Angular 21 (standalone components, signals-based)
 - **Database:** PostgreSQL (via `pg` connection pooling)
 - **Real-time:** WebSocket API with session authentication
@@ -46,6 +46,8 @@ The server starts at `http://localhost:3000`.
 | `GOOGLE_CLIENT_SECRET` | OAuth Google client secret (optional) |
 | `GITHUB_CLIENT_ID` | OAuth GitHub client ID (optional) |
 | `GITHUB_CLIENT_SECRET` | OAuth GitHub client secret (optional) |
+| `BASE_URL` | Base URL for OAuth callbacks (e.g. `http://localhost:3000`) |
+| `GITHUB_API_TOKEN` | GitHub API token (optional) |
 
 ## Tests
 
@@ -68,12 +70,14 @@ http://localhost:3000/api-docs
 ```
 src/
 ├── backend/
+│   ├── db/                # Database migrations & seeding
 │   ├── game-engines/      # Poker & Blackjack game logic
 │   ├── game-logic/        # Card utils, hand evaluation
+│   ├── middleware/        # Express middleware
 │   ├── routers/           # Express REST API routers
 │   ├── services/          # Database service layer
-│   ├── websocket/         # WS connection manager, handlers, timers
-│   └── utils/             # Unit (transactions), auth, password hashing
+│   ├── utils/             # Auth, password hashing, transactions
+│   └── websocket/         # WS connection manager, handlers, timers
 ├── frontend/
 │   └── src/app/
 │       ├── core/          # Auth, API, WebSocket services

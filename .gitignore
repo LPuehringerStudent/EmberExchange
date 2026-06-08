@@ -95,3 +95,6 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 kimi-export-*.md
+
+#Agent
+agent/

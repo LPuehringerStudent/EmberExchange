@@ -3,6 +3,8 @@ import { RoomPlayerRow } from "../../shared/model";
 export interface PlayerAction {
   type: string;
   amount?: number;
+  betType?: string;
+  number?: number;
 }
 
 export interface EngineResult {

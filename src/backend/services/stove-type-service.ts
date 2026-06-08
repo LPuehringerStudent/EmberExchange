@@ -9,11 +9,14 @@ export class StoveTypeService extends ServiceBase {
 
     /**
      * Retrieves all stove types from the database.
-     * @returns An array of all StoveTypeRow objects.
+     * @param limit - Maximum number of stove types to return (default 100).
+     * @param offset - Number of stove types to skip (default 0).
+     * @returns An array of StoveTypeRow objects.
      */
-    async getAllStoveTypes(): Promise<StoveTypeRow[]> {
+    async getAllStoveTypes(limit: number = 100, offset: number = 0): Promise<StoveTypeRow[]> {
         const stmt = this.unit.prepare<StoveTypeRow>(
-            "SELECT * FROM StoveType"
+            "SELECT * FROM StoveType LIMIT @limit OFFSET @offset",
+            { limit, offset }
         );
         return await stmt.all();
     }

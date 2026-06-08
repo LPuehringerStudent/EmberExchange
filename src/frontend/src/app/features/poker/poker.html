@@ -243,7 +243,7 @@
           @let seatPlayer = players[$index];
           @if (shouldShowSeat($index)) {
             <div
-              class="pt-seat absolute flex flex-col items-center gap-1 z-[10]"
+              class="pt-seat absolute z-[10]"
               [class.pt-seat--hero]="isHero($index)"
               [class.pt-seat--active]="seatPlayer?.isCurrentTurn"
               [class.pt-seat--folded]="seatPlayer?.isFolded"
@@ -262,38 +262,39 @@
                 <div class="pt-all-in-badge absolute -top-[18px] left-1/2 -translate-x-1/2 px-[6px] py-px rounded text-[0.55rem] font-extrabold uppercase tracking-[0.05em] bg-[var(--orange)] text-white whitespace-nowrap" aria-label="All In">ALL IN</div>
               }
 
-              @if (seatPlayer) {
-                <div class="pt-hole-cards flex gap-1">
-                  @for (cardIdx of [0, 1]; track cardIdx) {
-                    <div class="pt-card-slot pt-card-slot--hole rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]">
-                      @if (seatPlayer.cards?.[cardIdx]; as card) {
-                        <div class="card-flip w-full h-full rounded-[var(--radius-card)]" [class.card-flip--face-up]="card.faceUp">
-                          <div class="card-flip__inner w-full h-full relative rounded-[var(--radius-card)]">
-                            <div class="card-flip__front absolute w-full h-full rounded-[var(--radius-card)] overflow-hidden">
-                              <img
-                                [src]="cardSpriteSrc(card)"
-                                [alt]="card.rank + ' of ' + card.suit"
-                                class="pt-card-img w-full h-full object-cover block"
-                                loading="eager"
-                              />
-                            </div>
-                            <div class="card-flip__back absolute w-full h-full rounded-[var(--radius-card)] overflow-hidden">
-                              <img
-                                [src]="cardBackSrc()"
-                                alt="Face-down card"
-                                class="pt-card-img w-full h-full object-cover block"
-                                loading="eager"
-                              />
+              <div class="relative">
+                @if (seatPlayer) {
+                  <div class="pt-hole-cards absolute bottom-full left-1/2 -translate-x-1/2 mb-1 flex gap-1 justify-center">
+                    @for (cardIdx of [0, 1]; track cardIdx) {
+                      <div class="pt-card-slot pt-card-slot--hole rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]">
+                        @if (seatPlayer.cards?.[cardIdx]; as card) {
+                          <div class="card-flip w-full h-full rounded-[var(--radius-card)]" [class.card-flip--face-up]="card.faceUp">
+                            <div class="card-flip__inner w-full h-full relative rounded-[var(--radius-card)]">
+                              <div class="card-flip__front absolute w-full h-full rounded-[var(--radius-card)] overflow-hidden">
+                                <img
+                                  [src]="cardSpriteSrc(card)"
+                                  [alt]="card.rank + ' of ' + card.suit"
+                                  class="pt-card-img w-full h-full object-cover block"
+                                  loading="eager"
+                                />
+                              </div>
+                              <div class="card-flip__back absolute w-full h-full rounded-[var(--radius-card)] overflow-hidden">
+                                <img
+                                  [src]="cardBackSrc()"
+                                  alt="Face-down card"
+                                  class="pt-card-img w-full h-full object-cover block"
+                                  loading="eager"
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              }
+                        }
+                      </div>
+                    }
+                  </div>
+                }
 
-              <div class="pt-seat__chip flex flex-col items-center bg-[var(--seat-bg)] border border-[var(--seat-border)] rounded-lg px-[10px] py-1 min-w-[62px] text-center relative">
+                <div class="pt-seat__chip flex flex-col items-center bg-[var(--seat-bg)] border border-[var(--seat-border)] rounded-lg px-[10px] py-1 min-w-[62px] text-center relative">
                 @if (seatPlayer; as p) {
                   <span class="pt-seat__name text-[10px] font-bold text-[var(--text-primary)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]">{{ p.name }}</span>
                   <span class="pt-seat__chips text-[10px] font-semibold text-[var(--orange)] tabular-nums flex items-center gap-[2px]">
@@ -309,6 +310,7 @@
                 } @else {
                   <span class="pt-seat__empty text-[11px] text-[var(--text-muted)] italic">Seat {{ $index + 1 }}</span>
                 }
+              </div>
               </div>
 
             </div>

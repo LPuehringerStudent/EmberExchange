@@ -11,9 +11,10 @@ export class LootboxDropService extends ServiceBase {
      * Retrieves all lootbox drops.
      * @returns Array of all LootboxDropRow objects.
      */
-    async getAll(): Promise<LootboxDropRow[]> {
+    async getAll(limit: number = 100, offset: number = 0): Promise<LootboxDropRow[]> {
         const stmt = this.unit.prepare<LootboxDropRow>(
-            "SELECT * FROM LootboxDrop ORDER BY dropId"
+            "SELECT * FROM LootboxDrop ORDER BY dropId LIMIT @limit OFFSET @offset",
+            { limit, offset }
         );
         return await stmt.all();
     }

@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { PlayerStatisticsService } from "../services/player-statistics-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const playerStatisticsRouter = express.Router();
 
@@ -78,7 +79,7 @@ playerStatisticsRouter.get("/player-statistics", async (_req, res) => {
 playerStatisticsRouter.get("/player-statistics/leaderboard/activity", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerStatisticsService(unit);
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
 
     try {
         const response = await service.getTopByActivity(limit);
@@ -124,7 +125,7 @@ playerStatisticsRouter.get("/player-statistics/leaderboard/activity", async (req
 playerStatisticsRouter.get("/player-statistics/leaderboard/wealth", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerStatisticsService(unit);
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
 
     try {
         const response = await service.getTopByNetWorth(limit);
@@ -242,7 +243,7 @@ playerStatisticsRouter.get("/players/:playerId/statistics", async (req, res) => 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.post("/players/:playerId/statistics", async (req, res) => {
+playerStatisticsRouter.post("/players/:playerId/statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerStatisticsService(unit);
     const playerId = req.params.playerId;
@@ -310,7 +311,7 @@ playerStatisticsRouter.post("/players/:playerId/statistics", async (req, res) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerStatisticsRouter.delete("/players/:playerId/statistics", async (req, res) => {
+playerStatisticsRouter.delete("/players/:playerId/statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerStatisticsService(unit);
     const playerId = req.params.playerId;

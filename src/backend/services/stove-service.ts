@@ -9,11 +9,14 @@ export class StoveService extends ServiceBase {
 
     /**
      * Retrieves all stoves from the database.
-     * @returns An array of all StoveRow objects.
+     * @param limit - Maximum number of stoves to return (default 100).
+     * @param offset - Number of stoves to skip (default 0).
+     * @returns An array of StoveRow objects.
      */
-    async getAllStoves(): Promise<StoveRow[]> {
+    async getAllStoves(limit: number = 100, offset: number = 0): Promise<StoveRow[]> {
         const stmt = this.unit.prepare<StoveRow>(
-            "SELECT * FROM Stove"
+            "SELECT * FROM Stove LIMIT @limit OFFSET @offset",
+            { limit, offset }
         );
         return await stmt.all();
     }
@@ -68,15 +71,19 @@ export class StoveService extends ServiceBase {
      *          and the second element is the new stove's ID (if successful).
      */
     async createStove(typeId: number, currentOwnerId: number): Promise<[boolean, number]> {
-        // Fetch stove type heat range
-        const typeStmt = this.unit.prepare<{ minHeat: number; maxHeat: number }>(
-            "SELECT minHeat, maxHeat FROM StoveType WHERE typeId = @typeId",
+        // Fetch stove type heat range and rarity
+        const typeStmt = this.unit.prepare<{ minHeat: number; maxHeat: number; rarity: string }>(
+            "SELECT minHeat, maxHeat, rarity FROM StoveType WHERE typeId = @typeId",
             { typeId }
         );
         const typeRow = await typeStmt.get();
-        const heatLevel = typeRow
+        let heatLevel = typeRow
             ? typeRow.minHeat + Math.random() * (typeRow.maxHeat - typeRow.minHeat)
             : 0.0;
+        // Secret stoves should never be extinguished (heat > 0.55)
+        if (typeRow && typeRow.rarity.toLowerCase() === 'secret') {
+            heatLevel = Math.min(heatLevel, 0.55);
+        }
 
         const stmt = this.unit.prepare<StoveRow>(
             `INSERT INTO Stove (typeId, currentOwnerId, mintedAt, heatLevel) 
