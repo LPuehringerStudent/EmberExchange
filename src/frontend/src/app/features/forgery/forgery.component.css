@@ -68,6 +68,42 @@
   opacity: 1;
 }
 
+/* ─── Merge Animation ─── */
+.forge-slot--burning {
+  animation: slot-burn 0.4s ease forwards;
+}
+
+@keyframes slot-burn {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.15); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.forge-slot__flame {
+  box-shadow: 0 0 24px rgba(0, 150, 255, 0.6), 0 0 48px rgba(0, 100, 255, 0.3);
+  animation: flame-flicker 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes flame-flicker {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.15); }
+}
+
+.merge-glow-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.9) 0%, rgba(100, 180, 255, 0.5) 40%, transparent 70%);
+  animation: merge-glow-flash 0.8s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes merge-glow-flash {
+  0% { opacity: 0; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.2); }
+}
+
 /* ─── Forge Button ─── */
 .forge-btn {
   background: linear-gradient(135deg, var(--orange) 0%, var(--orange-light) 100%);

@@ -56,6 +56,13 @@ export class ForgeryComponent {
   result = signal<ForgeryResult | null>(null);
   showResult = signal(false);
 
+  // ─── Merge Animation State ───
+  mergeAnimating = signal(false);
+  mergeAnimSlot = signal<number>(-1);
+  mergeGlow = signal(false);
+  mergeResultData = signal<ForgeryResult | null>(null);
+  readonly blueFireGif = 'assets/animation/blue-fire.gif';
+
   // ─── Computed ───
   selectedStoveIds = computed(() => {
     const ids = new Set<number>();
@@ -211,7 +218,7 @@ export class ForgeryComponent {
 
   // ─── Forging ───
   async onForge(): Promise<void> {
-    if (!this.canForge()) return;
+    if (!this.canForge() || this.mergeAnimating()) return;
 
     const sessionId = this.auth.getSessionId();
     if (!sessionId) {
@@ -228,13 +235,12 @@ export class ForgeryComponent {
 
     try {
       const res = await this.forgeryService.forge(sessionId, stoveIds);
-      this.result.set(res);
-      this.showResult.set(true);
 
       if (res.success) {
-        // Refresh inventory
-        await this.loadStoves();
-        this.clearSlots();
+        this.startMergeAnimation(res);
+      } else {
+        this.result.set(res);
+        this.showResult.set(true);
       }
     } catch (err: any) {
       console.error('Forge failed:', err);
@@ -242,6 +248,35 @@ export class ForgeryComponent {
     } finally {
       this.forging.set(false);
     }
+  }
+
+  private startMergeAnimation(result: ForgeryResult): void {
+    this.mergeAnimating.set(true);
+    this.mergeAnimSlot.set(-1);
+    this.mergeGlow.set(false);
+    this.mergeResultData.set(result);
+
+    // Light up slots one by one, 1 second apart
+    for (let i = 0; i < 6; i++) {
+      setTimeout(() => {
+        this.mergeAnimSlot.set(i);
+      }, i * 1000);
+    }
+
+    // After all slots lit, wait 3 seconds, then glow and show result
+    setTimeout(() => {
+      this.mergeGlow.set(true);
+      // Flash glow for 800ms then reveal result
+      setTimeout(() => {
+        this.mergeGlow.set(false);
+        this.mergeAnimating.set(false);
+        this.mergeAnimSlot.set(-1);
+        this.slots.set(Array.from({ length: 6 }, () => ({ stove: null })));
+        this.result.set(this.mergeResultData());
+        this.showResult.set(true);
+        this.loadStoves();
+      }, 800);
+    }, 6 * 1000 + 3000);
   }
 
   closeResult(): void {

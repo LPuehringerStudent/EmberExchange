@@ -58,10 +58,11 @@
             [style.transform]="slotPositions[i].transform"
             [class.forge-slot--filled]="slot.stove"
             [class.forge-slot--empty]="!slot.stove"
+            [class.forge-slot--burning]="mergeAnimating() && mergeAnimSlot() >= i"
             (click)="slot.stove && removeStove(slot.stove.stoveId)"
             [attr.aria-label]="slot.stove ? 'Remove ' + slot.stove.stoveName : 'Empty forge slot'"
           >
-            @if (slot.stove) {
+            @if (slot.stove && !(mergeAnimating() && mergeAnimSlot() >= i)) {
               <div class="forge-slot__content relative w-full h-full rounded-xl overflow-hidden shadow-lg">
                 <img [src]="slot.stove.imageUrl" [alt]="slot.stove.stoveName" class="w-full h-full object-cover" />
                 <div class="forge-slot__overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-1.5">
@@ -77,6 +78,10 @@
                   </svg>
                 </button>
               </div>
+            } @else if (mergeAnimating() && mergeAnimSlot() >= i) {
+              <div class="forge-slot__flame relative w-full h-full rounded-xl overflow-hidden">
+                <img [src]="blueFireGif" alt="" class="w-full h-full object-cover" />
+              </div>
             } @else {
               <div class="forge-slot__placeholder flex items-center justify-center w-full h-full rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--bg-card)]/60">
                 <span class="text-lg font-bold text-[var(--text-muted)] opacity-40">{{ i + 1 }}</span>
@@ -89,7 +94,7 @@
         <div class="forge-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <button
             (click)="onForge()"
-            [disabled]="!canForge() || forging()"
+            [disabled]="!canForge() || forging() || mergeAnimating()"
             class="forge-btn relative px-8 py-4 rounded-2xl font-bold text-white text-sm uppercase tracking-[0.12em] border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden"
           >
             @if (forging()) {
@@ -203,6 +208,11 @@
       }
     </section>
   </main>
+
+  <!-- ─── Merge Glow Overlay ─── -->
+  @if (mergeGlow()) {
+    <div class="merge-glow-overlay" aria-hidden="true"></div>
+  }
 
   <!-- ─── Result Overlay ─── -->
   @if (showResult()) {

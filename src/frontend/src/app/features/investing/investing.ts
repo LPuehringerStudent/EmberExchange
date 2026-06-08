@@ -818,8 +818,6 @@ export class Investing implements OnInit {
   }
 
   private async loadPriceHistory(asset: InvestableAsset): Promise<void> {
-    this.priceHistory.set([]);
-
     if (asset.category === 'stove') {
       try {
         const svc = this.priceHistoryService as unknown as {
