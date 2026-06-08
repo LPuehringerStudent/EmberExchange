@@ -1,21 +1,21 @@
-<div class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none max-w-[380px] w-full">
+<div class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none max-w-[23.75rem] w-full">
   @for (toast of toastService.toasts(); track toast.id) {
     <div
       class="toast toast-{{ toast.type }} pointer-events-auto bg-surface rounded-2xl shadow-[0_8px_32px_var(--shadow-color),0_2px_8px_rgba(0,0,0,0.1)] border border-border overflow-hidden cursor-pointer transition-transform duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_12px_40px_var(--shadow-color),0_4px_12px_rgba(0,0,0,0.15)]"
       [class.exiting]="toast.progress <= 0"
       (click)="toastService.remove(toast.id)"
     >
-      <div class="flex items-start gap-3 px-4 py-[14px]">
+      <div class="flex items-start gap-3 px-4 py-[0.875rem]">
         <span class="toast-icon w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">{{ getIcon(toast.type) }}</span>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-semibold text-text-primary leading-snug">{{ toast.title }}</div>
           @if (toast.message) {
-            <div class="text-[13px] text-text-secondary mt-[3px] leading-relaxed">{{ toast.message }}</div>
+            <div class="text-[0.8125rem] text-text-secondary mt-[0.1875rem] leading-relaxed">{{ toast.message }}</div>
           }
         </div>
         <button class="bg-transparent border-none text-text-muted text-base cursor-pointer px-1 py-0.5 leading-none rounded-md transition-colors duration-150 hover:text-text-primary hover:bg-surface-hover" (click)="toastService.remove(toast.id); $event.stopPropagation()">✕</button>
       </div>
-      <div class="h-[3px] bg-surface-secondary relative">
+      <div class="h-[0.1875rem] bg-surface-secondary relative">
         <div class="toast-progress-bar h-full" [style.width.%]="toast.progress"></div>
       </div>
     </div>

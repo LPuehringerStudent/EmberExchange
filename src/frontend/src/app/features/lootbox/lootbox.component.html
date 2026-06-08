@@ -1,26 +1,26 @@
-<div class="py-5 px-5 md:py-[30px] md:px-10 max-w-[1000px] mx-auto">
+<div class="py-5 px-5 md:py-[1.875rem] md:px-10 max-w-[62.5rem] mx-auto">
 
   <!-- ════ PAGE HEADER ════ -->
   <div class="flex flex-col md:flex-row items-start justify-between gap-3 md:gap-4 mb-7">
     <div>
-      <h1 class="text-[28px] text-text-primary font-bold m-0 mb-1.5">Open your Lootbox!</h1>
+      <h1 class="text-[1.75rem] text-text-primary font-bold m-0 mb-1.5">Open your Lootbox!</h1>
     </div>
 
-    <div class="inline-flex items-center gap-2 px-[18px] py-2.5 bg-gradient-to-br from-[#e85d04] to-[#f48c06] text-white rounded-full font-bold text-sm shadow-[0_4px_12px_rgba(232,93,4,0.3)] whitespace-nowrap" role="status" [attr.aria-label]="lootboxCount() + ' lootboxes available'">
-      <svg class="w-[18px] h-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+    <div class="inline-flex items-center gap-2 px-[1.125rem] py-2.5 bg-gradient-to-br from-[#e85d04] to-[#f48c06] text-white rounded-full font-bold text-sm shadow-[0_4px_12px_rgba(232,93,4,0.3)] whitespace-nowrap" role="status" [attr.aria-label]="lootboxCount() + ' lootboxes available'">
+      <svg class="w-[1.125rem] h-[1.125rem] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
       </svg>
       <span class="text-lg leading-none">{{ lootboxCount() }}</span>
-      <span class="text-[13px] font-semibold opacity-[0.88]">Available</span>
+      <span class="text-[0.8125rem] font-semibold opacity-[0.88]">Available</span>
     </div>
   </div>
 
   <!-- ════ MAIN CARD ════ -->
-  <div class="bg-surface rounded-[20px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] overflow-hidden">
+  <div class="bg-surface rounded-[1.25rem] shadow-[0_4px_24px_rgba(0,0,0,0.08)] overflow-hidden">
 
     <!-- ── Chest Section ── -->
     <div class="flex flex-col md:flex-row items-center gap-7 md:gap-12 px-6 py-8 md:px-12 md:py-10 text-center md:text-left">
-      <div class="relative w-[200px] h-[200px] shrink-0 flex items-center justify-center rounded-[20px] transition-transform duration-300 bg-[radial-gradient(ellipse_80%_60%_at_50%_60%,rgba(232,93,4,0.07)_0%,transparent_70%)]" [class.chest-wrap--opening]="playingGif()">
+      <div class="relative w-[12.5rem] h-[12.5rem] shrink-0 flex items-center justify-center rounded-[1.25rem] transition-transform duration-300 bg-[radial-gradient(ellipse_80%_60%_at_50%_60%,rgba(232,93,4,0.07)_0%,transparent_70%)]" [class.chest-wrap--opening]="playingGif()">
         <img
           class="object-contain drop-shadow-[0_8px_20px_rgba(232,93,4,0.18)] transition-all duration-300"
           [ngSrc]="playingGif()
@@ -37,12 +37,12 @@
       </div>
 
       <div class="flex flex-col gap-3">
-        <span class="inline-block bg-accent-light text-accent border border-[rgba(232,93,4,0.22)] rounded-[20px] py-1 px-3.5 text-xs font-bold tracking-wide uppercase w-fit mx-auto md:mx-0">Inventory Item</span>
-        <h2 class="text-[26px] font-bold text-text-primary m-0">{{ selectedTypeName() }}</h2>
+        <span class="inline-block bg-accent-light text-accent border border-[rgba(232,93,4,0.22)] rounded-[1.25rem] py-1 px-3.5 text-xs font-bold tracking-wide uppercase w-fit mx-auto md:mx-0">Inventory Item</span>
+        <h2 class="text-[1.625rem] font-bold text-text-primary m-0">{{ selectedTypeName() }}</h2>
 
         @if (lootboxCount() > 0) {
           <button
-            class="open-btn inline-flex items-center gap-2.5 mt-2 px-8 py-3.5 bg-gradient-to-br from-[#e85d04] to-[#f48c06] text-white border-none rounded-xl text-[15px] font-bold cursor-pointer shadow-[0_4px_16px_rgba(232,93,4,0.35)] w-full md:w-fit justify-center md:justify-start"
+            class="open-btn inline-flex items-center gap-2.5 mt-2 px-8 py-3.5 bg-gradient-to-br from-[#e85d04] to-[#f48c06] text-white border-none rounded-xl text-[0.9375rem] font-bold cursor-pointer shadow-[0_4px_16px_rgba(232,93,4,0.35)] w-full md:w-fit justify-center md:justify-start"
             (click)="openBox()"
             [disabled]="!canOpen()"
             [attr.aria-label]="isOpening() ? 'Opening, please wait' : 'Open lootbox'">
@@ -50,7 +50,7 @@
               <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-[spin_0.7s_linear_infinite] shrink-0" aria-hidden="true"></span>
               Opening…
             } @else {
-              <svg class="w-[18px] h-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+              <svg class="w-[1.125rem] h-[1.125rem] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
               </svg>
               Open Lootbox
@@ -60,8 +60,8 @@
             <p class="text-sm text-text-muted m-0">Select a lootbox below to open it.</p>
           }
         } @else {
-          <div class="inline-flex items-center gap-2 mt-2 px-[18px] py-3 bg-[rgba(232,93,4,0.06)] border border-[rgba(232,93,4,0.18)] rounded-xl text-accent text-sm font-medium" role="status">
-            <svg class="w-[18px] h-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+          <div class="inline-flex items-center gap-2 mt-2 px-[1.125rem] py-3 bg-[rgba(232,93,4,0.06)] border border-[rgba(232,93,4,0.18)] rounded-xl text-accent text-sm font-medium" role="status">
+            <svg class="w-[1.125rem] h-[1.125rem] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
             </svg>
             No lootboxes remaining. Visit the Marketplace to get more.
@@ -76,11 +76,11 @@
     <!-- ── Lootbox Selector ── -->
     @if (availableLootboxes().length > 0 && !isOpening()) {
       <div class="px-6 py-6 md:px-12 md:py-8">
-        <h3 class="text-[13px] font-bold text-text-muted uppercase tracking-[1.5px] m-0 mb-4">Select a Lootbox</h3>
+        <h3 class="text-[0.8125rem] font-bold text-text-muted uppercase tracking-[1.5px] m-0 mb-4">Select a Lootbox</h3>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" role="list">
           @for (box of availableLootboxes(); track box.lootboxId) {
             <button
-              class="lootbox-select-card text-left p-4 rounded-[14px] border-2 transition-all duration-200"
+              class="lootbox-select-card text-left p-4 rounded-[0.875rem] border-2 transition-all duration-200"
               [class.selected]="selectedLootboxId() === box.lootboxId"
               [class.unselected]="selectedLootboxId() !== box.lootboxId"
               (click)="selectLootbox(box.lootboxId)"
@@ -97,7 +97,7 @@
                 </div>
                 <div class="min-w-0">
                   <p class="text-sm font-bold text-text-primary m-0 truncate">{{ getLootboxTypeName(box.lootboxTypeId) }}</p>
-                  <span class="inline-block mt-1 text-[10px] font-semibold text-text-muted uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-secondary">{{ getAcquisitionLabel(box.acquiredHow) }}</span>
+                  <span class="inline-block mt-1 text-[0.625rem] font-semibold text-text-muted uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-secondary">{{ getAcquisitionLabel(box.acquiredHow) }}</span>
                 </div>
               </div>
               @if (selectedLootboxId() === box.lootboxId) {
@@ -130,10 +130,10 @@
         <div class="flex flex-col gap-2 p-4 rounded-xl bg-[rgba(232,93,4,0.05)] border border-[rgba(232,93,4,0.15)]">
           <div class="flex items-center justify-between">
             <app-info-tooltip text="Bad-luck protection: guaranteed Epic after enough rolls, and guaranteed Legendary after even more. Counter resets only on Legendary or better."><span class="text-xs font-bold text-text-muted uppercase tracking-wide">Pity Counter</span></app-info-tooltip>
-            <span class="text-[11px] text-text-muted">{{ pity.opens }} opens since last legendary</span>
+            <span class="text-[0.6875rem] text-text-muted">{{ pity.opens }} opens since last legendary</span>
           </div>
           <div class="flex flex-col gap-1.5">
-            <div class="flex items-center justify-between text-[11px]">
+            <div class="flex items-center justify-between text-[0.6875rem]">
               <span class="text-text-secondary">Guaranteed Epic</span>
               <span [class.text-accent]="pity.opens >= pity.epicThreshold - 5" [class.font-bold]="pity.opens >= pity.epicThreshold - 5">{{ pity.opens }} / {{ pity.epicThreshold }}</span>
             </div>
@@ -142,7 +142,7 @@
             </div>
           </div>
           <div class="flex flex-col gap-1.5">
-            <div class="flex items-center justify-between text-[11px]">
+            <div class="flex items-center justify-between text-[0.6875rem]">
               <span class="text-text-secondary">Guaranteed Legendary</span>
               <span [class.text-accent]="pity.opens >= pity.legendaryThreshold - 5" [class.font-bold]="pity.opens >= pity.legendaryThreshold - 5">{{ pity.opens }} / {{ pity.legendaryThreshold }}</span>
             </div>
@@ -157,15 +157,15 @@
     <!-- ── Possible Rewards Banner ── -->
     <div class="px-6 pt-7 pb-8 md:px-12 md:pt-8 md:pb-10">
       <div class="flex items-center justify-between mb-5">
-        <h3 class="text-[13px] font-bold text-text-muted uppercase tracking-[1.5px] m-0">Possible Rewards</h3>
-        <span class="text-[11px] text-text-muted font-medium">{{ getRatesLabel() }}</span>
+        <h3 class="text-[0.8125rem] font-bold text-text-muted uppercase tracking-[1.5px] m-0">Possible Rewards</h3>
+        <span class="text-[0.6875rem] text-text-muted font-medium">{{ getRatesLabel() }}</span>
       </div>
 
       @if (isDragonCrate()) {
         <!-- Dragon Crate: shows specific dragon stoves -->
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4" role="list">
           @for (drop of dragonDrops; track drop.label) {
-            <div role="listitem" [class]="'reward-card flex flex-col items-center gap-3 px-4 pt-5 pb-4 rounded-[14px] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.09)] reward-card--' + drop.rarity">
+            <div role="listitem" [class]="'reward-card flex flex-col items-center gap-3 px-4 pt-5 pb-4 rounded-[0.875rem] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.09)] reward-card--' + drop.rarity">
               <div class="relative w-20 h-20 flex items-center justify-center">
                 <img
                   class="object-contain"
@@ -173,10 +173,10 @@
                   [alt]="drop.label"
                   width="80"
                   height="80">
-                <span [class]="'rarity-badge absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-[3px] rounded-[20px] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.12)] ' + drop.rarity">{{ drop.rarityLabel }}</span>
+                <span [class]="'rarity-badge absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-[0.1875rem] rounded-[1.25rem] text-[0.625rem] font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.12)] ' + drop.rarity">{{ drop.rarityLabel }}</span>
               </div>
-              <p class="text-[13px] font-bold text-text-primary mt-2.5 m-0">{{ drop.label }}</p>
-              <span class="text-[11px] font-bold text-text-muted">{{ getDropRate(drop.rarity) }}</span>
+              <p class="text-[0.8125rem] font-bold text-text-primary mt-2.5 m-0">{{ drop.label }}</p>
+              <span class="text-[0.6875rem] font-bold text-text-muted">{{ getDropRate(drop.rarity) }}</span>
             </div>
           }
         </div>
@@ -184,7 +184,7 @@
         <!-- Winter Crate: shows specific winter stoves -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
           @for (drop of winterDrops; track drop.label) {
-            <div role="listitem" [class]="'reward-card flex flex-col items-center gap-3 px-4 pt-5 pb-4 rounded-[14px] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.09)] reward-card--' + drop.rarity">
+            <div role="listitem" [class]="'reward-card flex flex-col items-center gap-3 px-4 pt-5 pb-4 rounded-[0.875rem] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.09)] reward-card--' + drop.rarity">
               <div class="relative w-20 h-20 flex items-center justify-center">
                 <img
                   class="object-contain"
@@ -192,10 +192,10 @@
                   [alt]="drop.label"
                   width="80"
                   height="80">
-                <span [class]="'rarity-badge absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-[3px] rounded-[20px] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.12)] ' + drop.rarity">{{ drop.rarityLabel }}</span>
+                <span [class]="'rarity-badge absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-[0.1875rem] rounded-[1.25rem] text-[0.625rem] font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.12)] ' + drop.rarity">{{ drop.rarityLabel }}</span>
               </div>
-              <p class="text-[13px] font-bold text-text-primary mt-2.5 m-0">{{ drop.label }}</p>
-              <span class="text-[11px] font-bold text-text-muted">{{ getDropRate(drop.rarity) }}</span>
+              <p class="text-[0.8125rem] font-bold text-text-primary mt-2.5 m-0">{{ drop.label }}</p>
+              <span class="text-[0.6875rem] font-bold text-text-muted">{{ getDropRate(drop.rarity) }}</span>
             </div>
           }
         </div>
@@ -203,7 +203,7 @@
         <!-- Standard/Golden/Legendary: show rarity grid -->
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4" role="list">
           @for (drop of previewDrops; track drop.label) {
-            <div role="listitem" [class]="'reward-card flex flex-col items-center gap-3 px-4 pt-5 pb-4 rounded-[14px] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.09)] reward-card--' + drop.rarity">
+            <div role="listitem" [class]="'reward-card flex flex-col items-center gap-3 px-4 pt-5 pb-4 rounded-[0.875rem] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.09)] reward-card--' + drop.rarity">
               <div class="relative w-20 h-20 flex items-center justify-center">
                 <img
                   class="object-contain"
@@ -211,16 +211,16 @@
                   [alt]="drop.label"
                   width="80"
                   height="80">
-                <span [class]="'rarity-badge absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-[3px] rounded-[20px] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.12)] ' + drop.rarity">{{ drop.rarityLabel }}</span>
+                <span [class]="'rarity-badge absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-[0.1875rem] rounded-[1.25rem] text-[0.625rem] font-bold uppercase tracking-wider whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.12)] ' + drop.rarity">{{ drop.rarityLabel }}</span>
               </div>
-              <p class="text-[13px] font-bold text-text-primary mt-2.5 m-0">{{ drop.label }}</p>
-              <span class="text-[11px] font-bold text-text-muted">{{ getDropRate(drop.rarity) }}</span>
+              <p class="text-[0.8125rem] font-bold text-text-primary mt-2.5 m-0">{{ drop.label }}</p>
+              <span class="text-[0.6875rem] font-bold text-text-muted">{{ getDropRate(drop.rarity) }}</span>
             </div>
           }
         </div>
       }
 
-      <p class="text-[11px] text-text-muted mt-4 m-0">Upgraded stoves are forgery-only and cannot be obtained from lootboxes.</p>
+      <p class="text-[0.6875rem] text-text-muted mt-4 m-0">Upgraded stoves are forgery-only and cannot be obtained from lootboxes.</p>
     </div>
 
   </div><!-- /main-card -->
@@ -238,7 +238,7 @@
     (click)="resetAll()">
 
     <div class="flex flex-col items-center gap-3" (click)="$event.stopPropagation()">
-      <p class="text-[13px] font-semibold tracking-[2px] uppercase text-white/55 m-0" aria-live="polite">Rolling your reward…</p>
+      <p class="text-[0.8125rem] font-semibold tracking-[2px] uppercase text-white/55 m-0" aria-live="polite">Rolling your reward…</p>
 
       <div id="roller">
         <div id="marker" aria-hidden="true"></div>
@@ -266,7 +266,7 @@
     <div id="popupBox">
       <div class="popup-icon" aria-hidden="true">
         @if (resultImageUrl()) {
-          <img [src]="resultImageUrl()" alt="Reward" class="w-[140px] h-[140px] object-contain rounded-xl" />
+          <img [src]="resultImageUrl()" alt="Reward" class="w-[8.75rem] h-[8.75rem] object-contain rounded-xl" />
         } @else {
           <svg class="w-8 h-8 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
@@ -274,7 +274,7 @@
         }
       </div>
       <h2 id="result" class="text-base text-accent font-bold m-0 mb-1.5">{{ resultText() }}</h2>
-      <p class="text-[13px] text-text-secondary m-0 mb-7">The item has been added to your inventory.</p>
+      <p class="text-[0.8125rem] text-text-secondary m-0 mb-7">The item has been added to your inventory.</p>
       <button id="okBtn" (click)="closePopup()">Close</button>
     </div>
 

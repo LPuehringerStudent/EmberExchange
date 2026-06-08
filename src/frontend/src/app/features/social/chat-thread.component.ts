@@ -72,7 +72,7 @@ import type { ChatMessageRow } from '@shared/model';
                     {{ $any(msg.data)['status'] | titlecase }}
                   </p>
                 }
-                <p class="text-[10px] text-text-secondary mt-2">{{ msg.sentAt | date:'shortTime' }}</p>
+                <p class="text-[0.625rem] text-text-secondary mt-2">{{ msg.sentAt | date:'shortTime' }}</p>
               </div>
             } @else {
               <div
@@ -83,7 +83,7 @@ import type { ChatMessageRow } from '@shared/model';
                 class="max-w-[75%] rounded-2xl px-4 py-2.5 text-sm"
               >
                 <p>{{ msg.content }}</p>
-                <p class="text-[10px] mt-1 opacity-70">{{ msg.sentAt | date:'shortTime' }}</p>
+                <p class="text-[0.625rem] mt-1 opacity-70">{{ msg.sentAt | date:'shortTime' }}</p>
               </div>
             }
           </div>

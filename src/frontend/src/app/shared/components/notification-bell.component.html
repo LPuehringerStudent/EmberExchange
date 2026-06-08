@@ -5,7 +5,7 @@
     (click)="toggleDropdown()"
     aria-label="Notifications"
   >
-    <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="w-[1.375rem] h-[1.375rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
       <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
     </svg>
@@ -17,7 +17,7 @@
   @if (dropdownOpen()) {
     <div class="dropdown-panel" @dropdownAnimation>
       <div class="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
-        <span class="text-[15px] font-bold text-text-primary">Notifications</span>
+        <span class="text-[0.9375rem] font-bold text-text-primary">Notifications</span>
         <div class="flex gap-2">
           @if (unreadCount() > 0) {
             <button class="bg-transparent border-none text-accent text-xs font-semibold cursor-pointer px-2 py-1 rounded-lg transition-colors duration-150 hover:bg-accent-glow" (click)="markAllAsRead($event)">Mark all read</button>
@@ -35,13 +35,13 @@
         } @else {
           @for (notification of notifications(); track notification.notificationId) {
             <div
-              class="notification-item flex items-start gap-3 px-3.5 py-3 rounded-[14px] cursor-pointer transition-all duration-180 relative mb-1 last:mb-0"
+              class="notification-item flex items-start gap-3 px-3.5 py-3 rounded-[0.875rem] cursor-pointer transition-all duration-180 relative mb-1 last:mb-0"
               [class.unread]="!notification.isRead"
               [class.quest-complete]="notification.type === 'quest_complete'"
               (click)="markAsRead(notification.notificationId, $event)"
             >
               <div [class]="'notification-accent accent-' + notification.type"></div>
-              <div class="w-9 h-9 rounded-[10px] bg-surface-secondary flex items-center justify-center text-base flex-shrink-0 mt-0.5 transition-colors duration-200 relative">
+              <div class="w-9 h-9 rounded-[0.625rem] bg-surface-secondary flex items-center justify-center text-base flex-shrink-0 mt-0.5 transition-colors duration-200 relative">
                 {{ getTypeIcon(notification.type) }}
                 @if (notification.count > 1) {
                   <span class="count-badge">{{ notification.count }}</span>
@@ -49,14 +49,14 @@
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-0.5">
-                  <span class="text-[11px] font-bold uppercase tracking-wide text-accent bg-accent-glow px-[7px] py-0.5 rounded-md">{{ getTypeLabel(notification.type) }}</span>
-                  <span class="text-[11px] text-text-muted font-medium">{{ relativeTime(notification.count > 1 ? (notification.updatedAt || notification.createdAt) : notification.createdAt) }}</span>
+                  <span class="text-[0.6875rem] font-bold uppercase tracking-wide text-accent bg-accent-glow px-[0.4375rem] py-0.5 rounded-md">{{ getTypeLabel(notification.type) }}</span>
+                  <span class="text-[0.6875rem] text-text-muted font-medium">{{ relativeTime(notification.count > 1 ? (notification.updatedAt || notification.createdAt) : notification.createdAt) }}</span>
                 </div>
-                <div class="text-[13px] font-semibold text-text-primary leading-tight mb-0.5">{{ notification.title }}</div>
+                <div class="text-[0.8125rem] font-semibold text-text-primary leading-tight mb-0.5">{{ notification.title }}</div>
                 <div class="text-xs text-text-secondary leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis">{{ notification.message }}</div>
               </div>
               <button
-                class="notification-delete bg-transparent border-none text-text-muted text-[13px] cursor-pointer p-1 rounded-md leading-none flex-shrink-0 mt-0.5 opacity-0 transition-all duration-150"
+                class="notification-delete bg-transparent border-none text-text-muted text-[0.8125rem] cursor-pointer p-1 rounded-md leading-none flex-shrink-0 mt-0.5 opacity-0 transition-all duration-150"
                 (click)="deleteNotification(notification.notificationId, $event)"
                 title="Delete"
               >

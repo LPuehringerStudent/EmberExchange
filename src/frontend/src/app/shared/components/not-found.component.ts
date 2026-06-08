@@ -20,30 +20,30 @@ import { RouterModule } from '@angular/router';
       justify-content: center;
       height: 100vh;
       text-align: center;
-      padding: 20px;
+      padding: 1.25rem;
     }
     h1 {
-      font-size: 120px;
+      font-size: 7.5rem;
       margin: 0;
       color: #3f51b5;
     }
     h2 {
-      font-size: 32px;
-      margin: 10px 0;
+      font-size: 2rem;
+      margin: 0.625rem 0;
       color: #555;
     }
     p {
-      font-size: 18px;
+      font-size: 1.125rem;
       color: #777;
-      margin-bottom: 30px;
+      margin-bottom: 1.875rem;
     }
     .btn-primary {
-      padding: 12px 30px;
-      font-size: 16px;
+      padding: 0.75rem 1.875rem;
+      font-size: 1rem;
       background: #3f51b5;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 0.5rem;
       cursor: pointer;
       transition: background 0.2s;
     }

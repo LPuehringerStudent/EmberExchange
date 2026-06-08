@@ -1,7 +1,7 @@
 <div class="max-w-xl mx-auto p-5 font-sans text-text-primary bg-body min-h-screen">
   <header class="text-center mb-6 p-5">
     <h1 class="text-3xl mb-2 text-accent">Support</h1>
-    <p class="text-text-muted text-[15px]">Report a bug, request a feature, or ask for help</p>
+    <p class="text-text-muted text-[0.9375rem]">Report a bug, request a feature, or ask for help</p>
   </header>
 
   @if (success()) {
@@ -29,7 +29,7 @@
         placeholder="Short summary of your issue"
         required
         [disabled]="loading()"
-        class="w-full p-3 text-[15px] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface disabled:opacity-60 disabled:cursor-not-allowed"
+        class="w-full p-3 text-[0.9375rem] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface disabled:opacity-60 disabled:cursor-not-allowed"
       />
     </div>
 
@@ -42,7 +42,7 @@
         [(ngModel)]="form().type"
         name="type"
         [disabled]="loading()"
-        class="w-full p-3 text-[15px] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface disabled:opacity-60 disabled:cursor-not-allowed"
+        class="w-full p-3 text-[0.9375rem] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <option value="bug">Bug Report</option>
         <option value="feature">Feature Request</option>
@@ -59,7 +59,7 @@
         [(ngModel)]="form().priority"
         name="priority"
         [disabled]="loading()"
-        class="w-full p-3 text-[15px] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface disabled:opacity-60 disabled:cursor-not-allowed"
+        class="w-full p-3 text-[0.9375rem] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <option value="low">Low</option>
         <option value="medium">Medium</option>
@@ -79,7 +79,7 @@
         placeholder="Describe your issue in detail..."
         required
         [disabled]="loading()"
-        class="w-full p-3 text-[15px] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface resize-y min-h-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
+        class="w-full p-3 text-[0.9375rem] border border-border rounded-xl bg-input-bg text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:bg-surface resize-y min-h-[7.5rem] disabled:opacity-60 disabled:cursor-not-allowed"
       ></textarea>
     </div>
 

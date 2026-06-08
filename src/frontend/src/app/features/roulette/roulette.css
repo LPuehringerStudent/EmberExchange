@@ -8,7 +8,7 @@
 
 /* Container */
 .roulette-container {
-  max-width: 1200px;
+  max-width: 75rem;
   margin: 0 auto;
   padding: 1rem;
   display: flex;
@@ -37,7 +37,7 @@
 
 .rl-phase-badge {
   padding: 0.4rem 1rem;
-  border-radius: 20px;
+  border-radius: 1.25rem;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -85,7 +85,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 110px;
+  min-width: 6.875rem;
   gap: 0.15rem;
 }
 
@@ -129,7 +129,7 @@
 /* Game Area */
 .rl-game-area {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 17.5rem 1fr;
   gap: 1.5rem;
   align-items: start;
 }
@@ -150,8 +150,8 @@
 
 .rl-wheel-wrapper {
   position: relative;
-  width: 260px;
-  height: 260px;
+  width: 16.25rem;
+  height: 16.25rem;
 }
 
 .rl-wheel-rotator {
@@ -169,11 +169,11 @@
 /* Ball positioned at top of track */
 .rl-ball {
   position: absolute;
-  top: 18px;
+  top: 1.125rem;
   left: 50%;
   transform: translateX(-50%);
-  width: 12px;
-  height: 12px;
+  width: 0.75rem;
+  height: 0.75rem;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #fff, #ddd 40%, #999 100%);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
@@ -198,8 +198,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 192px;
-  height: 192px;
+  width: 12rem;
+  height: 12rem;
   border-radius: 50%;
   border: 1px solid rgba(139, 105, 20, 0.25);
   pointer-events: none;
@@ -212,8 +212,8 @@
 }
 
 .rl-result-number {
-  width: 56px;
-  height: 56px;
+  width: 3.5rem;
+  height: 3.5rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -267,8 +267,8 @@
 
 /* Zero cell */
 .rl-zero {
-  width: 44px;
-  min-height: 120px;
+  width: 2.75rem;
+  min-height: 7.5rem;
   background: #2e7d32;
   color: white;
   display: flex;
@@ -295,8 +295,8 @@
 }
 
 .rl-cell {
-  width: 44px;
-  height: 40px;
+  width: 2.75rem;
+  height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -326,8 +326,8 @@
 }
 
 .rl-column-cell {
-  width: 44px;
-  height: 40px;
+  width: 2.75rem;
+  height: 2.5rem;
   background: #1a472a;
   color: white;
   display: flex;
@@ -349,7 +349,7 @@
 
 .rl-dozen {
   flex: 1;
-  height: 36px;
+  height: 2.25rem;
   background: #1a472a;
   color: white;
   display: flex;
@@ -371,7 +371,7 @@
 
 .rl-even-cell {
   flex: 1;
-  height: 36px;
+  height: 2.25rem;
   background: #1a1a1a;
   color: white;
   display: flex;
@@ -395,8 +395,8 @@
 }
 
 .rl-diamond {
-  width: 10px;
-  height: 10px;
+  width: 0.625rem;
+  height: 0.625rem;
   background: white;
   transform: rotate(45deg);
   display: inline-block;
@@ -435,8 +435,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 22px;
-  height: 22px;
+  width: 1.375rem;
+  height: 1.375rem;
   border-radius: 50%;
   background: #f5f5f5;
   color: #111;
@@ -478,8 +478,8 @@
 }
 
 .rl-chip {
-  width: 44px;
-  height: 44px;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 50%;
   border: 2px solid #555;
   background: #2a2a2a;

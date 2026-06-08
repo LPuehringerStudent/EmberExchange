@@ -16,8 +16,8 @@
 
 .heat-wave {
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: 37.5rem;
+  height: 37.5rem;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(232, 93, 4, 0.08) 0%, transparent 70%);
   top: 10%;
@@ -28,15 +28,15 @@
 
 .heat-wave.delay-1 {
   animation-delay: -2.5s;
-  width: 500px;
-  height: 500px;
+  width: 31.25rem;
+  height: 31.25rem;
   background: radial-gradient(circle, rgba(255, 140, 0, 0.06) 0%, transparent 70%);
 }
 
 .heat-wave.delay-2 {
   animation-delay: -5s;
-  width: 700px;
-  height: 700px;
+  width: 43.75rem;
+  height: 43.75rem;
   background: radial-gradient(circle, rgba(211, 84, 0, 0.05) 0%, transparent 70%);
 }
 
@@ -86,8 +86,8 @@
 }
 
 .round-dot {
-  width: 12px;
-  height: 12px;
+  width: 0.75rem;
+  height: 0.75rem;
   border-radius: 50%;
   background: var(--border-color, #334155);
   transition: all 0.3s ease;
@@ -115,7 +115,7 @@
   gap: 0.5rem;
   background: rgba(0, 0, 0, 0.4);
   padding: 0.5rem 1rem;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   border: 1px solid rgba(232, 93, 4, 0.3);
 }
 
@@ -134,7 +134,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 20rem;
   gap: 2rem;
   margin-bottom: 2rem;
 }
@@ -234,7 +234,7 @@
   color: #ef4444;
   background: rgba(0, 0, 0, 0.6);
   padding: 0.125rem 0.5rem;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
 }
 
 .stove-popup {
@@ -242,8 +242,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 240px;
-  max-height: 300px;
+  width: 15rem;
+  max-height: 18.75rem;
   background: var(--surface-bg, #1e293b);
   border: 1px solid var(--border-color, #334155);
   border-radius: 0.75rem;
@@ -321,8 +321,8 @@
 }
 
 .popup-thumb {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   object-fit: contain;
   border-radius: 0.375rem;
   background: rgba(0, 0, 0, 0.3);
@@ -352,7 +352,7 @@
   letter-spacing: 0.05em;
   width: fit-content;
   padding: 0.125rem 0.375rem;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
 }
 
 .popup-rarity.common    { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
@@ -392,8 +392,8 @@
 .glow-secret    { background: radial-gradient(circle, rgba(236, 72, 153, 0.35) 0%, transparent 70%); }
 
 .stove-image {
-  width: 70px;
-  height: 70px;
+  width: 4.375rem;
+  height: 4.375rem;
   object-fit: contain;
   position: relative;
   z-index: 1;
@@ -412,15 +412,15 @@
 
 .heat-bar-bg {
   width: 100%;
-  height: 4px;
+  height: 0.25rem;
   background: rgba(0, 0, 0, 0.5);
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   overflow: hidden;
 }
 
 .heat-bar-fill {
   height: 100%;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   transition: width 0.3s ease;
 }
 
@@ -440,7 +440,7 @@
   color: #ffffff;
   background: rgba(0, 0, 0, 0.6);
   padding: 0.125rem 0.375rem;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
 }
 
 .resolve-overlay {
@@ -471,7 +471,7 @@
   z-index: 1;
   background: rgba(0, 0, 0, 0.6);
   padding: 0.125rem 0.5rem;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
 }
 
 .control-panel {
@@ -482,7 +482,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 300px;
+  min-height: 18.75rem;
 }
 
 .ready-panel,
@@ -586,7 +586,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-height: 200px;
+  max-height: 12.5rem;
   overflow-y: auto;
 }
 
@@ -656,7 +656,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-height: 240px;
+  max-height: 15rem;
   overflow-y: auto;
 }
 
@@ -675,8 +675,8 @@
 }
 
 .active-stove-thumb {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   object-fit: contain;
   border-radius: 0.375rem;
   background: rgba(0, 0, 0, 0.3);
@@ -708,7 +708,7 @@
   letter-spacing: 0.05em;
   width: fit-content;
   padding: 0.125rem 0.375rem;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
 }
 
 .active-stove-rarity.common    { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
@@ -726,16 +726,16 @@
 }
 
 .mini-heat-bar {
-  width: 48px;
-  height: 3px;
+  width: 3rem;
+  height: 0.1875rem;
   background: rgba(0, 0, 0, 0.5);
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   overflow: hidden;
 }
 
 .mini-heat-fill {
   height: 100%;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   transition: width 0.3s ease;
 }
 
@@ -771,7 +771,7 @@
 .risk-header,
 .risk-row {
   display: grid;
-  grid-template-columns: 80px 100px repeat(5, 1fr);
+  grid-template-columns: 5rem 6.25rem repeat(5, 1fr);
   align-items: center;
   padding: 0.5rem 0.75rem;
   border-radius: 0.375rem;
@@ -811,7 +811,7 @@
 
 .pipe {
   position: absolute;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   z-index: 0;
   animation: pipe-flow 3s linear infinite;
 }
@@ -819,7 +819,7 @@
 .pipe-right,
 .pipe-left {
   width: 1.5rem;
-  height: 5px;
+  height: 0.3125rem;
   top: 50%;
   transform: translateY(-50%);
   background: linear-gradient(90deg, #92400e, #f59e0b, #92400e);
@@ -828,7 +828,7 @@
 
 .pipe-bottom,
 .pipe-top {
-  width: 5px;
+  width: 0.3125rem;
   height: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
@@ -884,13 +884,13 @@
   }
 
   .stove-image {
-    width: 50px;
-    height: 50px;
+    width: 3.125rem;
+    height: 3.125rem;
   }
 
   .risk-header,
   .risk-row {
-    grid-template-columns: 60px 80px repeat(5, 1fr);
+    grid-template-columns: 3.75rem 5rem repeat(5, 1fr);
     font-size: 0.75rem;
   }
 
@@ -909,10 +909,10 @@
   }
 
   .stove-popup {
-    width: 180px;
+    width: 11.25rem;
   }
 
   .active-stoves-list {
-    max-height: 180px;
+    max-height: 11.25rem;
   }
 }

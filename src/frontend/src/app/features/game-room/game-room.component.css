@@ -8,8 +8,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  border-radius: 16px 16px 0 0;
+  height: 0.25rem;
+  border-radius: 1rem 1rem 0 0;
 }
 
 .player-banner.banner-particles::before,
@@ -24,7 +24,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 16px 16px 0 0;
+  border-radius: 1rem 1rem 0 0;
 }
 
 .player-banner.banner-golden::before {

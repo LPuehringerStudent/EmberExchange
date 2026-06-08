@@ -71,7 +71,7 @@
 }
 .sidebar a:hover {
   border-left-color: var(--accent);
-  padding-left: 36px;
+  padding-left: 2.25rem;
   color: white;
 }
 .sidebar a:hover::before {
@@ -99,7 +99,7 @@
   display: none;
 }
 .content > * {
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 4rem);
   display: block;
   animation: routeFadeIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }

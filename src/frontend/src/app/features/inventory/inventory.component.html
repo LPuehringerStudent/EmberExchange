@@ -1,19 +1,19 @@
-<div class="flex flex-col md:flex-row h-[calc(100vh-80px)] bg-gradient-to-br from-body to-surface-secondary rounded-[18px] overflow-hidden">
+<div class="flex flex-col md:flex-row h-[calc(100vh-5rem)] bg-gradient-to-br from-body to-surface-secondary rounded-[1.125rem] overflow-hidden">
 
   <!-- Sidebar -->
-  <aside class="w-full md:w-[240px] shrink-0 bg-gradient-to-b from-surface to-surface-secondary p-4 md:p-7 px-4 md:px-5 border-b md:border-b-0 md:border-r border-border shadow-[4px_0_15px_rgba(0,0,0,0.05)]">
-    <h2 class="text-[22px] mb-4 md:mb-6 text-accent font-bold hidden md:block">Inventory</h2>
+  <aside class="w-full md:w-[15rem] shrink-0 bg-gradient-to-b from-surface to-surface-secondary p-4 md:p-7 px-4 md:px-5 border-b md:border-b-0 md:border-r border-border shadow-[4px_0_15px_rgba(0,0,0,0.05)]">
+    <h2 class="text-[1.375rem] mb-4 md:mb-6 text-accent font-bold hidden md:block">Inventory</h2>
 
     <div class="flex md:flex-col gap-2 md:gap-0">
       <button
-        class="sidebar-btn flex-1 md:w-full text-center md:text-left px-[18px] py-2.5 md:py-3.5 md:mb-3 rounded-xl bg-transparent text-text-secondary text-[15px] font-medium cursor-pointer transition-all duration-250 border-none"
+        class="sidebar-btn flex-1 md:w-full text-center md:text-left px-[1.125rem] py-2.5 md:py-3.5 md:mb-3 rounded-xl bg-transparent text-text-secondary text-[0.9375rem] font-medium cursor-pointer transition-all duration-250 border-none"
         [class.active]="activeTab === 'lootboxes'"
         (click)="activeTab = 'lootboxes'">
         Lootboxes
       </button>
 
       <button
-        class="sidebar-btn flex-1 md:w-full text-center md:text-left px-[18px] py-2.5 md:py-3.5 md:mb-3 rounded-xl bg-transparent text-text-secondary text-[15px] font-medium cursor-pointer transition-all duration-250 border-none"
+        class="sidebar-btn flex-1 md:w-full text-center md:text-left px-[1.125rem] py-2.5 md:py-3.5 md:mb-3 rounded-xl bg-transparent text-text-secondary text-[0.9375rem] font-medium cursor-pointer transition-all duration-250 border-none"
         [class.active]="activeTab === 'items'"
         (click)="activeTab = 'items'">
         Items
@@ -26,15 +26,15 @@
 
     <div class="flex items-start justify-between gap-4 mb-7">
       <div>
-        <h1 class="text-[22px] md:text-[28px] text-text-primary font-bold mb-1.5">{{ activeTab === 'lootboxes' ? 'Lootboxes' : 'Items' }}</h1>
+        <h1 class="text-[1.375rem] md:text-[1.75rem] text-text-primary font-bold mb-1.5">{{ activeTab === 'lootboxes' ? 'Lootboxes' : 'Items' }}</h1>
         <span class="text-sm text-text-secondary">
           {{ activeTab === 'lootboxes'
           ? 'Your unopened lootboxes'
           : 'Your collected stoves' }}
         </span>
       </div>
-      <div class="flex items-center gap-2 px-[18px] py-2.5 bg-gradient-to-br from-accent to-[#f48c06] text-white rounded-3xl font-bold text-sm shadow-[0_4px_12px_rgba(232,93,4,0.3)]">
-        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="flex items-center gap-2 px-[1.125rem] py-2.5 bg-gradient-to-br from-accent to-[#f48c06] text-white rounded-3xl font-bold text-sm shadow-[0_4px_12px_rgba(232,93,4,0.3)]">
+        <svg class="w-[1.125rem] h-[1.125rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
           <path d="M9 12h6M12 9v6"/>
         </svg>
@@ -62,7 +62,7 @@
     <!-- Error State -->
     @if (error && !loading) {
       <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
-        <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+        <div class="w-[6.25rem] h-[6.25rem] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
           <svg class="w-12 h-12 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="12"/>
@@ -81,7 +81,7 @@
       <!-- EMPTY: LOOTBOXES -->
       @if (activeTab === 'lootboxes' && lootboxes.length === 0) {
         <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
-          <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-[6.25rem] h-[6.25rem] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
             <span class="text-4xl">🎁</span>
           </div>
           <p class="text-lg font-semibold text-text-primary m-0 mb-2">No lootboxes yet</p>
@@ -96,26 +96,26 @@
           <div class="item-card bg-surface rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border-2 border-transparent flex flex-col gap-4 transition-all duration-250 rarity-common">
             <div class="relative h-40 flex items-center justify-center bg-surface-secondary rounded-xl">
               <div class="stove-icon">
-                <img [src]="getLootboxImage(box.typeName)" [alt]="box.typeName" class="w-[140px] h-[140px] object-contain" />
+                <img [src]="getLootboxImage(box.typeName)" [alt]="box.typeName" class="w-[8.75rem] h-[8.75rem] object-contain" />
               </div>
-              <span class="rarity-badge common absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)]">
+              <span class="rarity-badge common absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[1.25rem] text-[0.6875rem] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)]">
                 {{ box.acquiredHow }}
               </span>
               @if (isLootboxListed(box.id)) {
-                <span class="listed-badge absolute bottom-2.5 right-2.5 px-3 py-1 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)]">Listed</span>
+                <span class="listed-badge absolute bottom-2.5 right-2.5 px-3 py-1 rounded-[1.25rem] text-[0.6875rem] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)]">Listed</span>
               }
             </div>
             <div class="flex flex-col gap-1.5">
               <h4 class="m-0 text-base text-text-primary font-bold">{{ box.typeName }}</h4>
-              <p class="m-0 text-[13px] text-text-secondary font-medium">Lootbox #{{ box.id }}</p>
+              <p class="m-0 text-[0.8125rem] text-text-secondary font-medium">Lootbox #{{ box.id }}</p>
               <p class="m-0 text-xs text-text-muted">Unopened</p>
             </div>
             <div class="mt-auto flex flex-col gap-2">
               @if (isLootboxListed(box.id)) {
-                <button class="btn-sell w-full px-2.5 py-2.5 rounded-[10px] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" disabled>Listed</button>
+                <button class="btn-sell w-full px-2.5 py-2.5 rounded-[0.625rem] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" disabled>Listed</button>
               } @else {
-                <button class="btn-open w-full px-2.5 py-2.5 rounded-[10px] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" (click)="openLootbox(box)">Open</button>
-                <button class="btn-sell w-full px-2.5 py-2.5 rounded-[10px] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" (click)="openSellLootboxModal(box)">Sell</button>
+                <button class="btn-open w-full px-2.5 py-2.5 rounded-[0.625rem] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" (click)="openLootbox(box)">Open</button>
+                <button class="btn-sell w-full px-2.5 py-2.5 rounded-[0.625rem] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" (click)="openSellLootboxModal(box)">Sell</button>
               }
             </div>
           </div>
@@ -125,7 +125,7 @@
       <!-- EMPTY: ITEMS -->
       @if (activeTab === 'items' && items.length === 0) {
         <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
-          <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-[6.25rem] h-[6.25rem] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
             <span class="text-4xl">🔥</span>
           </div>
           <p class="text-lg font-semibold text-text-primary m-0 mb-2">No stoves yet</p>
@@ -143,7 +143,7 @@
             <div class="relative h-40 flex items-center justify-center bg-surface-secondary rounded-xl">
               <div class="stove-icon">
                 @if (item.imageUrl) {
-                  <img [src]="item.imageUrl" [alt]="item.stoveName" class="w-[150px] h-[150px] object-contain" />
+                  <img [src]="item.imageUrl" [alt]="item.stoveName" class="w-[9.375rem] h-[9.375rem] object-contain" />
                 } @else {
                   <svg class="w-16 h-16 text-text-secondary drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
@@ -151,7 +151,7 @@
                   </svg>
                 }
               </div>
-              <span [class]="'rarity-badge absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] ' + item.rarity.toLowerCase()">
+              <span [class]="'rarity-badge absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[1.25rem] text-[0.6875rem] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] ' + item.rarity.toLowerCase()">
                 @if ($first) {
                   <app-info-tooltip text="How rare this stove is. Higher rarity means fewer exist and they're worth more.">{{item.rarity}}</app-info-tooltip>
                 } @else {
@@ -166,12 +166,12 @@
                 }
               </span>
               @if (isStoveListed(item.stoveId)) {
-                <span class="listed-badge absolute bottom-2.5 right-2.5 px-3 py-1 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)]">Listed</span>
+                <span class="listed-badge absolute bottom-2.5 right-2.5 px-3 py-1 rounded-[1.25rem] text-[0.6875rem] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)]">Listed</span>
               }
             </div>
             <div class="flex flex-col gap-1.5">
               <h4 class="m-0 text-base text-text-primary font-bold">{{item.stoveName || 'Stove #' + item.stoveId}}</h4>
-              <p class="m-0 text-[13px] text-text-secondary font-medium">Type #{{item.typeId}}</p>
+              <p class="m-0 text-[0.8125rem] text-text-secondary font-medium">Type #{{item.typeId}}</p>
               <p class="m-0 text-xs text-text-muted">Click to manage</p>
             </div>
           </div>
@@ -199,12 +199,12 @@
 <!-- Lootbox Sell Modal -->
 @if (showSellModal) {
   <div class="modal-overlay bg-[rgba(45,52,54,0.6)]" (click)="closeSellModal()">
-    <div class="modal-content max-w-[380px] p-7" (click)="$event.stopPropagation()">
+    <div class="modal-content max-w-[23.75rem] p-7" (click)="$event.stopPropagation()">
       <h3 class="m-0 mb-1.5 text-lg text-text-primary">Sell {{ getSellModalTitle() }}</h3>
       <p class="m-0 mb-5 text-sm text-text-secondary">Set a price in Coal for your item.</p>
 
       <div class="flex flex-col gap-2 mb-4">
-        <label for="sellPrice" class="text-[13px] font-semibold text-text-primary uppercase tracking-wide">Price</label>
+        <label for="sellPrice" class="text-[0.8125rem] font-semibold text-text-primary uppercase tracking-wide">Price</label>
         <input
           id="sellPrice"
           type="number"
@@ -212,17 +212,17 @@
           placeholder="e.g. 500"
           min="1"
           (keydown.enter)="confirmSell()"
-          class="px-3.5 py-3 border-2 border-border rounded-[10px] text-[15px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_4px_rgba(232,93,4,0.1)]"
+          class="px-3.5 py-3 border-2 border-border rounded-[0.625rem] text-[0.9375rem] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_4px_rgba(232,93,4,0.1)]"
         />
       </div>
 
       @if (sellError) {
-        <div class="px-3 py-2.5 bg-red-500/[0.08] border border-red-500/20 rounded-[10px] text-red-500 text-[13px] mb-4">{{ sellError }}</div>
+        <div class="px-3 py-2.5 bg-red-500/[0.08] border border-red-500/20 rounded-[0.625rem] text-red-500 text-[0.8125rem] mb-4">{{ sellError }}</div>
       }
 
       <div class="modal-actions">
-        <button class="btn-secondary flex-1 py-3 rounded-[10px]" (click)="closeSellModal()">Cancel</button>
-        <button class="btn-primary flex-1 py-3 rounded-[10px]" [disabled]="sellLoading" (click)="confirmSell()">
+        <button class="btn-secondary flex-1 py-3 rounded-[0.625rem]" (click)="closeSellModal()">Cancel</button>
+        <button class="btn-primary flex-1 py-3 rounded-[0.625rem]" [disabled]="sellLoading" (click)="confirmSell()">
           @if (sellLoading) {
             <span class="w-4 h-4 border-2 border-white/35 border-t-white rounded-full animate-spin"></span>
             <span>Listing...</span>

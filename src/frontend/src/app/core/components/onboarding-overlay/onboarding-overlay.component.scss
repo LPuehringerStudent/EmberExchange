@@ -8,7 +8,7 @@
 
 .spotlight {
   position: fixed;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
   pointer-events: none;
   animation: pulse 2s infinite;
@@ -17,12 +17,12 @@
 .onboarding-tooltip {
   position: fixed;
   z-index: 1201;
-  min-width: 280px;
-  max-width: 340px;
+  min-width: 17.5rem;
+  max-width: 21.25rem;
   background: var(--surface-color, #1a1a1a);
   border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 1rem;
+  padding: 1.25rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: slideUp 250ms ease;
 }
@@ -30,34 +30,34 @@
 .tooltip-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 0.625rem;
+  margin-bottom: 0.625rem;
 }
 
 .step-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  height: 22px;
-  padding: 0 8px;
+  min-width: 2.25rem;
+  height: 1.375rem;
+  padding: 0 0.5rem;
   background: var(--accent-color, #e85d04);
   color: white;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
 }
 
 .tooltip-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 700;
   color: var(--text-primary, #fff);
 }
 
 .tooltip-body {
-  margin: 0 0 18px 0;
-  font-size: 14px;
+  margin: 0 0 1.125rem 0;
+  font-size: 0.875rem;
   line-height: 1.5;
   color: var(--text-secondary, rgba(255, 255, 255, 0.7));
 }
@@ -66,18 +66,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .btn-skip {
-  padding: 8px 16px;
+  padding: 0.5rem 1rem;
   background: transparent;
   border: none;
   color: var(--text-muted, rgba(255, 255, 255, 0.5));
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   transition: all 150ms ease;
 
   &:hover {
@@ -87,14 +87,14 @@
 }
 
 .btn-next {
-  padding: 8px 20px;
+  padding: 0.5rem 1.25rem;
   background: var(--accent-color, #e85d04);
   border: none;
   color: white;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   transition: all 150ms ease;
 
   &:hover {
@@ -128,9 +128,9 @@
 @media (max-width: 639px) {
   .onboarding-tooltip {
     min-width: auto;
-    max-width: calc(100vw - 32px);
-    left: 16px !important;
-    right: 16px;
+    max-width: calc(100vw - 2rem);
+    left: 1rem !important;
+    right: 1rem;
     transform: none !important;
   }
 }

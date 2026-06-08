@@ -76,7 +76,7 @@ export interface FriendWithPreview extends FriendWithUser {
                   <div class="flex items-center gap-1.5">
                     <button
                       (click)="$event.stopPropagation(); onViewGlory.emit(getFriendPlayerId(friend))"
-                      class="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[10px] font-semibold hover:bg-accent hover:text-white transition-colors"
+                      class="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[0.625rem] font-semibold hover:bg-accent hover:text-white transition-colors"
                       title="View Hall of Glory"
                     >
                       ✦ Glory

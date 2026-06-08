@@ -1,11 +1,11 @@
-<div class="max-w-[1400px] mx-auto p-6 min-h-screen box-border" (click)="closeFilter()">
+<div class="max-w-[87.5rem] mx-auto p-6 min-h-screen box-border" (click)="closeFilter()">
 
   <!-- ───── HEADER ───── -->
   <header class="flex items-center justify-between mb-8 gap-4 flex-wrap">
     <div class="flex items-center gap-3">
       <div class="relative">
         <button
-          class="options-btn flex items-center gap-2 px-[18px] py-2.5 bg-surface/90 border border-accent/25 rounded-xl text-sm font-semibold text-text-primary cursor-pointer transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)] backdrop-blur-[8px] hover:border-accent hover:shadow-[0_4px_16px_rgba(232,93,4,0.15)] hover:-translate-y-px"
+          class="options-btn flex items-center gap-2 px-[1.125rem] py-2.5 bg-surface/90 border border-accent/25 rounded-xl text-sm font-semibold text-text-primary cursor-pointer transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)] backdrop-blur-[8px] hover:border-accent hover:shadow-[0_4px_16px_rgba(232,93,4,0.15)] hover:-translate-y-px"
           (click)="toggleFilter(); $event.stopPropagation()"
           [attr.aria-expanded]="filterOpen()"
           aria-haspopup="true"
@@ -13,7 +13,7 @@
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-               class="w-[18px] h-[18px] text-accent flex-shrink-0">
+               class="w-[1.125rem] h-[1.125rem] text-accent flex-shrink-0">
             <line x1="4" y1="6" x2="20" y2="6"/>
             <line x1="4" y1="12" x2="20" y2="12"/>
             <line x1="4" y1="18" x2="20" y2="18"/>
@@ -27,9 +27,9 @@
         </button>
 
         @if (filterOpen()) {
-          <div class="filter-popup absolute top-[calc(100%+8px)] left-0 z-[100] min-w-[220px] bg-surface/97 backdrop-blur-[20px] border border-accent/15 rounded-2xl p-3 shadow-[0_12px_40px_rgba(0,0,0,0.12)]" role="menu" (click)="$event.stopPropagation()">
-            <p class="filter-popup-title ml-2 mb-2.5 text-[11px] font-bold uppercase tracking-[0.8px] text-text-muted">Sort &amp; Filter</p>
-            <button class="filter-option flex items-center gap-2.5 w-full px-3 py-2.5 bg-transparent border-0 rounded-[10px] text-sm font-medium text-text-secondary cursor-pointer text-left transition-all duration-150" [class.active]="activeFilter() === 'all'"
+          <div class="filter-popup absolute top-[calc(100%+0.5rem)] left-0 z-[100] min-w-[13.75rem] bg-surface/97 backdrop-blur-[20px] border border-accent/15 rounded-2xl p-3 shadow-[0_12px_40px_rgba(0,0,0,0.12)]" role="menu" (click)="$event.stopPropagation()">
+            <p class="filter-popup-title ml-2 mb-2.5 text-[0.6875rem] font-bold uppercase tracking-[0.8px] text-text-muted">Sort &amp; Filter</p>
+            <button class="filter-option flex items-center gap-2.5 w-full px-3 py-2.5 bg-transparent border-0 rounded-[0.625rem] text-sm font-medium text-text-secondary cursor-pointer text-left transition-all duration-150" [class.active]="activeFilter() === 'all'"
                     role="menuitem" (click)="setFilter('all')">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -39,7 +39,7 @@
               </svg>
               All Games
             </button>
-            <button class="filter-option flex items-center gap-2.5 w-full px-3 py-2.5 bg-transparent border-0 rounded-[10px] text-sm font-medium text-text-secondary cursor-pointer text-left transition-all duration-150" [class.active]="activeFilter() === 'most-played'"
+            <button class="filter-option flex items-center gap-2.5 w-full px-3 py-2.5 bg-transparent border-0 rounded-[0.625rem] text-sm font-medium text-text-secondary cursor-pointer text-left transition-all duration-150" [class.active]="activeFilter() === 'most-played'"
                     role="menuitem" (click)="setFilter('most-played')">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -48,7 +48,7 @@
               </svg>
               Most Played
             </button>
-            <button class="filter-option flex items-center gap-2.5 w-full px-3 py-2.5 bg-transparent border-0 rounded-[10px] text-sm font-medium text-text-secondary cursor-pointer text-left transition-all duration-150" [class.active]="activeFilter() === 'recently-released'"
+            <button class="filter-option flex items-center gap-2.5 w-full px-3 py-2.5 bg-transparent border-0 rounded-[0.625rem] text-sm font-medium text-text-secondary cursor-pointer text-left transition-all duration-150" [class.active]="activeFilter() === 'recently-released'"
                     role="menuitem" (click)="setFilter('recently-released')">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -57,7 +57,7 @@
               </svg>
               Recently Released
             </button>
-            <button class="filter-option flex items-center gap-2.5 w-full px-3 py-2.5 bg-transparent border-0 rounded-[10px] text-sm font-medium text-text-secondary cursor-pointer text-left transition-all duration-150" [class.active]="activeFilter() === 'favorites'"
+            <button class="filter-option flex items-center gap-2.5 w-full px-3 py-2.5 bg-transparent border-0 rounded-[0.625rem] text-sm font-medium text-text-secondary cursor-pointer text-left transition-all duration-150" [class.active]="activeFilter() === 'favorites'"
                     role="menuitem" (click)="setFilter('favorites')">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -76,7 +76,7 @@
     </div>
 
     <div class="flex items-center">
-      <span class="game-count text-[13px] text-text-muted font-medium bg-surface-secondary/90 px-3.5 py-1.5 rounded-full border border-accent/15">
+      <span class="game-count text-[0.8125rem] text-text-muted font-medium bg-surface-secondary/90 px-3.5 py-1.5 rounded-full border border-accent/15">
         {{ filteredGames().length }} games
       </span>
     </div>
@@ -85,7 +85,7 @@
   <!-- ───── TRENDING STRIP ───── -->
   @if (activeFilter() === 'all') {
     <section class="mb-9" aria-label="Trending games">
-      <div class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.7px] text-accent mb-4">
+      <div class="flex items-center gap-2 text-[0.8125rem] font-bold uppercase tracking-[0.7px] text-accent mb-4">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
              class="w-4 h-4">
@@ -96,7 +96,7 @@
       </div>
       <div class="trending-strip flex gap-3 overflow-x-auto pb-2">
         @for (game of trendingGames(); track game.id) {
-          <button class="trending-card flex items-center gap-3 px-[18px] py-3.5 bg-surface/85 backdrop-blur-[10px] border border-accent/15 rounded-[14px] min-w-[220px] cursor-pointer transition-all duration-250 shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex-shrink-0 text-left"
+          <button class="trending-card flex items-center gap-3 px-[1.125rem] py-3.5 bg-surface/85 backdrop-blur-[10px] border border-accent/15 rounded-[0.875rem] min-w-[13.75rem] cursor-pointer transition-all duration-250 shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex-shrink-0 text-left"
                   (click)="openGame(game)"
                   [attr.aria-label]="'Go to ' + game.title">
             <span class="trending-icon flex items-center justify-center w-12 h-12 rounded-xl flex-shrink-0 p-2 box-border"
@@ -108,11 +108,11 @@
                 <path d="M474.331,50.608H180.56c-14.269,0-25.18,10.911-25.18,25.18v402.885c0,14.269,10.911,25.18,25.18,25.18h293.77 c14.269,0,25.18-10.911,25.18-25.18V75.789C499.511,61.52,488.6,50.608,474.331,50.608z M306.462,84.182h151.082 c5.036,0,8.393,3.357,8.393,8.393V343.54c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-242.57H306.462 c-5.036,0-8.393-3.357-8.393-8.393S301.426,84.182,306.462,84.182z M188.954,92.576c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v26.859L232.6,86.7c3.357-3.357,8.393-4.197,11.751-0.839s4.197,8.393,0.839,11.751l-22.662,26.859 l31.056,47.003c2.518,4.197,1.679,9.233-2.518,11.751c0,0.839-1.679,1.679-3.357,1.679c-2.518,0-5.036-1.679-6.715-3.357 l-28.538-42.807l-6.715,7.554v30.216c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393V92.576z M365.216,470.28 l-167.869,0.839c-2.518,0-4.197-0.839-5.875-2.518c-1.679-1.679-2.518-3.357-2.518-5.875V210.923c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v243.41l159.475-0.839c5.036,0,8.393,3.357,8.393,8.393C373.609,466.084,370.252,470.28,365.216,470.28z M361.859,351.094l7.554,18.466c1.679,3.357,1.679,7.554-0.839,10.911c-2.518,3.357-5.875,5.875-10.072,5.875H296.39 c-4.197,0-8.393-2.518-10.072-5.875c-1.679-3.357-2.518-7.554-0.839-10.911l5.875-18.466c-4.197,1.679-7.554,1.679-11.751,1.679 c-15.948,0-31.056-6.715-41.967-18.466c-10.911-10.911-15.948-26.02-15.108-40.289c0.839-16.787,10.911-32.734,27.698-43.646 c8.393-5.036,15.948-8.393,24.341-8.393c-2.518-5.875-3.357-13.43-3.357-20.984c0-16.787,7.554-32.734,20.984-43.646 c13.43-10.911,30.216-15.108,47.003-10.911c21.823,4.197,38.61,21.823,42.807,43.646c2.518,11.751,1.679,22.662-1.679,31.895 c8.393,0.839,15.948,3.357,24.341,9.233c16.787,10.911,26.859,26.02,27.698,43.646c0.839,15.108-4.197,29.377-15.108,40.289 c-10.911,11.751-26.859,18.466-41.967,18.466C370.252,352.772,366.055,351.933,361.859,351.094z M467.616,461.887h-1.679 c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-26.859l-26.859,32.734c-1.679,1.679-4.197,2.518-6.715,2.518 c-1.679,0-4.197-0.839-5.036-1.679c-3.357-3.357-4.197-8.393-0.839-11.751l22.662-26.859l-31.056-47.003 c-2.518-4.197-1.679-9.233,2.518-11.751c4.197-2.518,9.233-1.679,11.751,2.518l28.538,42.807l6.715-7.554v-31.056 c0-5.036,3.357-8.393,8.393-8.393c5.036,0,8.393,3.357,8.393,8.393V461.887z"/>
               </svg>
             </span>
-            <div class="flex flex-col gap-[3px] flex-1">
+            <div class="flex flex-col gap-[0.1875rem] flex-1">
               <span class="text-sm font-bold text-text-primary">{{ game.title }}</span>
               <span class="text-xs text-text-muted">{{ game.genre }} · {{ formatPlayCount(game.playCount) }} plays</span>
             </div>
-            <span class="text-[10px] font-extrabold tracking-[0.6px] text-accent bg-accent/10 border border-accent/25 rounded-md px-[7px] py-[3px]">HOT</span>
+            <span class="text-[0.625rem] font-extrabold tracking-[0.6px] text-accent bg-accent/10 border border-accent/25 rounded-md px-[0.4375rem] py-[0.1875rem]">HOT</span>
           </button>
         }
       </div>
@@ -121,7 +121,7 @@
 
   <!-- ───── GAMES LIST ───── -->
   <section class="flex-1" aria-label="Games list">
-    <div class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.7px] text-accent mb-4">
+    <div class="flex items-center gap-2 text-[0.8125rem] font-bold uppercase tracking-[0.7px] text-accent mb-4">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
            class="w-4 h-4">
@@ -132,17 +132,17 @@
     </div>
 
     @if (filteredGames().length === 0) {
-      <div class="flex flex-col items-center justify-center gap-3.5 py-16 px-5 text-center bg-surface-secondary/60 rounded-[20px] border border-dashed border-accent/20">
+      <div class="flex flex-col items-center justify-center gap-3.5 py-16 px-5 text-center bg-surface-secondary/60 rounded-[1.25rem] border border-dashed border-accent/20">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
              class="w-10 h-10 text-accent/35">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
         </svg>
-        <p class="m-0 text-text-muted text-[15px]">No favorites yet — star a game to save it here.</p>
+        <p class="m-0 text-text-muted text-[0.9375rem]">No favorites yet — star a game to save it here.</p>
       </div>
     }
 
-    <div class="flex flex-col bg-surface/85 backdrop-blur-[12px] border border-accent/12 rounded-[20px] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.07)]">
+    <div class="flex flex-col bg-surface/85 backdrop-blur-[12px] border border-accent/12 rounded-[1.25rem] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.07)]">
       @for (game of filteredGames(); track game.id; let i = $index) {
         <article
           class="game-row flex items-center gap-0 px-6 py-5 cursor-pointer transition-colors duration-200 border-b border-black/5 relative last:border-b-0 hover:bg-accent/4"
@@ -168,21 +168,21 @@
             <div class="flex items-center gap-2.5 flex-wrap">
               <h3 class="row-title m-0 text-[1.05rem] font-bold text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">{{ game.title }}</h3>
               @if (game.trending) {
-                <span class="px-2.5 py-[3px] bg-gradient-to-br from-accent to-[#f48c06] text-white rounded-full text-[10px] font-bold tracking-[0.4px] flex-shrink-0">Trending</span>
+                <span class="px-2.5 py-[0.1875rem] bg-gradient-to-br from-accent to-[#f48c06] text-white rounded-full text-[0.625rem] font-bold tracking-[0.4px] flex-shrink-0">Trending</span>
               }
             </div>
 
             <p class="row-genre flex items-center gap-1.5 m-0 text-xs font-semibold">
-              <span class="genre-dot w-[7px] h-[7px] rounded-full flex-shrink-0" [style.background]="game.accentColor"></span>
+              <span class="genre-dot w-[0.4375rem] h-[0.4375rem] rounded-full flex-shrink-0" [style.background]="game.accentColor"></span>
               {{ game.genre }}
             </p>
 
-            <p class="row-desc m-0 text-[13px] text-text-muted leading-normal line-clamp-1">{{ game.description }}</p>
+            <p class="row-desc m-0 text-[0.8125rem] text-text-muted leading-normal line-clamp-1">{{ game.description }}</p>
 
             <div class="row-meta-line flex items-center justify-between gap-3 flex-wrap mt-1">
               <div class="flex gap-1.5 flex-wrap">
                 @for (tag of game.tags; track tag) {
-                  <span class="px-2.5 py-[3px] bg-surface-secondary/95 border border-black/8 rounded-full text-[11px] font-semibold text-text-secondary">{{ tag }}</span>
+                  <span class="px-2.5 py-[0.1875rem] bg-surface-secondary/95 border border-black/8 rounded-full text-[0.6875rem] font-semibold text-text-secondary">{{ tag }}</span>
                 }
               </div>
 
@@ -191,12 +191,12 @@
                 @if (game.friendsPlayed.length > 0) {
                   <div class="friends-played flex items-center gap-1" [attr.aria-label]="game.friendsPlayed.length + ' friends played'">
                     @for (friend of visibleFriends(game.friendsPlayed); track friend.name) {
-                      <span class="friend-avatar inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-accent to-[#f48c06] text-white text-[10px] font-bold border-2 border-surface shadow-[0_2px_6px_rgba(0,0,0,0.1)]" [attr.title]="friend.name">{{ friend.avatar }}</span>
+                      <span class="friend-avatar inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-accent to-[#f48c06] text-white text-[0.625rem] font-bold border-2 border-surface shadow-[0_2px_6px_rgba(0,0,0,0.1)]" [attr.title]="friend.name">{{ friend.avatar }}</span>
                     }
                     @if (extraFriends(game.friendsPlayed) > 0) {
-                      <span class="friend-avatar extra inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-secondary text-text-muted text-[9px] font-bold border-2 border-surface shadow-[0_2px_6px_rgba(0,0,0,0.1)]">+{{ extraFriends(game.friendsPlayed) }}</span>
+                      <span class="friend-avatar extra inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-secondary text-text-muted text-[0.5625rem] font-bold border-2 border-surface shadow-[0_2px_6px_rgba(0,0,0,0.1)]">+{{ extraFriends(game.friendsPlayed) }}</span>
                     }
-                    <span class="text-[11px] text-text-muted ml-1">played</span>
+                    <span class="text-[0.6875rem] text-text-muted ml-1">played</span>
                   </div>
                 }
 
@@ -228,7 +228,7 @@
           <!-- Right: actions -->
           <div class="flex flex-col items-center gap-2 ml-4 flex-shrink-0">
             <button
-              class="fav-btn flex items-center justify-center w-[34px] h-[34px] bg-surface-secondary/90 border border-black/8 rounded-[10px] cursor-pointer transition-all duration-200 text-text-muted hover:bg-accent/8 hover:border-accent hover:text-accent"
+              class="fav-btn flex items-center justify-center w-[2.125rem] h-[2.125rem] bg-surface-secondary/90 border border-black/8 rounded-[0.625rem] cursor-pointer transition-all duration-200 text-text-muted hover:bg-accent/8 hover:border-accent hover:text-accent"
               [class.active]="game.isFavorite"
               [class.bg-accent/10]="game.isFavorite"
               [class.border-accent/40]="game.isFavorite"
@@ -240,17 +240,17 @@
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                    [attr.fill]="game.isFavorite ? 'currentColor' : 'none'"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                   class="w-[15px] h-[15px] transition-transform duration-200">
+                   class="w-[0.9375rem] h-[0.9375rem] transition-transform duration-200">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
             </button>
 
-            <button class="play-arrow-btn flex items-center justify-center w-[34px] h-[34px] border-0 rounded-[10px] cursor-pointer text-white transition-all duration-200"
+            <button class="play-arrow-btn flex items-center justify-center w-[2.125rem] h-[2.125rem] border-0 rounded-[0.625rem] cursor-pointer text-white transition-all duration-200"
                     [attr.aria-label]="'Play ' + game.title"
                     (click)="openGame(game); $event.stopPropagation()">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                   class="w-[15px] h-[15px]">
+                   class="w-[0.9375rem] h-[0.9375rem]">
                 <line x1="5" y1="12" x2="19" y2="12"/>
                 <polyline points="12 5 19 12 12 19"/>
               </svg>

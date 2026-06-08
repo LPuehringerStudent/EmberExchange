@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-body">
-  <div class="max-w-[900px] mx-auto px-5 py-8 md:px-8 md:py-10">
+  <div class="max-w-[56.25rem] mx-auto px-5 py-8 md:px-8 md:py-10">
 
     <!-- ═══ HEADER ═══ -->
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -57,8 +57,8 @@
       <section>
         <div class="flex items-center gap-3 mb-5">
           <div class="h-px flex-1 bg-gradient-to-r from-border to-transparent"></div>
-          <span class="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Open Rooms</span>
-          <span class="text-[11px] font-bold text-text-muted bg-surface-secondary px-2 py-0.5 rounded-full">{{ rooms().length }}</span>
+          <span class="text-[0.6875rem] font-bold text-text-muted uppercase tracking-[0.2em]">Open Rooms</span>
+          <span class="text-[0.6875rem] font-bold text-text-muted bg-surface-secondary px-2 py-0.5 rounded-full">{{ rooms().length }}</span>
           <div class="h-px flex-1 bg-gradient-to-l from-border to-transparent"></div>
         </div>
 
@@ -83,7 +83,7 @@
                   <div class="flex items-center gap-2.5 mb-0.5">
                     <span class="font-semibold text-sm text-text-primary truncate">Room {{ room.roomId.slice(0, 8) }}</span>
                     <span
-                      class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider shrink-0 border"
+                      class="px-2 py-0.5 rounded-full text-[0.625rem] font-extrabold uppercase tracking-wider shrink-0 border"
                       [class]="room.status === 'waiting'
                         ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
                         : room.status === 'active'
@@ -93,7 +93,7 @@
                       {{ room.status }}
                     </span>
                   </div>
-                  <div class="flex items-center gap-3 text-[11px] text-text-muted">
+                  <div class="flex items-center gap-3 text-[0.6875rem] text-text-muted">
                     <span class="flex items-center gap-1">
                       <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -141,7 +141,7 @@
     <!-- ═══ CREATE MODAL ═══ -->
     @if (showCreateModal()) {
       <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-5 animate-[fadeIn_0.2s_ease]" (click)="closeCreateModal()">
-        <div class="bg-surface border border-border rounded-[20px] p-7 w-full max-w-[400px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[slideUp_0.3s_ease]" (click)="$event.stopPropagation()">
+        <div class="bg-surface border border-border rounded-[1.25rem] p-7 w-full max-w-[25rem] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[slideUp_0.3s_ease]" (click)="$event.stopPropagation()">
           <h2 class="m-0 mb-6 text-xl font-bold text-text-primary">Create Room</h2>
 
           <div class="mb-5">

@@ -9,7 +9,7 @@ import { AuthService } from '@core/services/auth.service';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#1a0f0a] via-[#2d1b14] to-[#1a0f0a]">
-      <div class="relative z-10 w-full max-w-[480px] bg-surface/95 backdrop-blur-lg rounded-3xl p-10 border-2 border-accent/25 shadow-[0_25px_80px_rgba(0,0,0,0.5)] text-center">
+      <div class="relative z-10 w-full max-w-[30rem] bg-surface/95 backdrop-blur-lg rounded-3xl p-10 border-2 border-accent/25 shadow-[0_25px_80px_rgba(0,0,0,0.5)] text-center">
         @if (isLoading()) {
           <div class="text-5xl mb-5 animate-pulse">🔥</div>
           <h1 class="text-[1.85rem] font-bold mb-3 bg-gradient-to-br from-accent via-[#f48c06] to-[#ffba08] bg-clip-text text-transparent">

@@ -5,7 +5,7 @@
   <div class="flex flex-col gap-4">
     @for (theme of themes; track theme.id) {
       <button
-        class="flex items-center gap-4 w-full px-5 py-4 bg-surface-secondary border-2 border-transparent rounded-2xl cursor-pointer transition-all duration-250 ease-out relative hover:translate-x-[5px] hover:bg-surface-hover"
+        class="flex items-center gap-4 w-full px-5 py-4 bg-surface-secondary border-2 border-transparent rounded-2xl cursor-pointer transition-all duration-250 ease-out relative hover:translate-x-[0.3125rem] hover:bg-surface-hover"
         [class.border-accent]="selectedTheme() === theme.id"
         [class.bg-accent-light]="selectedTheme() === theme.id"
         (click)="selectTheme(theme.id)">

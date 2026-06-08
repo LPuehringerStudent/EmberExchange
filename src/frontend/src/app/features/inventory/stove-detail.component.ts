@@ -15,7 +15,7 @@ const REROLL_BASE_COST: Record<string, number> = {
   imports: [CommonModule, FormsModule, HeatTierPipe, InfoTooltipComponent],
   template: `
     <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4" (click)="onClose.emit()">
-      <div class="bg-surface border border-border rounded-[20px] max-w-[420px] w-full max-h-[90vh] flex flex-col overflow-hidden" (click)="$event.stopPropagation()">
+      <div class="bg-surface border border-border rounded-[1.25rem] max-w-[26.25rem] w-full max-h-[90vh] flex flex-col overflow-hidden" (click)="$event.stopPropagation()">
 
         <!-- Header image -->
         <div class="relative h-52 flex items-center justify-center bg-gradient-to-br from-surface-secondary to-body shrink-0">
@@ -41,17 +41,17 @@ const REROLL_BASE_COST: Record<string, number> = {
           <div>
             <h2 class="text-xl font-bold text-text-primary m-0 mb-2">{{ stove().stoveName || 'Stove #' + stove().stoveId }}</h2>
             <div class="flex flex-wrap items-center gap-2">
-              <span [class]="'px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ' + stove().rarity.toLowerCase()"
+              <span [class]="'px-3 py-1 rounded-full text-[0.6875rem] font-bold uppercase tracking-wider ' + stove().rarity.toLowerCase()"
                 [style.background]="rarityBg(stove().rarity)"
                 [style.color]="rarityColor(stove().rarity)">
                 <app-info-tooltip text="How rare this stove is. Higher rarity means fewer exist and they're worth more.">{{ stove().rarity }}</app-info-tooltip>
               </span>
-              <span [class]="'px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider heat-' + (stove().heatLevel | heatTier | lowercase)"
+              <span [class]="'px-3 py-1 rounded-full text-[0.6875rem] font-bold uppercase tracking-wider heat-' + (stove().heatLevel | heatTier | lowercase)"
                 class="heat-badge">
                 {{ stove().heatLevel | heatTier }}
               </span>
               @if (isListed()) {
-                <span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/20">Listed</span>
+                <span class="px-3 py-1 rounded-full text-[0.6875rem] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/20">Listed</span>
               }
             </div>
           </div>
@@ -59,19 +59,19 @@ const REROLL_BASE_COST: Record<string, number> = {
           <!-- Stats grid -->
           <div class="grid grid-cols-2 gap-3">
             <div class="bg-body rounded-xl p-3 border border-border">
-              <p class="text-[11px] uppercase tracking-wider text-text-muted m-0 mb-1">Type ID</p>
+              <p class="text-[0.6875rem] uppercase tracking-wider text-text-muted m-0 mb-1">Type ID</p>
               <p class="text-sm font-semibold text-text-primary m-0">#{{ stove().typeId }}</p>
             </div>
             <div class="bg-body rounded-xl p-3 border border-border">
-              <p class="text-[11px] uppercase tracking-wider text-text-muted m-0 mb-1"><app-info-tooltip text="A score from 1–100. Hotter stoves are more valuable and produce more in the Factory.">Heat Level</app-info-tooltip></p>
+              <p class="text-[0.6875rem] uppercase tracking-wider text-text-muted m-0 mb-1"><app-info-tooltip text="A score from 1–100. Hotter stoves are more valuable and produce more in the Factory.">Heat Level</app-info-tooltip></p>
               <p class="text-sm font-semibold text-text-primary m-0">{{ (stove().heatLevel * 100).toFixed(1) }}%</p>
             </div>
             <div class="bg-body rounded-xl p-3 border border-border">
-              <p class="text-[11px] uppercase tracking-wider text-text-muted m-0 mb-1">Collection</p>
+              <p class="text-[0.6875rem] uppercase tracking-wider text-text-muted m-0 mb-1">Collection</p>
               <p class="text-sm font-semibold text-text-primary m-0">{{ stove().collection || 'Unknown' }}</p>
             </div>
             <div class="bg-body rounded-xl p-3 border border-border">
-              <p class="text-[11px] uppercase tracking-wider text-text-muted m-0 mb-1">Re-rolls</p>
+              <p class="text-[0.6875rem] uppercase tracking-wider text-text-muted m-0 mb-1">Re-rolls</p>
               <p class="text-sm font-semibold text-text-primary m-0">{{ stove().reRollCount ?? 0 }}</p>
             </div>
           </div>
@@ -138,7 +138,7 @@ const REROLL_BASE_COST: Record<string, number> = {
                     </svg>
                     <span class="text-[#3b82f6] font-bold text-lg">-{{ reRollCost() }} Sparks</span>
                   </div>
-                  <p class="text-[11px] text-text-muted text-center m-0 mb-3">
+                  <p class="text-[0.6875rem] text-text-muted text-center m-0 mb-3">
                     Base {{ baseCost() }} × 1.5<sup>{{ stove().reRollCount ?? 0 }}</sup> = {{ reRollCost() }}
                     ({{ (stove().reRollCount ?? 0) + 1 }}{{ ordinalSuffix((stove().reRollCount ?? 0) + 1) }} re-roll)
                   </p>

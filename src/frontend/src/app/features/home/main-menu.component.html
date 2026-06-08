@@ -23,7 +23,7 @@
 
   <!-- ========== HEADER ========== -->
   <header class="dashboard-header relative z-[1] px-6 lg:px-10 pt-10 pb-8">
-    <div class="max-w-[1400px] mx-auto">
+    <div class="max-w-[87.5rem] mx-auto">
       <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
         <!-- User greeting -->
         <div class="flex items-center gap-5">
@@ -47,7 +47,7 @@
         <!-- Inventory CTA -->
         <a routerLink="/inventory" class="inventory-cta group inline-flex items-center gap-3 px-6 py-3.5 bg-surface border border-border rounded-2xl font-semibold text-sm text-text-primary shadow-sm hover:shadow-lg hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-300">
           <div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-            <svg class="w-[18px] h-[18px] text-accent group-hover:rotate-[10deg] transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="w-[1.125rem] h-[1.125rem] text-accent group-hover:rotate-[10deg] transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
               <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
               <line x1="12" y1="22.08" x2="12" y2="12"/>
@@ -71,7 +71,7 @@
               </svg>
             </div>
             <div>
-              <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Total Coal</p>
+              <p class="text-text-muted text-[0.6875rem] font-bold uppercase tracking-[0.15em] mb-0.5">Total Coal</p>
               <p class="text-2xl font-extrabold text-text-primary">{{ coins() }}</p>
             </div>
           </div>
@@ -86,7 +86,7 @@
               </svg>
             </div>
             <div>
-              <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Lootboxes</p>
+              <p class="text-text-muted text-[0.6875rem] font-bold uppercase tracking-[0.15em] mb-0.5">Lootboxes</p>
               <p class="text-2xl font-extrabold text-text-primary">{{ lootboxCount() }}</p>
             </div>
           </div>
@@ -100,7 +100,7 @@
               </svg>
             </div>
             <div>
-              <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Stoves Owned</p>
+              <p class="text-text-muted text-[0.6875rem] font-bold uppercase tracking-[0.15em] mb-0.5">Stoves Owned</p>
               <p class="text-2xl font-extrabold text-text-primary">{{ stoveCount() }}</p>
             </div>
           </div>
@@ -110,7 +110,7 @@
   </header>
 
   <!-- ========== MAIN CONTENT ========== -->
-  <main class="relative z-[1] px-6 lg:px-10 pb-12 max-w-[1400px] mx-auto">
+  <main class="relative z-[1] px-6 lg:px-10 pb-12 max-w-[87.5rem] mx-auto">
 
 
     <!-- Content Grid -->
@@ -120,7 +120,7 @@
       <section>
         <div class="flex items-center gap-3 mb-6">
           <div class="h-px flex-1 bg-gradient-to-r from-border to-transparent"></div>
-          <span class="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Quick Access</span>
+          <span class="text-[0.6875rem] font-bold text-text-muted uppercase tracking-[0.2em]">Quick Access</span>
           <div class="h-px flex-1 bg-gradient-to-l from-border to-transparent"></div>
         </div>
 
@@ -306,12 +306,12 @@
         <div class="px-5 py-4 border-b border-border flex items-center gap-3">
           <div class="flex items-center gap-1.5 bg-rarity-uncommon/10 px-2.5 py-1 rounded-full border border-rarity-uncommon/20">
             <span class="w-1.5 h-1.5 bg-rarity-uncommon rounded-full animate-pulse"></span>
-            <span class="text-[10px] font-extrabold text-rarity-uncommon tracking-wider uppercase">Live</span>
+            <span class="text-[0.625rem] font-extrabold text-rarity-uncommon tracking-wider uppercase">Live</span>
           </div>
           <h3 class="m-0 text-sm font-bold text-text-primary flex-1">Recent Pulls</h3>
         </div>
 
-        <div class="relative overflow-hidden" style="max-height: 460px;">
+        <div class="relative overflow-hidden" style="max-height: 28.75rem;">
           <div class="feed-content overflow-y-auto p-2">
             @for (pull of recentPulls(); track pull.username + pull.timeAgo) {
               <div class="feed-row flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-transparent cursor-default relative overflow-hidden"
@@ -331,11 +331,11 @@
                 </div>
                 <div class="flex flex-col gap-0.5 flex-1 min-w-0">
                   <div class="flex items-center justify-between gap-2">
-                    <span class="text-[13px] font-semibold text-text-primary truncate">{{pull.username}}</span>
-                    <span class="text-[11px] text-text-muted font-medium shrink-0">{{pull.timeAgo}}</span>
+                    <span class="text-[0.8125rem] font-semibold text-text-primary truncate">{{pull.username}}</span>
+                    <span class="text-[0.6875rem] text-text-muted font-medium shrink-0">{{pull.timeAgo}}</span>
                   </div>
                   <span class="text-xs text-text-secondary truncate">{{pull.itemName}}</span>
-                  <span class="rarity-badge text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit mt-0.5"
+                  <span class="rarity-badge text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit mt-0.5"
                         [class]="'rarity-badge ' + pull.rarity">{{pull.rarity}}</span>
                 </div>
               </div>

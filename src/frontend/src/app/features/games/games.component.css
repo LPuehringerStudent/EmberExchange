@@ -11,8 +11,8 @@
 
 /* Custom scrollbar */
 .trending-strip { scrollbar-width: thin; scrollbar-color: rgba(232, 93, 4, 0.3) transparent; }
-.trending-strip::-webkit-scrollbar { height: 4px; }
-.trending-strip::-webkit-scrollbar-thumb { background: rgba(232, 93, 4, 0.3); border-radius: 4px; }
+.trending-strip::-webkit-scrollbar { height: 0.25rem; }
+.trending-strip::-webkit-scrollbar-thumb { background: rgba(232, 93, 4, 0.3); border-radius: 0.25rem; }
 
 /* Row entrance animation */
 @keyframes row-in {
@@ -26,16 +26,16 @@
   content: '';
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  width: 3px;
+  width: 0.1875rem;
   background: var(--accent, #e85d04);
   opacity: 0;
   transition: opacity 0.2s ease;
-  border-radius: 0 2px 2px 0;
+  border-radius: 0 0.125rem 0.125rem 0;
 }
 .game-row:hover::before { opacity: 1; }
 .game-row:focus-visible {
-  outline: 3px solid var(--accent, #e85d04);
-  outline-offset: -3px;
+  outline: 0.1875rem solid var(--accent, #e85d04);
+  outline-offset: -0.1875rem;
 }
 
 /* Accent-dependent styles */
@@ -43,12 +43,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 72px;
-  min-width: 72px;
-  border-radius: 14px;
-  margin-right: 20px;
-  padding: 12px;
+  width: 4.5rem;
+  height: 4.5rem;
+  min-width: 4.5rem;
+  border-radius: 0.875rem;
+  margin-right: 1.25rem;
+  padding: 0.75rem;
   box-sizing: border-box;
   background: linear-gradient(135deg,
     color-mix(in srgb, var(--accent, #e85d04) 15%, white),
@@ -73,7 +73,7 @@
 .fav-btn.active svg { transform: scale(1.1); }
 
 /* Friend avatar overlap */
-.friend-avatar { margin-left: -4px; }
+.friend-avatar { margin-left: -0.25rem; }
 .friend-avatar:first-child { margin-left: 0; }
 
 /* Play arrow button */
@@ -86,10 +86,10 @@
 /* Responsive */
 @media (max-width: 768px) {
   .filter-label-text { display: none; }
-  .row-icon-wrap { width: 56px; height: 56px; min-width: 56px; }
+  .row-icon-wrap { width: 3.5rem; height: 3.5rem; min-width: 3.5rem; }
   .row-desc { display: none; }
 }
 @media (max-width: 480px) {
   .row-meta-line { flex-direction: column; align-items: flex-start; }
-  .trending-card { min-width: 180px; }
+  .trending-card { min-width: 11.25rem; }
 }

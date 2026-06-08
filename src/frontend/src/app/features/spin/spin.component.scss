@@ -21,7 +21,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 600px;
+  max-width: 37.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -39,15 +39,15 @@ $bg-card: rgba(20, 20, 35, 0.85);
 
 .ember {
   position: absolute;
-  width: 4px;
-  height: 4px;
+  width: 0.25rem;
+  height: 0.25rem;
   background: $gold;
   border-radius: 50%;
   opacity: 0;
   animation: ember-float 6s ease-in-out infinite;
   animation-delay: calc(var(--i) * 0.5s);
   left: calc(var(--i) * 8%);
-  bottom: -10px;
+  bottom: -0.625rem;
 }
 
 @keyframes ember-float {
@@ -100,8 +100,8 @@ $bg-card: rgba(20, 20, 35, 0.85);
   width: 100%;
 
   .skeleton-wheel {
-    width: 280px;
-    height: 280px;
+    width: 17.5rem;
+    height: 17.5rem;
     border-radius: 50%;
     background: linear-gradient(90deg, #1e1e2e 25%, #2a2a3e 50%, #1e1e2e 75%);
     background-size: 200% 100%;
@@ -109,9 +109,9 @@ $bg-card: rgba(20, 20, 35, 0.85);
   }
 
   .skeleton-button {
-    width: 180px;
-    height: 56px;
-    border-radius: 9999px;
+    width: 11.25rem;
+    height: 3.5rem;
+    border-radius: 624.9375rem;
     background: linear-gradient(90deg, #1e1e2e 25%, #2a2a3e 50%, #1e1e2e 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s infinite;
@@ -148,7 +148,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
 
 .pointer {
   position: absolute;
-  top: -16px;
+  top: -1rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -174,23 +174,23 @@ $bg-card: rgba(20, 20, 35, 0.85);
 }
 
 .wheel-wrapper {
-  width: 320px;
-  height: 320px;
+  width: 20rem;
+  height: 20rem;
   border-radius: 50%;
   overflow: hidden;
   transform: rotate(0deg);
   will-change: transform;
   transition: transform 4s cubic-bezier(0.1, 0.9, 0.2, 1);
   box-shadow:
-    0 0 40px rgba($gold, 0.3),
-    0 0 80px rgba($gold, 0.1),
-    inset 0 0 20px rgba(0,0,0,0.5);
+    0 0 2.5rem rgba($gold, 0.3),
+    0 0 5rem rgba($gold, 0.1),
+    inset 0 0 1.25rem rgba(0,0,0,0.5);
 
   &.spinning {
     box-shadow:
-      0 0 60px rgba($gold, 0.5),
-      0 0 120px rgba($gold, 0.2),
-      inset 0 0 20px rgba(0,0,0,0.5);
+      0 0 3.75rem rgba($gold, 0.5),
+      0 0 7.5rem rgba($gold, 0.2),
+      inset 0 0 1.25rem rgba(0,0,0,0.5);
   }
 }
 
@@ -217,7 +217,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
   color: #fff;
   background: linear-gradient(135deg, $gold 0%, $gold-dark 100%);
   border: none;
-  border-radius: 9999px;
+  border-radius: 624.9375rem;
   cursor: pointer;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba($gold, 0.4), 0 0 0 2px rgba($gold-light, 0.3);
@@ -281,7 +281,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
 .history-section {
   width: 100%;
   background: $bg-card;
-  border-radius: 16px;
+  border-radius: 1rem;
   padding: 1rem 1.25rem;
   border: 1px solid rgba(255,255,255,0.05);
 
@@ -305,7 +305,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
   background: rgba(255,255,255,0.03);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   border-left: 3px solid var(--prize-color);
 
   .history-icon {
@@ -325,7 +325,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     padding: 0.2rem 0.5rem;
-    border-radius: 4px;
+    border-radius: 0.25rem;
 
     &.rarity-common { color: #94a3b8; background: rgba(148,163,184,0.15); }
     &.rarity-uncommon { color: #22c55e; background: rgba(34,197,94,0.15); }
@@ -358,11 +358,11 @@ $bg-card: rgba(20, 20, 35, 0.85);
 .result-card {
   position: relative;
   background: linear-gradient(145deg, #1a1a2e, #0f0f1a);
-  border-radius: 24px;
+  border-radius: 1.5rem;
   padding: 2.5rem 2rem;
   text-align: center;
   width: 90%;
-  max-width: 360px;
+  max-width: 22.5rem;
   border: 1px solid rgba(255,255,255,0.08);
   animation: card-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   overflow: hidden;
@@ -429,7 +429,7 @@ $bg-card: rgba(20, 20, 35, 0.85);
   color: #fff;
   background: linear-gradient(135deg, $gold 0%, $gold-dark 100%);
   border: none;
-  border-radius: 9999px;
+  border-radius: 624.9375rem;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba($gold, 0.4);
   transition: all 0.2s ease;
@@ -451,8 +451,8 @@ $bg-card: rgba(20, 20, 35, 0.85);
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 8px;
-  height: 8px;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
   background: var(--color);
   animation: particle-burst 1s ease-out forwards;
@@ -463,8 +463,8 @@ $bg-card: rgba(20, 20, 35, 0.85);
   0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   100% {
     transform: translate(
-      calc(-50% + cos(var(--i) * 30deg) * 200px),
-      calc(-50% + sin(var(--i) * 30deg) * 200px)
+      calc(-50% + cos(var(--i) * 30deg) * 12.5rem),
+      calc(-50% + sin(var(--i) * 30deg) * 12.5rem)
     ) scale(0);
     opacity: 0;
   }
@@ -480,12 +480,12 @@ $bg-card: rgba(20, 20, 35, 0.85);
 
 .confetti-piece {
   position: absolute;
-  width: 10px;
-  height: 16px;
-  top: -20px;
+  width: 0.625rem;
+  height: 1rem;
+  top: -1.25rem;
   left: calc(var(--i) * 4%);
   background: hsl(calc(var(--i) * 25), 80%, 60%);
-  border-radius: 2px;
+  border-radius: 0.125rem;
   animation: confetti-fall 3s linear forwards;
   animation-delay: calc(var(--i) * 0.08s);
   transform: rotate(calc(var(--i) * 45deg));
@@ -511,8 +511,8 @@ $bg-card: rgba(20, 20, 35, 0.85);
   }
 
   .wheel-wrapper {
-    width: 260px;
-    height: 260px;
+    width: 16.25rem;
+    height: 16.25rem;
   }
 
   .spin-btn {
@@ -539,8 +539,8 @@ $bg-card: rgba(20, 20, 35, 0.85);
 
 @media (max-width: 360px) {
   .wheel-wrapper {
-    width: 220px;
-    height: 220px;
+    width: 13.75rem;
+    height: 13.75rem;
   }
 
   .spin-btn {

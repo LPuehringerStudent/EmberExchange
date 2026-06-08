@@ -3,7 +3,7 @@
   <header class="bj-header grid grid-cols-[1fr_auto_1fr] items-center px-8 py-4 border-b border-[var(--border)]" style="background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-sidebar) 100%);">
     <h1 class="bj-title m-0 text-[1.6rem] font-bold tracking-[-0.01em] text-[var(--text-primary)]" style="font-family: var(--font-display)">Blackjack</h1>
     <span
-      class="phase-badge inline-flex items-center gap-1.5 px-3.5 py-1 rounded-[20px] text-[0.7rem] font-semibold tracking-[0.07em] uppercase border shadow-sm"
+      class="phase-badge inline-flex items-center gap-1.5 px-3.5 py-1 rounded-[1.25rem] text-[0.7rem] font-semibold tracking-[0.07em] uppercase border shadow-sm"
       [class.phase-badge--playing]="isPlaying() || isDealerTurn()"
       [class.phase-badge--finished]="isShowdown()"
     >
@@ -27,16 +27,16 @@
   <div class="bj-main grid grid-cols-[200px_1fr_200px] min-h-0">
     <!-- Left Sidebar -->
     <aside class="bj-sidebar bj-sidebar--left flex flex-col gap-3.5 bg-[var(--bg-sidebar)] px-4 py-6">
-      <div class="info-block flex flex-col gap-1 px-4 py-3.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[10px]">
+      <div class="info-block flex flex-col gap-1 px-4 py-3.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[0.625rem]">
         <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Phase</span>
         <span class="info-block__value text-[1.05rem] font-semibold text-[var(--text-primary)]">{{ phaseLabel() }}</span>
       </div>
-      <div class="info-block flex flex-col gap-1 px-4 py-3.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[10px]">
+      <div class="info-block flex flex-col gap-1 px-4 py-3.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[0.625rem]">
         <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Table Bet</span>
         <span class="info-block__value text-[1.05rem] font-semibold text-[var(--text-primary)]">{{ currentBet() }}</span>
       </div>
       @if (heroPlayer(); as hero) {
-        <div class="info-block info-block--highlight flex flex-col gap-1 px-4 py-3.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[10px]">
+        <div class="info-block info-block--highlight flex flex-col gap-1 px-4 py-3.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[0.625rem]">
           <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Your Stack</span>
           <span class="info-block__value info-block__value--large text-[1.6rem] text-[var(--orange)] tabular-nums">{{ hero.chips }}</span>
         </div>
@@ -84,9 +84,9 @@
                 [style.top.%]="seatPositions[i].y"
               >
                 <!-- Name plate -->
-                <div class="bj-seat__plate flex flex-col items-center bg-[var(--seat-bg)] border border-[var(--seat-border)] rounded-lg px-2.5 py-1 min-w-[70px] text-center backdrop-blur-sm">
-                  <span class="bj-seat__name text-[11px] font-bold text-[var(--text-primary)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[90px]">{{ player.name }}</span>
-                  <span class="bj-seat__chips text-[11px] font-semibold text-[var(--orange)] tabular-nums">{{ player.chips }}</span>
+                <div class="bj-seat__plate flex flex-col items-center bg-[var(--seat-bg)] border border-[var(--seat-border)] rounded-lg px-2.5 py-1 min-w-[4.375rem] text-center backdrop-blur-sm">
+                  <span class="bj-seat__name text-[0.6875rem] font-bold text-[var(--text-primary)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[5.625rem]">{{ player.name }}</span>
+                  <span class="bj-seat__chips text-[0.6875rem] font-semibold text-[var(--orange)] tabular-nums">{{ player.chips }}</span>
                 </div>
 
                 <!-- Hands -->
@@ -125,14 +125,14 @@
         </div>
 
         <!-- Controls -->
-        <div class="bj-controls flex justify-center items-center min-h-[56px] gap-3 mt-4.5">
+        <div class="bj-controls flex justify-center items-center min-h-[3.5rem] gap-3 mt-4.5">
           @if (isBetting() && canAction('bet')) {
             <div class="bj-controls__group bj-controls__group--betting flex flex-col items-center gap-2.5">
-              <div class="bj-bet-slider flex flex-col items-center gap-1.5 min-w-[200px]">
+              <div class="bj-bet-slider flex flex-col items-center gap-1.5 min-w-[12.5rem]">
                 <span class="bj-bet-slider__label text-base font-bold text-[var(--text-primary)]">Bet: {{ betAmount() }}</span>
                 <input
                   type="range"
-                  class="bj-bet-slider__input w-full h-1.5 rounded-[3px] bg-[var(--border)] outline-none cursor-pointer"
+                  class="bj-bet-slider__input w-full h-1.5 rounded-[0.1875rem] bg-[var(--border)] outline-none cursor-pointer"
                   [min]="minBet()"
                   [max]="maxBet()"
                   [step]="10"
@@ -144,7 +144,7 @@
                   <span>{{ maxBet() }}</span>
                 </div>
               </div>
-              <button class="bj-btn bj-btn--primary py-3 px-7 rounded-[10px] border-none text-[0.9rem] font-bold cursor-pointer" (click)="executeBet()">Place Bet</button>
+              <button class="bj-btn bj-btn--primary py-3 px-7 rounded-[0.625rem] border-none text-[0.9rem] font-bold cursor-pointer" (click)="executeBet()">Place Bet</button>
             </div>
           }
 
@@ -152,21 +152,21 @@
             <div class="bj-controls__group flex flex-col items-center gap-2">
               <span class="text-sm font-semibold text-[var(--text-muted)]">Dealer shows Ace — Take Insurance?</span>
               <div class="flex items-center gap-3">
-                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeInsurance()" [disabled]="!canAction('insurance')">Take Insurance</button>
-                <button class="bj-btn bj-btn--action py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeDeclineInsurance()" [disabled]="!canAction('decline_insurance')">Decline</button>
+                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[0.625rem] text-[0.9rem] font-bold cursor-pointer" (click)="executeInsurance()" [disabled]="!canAction('insurance')">Take Insurance</button>
+                <button class="bj-btn bj-btn--action py-3 px-7 rounded-[0.625rem] text-[0.9rem] font-bold cursor-pointer" (click)="executeDeclineInsurance()" [disabled]="!canAction('decline_insurance')">Decline</button>
               </div>
             </div>
           }
 
           @if (isPlaying() && isHeroTurn()) {
             <div class="bj-controls__group flex items-center gap-3">
-              <button class="bj-btn bj-btn--action py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeHit()" [disabled]="!canAction('hit')">Hit</button>
-              <button class="bj-btn bj-btn--action py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeStand()" [disabled]="!canAction('stand')">Stand</button>
+              <button class="bj-btn bj-btn--action py-3 px-7 rounded-[0.625rem] text-[0.9rem] font-bold cursor-pointer" (click)="executeHit()" [disabled]="!canAction('hit')">Hit</button>
+              <button class="bj-btn bj-btn--action py-3 px-7 rounded-[0.625rem] text-[0.9rem] font-bold cursor-pointer" (click)="executeStand()" [disabled]="!canAction('stand')">Stand</button>
               @if (canAction('double')) {
-                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeDouble()">Double</button>
+                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[0.625rem] text-[0.9rem] font-bold cursor-pointer" (click)="executeDouble()">Double</button>
               }
               @if (canAction('split')) {
-                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeSplit()">Split</button>
+                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[0.625rem] text-[0.9rem] font-bold cursor-pointer" (click)="executeSplit()">Split</button>
               }
             </div>
           }
@@ -187,7 +187,7 @@
           @if (winners().length > 0) {
             <div class="sidebar-list flex flex-col gap-2">
               @for (winner of winners(); track $index) {
-                <div class="sidebar-row sidebar-row--winner flex items-center justify-between px-3.5 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[10px]">
+                <div class="sidebar-row sidebar-row--winner flex items-center justify-between px-3.5 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[0.625rem]">
                   <span class="sidebar-row__name text-[0.875rem] font-semibold text-[var(--text-primary)]">{{ getPlayerName(winner.playerId) }}</span>
                   <span class="sidebar-row__amount text-[0.875rem] font-bold text-[var(--orange)] tabular-nums">+{{ winner.amount }}</span>
                 </div>
@@ -200,13 +200,13 @@
             <p class="sidebar-empty text-[0.85rem] text-[var(--text-muted)] italic">No winners this round.</p>
           }
         </div>
-        <button class="bj-btn bj-btn--primary bj-btn--full py-3 px-7 rounded-[10px] border-none text-[0.9rem] font-bold cursor-pointer mt-1" (click)="onNewRound()">Next Game</button>
+        <button class="bj-btn bj-btn--primary bj-btn--full py-3 px-7 rounded-[0.625rem] border-none text-[0.9rem] font-bold cursor-pointer mt-1" (click)="onNewRound()">Next Game</button>
       } @else {
         <!-- Player List -->
         <h2 class="sidebar-title m-0 mb-0.5 text-[0.8rem] font-semibold uppercase tracking-[0.10em] text-[var(--text-muted)]">Players</h2>
         <div class="sidebar-list flex flex-col gap-2">
           @for (player of players(); track $index) {
-            <div class="sidebar-row flex items-center justify-between px-3.5 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[10px]" [class.sidebar-row--active]="player.isCurrentTurn">
+            <div class="sidebar-row flex items-center justify-between px-3.5 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-[0.625rem]" [class.sidebar-row--active]="player.isCurrentTurn">
               <span class="sidebar-row__name text-[0.875rem] font-semibold text-[var(--text-primary)]">{{ player.name }}</span>
               <span class="sidebar-row__chips text-[0.875rem] font-semibold text-[var(--orange)] tabular-nums">{{ player.chips }}</span>
             </div>

@@ -18,12 +18,12 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 3px;
+  height: 0.1875rem;
   background: linear-gradient(90deg, #e85d04, #f48c06);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  border-radius: 3px 3px 0 0;
+  border-radius: 0.1875rem 0.1875rem 0 0;
 }
 
 .tab-btn.active { background: linear-gradient(135deg,#e85d04 0%,#f48c06 100%); color: #fff; box-shadow: 0 4px 12px rgba(232,93,4,.3); }

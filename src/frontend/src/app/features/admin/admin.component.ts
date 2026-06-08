@@ -6,7 +6,7 @@ import { RouterLink, RouterOutlet } from '@angular/router';
   standalone: true,
   imports: [RouterOutlet, RouterLink],
   template: `
-    <div class="flex min-h-[calc(100vh-64px)]">
+    <div class="flex min-h-[calc(100vh-4rem)]">
       <!-- Admin sidebar -->
       <aside class="w-56 bg-surface border-r border-[rgba(232,93,4,0.15)] p-4">
         <h2 class="text-lg font-bold text-accent mb-4 px-2">Admin Panel</h2>

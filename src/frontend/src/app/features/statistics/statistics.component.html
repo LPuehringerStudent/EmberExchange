@@ -1,4 +1,4 @@
-<div class="max-w-[1400px] mx-auto p-6 min-h-screen text-text-primary">
+<div class="max-w-[87.5rem] mx-auto p-6 min-h-screen text-text-primary">
 
   <!-- Header -->
   <header class="mb-8">
@@ -11,7 +11,7 @@
         <h1 class="m-0 text-[2rem] font-bold bg-gradient-to-br from-accent to-orange-400 bg-clip-text text-transparent">Statistics Dashboard</h1>
       </div>
       <button class="btn-secondary" routerLink="/">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-[18px] h-[18px]">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-[1.125rem] h-[1.125rem]">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
         Back to Menu
@@ -49,7 +49,7 @@
         @for (stat of dashboardStats; track stat.label) {
           <div class="flex items-center gap-4 p-6 bg-surface rounded-2xl border border-border shadow-[0_4px_20px_var(--shadow-color)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_var(--shadow-color)]">
             <div
-              class="flex items-center justify-center w-14 h-14 rounded-[14px] text-white"
+              class="flex items-center justify-center w-14 h-14 rounded-[0.875rem] text-white"
               [class]="stat.trend === 'up' ? 'bg-gradient-to-br from-green-500 to-emerald-400' : stat.trend === 'down' ? 'bg-gradient-to-br from-red-500 to-red-400' : 'bg-gradient-to-br from-gray-400 to-gray-500'"
             >
               @if (stat.trend === 'up') {
@@ -71,7 +71,7 @@
               }
             </div>
             <div class="flex flex-col gap-1">
-              <span class="text-[13px] text-text-muted font-medium uppercase tracking-wide">{{stat.label}}</span>
+              <span class="text-[0.8125rem] text-text-muted font-medium uppercase tracking-wide">{{stat.label}}</span>
               <span class="text-2xl font-bold text-text-primary">{{stat.value}}</span>
             </div>
           </div>
@@ -110,10 +110,10 @@
                   >{{i + 1}}</span>
                   <div class="flex-1 flex flex-col gap-0.5">
                     <span class="font-semibold text-text-primary text-sm">{{player.username || 'Player #' + player.playerId}}</span>
-                    <span class="text-[13px] text-text-muted">{{player.totalMiniGamesPlayed}} games</span>
+                    <span class="text-[0.8125rem] text-text-muted">{{player.totalMiniGamesPlayed}} games</span>
                   </div>
                   <div class="flex gap-2">
-                    <span class="px-2.5 py-1 bg-accent-glow text-accent rounded-[20px] text-xs font-semibold">{{player.totalListingsSold}} sales</span>
+                    <span class="px-2.5 py-1 bg-accent-glow text-accent rounded-[1.25rem] text-xs font-semibold">{{player.totalListingsSold}} sales</span>
                   </div>
                 </div>
               }
@@ -142,10 +142,10 @@
                   >{{i + 1}}</span>
                   <div class="flex-1 flex flex-col gap-0.5">
                     <span class="font-semibold text-text-primary text-sm">{{player.username || 'Player #' + player.playerId}}</span>
-                    <span class="text-[13px] text-text-muted">{{formatCurrency(player.netWorthEstimate)}}</span>
+                    <span class="text-[0.8125rem] text-text-muted">{{formatCurrency(player.netWorthEstimate)}}</span>
                   </div>
                   <div class="flex gap-2">
-                    <span class="px-2.5 py-1 bg-accent-glow text-accent rounded-[20px] text-xs font-semibold">{{player.currentStoveCount}} stoves</span>
+                    <span class="px-2.5 py-1 bg-accent-glow text-accent rounded-[1.25rem] text-xs font-semibold">{{player.currentStoveCount}} stoves</span>
                   </div>
                 </div>
               }
@@ -179,28 +179,28 @@
                 Today's Activity
               </h3>
               <div class="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4">
-                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
-                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Players Online</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[0.625rem] text-center">
+                  <span class="text-[0.6875rem] text-text-muted font-medium uppercase tracking-wide">Players Online</span>
                   <span class="text-lg font-bold text-text-primary">{{todayStats.uniquePlayersLoggedIn}}</span>
                 </div>
-                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
-                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Lootboxes Opened</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[0.625rem] text-center">
+                  <span class="text-[0.6875rem] text-text-muted font-medium uppercase tracking-wide">Lootboxes Opened</span>
                   <span class="text-lg font-bold text-text-primary">{{todayStats.lootboxesOpenedToday}}</span>
                 </div>
-                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
-                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">New Listings</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[0.625rem] text-center">
+                  <span class="text-[0.6875rem] text-text-muted font-medium uppercase tracking-wide">New Listings</span>
                   <span class="text-lg font-bold text-text-primary">{{todayStats.newListingsToday}}</span>
                 </div>
-                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
-                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Sales Completed</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[0.625rem] text-center">
+                  <span class="text-[0.6875rem] text-text-muted font-medium uppercase tracking-wide">Sales Completed</span>
                   <span class="text-lg font-bold text-text-primary">{{todayStats.listingsSoldToday}}</span>
                 </div>
-                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
-                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Trading Volume</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[0.625rem] text-center">
+                  <span class="text-[0.6875rem] text-text-muted font-medium uppercase tracking-wide">Trading Volume</span>
                   <span class="text-lg font-bold text-text-primary">{{formatNumber(todayStats.totalTradingVolume)}}</span>
                 </div>
-                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[10px] text-center">
-                  <span class="text-[11px] text-text-muted font-medium uppercase tracking-wide">Avg Sale Price</span>
+                <div class="flex flex-col gap-1 p-3 bg-surface-secondary rounded-[0.625rem] text-center">
+                  <span class="text-[0.6875rem] text-text-muted font-medium uppercase tracking-wide">Avg Sale Price</span>
                   <span class="text-lg font-bold text-text-primary">{{formatNumber(todayStats.averageSalePriceToday)}}</span>
                 </div>
               </div>
@@ -280,7 +280,7 @@
                     <div class="flex items-center gap-2 flex-wrap">
                       <span class="font-semibold text-text-primary text-sm">{{stove.name || 'Type #' + stove.stoveTypeId}}</span>
                       <span
-                        class="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-[10px]"
+                        class="text-[0.6875rem] font-bold uppercase tracking-wide px-2 py-0.5 rounded-[0.625rem]"
                         [class]="'stove-rarity-' + (stove.rarity || 'common').toLowerCase()"
                       >{{stove.rarity || 'Common'}}</span>
                     </div>
