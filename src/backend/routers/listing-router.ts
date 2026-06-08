@@ -375,6 +375,53 @@ listingRouter.get("/stoves/:stoveId/listing", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /listings/sold:
+ *   get:
+ *     summary: Get recently sold listings
+ *     description: Retrieves the most recently sold marketplace listings
+ *     tags:
+ *       - Listings
+ *     parameters:
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Maximum number of records (default 10)
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: List of sold listings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Listing'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+listingRouter.get("/listings/sold", async (req, res) => {
+    const unit = await Unit.create(true);
+    const service = new ListingService(unit);
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
+
+    try {
+        const response = await service.getSoldListings(limit);
+        res.status(StatusCodes.OK).json(response);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
 listingRouter.get("/lootboxes/:lootboxId/listing", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);

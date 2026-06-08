@@ -61,6 +61,67 @@
         </div>
       </div>
 
+      <!-- Portfolio Performance Chart -->
+      @if (portfolioChartModel(); as pChart) {
+        <div class="overview-section">
+          <div class="section-divider">
+            <div class="divider-line left"></div>
+            <span class="divider-label">Portfolio Performance</span>
+            <div class="divider-line right"></div>
+          </div>
+          <div class="chart-section glass-panel">
+            <div class="chart-toolbar">
+              <div class="time-controls">
+                <button type="button" class="time-button" [class.active]="timeRange() === '1d'" (click)="setTimeRange('1d')">1D</button>
+                <button type="button" class="time-button" [class.active]="timeRange() === '1w'" (click)="setTimeRange('1w')">1W</button>
+                <button type="button" class="time-button" [class.active]="timeRange() === '1m'" (click)="setTimeRange('1m')">1M</button>
+              </div>
+              @if (portfolioHoveredPoint(); as point) {
+                <div class="hover-tooltip" role="status" aria-live="polite">
+                  <span class="tooltip-price">{{ formatCoal(point.price) }}</span>
+                  <span class="tooltip-time">{{ formatTime(point.timestamp) }}</span>
+                </div>
+              }
+            </div>
+            <div class="chart-container">
+              <svg class="chart-svg" [attr.viewBox]="pChart.viewBox" preserveAspectRatio="none" (mousemove)="onPortfolioChartMouseMove($event)" (mouseleave)="onPortfolioChartMouseLeave()" role="img" aria-label="Portfolio performance chart">
+                <defs>
+                  <linearGradient id="portfolioAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#e85d04" stop-opacity="0.3" />
+                    <stop offset="100%" stop-color="#e85d04" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                @for (y of gridLineYs; track y) {
+                  <line class="chart-grid-line" x1="0" [attr.y1]="y" x2="100" [attr.y2]="y" />
+                }
+                <path class="chart-area" [attr.d]="pChart.areaPath" fill="url(#portfolioAreaGradient)" opacity="0.25" />
+                @for (segment of pChart.segments; track $index) {
+                  <line [class.chart-segment-up]="segment.isUp" [class.chart-segment-down]="!segment.isUp" [attr.x1]="segment.x1" [attr.y1]="segment.y1" [attr.x2]="segment.x2" [attr.y2]="segment.y2" />
+                }
+                @if (portfolioHoverIndex() >= 0) {
+                  @if (pChart.points[portfolioHoverIndex()]; as point) {
+                    <line class="chart-crosshair" [attr.x1]="point.x" y1="0" [attr.x2]="point.x" y2="40" />
+                    <circle class="chart-hover-circle" [attr.cx]="point.x" [attr.cy]="point.y" r="0.8" />
+                  }
+                }
+              </svg>
+              <div class="axis-labels y-axis">
+                <span class="axis-label">{{ formatCoal(pChart.maxPrice) }}</span>
+                <span class="axis-label">{{ formatCoal(pChart.minPrice + pChart.priceRange * 0.75) }}</span>
+                <span class="axis-label">{{ formatCoal(pChart.minPrice + pChart.priceRange * 0.5) }}</span>
+                <span class="axis-label">{{ formatCoal(pChart.minPrice + pChart.priceRange * 0.25) }}</span>
+                <span class="axis-label">{{ formatCoal(pChart.minPrice) }}</span>
+              </div>
+              <div class="axis-labels x-axis">
+                <span class="axis-label">{{ formatDateShort(pChart.startDate) }}</span>
+                <span class="axis-label">{{ formatDateShort(pChart.midDate) }}</span>
+                <span class="axis-label">{{ formatDateShort(pChart.endDate) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Top Gainers -->
       @if (portfolioSummary().topGainers.length > 0) {
         <div class="overview-section">
@@ -679,6 +740,30 @@
                         {{ formatPercent(selectedAssetPL()) }}
                       </span>
                     </div>
+                  </div>
+
+                  <!-- Sell Controls -->
+                  <div class="sell-section">
+                    <div class="invest-divider"></div>
+                    <div class="invest-row">
+                      <span class="invest-label">Sell Quantity</span>
+                      <div class="stepper">
+                        <button type="button" class="stepper-button" (click)="decrementSellQuantity()" aria-label="Decrease sell quantity">−</button>
+                        <input type="number" class="stepper-input" [value]="sellQuantity()" (input)="updateSellQuantity($event)" min="1" [max]="pos.quantity" aria-label="Sell quantity" />
+                        <button type="button" class="stepper-button" (click)="incrementSellQuantity()" aria-label="Increase sell quantity">+</button>
+                      </div>
+                    </div>
+                    <div class="invest-row highlight">
+                      <span class="invest-label">Total Value</span>
+                      <span class="invest-value accent">{{ formatCoal(totalSaleValue()) }}</span>
+                    </div>
+                    <div class="invest-row">
+                      <span class="invest-label">Balance After</span>
+                      <span class="invest-value muted">{{ formatCoal(balance() + totalSaleValue()) }}</span>
+                    </div>
+                    <button type="button" class="sell-button" (click)="executeSale()" [disabled]="!canSell()">
+                      {{ canSell() ? 'Execute Sale' : 'Invalid Quantity' }}
+                    </button>
                   </div>
                 </div>
               }

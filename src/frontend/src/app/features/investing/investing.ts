@@ -137,7 +137,9 @@ export class Investing implements OnInit {
   timeRange = signal<TimeRange>('1w');
   priceHistory = signal<PricePoint[]>([]);
   quantity = signal<number>(1);
+  sellQuantity = signal<number>(1);
   hoverIndex = signal<number>(-1);
+  sellHoverIndex = signal<number>(-1);
   loading = signal<boolean>(true);
   searchQuery = signal<string>('');
 
@@ -234,6 +236,18 @@ export class Investing implements OnInit {
 
   canInvest = computed(() => this.totalCost() <= this.balance());
 
+  totalSaleValue = computed(() => {
+    const asset = this.selectedAsset();
+    if (!asset) return 0;
+    return asset.currentPrice * this.sellQuantity();
+  });
+
+  canSell = computed(() => {
+    const pos = this.selectedAssetPosition();
+    if (!pos) return false;
+    return this.sellQuantity() > 0 && this.sellQuantity() <= pos.quantity;
+  });
+
   periodHigh = computed(() => {
     const data = this.priceHistory();
     return data.length ? Math.max(...data.map((d) => d.price)) : 0;
@@ -329,6 +343,126 @@ export class Investing implements OnInit {
     return ((asset.currentPrice - pos.avgBuyPrice) / pos.avgBuyPrice) * 100;
   });
 
+  /* ── Portfolio chart ── */
+  portfolioHoverIndex = signal<number>(-1);
+
+  portfolioPriceHistory = computed<PricePoint[]>(() => {
+    const stocks = this.ownedStocks();
+    const assets = this.allAssets();
+    const range = this.timeRange();
+    if (stocks.length === 0) return [];
+
+    const now = new Date();
+    let count: number;
+    let intervalMs: number;
+
+    switch (range) {
+      case '1d':
+        count = 48;
+        intervalMs = 30 * 60 * 1000;
+        break;
+      case '1w':
+        count = 56;
+        intervalMs = 3 * 60 * 60 * 1000;
+        break;
+      case '1m':
+        count = 30;
+        intervalMs = 24 * 60 * 60 * 1000;
+        break;
+    }
+
+    const points: PricePoint[] = [];
+    for (let i = count - 1; i >= 0; i--) {
+      const timestamp = new Date(now.getTime() - i * intervalMs);
+      let totalValue = 0;
+      for (const stock of stocks) {
+        const asset = assets.find((a) => a.id === stock.assetId && a.category === stock.category);
+        const basePrice = asset?.currentPrice ?? stock.avgBuyPrice;
+        const volatility = range === '1d' ? 0.008 : range === '1w' ? 0.015 : 0.03;
+        const seed = stock.assetId * 9301 + stock.category.length * 49297 + i * 233280;
+        const pseudoRandom = ((seed * 16807) % 2147483647) / 2147483647;
+        const change = (pseudoRandom - 0.48) * basePrice * volatility;
+        const price = Math.max(basePrice * 0.4, basePrice + change);
+        totalValue += Math.round(price * 100) / 100 * stock.quantity;
+      }
+      points.push({ timestamp, price: Math.round(totalValue * 100) / 100 });
+    }
+
+    /* Smooth toward actual current portfolio value */
+    const currentValue = this.portfolioCurrentValue();
+    if (points.length > 0 && currentValue > 0) {
+      points[points.length - 1].price = currentValue;
+    }
+    return points;
+  });
+
+  portfolioChartModel = computed<ChartModel | null>(() => {
+    const data = this.portfolioPriceHistory();
+    if (data.length < 2) return null;
+
+    const prices = data.map((d) => d.price);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const padding = (max - min) * 0.05 || max * 0.05;
+    const minPrice = min - padding;
+    const maxPrice = max + padding;
+    const range = maxPrice - minPrice || 1;
+
+    const width = 100;
+    const height = 40;
+
+    const points = data.map((d, i) => ({
+      x: (i / (data.length - 1)) * width,
+      y: height - ((d.price - minPrice) / range) * height,
+      price: d.price,
+      timestamp: d.timestamp,
+    }));
+
+    const segments: ChartSegment[] = [];
+    for (let i = 1; i < points.length; i++) {
+      segments.push({
+        x1: points[i - 1].x,
+        y1: points[i - 1].y,
+        x2: points[i].x,
+        y2: points[i].y,
+        isUp: points[i].price >= points[i - 1].price,
+      });
+    }
+
+    const areaPath =
+      `M ${points[0].x} ${height} ` +
+      points.map((p) => `L ${p.x} ${p.y}`).join(' ') +
+      ` L ${points[points.length - 1].x} ${height} Z`;
+
+    return {
+      viewBox: `0 0 ${width} ${height}`,
+      segments,
+      areaPath,
+      points,
+      minPrice,
+      maxPrice,
+      priceRange: range,
+      startDate: points[0].timestamp,
+      midDate: points[Math.floor(points.length / 2)].timestamp,
+      endDate: points[points.length - 1].timestamp,
+    };
+  });
+
+  portfolioHoveredPoint = computed(() => {
+    const model = this.portfolioChartModel();
+    const index = this.portfolioHoverIndex();
+    if (!model || index < 0 || index >= model.points.length) return null;
+    return model.points[index];
+  });
+
+  portfolioPeriodChange = computed(() => {
+    const data = this.portfolioPriceHistory();
+    if (data.length < 2) return 0;
+    const first = data[0].price;
+    const last = data[data.length - 1].price;
+    return first > 0 ? ((last - first) / first) * 100 : 0;
+  });
+
   async ngOnInit(): Promise<void> {
     const user = this.authService.getCurrentUser();
     if (user) {
@@ -402,6 +536,22 @@ export class Investing implements OnInit {
     this.hoverIndex.set(-1);
   }
 
+  onPortfolioChartMouseMove(event: MouseEvent): void {
+    const svg = event.currentTarget as SVGSVGElement;
+    const rect = svg.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const model = this.portfolioChartModel();
+    if (!model || model.points.length === 0) return;
+
+    const ratio = Math.max(0, Math.min(1, x / rect.width));
+    const index = Math.round(ratio * (model.points.length - 1));
+    this.portfolioHoverIndex.set(index);
+  }
+
+  onPortfolioChartMouseLeave(): void {
+    this.portfolioHoverIndex.set(-1);
+  }
+
   viewAsset(stock: OwnedStock | PortfolioStock): void {
     const asset = this.allAssets().find(
       (a) => a.id === stock.assetId && a.category === stock.category
@@ -455,6 +605,51 @@ export class Investing implements OnInit {
     }
 
     this.savePortfolio();
+  }
+
+  executeSale(): void {
+    const asset = this.selectedAsset();
+    const qty = this.sellQuantity();
+    const value = this.totalSaleValue();
+    const pos = this.selectedAssetPosition();
+    if (!asset || !pos || qty > pos.quantity || qty < 1) return;
+
+    this.balance.update((b) => b + value);
+
+    if (qty === pos.quantity) {
+      this.ownedStocks.update((stocks) =>
+        stocks.filter((s) => !(s.assetId === asset.id && s.category === asset.category))
+      );
+    } else {
+      this.ownedStocks.update((stocks) =>
+        stocks.map((s) =>
+          s.assetId === asset.id && s.category === asset.category
+            ? { ...s, quantity: s.quantity - qty }
+            : s
+        )
+      );
+    }
+
+    this.sellQuantity.set(1);
+    this.savePortfolio();
+  }
+
+  updateSellQuantity(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = parseInt(input.value, 10);
+    const pos = this.selectedAssetPosition();
+    const maxQty = pos?.quantity ?? 1;
+    this.sellQuantity.set(isNaN(value) || value < 1 ? 1 : Math.min(value, maxQty));
+  }
+
+  incrementSellQuantity(): void {
+    const pos = this.selectedAssetPosition();
+    const maxQty = pos?.quantity ?? 1;
+    this.sellQuantity.update((q) => Math.min(q + 1, maxQty));
+  }
+
+  decrementSellQuantity(): void {
+    this.sellQuantity.update((q) => (q > 1 ? q - 1 : 1));
   }
 
   getStockCurrentPrice(stock: OwnedStock): number {

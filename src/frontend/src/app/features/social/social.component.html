@@ -4,10 +4,13 @@
     <app-friend-list
       [friends]="friends()"
       [pendingRequests]="pendingRequests()"
+      [marketplaceThreads]="marketplaceThreads()"
       [selectedFriendId]="selectedFriend()?.friendId ?? null"
+      [selectedMarketplacePlayerId]="selectedMarketplaceThread()?.playerId ?? null"
       [activeTab]="activeTab()"
       [currentPlayerId]="currentPlayerId()"
       (onSelectFriend)="selectFriend($event)"
+      (onSelectMarketplaceThread)="selectMarketplaceThread($event)"
       (onViewGlory)="viewGlory($event)"
       (onAddFriend)="showAddFriendModal.set(true)"
       (onRespondRequest)="respondToRequest($event.friendId, $event.accept)"
@@ -17,15 +20,24 @@
 
   <!-- Right panel: Chat thread -->
   <div class="flex-1 h-[55%] lg:h-full min-h-0">
-    <app-chat-thread
-      [friend]="selectedFriend()"
-      [messages]="messages()"
-      [currentPlayerId]="currentPlayerId()"
-      (onSendMessage)="sendMessage($event)"
-      (onMakeOffer)="showTradeOfferModal.set(true)"
-      (onAcceptOffer)="acceptTradeOffer($event)"
-      (onDeclineOffer)="declineTradeOffer($event)"
-    />
+    @if (activeTab() === 'marketplace' && selectedMarketplaceThread()) {
+      <app-chat-thread
+        [friend]="{ username: selectedMarketplaceThread()!.username }"
+        [messages]="marketplaceMessages()"
+        [currentPlayerId]="currentPlayerId()"
+        (onSendMessage)="sendMarketplaceMessage($event)"
+      />
+    } @else {
+      <app-chat-thread
+        [friend]="selectedFriend()"
+        [messages]="messages()"
+        [currentPlayerId]="currentPlayerId()"
+        (onSendMessage)="sendMessage($event)"
+        (onMakeOffer)="showTradeOfferModal.set(true)"
+        (onAcceptOffer)="acceptTradeOffer($event)"
+        (onDeclineOffer)="declineTradeOffer($event)"
+      />
+    }
   </div>
 </div>
 

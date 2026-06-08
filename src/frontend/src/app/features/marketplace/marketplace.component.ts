@@ -18,7 +18,7 @@ import { LootboxService, LootboxType } from '@core/services/lootbox.service';
 import { PriceHistoryService } from '@core/services/price-history.service';
 import { ChatMessageService } from '@core/services/chat-message.service';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
-import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
+
 
 /* ─── Local Types ─── */
 
@@ -55,7 +55,7 @@ interface ChartModel {
 @Component({
   selector: 'app-marketplace',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule, CommonModule, HeatTierPipe, InfoTooltipComponent],
+  imports: [RouterModule, CommonModule, HeatTierPipe],
   templateUrl: './marketplace.component.html',
   styleUrls: ['./marketplace.component.css'],
 })
@@ -440,7 +440,7 @@ export class MarketplaceComponent implements OnInit {
     this.processingId.set(-1);
     try {
       await firstValueFrom(
-        this._chatService.sendChatMessage(this.playerId, text, listing.sellerId)
+        this._chatService.sendChatMessage(this.playerId, text, listing.sellerId, 'text', { source: 'marketplace' })
       );
       this.messageSent.set(true);
       this.messageText.set('');

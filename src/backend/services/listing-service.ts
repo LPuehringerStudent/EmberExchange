@@ -317,6 +317,26 @@ export class ListingService extends ServiceBase {
     }
 
     /**
+     * Retrieves recently sold listings joined with trade execution time.
+     * @param limit - Maximum number of records to return (default 10).
+     * @returns An array of sold ListingRow objects ordered by most recent sale.
+     */
+    async getSoldListings(limit: number = 10): Promise<ListingRow[]> {
+        const stmt = this.unit.prepare<ListingRow>(
+            `SELECT l.*, p.username as sellerName
+             FROM Listing l
+             JOIN Trade t ON l.listingId = t.listingId
+             JOIN Player p ON l.sellerId = p.playerId
+             WHERE l.status = 'sold'
+               AND p.bannedAt IS NULL
+             ORDER BY t.executedAt DESC
+             LIMIT @limit`,
+            { limit }
+        );
+        return await stmt.all();
+    }
+
+    /**
      * Counts active listings for a seller.
      * @param sellerId - The seller's player ID.
      * @returns The count of active listings.

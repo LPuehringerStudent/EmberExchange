@@ -99,7 +99,8 @@ export class ListingService {
   }
 
   getSoldListings(limit: number = 10): Observable<Listing[]> {
-    // TODO: wire up backend endpoint
-    return of([]);
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.get<Listing[]>(`/listings/sold?limit=${limit}`, headers);
   }
 }

@@ -1263,6 +1263,46 @@
   filter: grayscale(0.5);
 }
 
+/* ---- Sell Button ---- */
+.sell-button {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--color-red), #dc2626);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0.25rem 1rem rgba(239, 68, 68, 0.25);
+  font-family: inherit;
+  letter-spacing: 0.01em;
+}
+
+.sell-button:hover:not(:disabled) {
+  transform: translateY(-0.0625rem);
+  box-shadow: 0 0.375rem 1.25rem rgba(239, 68, 68, 0.35);
+}
+
+.sell-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.sell-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.sell-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
 /* ---- Position Panel ---- */
 .position-panel {
   padding: 1.5rem;
