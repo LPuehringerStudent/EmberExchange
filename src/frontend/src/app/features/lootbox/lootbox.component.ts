@@ -390,6 +390,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
       this.lootboxCount.update(count => Math.max(0, count - 1));
       void this.authService.refreshUser();
+      await this.loadPityData(); // refresh pity counter immediately
 
       // Remove opened lootbox from available list
       this.availableLootboxes.set(available.filter(lb => lb.lootboxId !== target.lootboxId));
