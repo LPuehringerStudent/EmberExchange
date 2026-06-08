@@ -447,7 +447,8 @@ export class MarketplaceComponent implements OnInit {
       setTimeout(() => this.messageSent.set(false), 3000);
     } catch (err) {
       console.error('Failed to send message:', err);
-      this.error.set('Failed to send message. You may need to be friends with this player first.');
+      const e = err as { message?: string };
+      this.error.set(e?.message ?? 'Failed to send message. Please try again.');
     } finally {
       this.processingId.set(null);
     }
