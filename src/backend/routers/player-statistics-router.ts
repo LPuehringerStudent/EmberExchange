@@ -80,7 +80,7 @@ playerStatisticsRouter.get("/player-statistics", async (_req, res) => {
 playerStatisticsRouter.get("/player-statistics/leaderboard/activity", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerStatisticsService(unit);
-    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
 
     try {
         const response = await service.getTopByActivity(limit);
@@ -127,7 +127,7 @@ playerStatisticsRouter.get("/player-statistics/leaderboard/activity", async (req
 playerStatisticsRouter.get("/player-statistics/leaderboard/wealth", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerStatisticsService(unit);
-    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
 
     try {
         const response = await service.getTopByNetWorth(limit);

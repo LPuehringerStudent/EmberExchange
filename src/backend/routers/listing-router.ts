@@ -50,7 +50,7 @@ function getClientIp(req: express.Request): string {
 listingRouter.get("/listings", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
@@ -91,7 +91,7 @@ listingRouter.get("/listings", readRateLimiter.middleware(), async (req, res) =>
 listingRouter.get("/listings/active", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
@@ -539,8 +539,8 @@ listingRouter.post("/listings", requireAuth, async (req, res) => {
             return;
         }
 
-        if (price < 1) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive number" });
+        if (!Number.isFinite(price) || !Number.isInteger(price) || price < 1 || price > 2147483647) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive integer" });
             return;
         }
 
@@ -616,9 +616,13 @@ listingRouter.post("/listings", requireAuth, async (req, res) => {
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create listing" });
         }
-    } catch (err) {
-        console.error("Route error:", err);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    } catch (err: any) {
+        if (err?.code === '23505') {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Item is already listed" });
+        } else {
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+        }
     } finally {
         await unit.complete(ok);
     }
@@ -711,8 +715,8 @@ listingRouter.patch("/listings/:id/price", requireAuth, async (req, res) => {
         }
 
         const { price } = req.body;
-        if (typeof price !== "number" || price < 1) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive number" });
+        if (typeof price !== "number" || !Number.isFinite(price) || !Number.isInteger(price) || price < 1 || price > 2147483647) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive integer" });
             return;
         }
 

@@ -377,13 +377,17 @@ export class LootboxService extends ServiceBase {
      * Updates the owner (playerId) of a lootbox.
      * @param lootboxId - The lootbox's unique ID.
      * @param playerId - The new owner's player ID.
+     * @param expectedCurrentOwnerId - If provided, the update only succeeds if the lootbox is currently owned by this player.
      * @returns True if exactly one lootbox was updated, false otherwise.
      */
-    async updateLootboxOwner(lootboxId: number, playerId: number): Promise<boolean> {
-        const stmt = this.unit.prepare(
-            "UPDATE Lootbox SET playerId = @playerId WHERE lootboxId = @lootboxId",
-            { lootboxId, playerId }
-        );
+    async updateLootboxOwner(lootboxId: number, playerId: number, expectedCurrentOwnerId?: number): Promise<boolean> {
+        const sql = expectedCurrentOwnerId !== undefined
+            ? "UPDATE Lootbox SET playerId = @playerId WHERE lootboxId = @lootboxId AND playerId = @expectedCurrentOwnerId"
+            : "UPDATE Lootbox SET playerId = @playerId WHERE lootboxId = @lootboxId";
+        const params = expectedCurrentOwnerId !== undefined
+            ? { lootboxId, playerId, expectedCurrentOwnerId }
+            : { lootboxId, playerId };
+        const stmt = this.unit.prepare(sql, params);
         const result = await stmt.run();
         return result.changes === 1;
     }

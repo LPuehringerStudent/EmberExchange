@@ -43,7 +43,7 @@ function isConstraintError(err: unknown): boolean {
 lootboxRouter.get("/lootboxes", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LootboxService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
@@ -103,7 +103,7 @@ lootboxRouter.get("/lootboxes/recent", async (req, res) => {
     const service = new LootboxService(unit);
 
     try {
-        const limit = Math.min(100, req.query.limit ? Number(req.query.limit) : 20);
+        const limit = Math.min(Math.max(req.query.limit ? Number(req.query.limit) : 20, 1), 100);
         const rows = await service.getRecentPulls(limit);
 
         // Format relative timestamps on the backend so the frontend stays simple

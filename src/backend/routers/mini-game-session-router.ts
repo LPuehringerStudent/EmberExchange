@@ -43,7 +43,7 @@ function isConstraintError(err: unknown): boolean {
 miniGameSessionRouter.get("/mini-game-sessions", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {

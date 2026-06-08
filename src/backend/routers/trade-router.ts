@@ -59,7 +59,7 @@ function getClientIp(req: express.Request): string {
 tradeRouter.get("/trades", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
@@ -108,7 +108,7 @@ tradeRouter.get("/trades", requireAuth, async (req, res) => {
 tradeRouter.get("/trades/recent", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
-    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
 
     try {
         const response = await service.getRecentTrades(limit);
@@ -493,8 +493,7 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
         }
         const sellerCredited = await playerService.addCoinsAtomic(listing.sellerId, listing.price);
         if (!sellerCredited) {
-            // This should never happen if seller exists, but roll back buyer if it does
-            await playerService.addCoinsAtomic(buyerId, listing.price);
+            // Transaction rollback will automatically restore buyer's coins
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to credit seller" });
             await unit.complete(false);
             return;
@@ -510,7 +509,7 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
         // Transfer ownership of the item (stove or lootbox)
         let itemDescription: string;
         if (listing.stoveId !== undefined && listing.stoveId !== null) {
-            const transferSuccess = await stoveService.updateOwner(listing.stoveId, buyerId);
+            const transferSuccess = await stoveService.updateOwner(listing.stoveId, buyerId, listing.sellerId);
             if (!transferSuccess) {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer stove ownership" });
                 return;
@@ -532,7 +531,7 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
             itemDescription = `stove #${listing.stoveId}`;
         } else if (listing.lootboxId !== undefined && listing.lootboxId !== null) {
             const lootboxService = new LootboxService(unit);
-            const transferSuccess = await lootboxService.updateLootboxOwner(listing.lootboxId, buyerId);
+            const transferSuccess = await lootboxService.updateLootboxOwner(listing.lootboxId, buyerId, listing.sellerId);
             if (!transferSuccess) {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer lootbox ownership" });
                 return;

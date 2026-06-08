@@ -126,7 +126,7 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/market-summary", async (_r
 stoveTypeStatisticsRouter.get("/stove-type-statistics/leaderboard/sales", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
-    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
 
     try {
         const response = await service.getTopBySales(limit);
@@ -173,7 +173,7 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/leaderboard/sales", async 
 stoveTypeStatisticsRouter.get("/stove-type-statistics/most-viewed", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new StoveTypeStatisticsService(unit);
-    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
 
     try {
         const response = await service.getMostViewed(limit);

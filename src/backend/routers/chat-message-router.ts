@@ -84,7 +84,7 @@ chatMessageRouter.get("/chat-messages", requireAuth, async (req, res) => {
 chatMessageRouter.get("/chat-messages/global", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ChatMessageService(unit);
-    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
@@ -403,7 +403,7 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", requi
     const service = new ChatMessageService(unit);
     const player1Id = req.params.player1Id;
     const player2Id = req.params.player2Id;
-    const limit = Math.min(Number(req.query.limit) || 20, 100);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {

@@ -97,13 +97,17 @@ export class StoveService extends ServiceBase {
      * Updates the owner of a stove (for trades/transfers).
      * @param id - The stove's unique ID.
      * @param newOwnerId - The new owner's player ID.
+     * @param expectedCurrentOwnerId - If provided, the update only succeeds if the stove is currently owned by this player.
      * @returns True if exactly one stove was updated, false otherwise.
      */
-    async updateOwner(id: number, newOwnerId: number): Promise<boolean> {
-        const stmt = this.unit.prepare(
-            "UPDATE Stove SET currentOwnerId = @newOwnerId WHERE stoveId = @id",
-            { id, newOwnerId }
-        );
+    async updateOwner(id: number, newOwnerId: number, expectedCurrentOwnerId?: number): Promise<boolean> {
+        const sql = expectedCurrentOwnerId !== undefined
+            ? "UPDATE Stove SET currentOwnerId = @newOwnerId WHERE stoveId = @id AND currentOwnerId = @expectedCurrentOwnerId"
+            : "UPDATE Stove SET currentOwnerId = @newOwnerId WHERE stoveId = @id";
+        const params = expectedCurrentOwnerId !== undefined
+            ? { id, newOwnerId, expectedCurrentOwnerId }
+            : { id, newOwnerId };
+        const stmt = this.unit.prepare(sql, params);
         const result = await stmt.run();
         return result.changes === 1;
     }

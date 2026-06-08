@@ -42,13 +42,6 @@ export interface CreateListingResponse {
   listingId: number;
 }
 
-export interface PurchaseResult {
-  success: boolean;
-  error?: string;
-  coins?: number;
-  xp?: number;
-}
-
 @Injectable({ providedIn: 'root' })
 export class ListingService {
   private api = inject(ApiService);
@@ -72,12 +65,6 @@ export class ListingService {
     const sessionId = this.auth.getSessionId();
     const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
     return this.api.post<CreateListingResponse>('/listings', { sellerId, price, stoveId, lootboxId }, headers);
-  }
-
-  buyListing(listingId: number): Observable<PurchaseResult> {
-    const sessionId = this.auth.getSessionId();
-    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
-    return this.api.post<PurchaseResult>(`/listings/${listingId}/buy`, {}, headers);
   }
 
   getListingsBySellerId(sellerId: number): Observable<Listing[]> {

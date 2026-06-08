@@ -538,6 +538,22 @@ export class DB {
             )
         `);
 
+        await connection.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes WHERE indexname = 'idx_listing_active_stove'
+                ) THEN
+                    CREATE UNIQUE INDEX idx_listing_active_stove ON Listing(stoveId) WHERE status = 'active';
+                END IF;
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes WHERE indexname = 'idx_listing_active_lootbox'
+                ) THEN
+                    CREATE UNIQUE INDEX idx_listing_active_lootbox ON Listing(lootboxId) WHERE status = 'active';
+                END IF;
+            END $$;
+        `);
+
         // Migration: add lootboxId column to existing Listing tables
         await connection.query(`
             DO $$

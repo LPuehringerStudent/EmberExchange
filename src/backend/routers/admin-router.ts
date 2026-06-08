@@ -219,7 +219,7 @@ adminRouter.get("/admin/request-logs", async (req, res) => {
         const path = req.query.path as string | undefined;
         const since = req.query.since as string | undefined;
         const until = req.query.until as string | undefined;
-        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 500;
+        const limit = Math.max(req.query.limit ? parseInt(req.query.limit as string, 10) : 500, 1);
 
         const logs = await queryRequestLogs(unit, {
             playerId: playerId && !isNaN(playerId) ? playerId : undefined,
@@ -258,7 +258,7 @@ adminRouter.get("/admin/violations", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PunishmentService(unit);
     try {
-        const limit = Math.min(Number(req.query.limit) || 100, 500);
+        const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
         const log = await service.getViolationLog(limit);
         res.status(StatusCodes.OK).json(log);
     } catch (err) {

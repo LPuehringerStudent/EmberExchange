@@ -35,7 +35,7 @@ export const coinTransactionRouter = express.Router();
 coinTransactionRouter.get("/coin-transactions", requireAdmin, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new CoinTransactionService(unit);
-    const limit = Math.min(Number(req.query.limit) || 500, 500);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 500, 1), 500);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
