@@ -5,6 +5,7 @@ import { Unit } from "./unit";
 import { PlayerService } from "../services/player-service";
 import { PlayerStatisticsService } from "../services/player-statistics-service";
 import { SessionService } from "../services/session-service";
+import { LoginHistoryService } from "../services/login-history-service";
 import crypto from "crypto";
 
 // Environment variables (must be set in production)
@@ -166,6 +167,9 @@ async function handleOAuthLogin(
             throw new Error("Failed to create session");
         }
         console.log(`[OAuth] session created — playerId=${player.playerId}`);
+
+        const loginHistoryService = new LoginHistoryService(unit);
+        await loginHistoryService.create(player.playerId, sessionId);
 
         await unit.complete(true);
         return { playerId: player.playerId, sessionId };
