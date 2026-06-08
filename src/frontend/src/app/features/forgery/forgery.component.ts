@@ -64,6 +64,7 @@ export class ForgeryComponent {
   mergePhase = signal<MergePhase>(null);
   mergeResultData = signal<ForgeryResult | null>(null);
   readonly blueFireGif = 'assets/animation/blue-fire.gif';
+  private mergeTimeouts: ReturnType<typeof setTimeout>[] = [];
 
   // ─── Computed ───
   selectedStoveIds = computed(() => {
@@ -254,42 +255,57 @@ export class ForgeryComponent {
   }
 
   private startMergeAnimation(result: ForgeryResult): void {
+    this.mergeTimeouts.forEach(clearTimeout);
+    this.mergeTimeouts = [];
     this.mergeAnimating.set(true);
     this.mergeAnimSlot.set(-1);
     this.mergePhase.set('charging');
     this.mergeResultData.set(result);
 
-    // Phase 1: Charging (0-700ms) — energy builds up
-    setTimeout(() => {
+    const t = (fn: () => void, delay: number) => {
+      this.mergeTimeouts.push(setTimeout(fn, delay));
+    };
+
+    // Phase 1: Charging (0-700ms)
+    t(() => {
       this.mergePhase.set('igniting');
 
-      // Phase 2: Ignite slots one by one, 750ms apart with smooth transitions
+      // Phase 2: Ignite slots one by one, 750ms apart
       for (let i = 0; i < 6; i++) {
-        setTimeout(() => {
+        t(() => {
           this.mergeAnimSlot.set(i);
         }, 700 + i * 750);
       }
 
-      // Phase 3: All ignited — convergence to center (after last ignition + 1.5s)
-      setTimeout(() => {
+      // Phase 3: Convergence to center
+      t(() => {
         this.mergePhase.set('converging');
       }, 700 + 6 * 750 + 1500);
 
-      // Phase 4: Flash explosion (after convergence + 1s)
-      setTimeout(() => {
+      // Phase 4: Flash explosion
+      t(() => {
         this.mergePhase.set('flash');
-        // End flash and reveal result
-        setTimeout(() => {
-          this.mergePhase.set(null);
-          this.mergeAnimating.set(false);
-          this.mergeAnimSlot.set(-1);
-          this.slots.set(Array.from({ length: 6 }, () => ({ stove: null })));
-          this.result.set(this.mergeResultData());
-          this.showResult.set(true);
-          this.loadStoves();
+        t(() => {
+          this.finishMergeAnimation();
         }, 900);
       }, 700 + 6 * 750 + 1500 + 1000);
     }, 100);
+  }
+
+  skipMergeAnimation(): void {
+    this.mergeTimeouts.forEach(clearTimeout);
+    this.mergeTimeouts = [];
+    this.finishMergeAnimation();
+  }
+
+  private finishMergeAnimation(): void {
+    this.mergePhase.set(null);
+    this.mergeAnimating.set(false);
+    this.mergeAnimSlot.set(-1);
+    this.slots.set(Array.from({ length: 6 }, () => ({ stove: null })));
+    this.result.set(this.mergeResultData());
+    this.showResult.set(true);
+    this.loadStoves();
   }
 
   closeResult(): void {
