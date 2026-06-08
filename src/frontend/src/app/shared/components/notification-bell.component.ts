@@ -32,10 +32,7 @@ export class NotificationBellComponent implements OnInit {
   unreadCount = this.notificationService.unreadCount;
   notifications = this.notificationService.notifications;
 
-  ngOnInit(): void {
-    void this.notificationService.refresh();
-    this.lastCount = this.unreadCount();
-
+  constructor() {
     effect(() => {
       const notif = this.notificationService.lastHighPriorityNotification();
       if (notif) {
@@ -44,6 +41,11 @@ export class NotificationBellComponent implements OnInit {
         setTimeout(() => this.shakeBell.set(false), 600);
       }
     });
+  }
+
+  ngOnInit(): void {
+    void this.notificationService.refresh();
+    this.lastCount = this.unreadCount();
 
     // Poll every 15s for new notifications
     setInterval(() => {

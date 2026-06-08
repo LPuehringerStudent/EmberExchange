@@ -35,7 +35,8 @@ sparksRouter.get("/player/sparks", requireAuth, async (req, res) => {
         const balance = await sparksService.getSparksBalance(req.playerId!);
         res.status(StatusCodes.OK).json({ sparks: balance });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -90,7 +91,8 @@ sparksRouter.post("/sparks/salvage", requireAuth, async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json(result);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -145,7 +147,8 @@ sparksRouter.post("/sparks/reroll-heat", requireAuth, async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json(result);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

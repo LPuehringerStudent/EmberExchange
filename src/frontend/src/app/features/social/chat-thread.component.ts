@@ -1,4 +1,4 @@
-import { Component, input, output, viewChild, ChangeDetectionStrategy, AfterViewChecked, effect } from '@angular/core';
+import { Component, input, output, viewChild, ChangeDetectionStrategy, AfterViewChecked, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { ChatMessageRow } from '@shared/model';
@@ -126,7 +126,7 @@ import type { ChatMessageRow } from '@shared/model';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ChatThreadComponent implements AfterViewChecked {
+export class ChatThreadComponent implements AfterViewChecked, OnChanges {
   friend = input<{ username: string } | null>(null);
   messages = input.required<ChatMessageRow[]>();
   currentPlayerId = input.required<number>();
@@ -140,12 +140,10 @@ export class ChatThreadComponent implements AfterViewChecked {
   private messagesContainer = viewChild<HTMLDivElement>('messagesContainer');
   private shouldScroll = false;
 
-  constructor() {
-    effect(() => {
-      // Trigger scroll when messages change
-      const _ = this.messages();
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['messages']) {
       this.shouldScroll = true;
-    });
+    }
   }
 
   ngAfterViewChecked(): void {

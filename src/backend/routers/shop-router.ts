@@ -39,7 +39,8 @@ shopRouter.get("/shop/items", async (req, res) => {
         const items = await shopService.getShopItems();
         res.status(StatusCodes.OK).json(items);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -106,7 +107,8 @@ shopRouter.post("/shop/buy", requireAuth, async (req, res) => {
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -140,7 +142,8 @@ shopRouter.get("/shop/daily-status", requireAuth, async (req, res) => {
         const status = await shopService.getDailyRewardStatus(req.playerId!);
         res.status(StatusCodes.OK).json(status);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -231,7 +234,8 @@ shopRouter.post("/shop/sell", requireAuth, async (req, res) => {
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -271,7 +275,8 @@ shopRouter.post("/shop/rotate", requireAdmin, async (req, res) => {
         res.status(StatusCodes.OK).json(result);
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -342,7 +347,8 @@ shopRouter.post("/shop/redeem", requireAuth, async (req, res) => {
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -378,6 +384,7 @@ shopRouter.post("/shop/claim-daily", requireAuth, async (req, res) => {
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });

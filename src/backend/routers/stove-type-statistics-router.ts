@@ -39,7 +39,8 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics", async (_req, res) => {
         const response = await service.getAll();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -84,7 +85,8 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/market-summary", async (_r
         const response = await service.getMarketSummary();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -130,7 +132,8 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/leaderboard/sales", async 
         const response = await service.getTopBySales(limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -176,7 +179,8 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/most-viewed", async (req, 
         const response = await service.getMostViewed(limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -234,7 +238,8 @@ stoveTypeStatisticsRouter.get("/stove-type-statistics/trend/:trend", async (req,
         const response = await service.getByDemandTrend(trend as "increasing" | "stable" | "decreasing");
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -299,7 +304,8 @@ stoveTypeStatisticsRouter.get("/stove-types/:stoveTypeId/statistics", async (req
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -457,7 +463,8 @@ stoveTypeStatisticsRouter.post("/stove-types/:stoveTypeId/statistics/increment-v
             res.status(StatusCodes.NOT_FOUND).json({ error: "Statistics not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -524,7 +531,8 @@ stoveTypeStatisticsRouter.delete("/stove-types/:stoveTypeId/statistics", require
             res.status(StatusCodes.NOT_FOUND).json({ error: "Statistics not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }

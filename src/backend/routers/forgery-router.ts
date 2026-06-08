@@ -87,6 +87,7 @@ forgeryRouter.post("/forgery", requireAuth, async (req, res) => {
         }
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });

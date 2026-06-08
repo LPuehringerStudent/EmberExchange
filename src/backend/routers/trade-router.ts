@@ -16,6 +16,7 @@ import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { requireAuth } from "../middleware/require-auth";
 import { requireAdmin } from "../middleware/admin";
+import { readRateLimiter } from "../middleware/rate-limiter";
 import { PunishmentService } from "../services/punishment-service";
 
 export const tradeRouter = express.Router();
@@ -65,7 +66,8 @@ tradeRouter.get("/trades", requireAuth, async (req, res) => {
         const response = await service.getAllTrades(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -103,7 +105,7 @@ tradeRouter.get("/trades", requireAuth, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades/recent", async (req, res) => {
+tradeRouter.get("/trades/recent", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
@@ -112,7 +114,8 @@ tradeRouter.get("/trades/recent", async (req, res) => {
         const response = await service.getRecentTrades(limit);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -140,7 +143,7 @@ tradeRouter.get("/trades/recent", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades/count", async (_req, res) => {
+tradeRouter.get("/trades/count", readRateLimiter.middleware(), async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
 
@@ -148,7 +151,8 @@ tradeRouter.get("/trades/count", async (_req, res) => {
         const count = await service.countTrades();
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -195,7 +199,7 @@ tradeRouter.get("/trades/count", async (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades/:id", async (req, res) => {
+tradeRouter.get("/trades/:id", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const id = req.params.id;
@@ -213,7 +217,8 @@ tradeRouter.get("/trades/:id", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -260,7 +265,7 @@ tradeRouter.get("/trades/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/listings/:listingId/trade", async (req, res) => {
+tradeRouter.get("/listings/:listingId/trade", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const listingId = req.params.listingId;
@@ -278,7 +283,8 @@ tradeRouter.get("/listings/:listingId/trade", async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -340,7 +346,8 @@ tradeRouter.get("/players/:buyerId/trades", requireAuth, async (req, res) => {
         const response = await service.getTradesByBuyerId(Number(buyerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -605,7 +612,8 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to record trade" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -674,7 +682,8 @@ tradeRouter.delete("/trades/:id", requireAdmin, async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Trade not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -734,7 +743,8 @@ tradeRouter.get("/players/:buyerId/trades/count", requireAuth, async (req, res) 
         const count = await service.countTradesByBuyer(Number(buyerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

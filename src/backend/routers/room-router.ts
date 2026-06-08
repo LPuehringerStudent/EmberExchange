@@ -33,7 +33,8 @@ roomRouter.post("/rooms", requireAuth, async (req, res) => {
         ok = true;
         res.status(StatusCodes.CREATED).json(room);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -55,7 +56,8 @@ roomRouter.get("/rooms", async (req, res) => {
         const rooms = await roomService.listRoomsByGameType(gameType, validStatus);
         res.status(StatusCodes.OK).json(rooms);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -83,7 +85,8 @@ roomRouter.get("/rooms/:roomId", async (req, res) => {
             gameState: state
         });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

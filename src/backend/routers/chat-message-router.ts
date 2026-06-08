@@ -50,7 +50,8 @@ chatMessageRouter.get("/chat-messages", requireAuth, async (req, res) => {
         const response = await service.getAllForPlayer(req.playerId!);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -90,7 +91,8 @@ chatMessageRouter.get("/chat-messages/global", requireAuth, async (req, res) => 
         const response = await service.getGlobalMessages(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -157,7 +159,8 @@ chatMessageRouter.get("/chat-messages/:id", requireAuth, async (req, res) => {
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -219,7 +222,8 @@ chatMessageRouter.get("/players/:playerId/sent-messages", requireAuth, async (re
         const response = await service.getBySender(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -281,7 +285,8 @@ chatMessageRouter.get("/players/:playerId/received-messages", requireAuth, async
         const response = await service.getByReceiver(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -343,7 +348,8 @@ chatMessageRouter.get("/players/:playerId/unread-messages", requireAuth, async (
         const response = await service.getUnreadByReceiver(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -420,7 +426,8 @@ chatMessageRouter.get("/chat-messages/conversation/:player1Id/:player2Id", requi
         const response = await service.getConversationPaginated(p1, p2, limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -536,7 +543,7 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
                         messageId: id,
                         senderId,
                         receiverId,
-                        content,
+                        content: safeContent,
                         sentAt: new Date().toISOString(),
                         isRead: false,
                         messageType: msgType,
@@ -570,7 +577,8 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
         if (isConstraintError(err)) {
             res.status(StatusCodes.CONFLICT).json({ error: String(err) });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+            console.error("Route error:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     } finally {
         await unit.complete(ok);
@@ -649,7 +657,8 @@ chatMessageRouter.patch("/chat-messages/:id/read", requireAuth, async (req, res)
             res.status(StatusCodes.NOT_FOUND).json({ error: "Message not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -727,7 +736,8 @@ chatMessageRouter.delete("/chat-messages/:id", requireAuth, async (req, res) => 
             res.status(StatusCodes.NOT_FOUND).json({ error: "Message not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -787,7 +797,8 @@ chatMessageRouter.get("/players/:playerId/unread-count", requireAuth, async (req
         const count = await service.countUnread(Number(playerId));
         res.status(StatusCodes.OK).json({ count });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

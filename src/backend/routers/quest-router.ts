@@ -28,7 +28,8 @@ questRouter.get("/quests", requireAuth, async (req, res) => {
         const quests = await questService.getActiveQuests(req.playerId!);
         res.status(StatusCodes.OK).json(quests);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -78,7 +79,8 @@ questRouter.post("/quests/:id/claim", requireAuth, async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json(result);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

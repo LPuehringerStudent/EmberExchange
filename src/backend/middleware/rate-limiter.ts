@@ -159,3 +159,10 @@ export const challengeRateLimiter = new ExpressRateLimiter({
     maxRequests: 30,
     message: "Too many challenge requests. Please try again in a minute."
 });
+
+/** General read limiter for public data endpoints — prevents scraping floods */
+export const readRateLimiter = new ExpressRateLimiter({
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 100,
+    message: "Too many requests. Please slow down."
+});

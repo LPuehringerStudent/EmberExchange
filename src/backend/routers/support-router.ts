@@ -135,7 +135,8 @@ supportRouter.post("/support", requireAuth, async (req, res) => {
         ok = true;
         res.status(StatusCodes.CREATED).json({ success: true, ticketId });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }

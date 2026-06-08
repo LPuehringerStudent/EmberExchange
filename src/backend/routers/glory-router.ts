@@ -48,7 +48,8 @@ gloryRouter.get("/glory/customization/:playerId", async (req, res) => {
         const customization = await service.getFullCustomization(Number(id));
         res.status(StatusCodes.OK).json(customization);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -109,11 +110,12 @@ gloryRouter.post("/glory/showcase", requireAuth, async (req, res) => {
         res.status(StatusCodes.OK).json({ message: "Showcase updated" });
     } catch (err) {
         await unit.complete(false);
-        const message = String(err);
-        if (message.includes("already in the showcase")) {
-            res.status(StatusCodes.CONFLICT).json({ error: message });
+        console.error("Route error:", err);
+        const rawMessage = String(err);
+        if (rawMessage.includes("already in the showcase")) {
+            res.status(StatusCodes.CONFLICT).json({ error: "This stove is already in the showcase" });
         } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: message });
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
     }
 });
@@ -158,7 +160,8 @@ gloryRouter.delete("/glory/showcase/:playerId/:slotIndex", requireAuth, async (r
         res.status(StatusCodes.OK).json({ message: "Showcase slot cleared" });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -200,7 +203,8 @@ gloryRouter.post("/glory/achievements", requireAuth, async (req, res) => {
         res.status(StatusCodes.OK).json({ message: "Achievement pinned" });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -244,7 +248,8 @@ gloryRouter.delete("/glory/achievements/:playerId/:achievementId", requireAuth, 
         res.status(StatusCodes.OK).json({ message: "Achievement unpinned" });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -273,7 +278,8 @@ gloryRouter.get("/glory/themes/:playerId", async (req, res) => {
         const themes = await service.getPlayerThemes(Number(req.params.playerId));
         res.status(StatusCodes.OK).json(themes);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -319,7 +325,8 @@ gloryRouter.post("/glory/theme", requireAuth, async (req, res) => {
         res.status(StatusCodes.OK).json({ message: "Theme activated" });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -348,7 +355,8 @@ gloryRouter.get("/glory/titles/:playerId", async (req, res) => {
         const titles = await service.getPlayerTitles(Number(req.params.playerId));
         res.status(StatusCodes.OK).json(titles);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -394,7 +402,8 @@ gloryRouter.post("/glory/title", requireAuth, async (req, res) => {
         res.status(StatusCodes.OK).json({ message: "Title activated" });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -423,7 +432,8 @@ gloryRouter.get("/glory/banners/:playerId", async (req, res) => {
         const banners = await service.getPlayerBanners(Number(req.params.playerId));
         res.status(StatusCodes.OK).json(banners);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -469,7 +479,8 @@ gloryRouter.post("/glory/banner", requireAuth, async (req, res) => {
         res.status(StatusCodes.OK).json({ message: "Banner activated" });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -538,7 +549,8 @@ gloryRouter.post("/glory/visit", requireAuth, async (req, res) => {
         res.status(StatusCodes.OK).json({ message: "Visit recorded" });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -551,7 +563,8 @@ gloryRouter.get("/glory/visits/:playerId", async (req, res) => {
         const visitors = await service.getRecentVisitors(Number(req.params.playerId), 5);
         res.status(StatusCodes.OK).json({ count, visitors });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -582,7 +595,8 @@ gloryRouter.get("/glory/guestbook/:playerId", async (req, res) => {
         const entries = await service.getGuestbook(Number(req.params.playerId));
         res.status(StatusCodes.OK).json(entries);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -639,7 +653,8 @@ gloryRouter.post("/glory/guestbook", requireAuth, async (req, res) => {
         res.status(StatusCodes.OK).json({ message: "Guestbook entry added" });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -692,7 +707,8 @@ gloryRouter.delete("/glory/guestbook/:entryId", requireAuth, async (req, res) =>
         res.status(StatusCodes.OK).json({ message: "Entry deleted" });
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -721,7 +737,8 @@ gloryRouter.get("/glory/trophies/:playerId", async (req, res) => {
         const trophies = await service.getPlayerTrophies(Number(req.params.playerId));
         res.status(StatusCodes.OK).json(trophies);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -758,7 +775,8 @@ gloryRouter.get("/players/:playerId/prestige", async (req, res) => {
         const nextLevelXP = PlayerPrestigeService.xpForLevel(prestige.currentLevel + 1);
         res.status(StatusCodes.OK).json({ ...prestige, nextLevelXP });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -804,7 +822,8 @@ gloryRouter.post("/players/:playerId/prestige", requireAuth, async (req, res) =>
         res.status(StatusCodes.OK).json(result);
     } catch (err) {
         await unit.complete(false);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 });
 
@@ -833,7 +852,8 @@ gloryRouter.get("/glory/achievements/:playerId", async (req, res) => {
         const achievements = await service.getByPlayerId(Number(req.params.playerId));
         res.status(StatusCodes.OK).json(achievements);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

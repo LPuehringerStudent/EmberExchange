@@ -50,7 +50,8 @@ miniGameSessionRouter.get("/mini-game-sessions", requireAuth, async (req, res) =
         const response = await service.getAll(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -115,7 +116,8 @@ miniGameSessionRouter.get("/mini-game-sessions/:id", requireAuth, async (req, re
             res.status(StatusCodes.OK).json(response);
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -177,7 +179,8 @@ miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", requireAuth, 
         const response = await service.getByPlayerId(Number(playerId));
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -228,7 +231,8 @@ miniGameSessionRouter.get("/mini-game-sessions/type/:gameType", async (req, res)
         const response = await service.getByGameType(gameType);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -309,7 +313,8 @@ miniGameSessionRouter.post("/mini-game-sessions", requireAuth, async (req, res) 
 
         res.status(StatusCodes.FORBIDDEN).json({ error: "Banned for API abuse" });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(false);
     }
@@ -376,7 +381,8 @@ miniGameSessionRouter.delete("/mini-game-sessions/:id", requireAdmin, async (req
             res.status(StatusCodes.NOT_FOUND).json({ error: "Session not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -443,7 +449,8 @@ miniGameSessionRouter.get("/players/:playerId/mini-game-stats", requireAuth, asy
         const totalPayout = await service.getTotalPayoutByPlayer(parsedPlayerId);
         res.status(StatusCodes.OK).json({ totalSessions, totalPayout });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }

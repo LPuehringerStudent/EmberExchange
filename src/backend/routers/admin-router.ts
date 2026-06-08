@@ -48,7 +48,8 @@ adminRouter.get("/admin/stats", async (_req, res) => {
         const stats = await service.getSystemStats();
         res.status(StatusCodes.OK).json(stats);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -101,7 +102,8 @@ adminRouter.get("/admin/players", async (req, res) => {
         const result = await service.getPlayers(page, limit, filters);
         res.status(StatusCodes.OK).json(result);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -142,7 +144,8 @@ adminRouter.get("/admin/players/:id", async (req, res) => {
         }
         res.status(StatusCodes.OK).json(detail);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -201,7 +204,8 @@ adminRouter.post("/admin/players/:id/coins", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -227,7 +231,8 @@ adminRouter.get("/admin/request-logs", async (req, res) => {
         });
         res.status(StatusCodes.OK).json(logs);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -242,7 +247,8 @@ adminRouter.get("/admin/banned-ips", async (_req, res) => {
         const bans = await service.getBannedIPs();
         res.status(StatusCodes.OK).json(bans);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -256,7 +262,8 @@ adminRouter.get("/admin/violations", async (req, res) => {
         const log = await service.getViolationLog(limit);
         res.status(StatusCodes.OK).json(log);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -287,7 +294,8 @@ adminRouter.post("/admin/banned-ips", async (req, res) => {
         ok = true;
         res.status(StatusCodes.OK).json({ message: `IP ${ip} banned` });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -311,7 +319,8 @@ adminRouter.post("/admin/banned-ips/unban", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "IP not found in ban list" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -335,7 +344,8 @@ adminRouter.post("/admin/players/:id/unban", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found or not banned" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -437,7 +447,7 @@ adminRouter.delete("/admin/players/:id", async (req, res) => {
         const playerId = Number(id);
 
         // Prevent self-deletion
-        if (req.playerId === playerId) {
+        if ((req as any).adminPlayerId === playerId) {
             res.status(StatusCodes.FORBIDDEN).json({ error: "You cannot delete your own account" });
             return;
         }
@@ -457,7 +467,8 @@ adminRouter.delete("/admin/players/:id", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -486,7 +497,8 @@ adminRouter.post("/admin/players/:id/ban", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -511,7 +523,8 @@ adminRouter.get("/admin/stove-types", async (_req, res) => {
         const types = await service.getStoveTypes();
         res.status(StatusCodes.OK).json(types);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -568,7 +581,8 @@ adminRouter.patch("/admin/stove-types/:id", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Stove type not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -631,7 +645,8 @@ adminRouter.post("/admin/stove-types", async (req, res) => {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create stove type" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -646,7 +661,8 @@ adminRouter.get("/admin/redeem-codes", async (_req, res) => {
         const codes = await service.listCodes();
         res.status(StatusCodes.OK).json(codes);
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete();
     }
@@ -675,7 +691,8 @@ adminRouter.post("/admin/redeem-codes", async (req, res) => {
         ok = true;
         res.status(StatusCodes.CREATED).json({ codeId: id, code: code.trim().toUpperCase() });
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -709,7 +726,8 @@ adminRouter.patch("/admin/redeem-codes/:id", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Code not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -737,7 +755,8 @@ adminRouter.delete("/admin/redeem-codes/:id", async (req, res) => {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Code not found" });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }

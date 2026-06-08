@@ -71,7 +71,8 @@ tradeOfferRouter.post("/trade-offers/:messageId/accept", requireAuth, async (req
             res.status(StatusCodes.CONFLICT).json({ error: result.error });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }
@@ -140,7 +141,8 @@ tradeOfferRouter.post("/trade-offers/:messageId/decline", requireAuth, async (re
             res.status(StatusCodes.NOT_FOUND).json({ error: result.error });
         }
     } catch (err) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }

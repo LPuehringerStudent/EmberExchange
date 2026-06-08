@@ -97,8 +97,13 @@ const allowedOrigins = new Set([
 ]);
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, same-origin)
-        if (!origin || allowedOrigins.has(origin)) {
+        // Allow requests with no origin in dev only (mobile apps, curl, same-origin)
+        if (!origin) {
+            const allowNull = process.env.NODE_ENV !== "production";
+            callback(null, allowNull);
+            return;
+        }
+        if (allowedOrigins.has(origin)) {
             callback(null, true);
             return;
         }
