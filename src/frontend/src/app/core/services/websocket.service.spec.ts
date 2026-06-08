@@ -141,6 +141,33 @@ describe('WebSocketService', () => {
     expect(authService.patchCurrentUserCoins).toHaveBeenCalledWith(850);
   });
 
+  it('does not patch header coins directly from roulette state updates', () => {
+    const service = TestBed.inject(WebSocketService);
+    const socket = connectOpen(service);
+
+    socket.onmessage?.({
+      data: JSON.stringify({
+        type: 'state_update',
+        payload: {
+          version: 10,
+          stateBlob: {
+            phase: 'settled',
+            winningNumber: 17,
+            winningColor: 'black',
+            bets: [{ playerId: 1, betType: 'black', amount: 50 }],
+            players: [
+              { playerId: 1, username: 'Alice', stack: 1050, bets: [], result: 'won' },
+            ],
+          },
+        },
+      }),
+    } as MessageEvent<string>);
+
+    expect(service.currentVersion()).toBe(10);
+    expect(service.playersInRoom()).toHaveLength(1);
+    expect(authService.patchCurrentUserCoins).not.toHaveBeenCalled();
+  });
+
   it('stores errors, chat messages, and trade offer updates from server messages', () => {
     const service = TestBed.inject(WebSocketService);
     const socket = connectOpen(service);

@@ -217,13 +217,16 @@ export class WebSocketService {
         if (blob && Array.isArray(blob['players'])) {
           this.playersInRoom.set(blob['players'] as PlayerInRoom[]);
 
-          // Keep the header coin display in sync with the in-game stack
-          const currentUser = this.auth.getCurrentUser();
-          if (currentUser) {
-            const me = (blob['players'] as Array<{ playerId: number; stack?: number }>)
-              .find(p => p.playerId === currentUser.playerId);
-            if (me && typeof me.stack === 'number') {
-              this.auth.patchCurrentUserCoins(me.stack);
+          if (!this.isRouletteState(blob)) {
+            // Keep the header coin display in sync with the in-game stack.
+            // Roulette delays this locally so spin/reveal timing stays coherent.
+            const currentUser = this.auth.getCurrentUser();
+            if (currentUser) {
+              const me = (blob['players'] as Array<{ playerId: number; stack?: number }>)
+                .find(p => p.playerId === currentUser.playerId);
+              if (me && typeof me.stack === 'number') {
+                this.auth.patchCurrentUserCoins(me.stack);
+              }
             }
           }
         }
@@ -252,5 +255,13 @@ export class WebSocketService {
         break;
       }
     }
+  }
+
+  private isRouletteState(blob: Record<string, unknown>): boolean {
+    return (
+      typeof blob['phase'] === 'string' &&
+      Array.isArray(blob['bets']) &&
+      ('winningNumber' in blob || 'winningColor' in blob)
+    );
   }
 }
