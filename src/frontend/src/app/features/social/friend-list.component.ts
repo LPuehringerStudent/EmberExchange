@@ -94,8 +94,18 @@ export interface FriendWithPreview extends FriendWithUser {
               </div>
             </div>
           } @empty {
-            <div class="text-center py-12 text-text-secondary text-sm">
-              No friends yet.<br>Click "Add" to send a request.
+            <div class="flex flex-col items-center justify-center py-16 px-5 text-center">
+              <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+                👋
+              </div>
+              <p class="text-base font-semibold text-text-primary m-0 mb-1">No friends yet</p>
+              <span class="text-sm text-text-secondary mb-5">Send a request to start chatting</span>
+              <button
+                (click)="onAddFriend.emit()"
+                class="px-4 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                Add Friend
+              </button>
             </div>
           }
         </div>
@@ -129,8 +139,12 @@ export interface FriendWithPreview extends FriendWithUser {
               </div>
             </div>
           } @empty {
-            <div class="text-center py-12 text-text-secondary text-sm">
-              No pending friend requests.
+            <div class="flex flex-col items-center justify-center py-16 px-5 text-center">
+              <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+                📭
+              </div>
+              <p class="text-base font-semibold text-text-primary m-0 mb-1">No pending requests</p>
+              <span class="text-sm text-text-secondary">Check back later for new requests</span>
             </div>
           }
         </div>

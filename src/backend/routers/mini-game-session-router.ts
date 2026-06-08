@@ -1,8 +1,12 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { MiniGameSessionService } from "../services/mini-game-session-service";
+import { PunishmentService } from "../services/punishment-service";
+import { getClientIp } from "../utils/bot-trap";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
 
 export const miniGameSessionRouter = express.Router();
 
@@ -36,12 +40,14 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/mini-game-sessions", async (_req, res) => {
+miniGameSessionRouter.get("/mini-game-sessions", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAll();
+        const response = await service.getAll(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -91,7 +97,7 @@ miniGameSessionRouter.get("/mini-game-sessions", async (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/mini-game-sessions/:id", async (req, res) => {
+miniGameSessionRouter.get("/mini-game-sessions/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
     const id = req.params.id;
@@ -152,7 +158,7 @@ miniGameSessionRouter.get("/mini-game-sessions/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", async (req, res) => {
+miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
     const playerId = req.params.playerId;
@@ -160,6 +166,11 @@ miniGameSessionRouter.get("/players/:playerId/mini-game-sessions", async (req, r
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own game sessions" });
             return;
         }
 
@@ -281,50 +292,26 @@ miniGameSessionRouter.get("/mini-game-sessions/type/:gameType", async (req, res)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.post("/mini-game-sessions", async (req, res) => {
+miniGameSessionRouter.post("/mini-game-sessions", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
-    const service = new MiniGameSessionService(unit);
-    let ok = false;
-
     try {
-        const { playerId, gameType, result, coinPayout } = req.body;
-
-        if (typeof playerId !== "number") {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "playerId is required" });
+        const playerId = req.playerId;
+        if (!playerId) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Unauthorized" });
             return;
         }
 
-        if (isNullOrWhiteSpace(gameType)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "gameType is required" });
-            return;
-        }
+        const { gameType } = req.body;
+        const details = `Attempted to inject fake mini-game session via REST API. gameType=${gameType ?? 'undefined'}`;
 
-        if (isNullOrWhiteSpace(result)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "result is required" });
-            return;
-        }
+        const punishmentService = new PunishmentService(unit);
+        await punishmentService.recordViolation(getClientIp(req), playerId, "coin_tampering", details);
 
-        if (typeof coinPayout !== "number" || coinPayout < 0) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "coinPayout must be a non-negative number" });
-            return;
-        }
-
-        const [success, id] = await service.create(playerId, gameType, result, coinPayout);
-
-        if (success) {
-            ok = true;
-            res.status(StatusCodes.CREATED).json({ sessionId: id, playerId, gameType });
-        } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create session" });
-        }
+        res.status(StatusCodes.FORBIDDEN).json({ error: "Banned for API abuse" });
     } catch (err) {
-        if (isConstraintError(err)) {
-            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
-        } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
-        }
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
-        await unit.complete(ok);
+        await unit.complete(false);
     }
 });
 
@@ -369,7 +356,7 @@ miniGameSessionRouter.post("/mini-game-sessions", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.delete("/mini-game-sessions/:id", async (req, res) => {
+miniGameSessionRouter.delete("/mini-game-sessions/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new MiniGameSessionService(unit);
     const id = req.params.id;
@@ -435,7 +422,7 @@ miniGameSessionRouter.delete("/mini-game-sessions/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-miniGameSessionRouter.get("/players/:playerId/mini-game-stats", async (req, res) => {
+miniGameSessionRouter.get("/players/:playerId/mini-game-stats", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new MiniGameSessionService(unit);
     const playerId = req.params.playerId;
@@ -446,8 +433,14 @@ miniGameSessionRouter.get("/players/:playerId/mini-game-stats", async (req, res)
             return;
         }
 
-        const totalSessions = await service.countByPlayer(Number(playerId));
-        const totalPayout = await service.getTotalPayoutByPlayer(Number(playerId));
+        const parsedPlayerId = Number(playerId);
+        if (req.playerId !== parsedPlayerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const totalSessions = await service.countByPlayer(parsedPlayerId);
+        const totalPayout = await service.getTotalPayoutByPlayer(parsedPlayerId);
         res.status(StatusCodes.OK).json({ totalSessions, totalPayout });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

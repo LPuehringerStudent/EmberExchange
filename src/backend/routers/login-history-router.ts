@@ -3,6 +3,8 @@ import { Unit } from "../utils/unit";
 import { LoginHistoryService } from "../services/login-history-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
 
 export const loginHistoryRouter = express.Router();
 
@@ -30,7 +32,7 @@ export const loginHistoryRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.get("/login-history", async (_req, res) => {
+loginHistoryRouter.get("/login-history", requireAdmin, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new LoginHistoryService(unit);
 
@@ -85,7 +87,7 @@ loginHistoryRouter.get("/login-history", async (_req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.get("/login-history/:id", async (req, res) => {
+loginHistoryRouter.get("/login-history/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LoginHistoryService(unit);
     const id = req.params.id;
@@ -146,7 +148,7 @@ loginHistoryRouter.get("/login-history/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.get("/players/:playerId/login-history", async (req, res) => {
+loginHistoryRouter.get("/players/:playerId/login-history", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LoginHistoryService(unit);
     const playerId = req.params.playerId;
@@ -154,6 +156,11 @@ loginHistoryRouter.get("/players/:playerId/login-history", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own login history" });
             return;
         }
 
@@ -210,7 +217,7 @@ loginHistoryRouter.get("/players/:playerId/login-history", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.post("/login-history", async (req, res) => {
+loginHistoryRouter.post("/login-history", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LoginHistoryService(unit);
     let ok = false;
@@ -279,7 +286,7 @@ loginHistoryRouter.post("/login-history", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-loginHistoryRouter.delete("/login-history/:id", async (req, res) => {
+loginHistoryRouter.delete("/login-history/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LoginHistoryService(unit);
     const id = req.params.id;

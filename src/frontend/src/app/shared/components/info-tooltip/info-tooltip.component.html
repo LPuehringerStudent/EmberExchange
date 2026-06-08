@@ -1,0 +1,21 @@
+<span
+  class="tooltip-host"
+  tabindex="0"
+  [attr.aria-describedby]="tooltipId"
+  (mouseenter)="show()"
+  (mouseleave)="hide()"
+  (focus)="show()"
+  (blur)="hide()"
+>
+  <ng-content />
+  <span class="tooltip-hint" aria-hidden="true"></span>
+</span>
+
+<span
+  [id]="tooltipId"
+  class="tooltip-box"
+  [class.visible]="visible()"
+  [style.left]="tooltipStyle().left"
+  [style.top]="tooltipStyle().top"
+  role="tooltip"
+>{{ text() }}</span>

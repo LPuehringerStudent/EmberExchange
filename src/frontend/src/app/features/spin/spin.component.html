@@ -1,0 +1,191 @@
+<div class="spin-page">
+  <!-- Animated background embers -->
+  <div class="ember-bg" aria-hidden="true">
+    @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
+      <div class="ember" [style.--i]="i"></div>
+    }
+  </div>
+
+  <div class="spin-container">
+    <!-- Header -->
+    <header class="spin-header">
+      <h1 class="title">
+        <span class="fire-icon">🔥</span>
+        Daily Lucky Wheel
+      </h1>
+      <p class="subtitle">Come back every day for free spins and epic prizes!</p>
+    </header>
+
+    @if (!spinStatusLoaded()) {
+      <div class="loading-skeleton">
+        <div class="skeleton-wheel"></div>
+        <div class="skeleton-button"></div>
+      </div>
+    }
+
+    <div class="wheel-wrap" [class.opacity-50]="!spinStatusLoaded()">
+      <!-- Wheel Area -->
+      <div class="wheel-area">
+        <!-- Pointer -->
+        <div class="pointer" [class.shake]="isSpinning()">
+          <div class="pointer-triangle"></div>
+        </div>
+
+        <!-- SVG Wheel -->
+        <div class="wheel-wrapper" [class.spinning]="isSpinning()"
+             [style.transform]="'rotate(' + wheelRotation() + 'deg)'">
+          <svg viewBox="0 0 400 400" class="wheel-svg">
+            <defs>
+              <!-- Gradients for each segment -->
+              @for (seg of segments; track seg.id + $index; let i = $index) {
+                <linearGradient [attr.id]="'grad-' + i" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" [attr.stop-color]="seg.color" stop-opacity="0.85" />
+                  <stop offset="100%" [attr.stop-color]="seg.color" stop-opacity="0.45" />
+                </linearGradient>
+              }
+              <!-- Gold rim gradient -->
+              <linearGradient id="rim-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fbbf24" />
+                <stop offset="50%" stop-color="#f59e0b" />
+                <stop offset="100%" stop-color="#d97706" />
+              </linearGradient>
+              <!-- Center glow -->
+              <radialGradient id="center-glow">
+                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.6" />
+                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+
+            <!-- Outer rim -->
+            <circle cx="200" cy="200" r="195" fill="none" stroke="url(#rim-gold)" stroke-width="6" />
+            <circle cx="200" cy="200" r="188" fill="none" stroke="rgba(251,191,36,0.3)" stroke-width="2" />
+
+            <!-- Segments -->
+            @for (seg of segments; track seg.id + $index; let i = $index) {
+              <g>
+                <!-- Segment wedge -->
+                <path
+                  [attr.d]="getSegmentPath(i)"
+                  [attr.fill]="'url(#grad-' + i + ')'"
+                  stroke="rgba(0,0,0,0.3)"
+                  stroke-width="1"
+                />
+                <!-- Segment label -->
+                <text
+                  [attr.transform]="getLabelTransform(i)"
+                  fill="white"
+                  font-size="11"
+                  font-weight="600"
+                  text-anchor="middle"
+                  dominant-baseline="middle"
+                  stroke="rgba(0,0,0,0.6)"
+                  stroke-width="0.8"
+                  paint-order="stroke"
+                  style="pointer-events: none;"
+                >
+                  {{ seg.label }}
+                </text>
+                <!-- Segment icon -->
+                <text
+                  [attr.transform]="getIconTransform(i)"
+                  font-size="18"
+                  text-anchor="middle"
+                  dominant-baseline="middle"
+                  style="pointer-events: none;"
+                >
+                  {{ getIconSvg(seg.icon) }}
+                </text>
+              </g>
+            }
+
+            <!-- Inner ring -->
+            <circle cx="200" cy="200" r="50" fill="#1a1a2e" stroke="url(#rim-gold)" stroke-width="3" />
+            <!-- Center glow -->
+            <circle cx="200" cy="200" r="80" fill="url(#center-glow)" opacity="0.5" />
+            <!-- Center icon -->
+            <text x="200" y="200" font-size="28" text-anchor="middle" dominant-baseline="middle">🔥</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Spin Button -->
+      <div class="spin-controls">
+        <button
+          class="spin-btn"
+          [disabled]="!canSpin() || isSpinning()"
+          (click)="onSpin()"
+          [attr.aria-label]="canSpin() ? 'Spin the wheel' : 'Next spin available in ' + countdown()"
+        >
+          @if (isSpinning()) {
+            <span class="spin-btn-text">Spinning...</span>
+          } @else if (canSpin()) {
+            <span class="spin-btn-text">✨ SPIN ✨</span>
+          } @else {
+            <span class="spin-btn-text">⏳ Next Spin In</span>
+          }
+        </button>
+
+        @if (bonusSpins() > 0) {
+          <p class="bonus-spins">
+            🎫 Bonus spins: <strong>{{ bonusSpins() }}</strong>
+          </p>
+        }
+
+        @if (!canSpin() && countdown()) {
+          <p class="countdown">{{ countdown() }}</p>
+        }
+
+        <p class="total-spins">Lifetime spins: <strong>{{ totalSpins() }}</strong></p>
+      </div>
+
+    </div>
+
+    <!-- Prize History -->
+    @if (spinHistory().length > 0) {
+      <div class="history-section">
+          <h3>🎁 Recent Wins</h3>
+          <div class="history-list">
+            @for (entry of spinHistory(); track $index) {
+              <div class="history-item" [style.--prize-color]="entry.prize.color">
+                <span class="history-icon">{{ getIconSvg(entry.prize.icon) }}</span>
+                <span class="history-label">{{ entry.prize.label }}</span>
+                <span class="history-rarity" [class]="'rarity-' + getRarityLabel(entry.prize.id).toLowerCase()">
+                  {{ getRarityLabel(entry.prize.id) }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+  </div>
+
+  <!-- Result Modal -->
+  @if (showResult() && lastPrize()) {
+    <div class="result-overlay" (click)="closeResult()">
+      <!-- Particles -->
+      <div class="particles" aria-hidden="true">
+        @for (i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]; track i) {
+          <div class="particle" [style.--i]="i" [style.--color]="lastPrize()!.prize.color"></div>
+        }
+      </div>
+
+      <!-- Confetti -->
+      <div class="confetti" aria-hidden="true">
+        @for (i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]; track i) {
+          <div class="confetti-piece" [style.--i]="i"></div>
+        }
+      </div>
+
+      <div class="result-card" (click)="$event.stopPropagation()">
+        <div class="result-glow" [style.--prize-color]="lastPrize()?.prize?.color ?? '#94a3b8'"></div>
+        <div class="result-icon">{{ getIconSvg(lastPrize()?.prize?.icon ?? '') }}</div>
+        <h2 class="result-title">You Won!</h2>
+        <p class="result-prize">{{ lastPrize()?.prize?.label ?? 'Unknown Prize' }}</p>
+        <p class="result-rarity" [class]="'rarity-' + getRarityLabel(lastPrize()?.prize?.id ?? '').toLowerCase()">
+          {{ getRarityLabel(lastPrize()?.prize?.id ?? '') }}
+        </p>
+        <button class="claim-btn" (click)="closeResult()">Claim Prize</button>
+      </div>
+    </div>
+  }
+</div>

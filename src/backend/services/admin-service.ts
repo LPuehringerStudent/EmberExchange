@@ -54,6 +54,15 @@ export interface BanRequest {
     reason?: string;
 }
 
+export interface PlayerFilters {
+    search?: string;
+    banned?: 'all' | 'banned' | 'active';
+    minCoins?: number;
+    maxCoins?: number;
+    isAdmin?: 'all' | 'admin' | 'user';
+    sortBy?: string;
+}
+
 export class AdminService extends ServiceBase {
     constructor(unit: Unit) {
         super(unit);
@@ -61,14 +70,43 @@ export class AdminService extends ServiceBase {
 
     // ── Player Management ──────────────────────────────────────
 
-    async getPlayers(page = 1, limit = 20, search?: string): Promise<PlayerListResult> {
+    async getPlayers(page = 1, limit = 20, filters: PlayerFilters = {}): Promise<PlayerListResult> {
         const offset = (page - 1) * limit;
         const params: Record<string, unknown> = { limit, offset };
         let where = "WHERE username != '__shop__'";
-        if (search) {
+
+        if (filters.search) {
             where += " AND (username ILIKE @search OR email ILIKE @search)";
-            params.search = `%${search}%`;
+            params.search = `%${filters.search}%`;
         }
+        if (filters.banned === 'banned') {
+            where += " AND bannedAt IS NOT NULL";
+        } else if (filters.banned === 'active') {
+            where += " AND bannedAt IS NULL";
+        }
+        if (filters.minCoins !== undefined && !isNaN(filters.minCoins)) {
+            where += " AND coins >= @minCoins";
+            params.minCoins = filters.minCoins;
+        }
+        if (filters.maxCoins !== undefined && !isNaN(filters.maxCoins)) {
+            where += " AND coins <= @maxCoins";
+            params.maxCoins = filters.maxCoins;
+        }
+        if (filters.isAdmin === 'admin') {
+            where += " AND isAdmin = 1";
+        } else if (filters.isAdmin === 'user') {
+            where += " AND isAdmin = 0";
+        }
+
+        const orderMap: Record<string, string> = {
+            'id_desc': 'playerId DESC',
+            'id_asc': 'playerId ASC',
+            'coins_desc': 'coins DESC',
+            'coins_asc': 'coins ASC',
+            'joined_desc': 'joinedAt DESC',
+            'joined_asc': 'joinedAt ASC',
+        };
+        const orderBy = orderMap[filters.sortBy ?? ''] ?? 'playerId DESC';
 
         const countStmt = this.unit.prepare<{ cnt: number }>(
             `SELECT COUNT(*)::int as cnt FROM Player ${where}`,
@@ -80,7 +118,7 @@ export class AdminService extends ServiceBase {
         const listStmt = this.unit.prepare<PlayerListItem>(
             `SELECT playerId, username, email, coins, lootboxCount, isAdmin, isPublic, joinedAt, bannedAt
              FROM Player ${where}
-             ORDER BY playerId DESC
+             ORDER BY ${orderBy}
              LIMIT @limit OFFSET @offset`,
             params
         );
@@ -96,6 +134,9 @@ export class AdminService extends ServiceBase {
         const player = await playerService.getInfoByID(playerId);
         if (!player) return null;
 
+        // password and totpSecret already excluded by getInfoByID
+        const playerSafe = player;
+
         const stats = await statsService.getByPlayerId(playerId);
         const ownershipStmt = this.unit.prepare<{ cnt: number }>(
             "SELECT COUNT(*)::int as cnt FROM Ownership WHERE playerId = @playerId",
@@ -104,7 +145,7 @@ export class AdminService extends ServiceBase {
         const ownershipRes = await ownershipStmt.get();
 
         return {
-            player,
+            player: playerSafe as PlayerRow,
             stats: {
                 totalTradesCompleted: stats?.totalTradesCompleted ?? 0,
                 totalCoinsEarned: stats?.totalCoinsEarned ?? 0,

@@ -5,11 +5,6 @@ import type { PlayerRow as Player } from '@shared/model';
 
 export type { Player };
 
-export interface CreatePlayerResponse {
-  playerId: number;
-  username: string;
-}
-
 export interface SuccessMessage {
   message: string;
 }
@@ -28,15 +23,6 @@ export class PlayerService {
 
   lookupPlayerByUsername(username: string): Observable<{ playerId: number; username: string }> {
     return this.api.get<{ playerId: number; username: string }>(`/players/lookup/${encodeURIComponent(username)}`);
-  }
-
-  createPlayer(username: string, password?: string, email?: string, coins?: number, lootboxCount?: number): Observable<CreatePlayerResponse> {
-    const body: Record<string, unknown> = { username };
-    if (password !== undefined) body["password"] = password;
-    if (email !== undefined) body["email"] = email;
-    if (coins !== undefined) body["coins"] = coins;
-    if (lootboxCount !== undefined) body["lootboxCount"] = lootboxCount;
-    return this.api.post<CreatePlayerResponse>('/players', body);
   }
 
   updatePlayerCoins(id: number, coins: number): Observable<SuccessMessage> {

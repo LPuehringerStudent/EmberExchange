@@ -106,7 +106,14 @@ export class SocialComponent implements OnInit, OnDestroy {
     if (!user) return;
 
     try {
-      const stoves = await firstValueFrom(this.stoveService.getStovesByPlayerId(user.playerId));
+      const [stoves, lootboxes, lootboxTypes] = await Promise.all([
+        firstValueFrom(this.stoveService.getStovesByPlayerId(user.playerId)),
+        firstValueFrom(this.lootboxService.getLootboxesByPlayerId(user.playerId)),
+        firstValueFrom(this.lootboxService.getAllLootboxTypes())
+      ]);
+
+      const typeMap = new Map(lootboxTypes.map(t => [t.lootboxTypeId, t.name]));
+
       const tradeableStoves: TradeableItem[] = stoves.map(s => ({
         id: s.stoveId,
         name: (s as unknown as Record<string, string>)['name'] || `Stove #${s.stoveId}`,
@@ -115,8 +122,15 @@ export class SocialComponent implements OnInit, OnDestroy {
         imageUrl: (s as unknown as Record<string, string>)['imageUrl']
       }));
 
-      // Lootboxes would need type name resolution; skip for now
-      this.tradeItems.set(tradeableStoves);
+      const tradeableLootboxes: TradeableItem[] = lootboxes.map(lb => ({
+        id: lb.lootboxId,
+        name: typeMap.get(lb.lootboxTypeId) || `Lootbox #${lb.lootboxId}`,
+        type: 'lootbox' as const,
+        rarity: undefined,
+        imageUrl: undefined
+      }));
+
+      this.tradeItems.set([...tradeableStoves, ...tradeableLootboxes]);
     } catch (err) {
       console.error('Failed to load inventory:', err);
     }
@@ -184,12 +198,19 @@ export class SocialComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Refresh to get the real message with proper ID and timestamp
+    // Refresh to sync any messages we might have missed (merge, don't replace)
     try {
       const msgs = await firstValueFrom(
         this.chatService.getConversationPaginated(this.currentPlayerId(), otherId, 50, 0)
       );
-      this.messages.set(msgs);
+      this.messages.update(current => {
+        const currentIds = new Set(current.map(m => m.messageId));
+        const newMsgs = msgs.filter(m => !currentIds.has(m.messageId));
+        if (newMsgs.length === 0) return current;
+        return [...current, ...newMsgs].sort((a, b) =>
+          new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
+        );
+      });
     } catch (err) {
       console.error('Failed to refresh conversation:', err);
     }
@@ -320,12 +341,32 @@ export class SocialComponent implements OnInit, OnDestroy {
         this.handleIncomingMessage(msg);
         this.ws.incomingChatMessage.set(null);
       }
+
+      const tradeUpdate = this.ws.incomingTradeUpdate();
+      if (tradeUpdate) {
+        this.refreshMessages();
+        this.ws.incomingTradeUpdate.set(null);
+      }
     }, 100);
 
     return () => clearInterval(interval);
   }
 
   private handleIncomingMessage(msg: ChatMessageRow): void {
+    // If this is our own message (WS ack), replace the optimistic version
+    if (msg.senderId === this.currentPlayerId()) {
+      this.messages.update(msgs => {
+        const idx = msgs.findIndex(m => m.messageId === 0 && m.content === msg.content);
+        if (idx !== -1) {
+          const updated = [...msgs];
+          updated[idx] = msg;
+          return updated;
+        }
+        return msgs;
+      });
+      return;
+    }
+
     // Skip duplicates
     const exists = this.messages().some(m => m.messageId === msg.messageId);
     if (exists) return;

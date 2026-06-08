@@ -8,6 +8,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/pages/startup/startup.component').then(m => m.StartupComponent)
   },
   {
+    path: 'how-it-works',
+    loadComponent: () => import('./pages/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent)
+  },
+  {
     path: 'home',
     loadComponent: () => import('./features/home/main-menu.component').then(m => m.MainMenuComponent),
     canActivate: [authGuard]
@@ -25,6 +29,11 @@ export const routes: Routes = [
   {
     path: 'shop',
     loadComponent: () => import('./features/shop/shop.component').then(m => m.ShopComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'spin',
+    loadComponent: () => import('./features/spin/spin.component').then(m => m.SpinComponent),
     canActivate: [authGuard]
   },
   {
@@ -126,9 +135,20 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/pages/oauth-callback/oauth-callback.component').then(m => m.OAuthCallbackComponent)
   },
   {
-    path: 'factory',
-    loadComponent: () => import('./features/factory/factory').then(m => m.Factory),
-    canActivate: [authGuard]
+    path: 'check-email',
+    loadComponent: () => import('./features/auth/pages/check-email/check-email.component').then(m => m.CheckEmailComponent)
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
+  },
+  {
+    path: 'terms',
+    loadComponent: () => import('./features/legal/pages/terms/terms.component').then(m => m.TermsComponent)
+  },
+  {
+    path: 'privacy',
+    loadComponent: () => import('./features/legal/pages/privacy/privacy.component').then(m => m.PrivacyComponent)
   },
   {
     path: 'investing',
@@ -137,7 +157,5 @@ export const routes: Routes = [
   {
     path: '**',
     loadComponent: () => import('./shared/components/not-found.component').then(m => m.NotFoundComponent)
-  },
-
-
+  }
 ];

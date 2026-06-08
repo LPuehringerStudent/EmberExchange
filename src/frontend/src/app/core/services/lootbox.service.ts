@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { HttpHeaders } from '@angular/common/http';
 import { ApiService } from './api.service';
+import { AuthService } from './auth.service';
 import type {
   LootboxRow as Lootbox,
   LootboxTypeRow as LootboxType,
@@ -45,10 +47,13 @@ export interface SuccessMessage {
 @Injectable({ providedIn: 'root' })
 export class LootboxService {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
 
   // Lootbox endpoints
   getAllLootboxes(): Observable<Lootbox[]> {
-    return this.api.get<Lootbox[]>('/lootboxes');
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.get<Lootbox[]>('/lootboxes', headers);
   }
 
   getRecentPulls(limit = 20): Observable<RecentPull[]> {
@@ -60,7 +65,9 @@ export class LootboxService {
   }
 
   getLootboxesByPlayerId(playerId: number): Observable<Lootbox[]> {
-    return this.api.get<Lootbox[]>(`/players/${playerId}/lootboxes`);
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.get<Lootbox[]>(`/players/${playerId}/lootboxes`, headers);
   }
 
   createLootbox(
@@ -75,11 +82,15 @@ export class LootboxService {
     lootboxId: number,
     playerId: number
   ): Observable<OpenLootboxResponse> {
-    return this.api.post<OpenLootboxResponse>(`/lootboxes/${lootboxId}/open`, { playerId });
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.post<OpenLootboxResponse>(`/lootboxes/${lootboxId}/open`, { playerId }, headers);
   }
 
   deleteLootbox(id: number): Observable<SuccessMessage> {
-    return this.api.delete<SuccessMessage>(`/lootboxes/${id}`);
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.delete<SuccessMessage>(`/lootboxes/${id}`, headers);
   }
 
   // LootboxType endpoints

@@ -1,8 +1,13 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { OwnershipService } from "../services/ownership-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
+import { StoveService } from "../services/stove-service";
+import { PlayerService } from "../services/player-service";
 
 export const ownershipRouter = express.Router();
 
@@ -36,7 +41,7 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/ownerships", async (_req, res) => {
+ownershipRouter.get("/ownerships", requireAuth, async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
 
@@ -152,7 +157,7 @@ ownershipRouter.get("/ownerships/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/stoves/:stoveId/ownership-history", async (req, res) => {
+ownershipRouter.get("/stoves/:stoveId/ownership-history", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const stoveId = req.params.stoveId;
@@ -163,7 +168,22 @@ ownershipRouter.get("/stoves/:stoveId/ownership-history", async (req, res) => {
             return;
         }
 
-        const response = await service.getOwnershipHistoryByStoveId(Number(stoveId));
+        const parsedStoveId = Number(stoveId);
+        const stoveService = new StoveService(unit);
+        const stove = await stoveService.getStoveById(parsedStoveId);
+        if (!stove) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Stove not found" });
+            return;
+        }
+
+        const playerService = new PlayerService(unit);
+        const player = await playerService.getInfoByID(req.playerId!);
+        if (stove.currentOwnerId !== req.playerId && !player?.isAdmin) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view ownership history for stoves you own" });
+            return;
+        }
+
+        const response = await service.getOwnershipHistoryByStoveId(parsedStoveId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -209,7 +229,7 @@ ownershipRouter.get("/stoves/:stoveId/ownership-history", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.get("/players/:playerId/ownerships", async (req, res) => {
+ownershipRouter.get("/players/:playerId/ownerships", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new OwnershipService(unit);
     const playerId = req.params.playerId;
@@ -217,6 +237,11 @@ ownershipRouter.get("/players/:playerId/ownerships", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
             return;
         }
 
@@ -289,7 +314,7 @@ ownershipRouter.get("/players/:playerId/ownerships", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.post("/ownerships", async (req, res) => {
+ownershipRouter.post("/ownerships", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new OwnershipService(unit);
     let ok = false;
@@ -304,6 +329,10 @@ ownershipRouter.post("/ownerships", async (req, res) => {
 
         if (!["lootbox", "trade", "mini-game"].includes(acquiredHow)) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "acquiredHow must be 'lootbox', 'trade', or 'mini-game'" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, playerId, res)) {
             return;
         }
 
@@ -434,7 +463,7 @@ ownershipRouter.get("/stoves/:stoveId/current-owner", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-ownershipRouter.delete("/ownerships/:id", async (req, res) => {
+ownershipRouter.delete("/ownerships/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new OwnershipService(unit);
     const id = req.params.id;

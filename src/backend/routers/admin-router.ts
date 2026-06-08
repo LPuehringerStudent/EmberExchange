@@ -1,9 +1,15 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { AdminService } from "../services/admin-service";
+import { RedeemCodeService } from "../services/redeem-code-service";
 import { requireAdmin } from "../middleware/admin";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { getBotTrapLog, clearBotTrapLog } from "../utils/bot-trap";
+import { PunishmentService } from "../services/punishment-service";
+import { PlayerService } from "../services/player-service";
+import { queryRequestLogs } from "../services/request-log-service";
+import net from "net";
 
 export const adminRouter = express.Router();
 
@@ -77,7 +83,22 @@ adminRouter.get("/admin/players", async (req, res) => {
         const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string, 10) || 20));
         const search = req.query.search as string | undefined;
-        const result = await service.getPlayers(page, limit, search);
+        const banned = req.query.banned as 'all' | 'banned' | 'active' | undefined;
+        const minCoins = req.query.minCoins ? parseInt(req.query.minCoins as string, 10) : undefined;
+        const maxCoins = req.query.maxCoins ? parseInt(req.query.maxCoins as string, 10) : undefined;
+        const isAdmin = req.query.isAdmin as 'all' | 'admin' | 'user' | undefined;
+        const sortBy = req.query.sortBy as string | undefined;
+
+        const filters = {
+            search,
+            banned: banned && ['all', 'banned', 'active'].includes(banned) ? banned : 'all',
+            minCoins: minCoins !== undefined && !isNaN(minCoins) ? minCoins : undefined,
+            maxCoins: maxCoins !== undefined && !isNaN(maxCoins) ? maxCoins : undefined,
+            isAdmin: isAdmin && ['all', 'admin', 'user'].includes(isAdmin) ? isAdmin : 'all',
+            sortBy: sortBy && ['id_desc', 'id_asc', 'coins_desc', 'coins_asc', 'joined_desc', 'joined_asc'].includes(sortBy) ? sortBy : 'id_desc',
+        };
+
+        const result = await service.getPlayers(page, limit, filters);
         res.status(StatusCodes.OK).json(result);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -186,6 +207,196 @@ adminRouter.post("/admin/players/:id/coins", async (req, res) => {
     }
 });
 
+adminRouter.get("/admin/request-logs", async (req, res) => {
+    const unit = await Unit.create(true);
+    try {
+        const playerId = req.query.playerId ? parseInt(req.query.playerId as string, 10) : undefined;
+        const ipAddress = req.query.ip as string | undefined;
+        const path = req.query.path as string | undefined;
+        const since = req.query.since as string | undefined;
+        const until = req.query.until as string | undefined;
+        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 500;
+
+        const logs = await queryRequestLogs(unit, {
+            playerId: playerId && !isNaN(playerId) ? playerId : undefined,
+            ipAddress: ipAddress || undefined,
+            path: path || undefined,
+            since: since || undefined,
+            until: until || undefined,
+            limit: limit && !isNaN(limit) ? limit : 500,
+        });
+        res.status(StatusCodes.OK).json(logs);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+// ─── Punishment / Security Admin Endpoints ───
+
+adminRouter.get("/admin/banned-ips", async (_req, res) => {
+    const unit = await Unit.create(true);
+    const service = new PunishmentService(unit);
+    try {
+        const bans = await service.getBannedIPs();
+        res.status(StatusCodes.OK).json(bans);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+adminRouter.get("/admin/violations", async (req, res) => {
+    const unit = await Unit.create(true);
+    const service = new PunishmentService(unit);
+    try {
+        const limit = Math.min(Number(req.query.limit) || 100, 500);
+        const log = await service.getViolationLog(limit);
+        res.status(StatusCodes.OK).json(log);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+adminRouter.post("/admin/banned-ips", async (req, res) => {
+    const { ip, reason, durationHours } = req.body;
+    if (!ip || typeof ip !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "IP is required" });
+        return;
+    }
+    if (net.isIP(ip) === 0) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid IP address" });
+        return;
+    }
+    if (!reason || typeof reason !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Reason is required" });
+        return;
+    }
+    const unit = await Unit.create(false);
+    const service = new PunishmentService(unit);
+    let ok = false;
+    try {
+        const durationMs = typeof durationHours === "number" && durationHours > 0
+            ? durationHours * 60 * 60 * 1000
+            : undefined;
+        await service.banIp(ip, reason, durationMs);
+        ok = true;
+        res.status(StatusCodes.OK).json({ message: `IP ${ip} banned` });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+adminRouter.post("/admin/banned-ips/unban", async (req, res) => {
+    const { ip } = req.body;
+    if (!ip || typeof ip !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "IP is required" });
+        return;
+    }
+    const unit = await Unit.create(false);
+    const service = new PunishmentService(unit);
+    let ok = false;
+    try {
+        const success = await service.unbanIp(ip);
+        ok = success;
+        if (success) {
+            res.status(StatusCodes.OK).json({ message: `IP ${ip} unbanned` });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "IP not found in ban list" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+adminRouter.post("/admin/players/:id/unban", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new PunishmentService(unit);
+    let ok = false;
+    try {
+        const playerId = Number(req.params.id);
+        if (isNaN(playerId)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid player ID" });
+            return;
+        }
+        const success = await service.unbanPlayer(playerId);
+        ok = success;
+        if (success) {
+            res.status(StatusCodes.OK).json({ message: `Player ${playerId} unbanned` });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found or not banned" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+/**
+ * @openapi
+ * /admin/bot-traps:
+ *   get:
+ *     summary: Get bot trap event log
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     responses:
+ *       200:
+ *         description: List of bot trap events
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   timestamp: { type: string }
+ *                   ip: { type: string }
+ *                   endpoint: { type: string }
+ *                   reason: { type: string }
+ *                   userAgent: { type: string }
+ *                   tarPitMs: { type: integer }
+ *       403:
+ *         description: Admin access required
+ */
+adminRouter.get("/admin/bot-traps", (_req, res) => {
+    res.status(StatusCodes.OK).json(getBotTrapLog());
+});
+
+/**
+ * @openapi
+ * /admin/bot-traps:
+ *   delete:
+ *     summary: Clear bot trap event log
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     responses:
+ *       200:
+ *         description: Log cleared
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *       403:
+ *         description: Admin access required
+ */
+adminRouter.delete("/admin/bot-traps", (_req, res) => {
+    clearBotTrapLog();
+    res.status(StatusCodes.OK).json({ message: "Bot trap log cleared" });
+});
+
 /**
  * @openapi
  * /admin/players/:id/ban:
@@ -213,6 +424,45 @@ adminRouter.post("/admin/players/:id/coins", async (req, res) => {
  *       200:
  *         description: Ban status updated
  */
+adminRouter.delete("/admin/players/:id", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new PlayerService(unit);
+    const id = req.params.id;
+    let ok = false;
+    try {
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid player ID" });
+            return;
+        }
+        const playerId = Number(id);
+
+        // Prevent self-deletion
+        if (req.playerId === playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You cannot delete your own account" });
+            return;
+        }
+
+        // Prevent deleting the shop account
+        const player = await unit.prepare<{ username: string }>("SELECT username FROM Player WHERE playerId = @playerId", { playerId }).get();
+        if (player && player.username === "__shop__") {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "The shop account cannot be deleted" });
+            return;
+        }
+
+        const success = await service.deletePlayer(playerId);
+        if (success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ message: "Player deleted" });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
 adminRouter.post("/admin/players/:id/ban", async (req, res) => {
     const unit = await Unit.create(false);
     const service = new AdminService(unit);
@@ -379,6 +629,112 @@ adminRouter.post("/admin/stove-types", async (req, res) => {
             res.status(StatusCodes.CREATED).json({ typeId: id, name });
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create stove type" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+// ─── Redeem Code Management ─────────────────────────────────
+
+adminRouter.get("/admin/redeem-codes", async (_req, res) => {
+    const unit = await Unit.create(true);
+    const service = new RedeemCodeService(unit);
+    try {
+        const codes = await service.listCodes();
+        res.status(StatusCodes.OK).json(codes);
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete();
+    }
+});
+
+adminRouter.post("/admin/redeem-codes", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new RedeemCodeService(unit);
+    let ok = false;
+    try {
+        const { code, rewardCoins, rewardLootboxes, rewardSparks, rewardSpins, maxUses, expiresAt, isActive } = req.body;
+        if (isNullOrWhiteSpace(code)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "code is required" });
+            return;
+        }
+        const id = await service.createCode({
+            code,
+            rewardCoins: typeof rewardCoins === "number" ? rewardCoins : 0,
+            rewardLootboxes: typeof rewardLootboxes === "number" ? rewardLootboxes : 0,
+            rewardSparks: typeof rewardSparks === "number" ? rewardSparks : 0,
+            rewardSpins: typeof rewardSpins === "number" ? rewardSpins : 0,
+            maxUses: typeof maxUses === "number" ? maxUses : null,
+            expiresAt: typeof expiresAt === "string" ? expiresAt : null,
+            isActive: typeof isActive === "boolean" ? isActive : true,
+        });
+        ok = true;
+        res.status(StatusCodes.CREATED).json({ codeId: id, code: code.trim().toUpperCase() });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+adminRouter.patch("/admin/redeem-codes/:id", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new RedeemCodeService(unit);
+    const id = req.params.id;
+    let ok = false;
+    try {
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid code ID" });
+            return;
+        }
+        const data: Partial<{ code: string; rewardCoins: number; rewardLootboxes: number; rewardSparks: number; rewardSpins: number; maxUses: number | null; expiresAt: string | null; isActive: boolean }> = {};
+        if (req.body.code !== undefined) data.code = req.body.code;
+        if (req.body.rewardCoins !== undefined) data.rewardCoins = req.body.rewardCoins;
+        if (req.body.rewardLootboxes !== undefined) data.rewardLootboxes = req.body.rewardLootboxes;
+        if (req.body.rewardSparks !== undefined) data.rewardSparks = req.body.rewardSparks;
+        if (req.body.rewardSpins !== undefined) data.rewardSpins = req.body.rewardSpins;
+        if (req.body.maxUses !== undefined) data.maxUses = req.body.maxUses;
+        if (req.body.expiresAt !== undefined) data.expiresAt = req.body.expiresAt;
+        if (req.body.isActive !== undefined) data.isActive = req.body.isActive;
+
+        const success = await service.updateCode(Number(id), data);
+        if (success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ message: "Code updated" });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Code not found" });
+        }
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+adminRouter.delete("/admin/redeem-codes/:id", async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new RedeemCodeService(unit);
+    const id = req.params.id;
+    let ok = false;
+    try {
+        if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid code ID" });
+            return;
+        }
+        const result = await service.deleteCode(Number(id));
+        if (result.success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ message: "Code deleted" });
+        } else if (result.error) {
+            await unit.complete(false);
+            res.status(StatusCodes.BAD_REQUEST).json({ error: result.error });
+            return;
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Code not found" });
         }
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

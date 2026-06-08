@@ -18,6 +18,7 @@ import { LootboxService, LootboxType } from '@core/services/lootbox.service';
 import { PriceHistoryService } from '@core/services/price-history.service';
 import { ChatMessageService } from '@core/services/chat-message.service';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
+import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 
 /* ─── Local Types ─── */
 
@@ -54,7 +55,7 @@ interface ChartModel {
 @Component({
   selector: 'app-marketplace',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule, CommonModule, HeatTierPipe],
+  imports: [RouterModule, CommonModule, HeatTierPipe, InfoTooltipComponent],
   templateUrl: './marketplace.component.html',
   styleUrls: ['./marketplace.component.css'],
 })

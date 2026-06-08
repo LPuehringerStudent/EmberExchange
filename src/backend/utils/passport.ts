@@ -80,6 +80,7 @@ async function handleOAuthLogin(
     provider: "google" | "github",
     profile: any
 ): Promise<{ playerId: number; sessionId: string }> {
+    console.log(`[OAuth] handleOAuthLogin started — provider=${provider}`);
     const unit = await Unit.create(false);
     const playerService = new PlayerService(unit);
     const playerStatisticsService = new PlayerStatisticsService(unit);
@@ -89,14 +90,17 @@ async function handleOAuthLogin(
         const providerId = profile.id;
         const email = profile.emails?.[0]?.value || `${providerId}@${provider}.oauth`;
         const displayName = profile.displayName || profile.username || `User${providerId}`;
+        console.log(`[OAuth] profile parsed — provider=${provider}`);
 
         // Check if user already exists with this OAuth provider
         let player = await playerService.getPlayerByOAuth(provider, providerId);
+        console.log(`[OAuth] existing player by OAuth: ${player ? `found (playerId=${player.playerId})` : "not found"}`);
 
         if (!player) {
             // Check if email is already used by another account
             const existingByEmail = await playerService.getPlayerByEmail(email);
             if (existingByEmail) {
+                console.warn(`[OAuth] email conflict — player ${existingByEmail.playerId}`);
                 throw new Error("An account with this email already exists");
             }
 
@@ -107,6 +111,7 @@ async function handleOAuthLogin(
                 username = `${displayName.replace(/\s+/g, "").toLowerCase()}${counter}`;
                 counter++;
             }
+            console.log(`[OAuth] creating new player — username=${username}`);
 
             // Create new OAuth player
             const [success, playerId] = await playerService.createOAuthPlayer(
@@ -119,19 +124,33 @@ async function handleOAuthLogin(
             );
 
             if (!success) {
+                console.error("[OAuth] createOAuthPlayer returned false");
                 throw new Error("Failed to create player");
             }
+            console.log(`[OAuth] player created — playerId=${playerId}`);
 
             // Create player statistics
             const [statsSuccess] = await playerStatisticsService.createDefaultPlayerStatistics(playerId);
             if (!statsSuccess) {
+                console.error("[OAuth] createDefaultPlayerStatistics returned false");
                 throw new Error("Failed to create player statistics");
+            }
+
+            // OAuth users are auto-verified — Google/GitHub already confirmed the email
+            try {
+                await unit.prepare(
+                    `UPDATE Player SET emailVerified = 1, verifiedAt = @verifiedAt WHERE playerId = @playerId`,
+                    { playerId, verifiedAt: new Date().toISOString() }
+                ).run();
+            } catch {
+                // Ignore update errors
             }
 
             player = await playerService.getInfoByID(playerId);
         }
 
         if (!player) {
+            console.error("[OAuth] player is null after lookup/creation");
             throw new Error("Failed to find or create player");
         }
 
@@ -139,15 +158,19 @@ async function handleOAuthLogin(
         const sessionId = crypto.randomUUID();
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
+        console.log(`[OAuth] creating session — playerId=${player.playerId}`);
 
         const sessionCreated = await sessionService.createSession(sessionId, player.playerId, expiresAt);
         if (!sessionCreated) {
+            console.error("[OAuth] createSession returned false");
             throw new Error("Failed to create session");
         }
+        console.log(`[OAuth] session created — playerId=${player.playerId}`);
 
         await unit.complete(true);
         return { playerId: player.playerId, sessionId };
     } catch (err) {
+        console.error("[OAuth] handleOAuthLogin error:", (err as Error).message);
         await unit.complete(false);
         throw err;
     }

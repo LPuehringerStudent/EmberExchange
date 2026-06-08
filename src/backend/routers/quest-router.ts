@@ -1,7 +1,8 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { QuestService } from "../services/quest-service";
-import { SessionService } from "../services/session-service";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 
 export const questRouter = express.Router();
@@ -20,24 +21,11 @@ export const questRouter = express.Router();
  *       401:
  *         description: Unauthorized
  */
-questRouter.get("/quests", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Missing session-id header" });
-        return;
-    }
-
+questRouter.get("/quests", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     try {
-        const sessionService = new SessionService(unit);
-        const session = await sessionService.getSession(sessionId);
-        if (!session || new Date(session.expiresAt) < new Date()) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
         const questService = new QuestService(unit);
-        const quests = await questService.getActiveQuests(session.playerId);
+        const quests = await questService.getActiveQuests(req.playerId!);
         res.status(StatusCodes.OK).json(quests);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -68,14 +56,8 @@ questRouter.get("/quests", async (req, res) => {
  *       401:
  *         description: Unauthorized
  */
-questRouter.post("/quests/:id/claim", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Missing session-id header" });
-        return;
-    }
-
-    const questId = parseInt(req.params.id, 10);
+questRouter.post("/quests/:id/claim", requireAuth, async (req, res) => {
+    const questId = parseInt(req.params.id as string, 10);
     if (isNaN(questId)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid quest ID" });
         return;
@@ -83,15 +65,12 @@ questRouter.post("/quests/:id/claim", async (req, res) => {
 
     const unit = await Unit.create(true);
     try {
-        const sessionService = new SessionService(unit);
-        const session = await sessionService.getSession(sessionId);
-        if (!session || new Date(session.expiresAt) < new Date()) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             return;
         }
 
         const questService = new QuestService(unit);
-        const result = await questService.claimReward(session.playerId, questId);
+        const result = await questService.claimReward(req.playerId!, questId);
 
         if (result.success) {
             res.status(StatusCodes.OK).json(result);

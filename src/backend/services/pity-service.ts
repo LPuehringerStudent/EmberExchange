@@ -85,6 +85,9 @@ export class PityService {
      * Checks if pity should override the rolled rarity.
      * Returns the guaranteed rarity if a threshold is met, otherwise null.
      * Legendary threshold takes precedence over epic.
+     *
+     * `count` = opens since last reset. The current open makes it `count + 1` total,
+     * so we trigger when `count + 1 >= threshold` (fixes off-by-one).
      */
     async checkPity(playerId: number, lootboxTypeId: number, rolledRarity: string): Promise<string | null> {
         const counters = await this.getCounters(playerId);
@@ -94,13 +97,14 @@ export class PityService {
         const [epicThreshold, legendaryThreshold] = thresholds;
 
         const rolledPriority = RARITY_PRIORITY[rolledRarity.toLowerCase()] ?? 0;
+        const totalOpens = count + 1; // include the current open
 
         // Legendary threshold takes precedence
-        if (count >= legendaryThreshold) {
+        if (totalOpens >= legendaryThreshold) {
             return 'legendary';
         }
         // Epic threshold only applies if we didn't already roll epic or better
-        if (count >= epicThreshold && rolledPriority < RARITY_PRIORITY['epic']) {
+        if (totalOpens >= epicThreshold && rolledPriority < RARITY_PRIORITY['epic']) {
             return 'epic';
         }
         return null;

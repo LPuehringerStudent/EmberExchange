@@ -1,6 +1,6 @@
-<div class="h-[calc(100vh-64px)] flex">
+<div class="h-[calc(100vh-64px)] flex flex-col lg:flex-row overflow-hidden">
   <!-- Left sidebar: Friend list -->
-  <div class="w-[320px] shrink-0 h-full">
+  <div class="w-full lg:w-[320px] shrink-0 h-[45%] lg:h-full border-b lg:border-b-0 lg:border-r border-border">
     <app-friend-list
       [friends]="friends()"
       [pendingRequests]="pendingRequests()"
@@ -16,7 +16,7 @@
   </div>
 
   <!-- Right panel: Chat thread -->
-  <div class="flex-1 h-full">
+  <div class="flex-1 h-[55%] lg:h-full min-h-0">
     <app-chat-thread
       [friend]="selectedFriend()"
       [messages]="messages()"

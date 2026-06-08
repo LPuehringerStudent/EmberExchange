@@ -43,10 +43,17 @@ export class GameStateService extends ServiceBase {
              RETURNING version`,
             { roomId, newBlob: JSON.stringify(newBlob), expectedVersion }
         );
-        const row = await stmt.get();
-        if (row) {
-            return { success: true, newVersion: row.version };
+        try {
+            const row = await stmt.get();
+            if (row) {
+                return { success: true, newVersion: row.version };
+            }
+            return { success: false, newVersion: -1 };
+        } catch (err: any) {
+            if (err?.code === "40001") {
+                return { success: false, newVersion: -1 };
+            }
+            throw err;
         }
-        return { success: false, newVersion: -1 };
     }
 }

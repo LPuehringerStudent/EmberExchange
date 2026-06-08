@@ -1,7 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { PityService } from "../services/pity-service";
-import { SessionService } from "../services/session-service";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 
 export const pityRouter = express.Router();
@@ -35,29 +35,16 @@ export const pityRouter = express.Router();
  *       401:
  *         description: Unauthorized
  */
-pityRouter.get("/player/pity", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Missing session-id header" });
-        return;
-    }
-
+pityRouter.get("/player/pity", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     try {
-        const sessionService = new SessionService(unit);
-        const session = await sessionService.getSession(sessionId);
-        if (!session || new Date(session.expiresAt) < new Date()) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
         const pityService = new PityService(unit);
         const [standard, golden, legendary, dragon, winter] = await Promise.all([
-            pityService.getPityProgress(session.playerId, 1),
-            pityService.getPityProgress(session.playerId, 2),
-            pityService.getPityProgress(session.playerId, 3),
-            pityService.getPityProgress(session.playerId, 4),
-            pityService.getPityProgress(session.playerId, 5),
+            pityService.getPityProgress(req.playerId!, 1),
+            pityService.getPityProgress(req.playerId!, 2),
+            pityService.getPityProgress(req.playerId!, 3),
+            pityService.getPityProgress(req.playerId!, 4),
+            pityService.getPityProgress(req.playerId!, 5),
         ]);
 
         res.status(StatusCodes.OK).json({

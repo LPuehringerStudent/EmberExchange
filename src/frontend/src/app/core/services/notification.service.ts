@@ -1,28 +1,49 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
+import { WebSocketService } from './websocket.service';
 import { HttpHeaders } from '@angular/common/http';
 import type { NotificationRow } from '@shared/model';
 
 export interface NotificationItem {
   notificationId: number;
   playerId: number;
-  type: 'friend_request' | 'chat_message' | 'trade_offer' | 'daily_reward' | 'system';
+  type: 'friend_request' | 'chat_message' | 'trade_offer' | 'daily_reward' | 'system' | 'quest_complete';
   title: string;
   message: string;
   data: Record<string, unknown>;
   isRead: boolean;
+  priority: 'low' | 'normal' | 'high';
+  groupKey: string | null;
+  count: number;
+  expiresAt: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private api = inject(ApiService);
   private authService = inject(AuthService);
+  private wsService = inject(WebSocketService);
 
   unreadCount = signal<number>(0);
   notifications = signal<NotificationItem[]>([]);
+  readonly lastHighPriorityNotification = signal<NotificationItem | null>(null);
+
+  constructor() {
+    effect(() => {
+      const incoming = this.wsService.incomingNotification();
+      if (incoming) {
+        this.unreadCount.update(c => c + 1);
+        this.loadNotifications();
+        if (incoming.priority === 'high') {
+          this.lastHighPriorityNotification.set(incoming as unknown as NotificationItem);
+        }
+      }
+    });
+  }
 
   async refresh(): Promise<void> {
     await Promise.all([this.loadNotifications(), this.loadUnreadCount()]);

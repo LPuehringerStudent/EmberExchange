@@ -14,13 +14,38 @@ import { clearTurnTimer } from "./turn-timer";
 
 export let wssInstance: WebSocketServer | null = null;
 
+// Per-IP WebSocket connection limit (P1 DoS hardening)
+const wsConnectionsByIp = new Map<string, number>();
+const MAX_WS_CONNECTIONS_PER_IP = 10;
+
+function getClientIp(req: http.IncomingMessage): string {
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (typeof cfIp === "string" && cfIp.length > 0) return cfIp.trim();
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+        if (hops.length > 0) return hops[hops.length - 1];
+    }
+    return req.socket.remoteAddress ?? "unknown";
+}
+
 export function setupWebSocketServer(server: http.Server): void {
-    const wss = new WebSocketServer({ server, path: "/ws" });
+    const wss = new WebSocketServer({ server, path: "/ws", maxPayload: 65536 });
     wssInstance = wss;
 
     wss.on("connection", async (ws, req) => {
-        const parsedUrl = new URL(req.url || "", "http://localhost");
-        const sessionId = parsedUrl.searchParams.get("sessionId") || undefined;
+        const clientIp = getClientIp(req);
+        const currentCount = wsConnectionsByIp.get(clientIp) ?? 0;
+        if (currentCount >= MAX_WS_CONNECTIONS_PER_IP) {
+            console.warn(`[WebSocket] Rejecting connection from ${clientIp}: limit ${MAX_WS_CONNECTIONS_PER_IP} reached`);
+            ws.close(1013, "TRY_AGAIN_LATER");
+            return;
+        }
+        wsConnectionsByIp.set(clientIp, currentCount + 1);
+
+        // Read sessionId from WebSocket subprotocol header (avoids leaking it to logs/URL/history)
+        const rawProtocol = req.headers["sec-websocket-protocol"];
+        const sessionId = typeof rawProtocol === "string" ? rawProtocol.split(",")[0].trim() : undefined;
 
         // Attach message listener immediately so messages don't get lost
         // while authenticateSession runs asynchronously
@@ -34,7 +59,11 @@ export function setupWebSocketServer(server: http.Server): void {
                 const rawData = messageQueue.shift()!;
                 try {
                     const data = JSON.parse(rawData.toString());
-                    await handleMessage(activeSocketId, data);
+                    if (!data || typeof data !== "object" || typeof data.type !== "string") {
+                        console.warn("[WebSocket] Dropping malformed message from", clientIp);
+                        continue;
+                    }
+                    await handleMessage(activeSocketId, clientIp, data);
                 } catch (err) {
                     console.error("WebSocket message parse error:", err);
                     if (activeSocketId) {
@@ -49,6 +78,11 @@ export function setupWebSocketServer(server: http.Server): void {
         }
 
         ws.on("message", (rawData) => {
+            // Cap pre-auth queue to prevent memory exhaustion from unauthenticated sockets
+            if (!authComplete && messageQueue.length >= 10) {
+                console.warn("WebSocket pre-auth queue full — dropping message");
+                return;
+            }
             messageQueue.push(rawData);
             if (!isProcessing && authComplete) {
                 isProcessing = true;
@@ -73,7 +107,17 @@ export function setupWebSocketServer(server: http.Server): void {
         }
 
         ws.on("close", async () => {
-            await handleDisconnect(activeSocketId);
+            const count = wsConnectionsByIp.get(clientIp) ?? 1;
+            if (count <= 1) {
+                wsConnectionsByIp.delete(clientIp);
+            } else {
+                wsConnectionsByIp.set(clientIp, count - 1);
+            }
+            try {
+                await handleDisconnect(activeSocketId);
+            } catch (err) {
+                console.error(`[WebSocket] handleDisconnect error for socket ${activeSocketId}:`, err);
+            }
         });
 
         ws.on("error", (err) => {

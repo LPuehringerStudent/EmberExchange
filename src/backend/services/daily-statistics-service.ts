@@ -76,7 +76,7 @@ export class DailyStatisticsService extends ServiceBase {
      * Retrieves all daily statistics.
      * @deprecated Use calculated statistics instead
      */
-    async getAll(): Promise<DailyStatisticsRow[]> {
+    async getAll(_limit: number = 500, _offset: number = 0): Promise<DailyStatisticsRow[]> {
         // Return only today's calculated stats
         return [await this.calculateTodayStats()];
     }

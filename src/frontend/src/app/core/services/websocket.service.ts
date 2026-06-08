@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from './auth.service';
-import type { ChatMessageRow } from '@shared/model';
+import type { ChatMessageRow, NotificationRow } from '@shared/model';
 
 export type WsConnectionState = 'closed' | 'connecting' | 'open' | 'reconnecting';
 
@@ -37,6 +37,8 @@ export class WebSocketService {
   readonly currentVersion = signal<number>(0);
   readonly stateBlob = signal<Record<string, unknown> | null>(null);
   readonly incomingChatMessage = signal<ChatMessageRow | null>(null);
+  readonly incomingTradeUpdate = signal<{ messageId: number; status: string } | null>(null);
+  readonly incomingNotification = signal<Partial<NotificationRow> | null>(null);
 
   connect(): void {
     if (this.ws) {
@@ -50,10 +52,10 @@ export class WebSocketService {
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${protocol}//${window.location.host}/ws?sessionId=${encodeURIComponent(sessionId)}`;
+    const url = `${protocol}//${window.location.host}/ws`;
 
     this.connectionState.set('connecting');
-    this.ws = new WebSocket(url);
+    this.ws = new WebSocket(url, sessionId);
 
     this.ws.onopen = () => {
       this.reconnectAttempts = 0;
@@ -243,6 +245,15 @@ export class WebSocketService {
       case 'chat_message': {
         const chatMsg = payload as unknown as ChatMessageRow;
         this.incomingChatMessage.set(chatMsg);
+        break;
+      }
+      case 'trade_offer_update': {
+        const update = payload as { messageId: number; status: string };
+        this.incomingTradeUpdate.set(update);
+        break;
+      }
+      case 'notification': {
+        this.incomingNotification.set(payload as Partial<NotificationRow>);
         break;
       }
     }

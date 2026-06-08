@@ -1,7 +1,9 @@
-import { Component, signal, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, signal, OnInit, ChangeDetectionStrategy, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService, VerificationRequiredError } from '@core/services/auth.service';
+import { TurnstileService } from '@core/services/turnstile.service';
+import { BehaviorTrackerService } from '@core/services/behavior-tracker.service';
 
 @Component({
   selector: 'app-login',
@@ -10,7 +12,7 @@ import { AuthService } from '@core/services/auth.service';
   styleUrls: ['./login.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, AfterViewInit {
   // Signals for reactive state (Angular 21 best practice)
   isLoading = signal(false);
   errorMessage = signal('');
@@ -20,14 +22,29 @@ export class LoginComponent implements OnInit {
   githubEnabled = signal(false);
   show2FA = signal(false);
   twoFACode = signal('');
+  turnstileWidgetId = signal<string | null>(null);
+  turnstileReady = signal(false);
+  turnstileError = signal(false);
+  formStartTime = signal<number>(0);
+  isWrongDomain = signal(false);
+  isLocalhost = signal(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  powChallenge = signal<string | null>(null);
+  powDifficulty = signal<number>(0);
+  powSolving = signal(false);
+
+  @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('loginFormEl', { static: false }) loginFormEl!: ElementRef<HTMLFormElement>;
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private turnstileService = inject(TurnstileService);
+  private behaviorTracker = inject(BehaviorTrackerService);
 
   loginForm = new FormGroup({
     email: new FormControl('', [Validators.required]),
     password: new FormControl('', [Validators.required]),
-    rememberMe: new FormControl(false)
+    rememberMe: new FormControl(false),
+    website: new FormControl('') // honeypot — hidden via CSS
   });
 
   twoFAForm = new FormGroup({
@@ -35,6 +52,9 @@ export class LoginComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
+    // Set form start time for timing analysis (backend rejects instant submissions)
+    this.formStartTime.set(Date.now());
+
     // Check if there's an OAuth error in the URL
     const urlParams = new URLSearchParams(window.location.search);
     const oauthError = urlParams.get('error');
@@ -50,25 +70,97 @@ export class LoginComponent implements OnInit {
     } catch {
       // OAuth status fetch failed, buttons will remain disabled
     }
+
+    // Fetch proof-of-work challenge
+    this.fetchPowChallenge().catch(() => {
+      this.errorMessage.set('Failed to load security challenge. Please refresh.');
+    });
+
+    // Initialize Turnstile widget (skip on localhost)
+    if (!this.isLocalhost()) {
+      try {
+        await this.turnstileService.initialize();
+        // Widget will be rendered after view init via a timeout
+        setTimeout(() => this.renderTurnstile(), 100);
+      } catch {
+        console.error('Failed to initialize Turnstile');
+      }
+    }
   }
+
+  ngAfterViewInit(): void {
+    // Start behavioral tracking once the form is in the DOM
+    if (this.loginFormEl?.nativeElement) {
+      this.behaviorTracker.startTracking(this.loginFormEl.nativeElement);
+    }
+  }
+
+  private renderTurnstile(): void {
+    if (!this.turnstileContainer?.nativeElement) return;
+    const widgetId = this.turnstileService.render(
+      this.turnstileContainer.nativeElement,
+      () => this.turnstileReady.set(true)
+    );
+    if (widgetId) {
+      this.turnstileWidgetId.set(widgetId);
+    }
+  }
+
+  shakeForm = signal(false);
 
   async onSubmit(): Promise<void> {
     this.errorMessage.set('');
+    this.turnstileError.set(false);
+    this.isWrongDomain.set(false);
 
     if (this.loginForm.invalid) {
       this.errorMessage.set('Please fill in all fields');
+      this.shakeForm.set(true);
+      setTimeout(() => this.shakeForm.set(false), 500);
+      return;
+    }
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      // If on the wrong domain, Turnstile invisible mode will silently fail
+      if (window.location.hostname.includes('onrender.com')) {
+        this.isWrongDomain.set(true);
+      }
       return;
     }
 
     this.isLoading.set(true);
 
     const { email, password, rememberMe } = this.loginForm.value;
+    const turnstileToken = this.isLocalhost() || !widgetId ? undefined : this.turnstileService.getToken(widgetId);
+
+    // Solve proof-of-work challenge
+    const challenge = this.powChallenge();
+    const difficulty = this.powDifficulty();
+    let powNonce: string | undefined;
+    if (challenge && difficulty > 0) {
+      this.powSolving.set(true);
+      try {
+        powNonce = await this.authService.solvePow(challenge, difficulty);
+      } finally {
+        this.powSolving.set(false);
+      }
+    }
+
+    // Collect behavior token
+    const behaviorToken = this.behaviorTracker.getToken() ?? undefined;
 
     try {
       const result = await this.authService.login(
         email!,
         password!,
-        rememberMe ?? false
+        rememberMe ?? false,
+        turnstileToken ?? undefined,
+        this.formStartTime(),
+        challenge ?? undefined,
+        powNonce,
+        behaviorToken
       );
 
       if ('requires2FA' in result) {
@@ -78,9 +170,18 @@ export class LoginComponent implements OnInit {
         this.router.navigate(['/']);
       }
     } catch (err) {
+      if (err instanceof VerificationRequiredError) {
+        this.router.navigate(['/check-email'], { state: { email: err.email } });
+        return;
+      }
       this.errorMessage.set(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       this.isLoading.set(false);
+      const widgetId = this.turnstileWidgetId();
+      if (widgetId) {
+        this.turnstileService.reset(widgetId);
+        this.turnstileReady.set(false);
+      }
     }
   }
 
@@ -111,6 +212,10 @@ export class LoginComponent implements OnInit {
     this.show2FA.set(false);
     this.twoFAForm.reset();
     this.authService.cancel2FA();
+    // Re-render Turnstile widget when returning to the login form (skip on localhost)
+    if (!this.isLocalhost()) {
+      setTimeout(() => this.renderTurnstile(), 50);
+    }
   }
 
   togglePassword(): void {
@@ -118,14 +223,38 @@ export class LoginComponent implements OnInit {
   }
 
   loginWithGoogle(): void {
-    if (this.googleEnabled()) {
-      this.authService.loginWithGoogle();
+    if (!this.googleEnabled()) return;
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      return;
     }
+
+    const token = this.isLocalhost() || !widgetId
+      ? undefined
+      : this.turnstileService.getToken(widgetId) ?? undefined;
+    this.authService.loginWithGoogle(token);
   }
 
   loginWithGitHub(): void {
-    if (this.githubEnabled()) {
-      this.authService.loginWithGitHub();
+    if (!this.githubEnabled()) return;
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      return;
     }
+
+    const token = this.isLocalhost() || !widgetId
+      ? undefined
+      : this.turnstileService.getToken(widgetId) ?? undefined;
+    this.authService.loginWithGitHub(token);
+  }
+
+  private async fetchPowChallenge(): Promise<void> {
+    const { challenge, difficulty } = await this.authService.getPowChallenge();
+    this.powChallenge.set(challenge);
+    this.powDifficulty.set(difficulty);
   }
 }

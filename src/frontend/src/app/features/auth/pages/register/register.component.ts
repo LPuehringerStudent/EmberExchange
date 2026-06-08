@@ -1,7 +1,9 @@
-import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, signal, inject, ChangeDetectionStrategy, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { TurnstileService } from '@core/services/turnstile.service';
+import { BehaviorTrackerService } from '@core/services/behavior-tracker.service';
 
 @Component({
   selector: 'app-register',
@@ -10,12 +12,13 @@ import { AuthService } from '@core/services/auth.service';
   styleUrls: ['./register.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit, AfterViewInit {
   // Form signals
   username = signal('');
   email = signal('');
   password = signal('');
   confirmPassword = signal('');
+  honeypotWebsite = signal(''); // honeypot — real users leave empty
 
   // UI state signals
   isLoading = signal(false);
@@ -25,14 +28,32 @@ export class RegisterComponent {
   showConfirmPassword = signal(false);
   currentStep = signal(1);
   acceptedTerms = signal(false);
+  turnstileWidgetId = signal<string | null>(null);
+  googleEnabled = signal(false);
+  githubEnabled = signal(false);
+  turnstileReady = signal(false);
+  turnstileError = signal(false);
+  formStartTime = signal<number>(0);
+  isWrongDomain = signal(false);
+  isLocalhost = signal(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  powChallenge = signal<string | null>(null);
+  powDifficulty = signal<number>(0);
+  powSolving = signal(false);
 
   // Password strength
   passwordStrength = signal(0);
   strengthLabel = signal('Cold Ash');
   strengthColor = signal('#6c757d');
+  shakeForm = signal(false);
+
+  @ViewChild('turnstileContainer', { static: false }) turnstileContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('registerFormEl', { static: false }) registerFormEl!: ElementRef<HTMLFormElement>;
+  @ViewChild('trackContainer', { static: true }) trackContainer!: ElementRef<HTMLDivElement>;
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private turnstileService = inject(TurnstileService);
+  private behaviorTracker = inject(BehaviorTrackerService);
 
   updatePasswordStrength(password: string): void {
     let strength = 0;
@@ -59,10 +80,14 @@ export class RegisterComponent {
     if (this.currentStep() === 1) {
       if (!this.username().trim() || !this.email().trim()) {
         this.errorMessage.set('Fill all fields');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
       if (!this.isValidEmail(this.email())) {
         this.errorMessage.set('Enter a valid E-Mail address');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
     }
@@ -70,20 +95,37 @@ export class RegisterComponent {
     if (this.currentStep() === 2) {
       if (!this.password() || !this.confirmPassword()) {
         this.errorMessage.set('Both password fields required');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
       if (this.password() !== this.confirmPassword()) {
         this.errorMessage.set('Passwords do not match');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
       if (this.password().length < 8) {
         this.errorMessage.set('Password too weak — must be at least 8 characters');
+        this.shakeForm.set(true);
+        setTimeout(() => this.shakeForm.set(false), 500);
         return;
       }
     }
 
     this.errorMessage.set('');
     this.currentStep.update(s => s + 1);
+
+    // Render Turnstile widget and fetch PoW challenge when reaching the final step (skip on localhost)
+    if (this.currentStep() === 3) {
+      if (!this.isLocalhost()) {
+        setTimeout(() => this.renderTurnstile(), 50);
+      }
+      // Fetch proof-of-work challenge
+      this.fetchPowChallenge().catch(() => {
+        this.errorMessage.set('Failed to load security challenge. Please refresh.');
+      });
+    }
   }
 
   prevStep(): void {
@@ -92,28 +134,121 @@ export class RegisterComponent {
   }
 
   async onSubmit(): Promise<void> {
+    this.errorMessage.set('');
+    this.turnstileError.set(false);
+    this.isWrongDomain.set(false);
+
     if (!this.acceptedTerms()) {
       this.errorMessage.set('You must accept the terms and conditions');
+      this.shakeForm.set(true);
+      setTimeout(() => this.shakeForm.set(false), 500);
+      return;
+    }
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      if (window.location.hostname.includes('onrender.com')) {
+        this.isWrongDomain.set(true);
+      }
       return;
     }
 
     this.isLoading.set(true);
     this.errorMessage.set('');
 
+    const turnstileToken = this.isLocalhost() || !widgetId ? undefined : this.turnstileService.getToken(widgetId);
+
+    // Solve proof-of-work challenge
+    const challenge = this.powChallenge();
+    const difficulty = this.powDifficulty();
+    let powNonce: string | undefined;
+    if (challenge && difficulty > 0) {
+      this.powSolving.set(true);
+      try {
+        powNonce = await this.authService.solvePow(challenge, difficulty);
+      } finally {
+        this.powSolving.set(false);
+      }
+    }
+
+    // Collect behavior token
+    const behaviorToken = this.behaviorTracker.getToken() ?? undefined;
+    this.behaviorTracker.stopTracking(this.trackContainer.nativeElement);
+
     try {
-      await this.authService.register(
+      const result = await this.authService.register(
         this.username(),
         this.password(),
         this.email(),
-        false // Don't remember me by default for new registrations
+        turnstileToken ?? undefined,
+        this.formStartTime(),
+        challenge ?? undefined,
+        powNonce,
+        behaviorToken
       );
-      this.successMessage.set('Account created successfully! Redirecting...');
+      this.successMessage.set(result.message);
       setTimeout(() => {
-        this.router.navigate(['/']);
+        this.router.navigate(['/check-email'], { queryParams: { email: this.email() } });
       }, 1500);
     } catch (err) {
       this.isLoading.set(false);
       this.errorMessage.set(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+    } finally {
+      if (widgetId) {
+        this.turnstileService.reset(widgetId);
+        this.turnstileReady.set(false);
+      }
+    }
+  }
+
+  async ngOnInit(): Promise<void> {
+    // Set form start time for timing analysis (backend rejects instant submissions)
+    this.formStartTime.set(Date.now());
+
+    // Check if there's an OAuth error in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthError = urlParams.get('error');
+    if (oauthError) {
+      this.errorMessage.set(decodeURIComponent(oauthError));
+    }
+
+    // Load OAuth provider status
+    try {
+      const status = await this.authService.getOAuthStatus();
+      this.googleEnabled.set(status.google);
+      this.githubEnabled.set(status.github);
+    } catch {
+      // OAuth status fetch failed, buttons will remain disabled
+    }
+
+    // Initialize Turnstile widget (skip on localhost)
+    if (!this.isLocalhost()) {
+      try {
+        await this.turnstileService.initialize();
+        setTimeout(() => this.renderTurnstile(), 100);
+      } catch {
+        console.error('Failed to initialize Turnstile');
+      }
+    }
+  }
+
+  ngAfterViewInit(): void {
+    // Start behavioral tracking on the persistent container so all steps are captured
+    if (this.trackContainer?.nativeElement) {
+      this.behaviorTracker.reset();
+      this.behaviorTracker.startTracking(this.trackContainer.nativeElement);
+    }
+  }
+
+  private renderTurnstile(): void {
+    if (!this.turnstileContainer?.nativeElement) return;
+    const widgetId = this.turnstileService.render(
+      this.turnstileContainer.nativeElement,
+      () => this.turnstileReady.set(true)
+    );
+    if (widgetId) {
+      this.turnstileWidgetId.set(widgetId);
     }
   }
 
@@ -125,7 +260,43 @@ export class RegisterComponent {
     }
   }
 
+  registerWithGoogle(): void {
+    if (!this.googleEnabled()) return;
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      return;
+    }
+
+    const token = this.isLocalhost() || !widgetId
+      ? undefined
+      : this.turnstileService.getToken(widgetId) ?? undefined;
+    this.authService.loginWithGoogle(token);
+  }
+
+  registerWithGitHub(): void {
+    if (!this.githubEnabled()) return;
+
+    const widgetId = this.turnstileWidgetId();
+    if (!this.isLocalhost() && (!widgetId || !this.turnstileService.isReady(widgetId))) {
+      this.turnstileError.set(true);
+      return;
+    }
+
+    const token = this.isLocalhost() || !widgetId
+      ? undefined
+      : this.turnstileService.getToken(widgetId) ?? undefined;
+    this.authService.loginWithGitHub(token);
+  }
+
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  private async fetchPowChallenge(): Promise<void> {
+    const { challenge, difficulty } = await this.authService.getPowChallenge();
+    this.powChallenge.set(challenge);
+    this.powDifficulty.set(difficulty);
   }
 }

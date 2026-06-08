@@ -98,8 +98,11 @@ export class LootboxService extends ServiceBase {
     /**
      * Retrieves all lootboxes from the database.
      */
-    async getAllLootboxes(): Promise<LootboxRow[]> {
-        const stmt = this.unit.prepare<LootboxRow>("SELECT * FROM Lootbox");
+    async getAllLootboxes(limit: number = 100, offset: number = 0): Promise<LootboxRow[]> {
+        const stmt = this.unit.prepare<LootboxRow>(
+            "SELECT * FROM Lootbox LIMIT @limit OFFSET @offset",
+            { limit, offset }
+        );
         return await stmt.all();
     }
 
@@ -292,8 +295,8 @@ export class LootboxService extends ServiceBase {
 
         // 2c. Update pity counter
         const rarityPriority: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3, limited: 4, secret: 5 };
-        if ((rarityPriority[rarity.toLowerCase()] ?? 0) >= 2) {
-            // Epic or better — reset counter
+        if ((rarityPriority[rarity.toLowerCase()] ?? 0) >= 3) {
+            // Legendary or better — reset counter (so legendary pity can actually be reached)
             await pityService.resetCounter(playerId, lootbox.lootboxTypeId);
         } else {
             await pityService.incrementCounter(playerId, lootbox.lootboxTypeId);
@@ -315,10 +318,13 @@ export class LootboxService extends ServiceBase {
         if (!stoveId) return [false, null];
 
         // 4. Mark lootbox as opened
-        await this.unit.prepare(
-            `UPDATE Lootbox SET openedAt = NOW() WHERE lootboxId = @lootboxId`,
+        const opened = await this.unit.prepare(
+            `UPDATE Lootbox SET openedAt = NOW() WHERE lootboxId = @lootboxId AND openedAt IS NULL`,
             { lootboxId }
         ).run();
+        if (opened.changes !== 1) {
+            return [false, null];
+        }
 
         // 5. Create lootbox drop
         const dropStmt = this.unit.prepare<LootboxDropRow>(

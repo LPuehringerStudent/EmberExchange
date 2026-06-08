@@ -13,9 +13,10 @@ export class MiniGameSessionService extends ServiceBase {
      * Retrieves all mini-game sessions.
      * @returns Array of all MiniGameSessionRow objects.
      */
-    async getAll(): Promise<MiniGameSessionRow[]> {
+    async getAll(limit: number = 100, offset: number = 0): Promise<MiniGameSessionRow[]> {
         const stmt = this.unit.prepare<MiniGameSessionRow>(
-            "SELECT * FROM MiniGameSession ORDER BY finishedAt DESC"
+            "SELECT * FROM MiniGameSession ORDER BY finishedAt DESC LIMIT @limit OFFSET @offset",
+            { limit, offset }
         );
         return await stmt.all();
     }

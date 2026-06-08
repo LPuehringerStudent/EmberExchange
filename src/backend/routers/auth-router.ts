@@ -1,6 +1,7 @@
 import express from "express";
 import { Unit } from "../utils/unit";
 import { PlayerService } from "../services/player-service";
+import type { PlayerRow } from "../../shared/model";
 import { SessionService } from "../services/session-service";
 import { PlayerStatisticsService } from "../services/player-statistics-service";
 import { LoginHistoryService } from "../services/login-history-service";
@@ -10,13 +11,137 @@ import { isNullOrWhiteSpace } from "../utils/util";
 import { hashPassword, comparePassword, isHashed } from "../utils/password";
 import { TwoFactorService } from "../services/two-factor-service";
 import { NotificationService } from "../services/notification-service";
+import { PunishmentService } from "../services/punishment-service";
+import { registerRateLimiter, loginRateLimiter, authRateLimiter, resendVerificationRateLimiter, twoFactorRateLimiter, challengeRateLimiter } from "../middleware/rate-limiter";
+import { turnstileMiddleware } from "../middleware/turnstile";
+import { timingGuard } from "../middleware/timing-guard";
+import { headerGuard } from "../middleware/header-guard";
+import { behaviorGuard } from "../middleware/behavior-guard";
+import { datacenterGuard } from "../middleware/datacenter-guard";
+import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, setBotHeaders, getClientIp } from "../utils/bot-trap";
+import { sendVerificationEmail } from "../services/email-service";
+import { requireAuth } from "../middleware/require-auth";
+import { logSecurityEvent } from "../services/security-event-service";
 
+/* ─── Proof-of-work challenge store (in-memory, 10-min expiry) ─── */
+interface PowChallenge {
+    challenge: string;
+    difficulty: number;
+    expiresAt: number;
+    used: boolean;
+    clientIp: string;
+}
+const powStore = new Map<string, PowChallenge>();
+const POW_DIFFICULTY = parseInt(process.env.POW_DIFFICULTY ?? "6", 10);
+const POW_TTL_MS = 10 * 60 * 1000;
+
+function createPowChallenge(clientIp: string): PowChallenge {
+    const challenge = crypto.randomBytes(32).toString("hex");
+    return {
+        challenge,
+        difficulty: POW_DIFFICULTY,
+        expiresAt: Date.now() + POW_TTL_MS,
+        used: false,
+        clientIp,
+    };
+}
+
+function verifyPow(challenge: string, nonce: string, difficulty: number): boolean {
+    const hash = crypto.createHash("sha256").update(challenge + nonce).digest("hex");
+    const prefix = "0".repeat(difficulty);
+    return hash.startsWith(prefix);
+}
+
+/* ─── Heuristic bot-pattern detection ─── */
 export const authRouter = express.Router();
 
 function isConstraintError(err: unknown): boolean {
     const pgErr = err as { code?: string };
     return pgErr.code === "23503" ||
            pgErr.code === "23505";
+}
+
+/** Validates registration input. Returns error message or null if valid. */
+function validateRegistrationInput(username: string, password: string, email: string): string | null {
+    if (username.length < 3 || username.length > 32) {
+        return "Username must be between 3 and 32 characters";
+    }
+    if (email.length > 255) {
+        return "Email must not exceed 255 characters";
+    }
+    if (password.length < 8 || password.length > 128) {
+        return "Password must be between 8 and 128 characters";
+    }
+    // Require at least one letter and one number
+    if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+        return "Password must contain at least one letter and one number";
+    }
+    return null;
+}
+
+/** Known disposable / throwaway email domains. Registrations from these are rejected. */
+const DISPOSABLE_EMAIL_DOMAINS = new Set([
+    "mailinator.com",
+    "mailinator.net",
+    "mailinator.org",
+    "guerrillamail.com",
+    "guerrillamail.net",
+    "guerrillamail.org",
+    "sharklasers.com",
+    "tempmail.com",
+    "temp-mail.org",
+    "tempmailaddress.com",
+    "throwawaymail.com",
+    "yopmail.com",
+    "yopmail.fr",
+    "yopmail.net",
+    "cool.fr.nf",
+    "jetable.fr.nf",
+    "nospam.ze.tc",
+    "nomail.xl.cx",
+    "mega.zik.dj",
+    "speed.1s.fr",
+    "courriel.fr.nf",
+    "moncourrier.fr.nf",
+    "monemail.fr.nf",
+    "monmail.fr.nf",
+    "10minutemail.com",
+    "10minutemail.net",
+    "10minute-mail.com",
+    "temp-mail.ru",
+    "tempmail.ninja",
+    "tmpmail.org",
+    "burnermail.io",
+    "dispomail.eu",
+    "emailondeck.com",
+    "fake-email.net",
+    "getairmail.com",
+    "getnada.com",
+    "inboxbear.com",
+    "mailcatch.com",
+    "maildrop.cc",
+    "mailnesia.com",
+    "mailnull.com",
+    "mailsac.com",
+    "mintemail.com",
+    "mytrashmail.com",
+    "nwytg.net",
+    "spam4.me",
+    "spamgourmet.com",
+    "tempinbox.com",
+    "trashmail.com",
+    "trashmail.net",
+    "trashmail.org",
+    "trash-mail.com",
+    "wegwerfmail.de",
+    "wegwerfmail.net",
+    "wegwerfmail.org",
+]);
+
+function isDisposableEmail(email: string): boolean {
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (!domain) return false;
+    return DISPOSABLE_EMAIL_DOMAINS.has(domain);
 }
 
 /**
@@ -69,87 +194,190 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.post("/auth/login", async (req, res) => {
+authRouter.post("/auth/login", loginRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, behaviorGuard, async (req, res) => {
     const { usernameOrEmail, password } = req.body;
-    
+    console.log("[Auth] Login attempt");
+
+    // Bot detection: high-confidence bots get tar-pitted but still see normal 401
+    const isBot = await handleBotDetection(req, res, res.locals.turnstileFailed as boolean);
+    if (isBot) {
+        console.warn(`[Auth] Login blocked — bot detected (turnstileFailed=${res.locals.turnstileFailed})`);
+        try {
+            const punishmentUnit = await Unit.create(false);
+            const punishmentService = new PunishmentService(punishmentUnit);
+            const reason = res.locals.turnstileFailed ? "turnstile_failed" : "honeypot_triggered";
+            await punishmentService.recordViolation(getClientIp(req), null, reason);
+            await punishmentUnit.complete(true);
+        } catch {
+            // Ignore punishment errors
+        }
+        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+        return;
+    }
+
+    // Proof-of-work verification (login)
+    const { powChallenge, powNonce } = req.body as Record<string, unknown>;
+    if (!powChallenge || !powNonce || typeof powChallenge !== "string" || typeof powNonce !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing proof-of-work challenge. Please refresh the page and try again." });
+        return;
+    }
+    const stored = powStore.get(powChallenge);
+    if (!stored || stored.used || stored.expiresAt < Date.now()) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid or expired challenge. Please refresh the page and try again." });
+        return;
+    }
+    if (stored.clientIp !== getClientIp(req)) {
+        logBot(req, "login-blocked: pow-ip-mismatch");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
+        return;
+    }
+    const claimed = powStore.delete(powChallenge);
+    if (!claimed) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Challenge already used. Please refresh the page and try again." });
+        return;
+    }
+    if (!verifyPow(powChallenge, powNonce, stored.difficulty)) {
+        logBot(req, "login-blocked: invalid-pow");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
+        return;
+    }
+
     if (isNullOrWhiteSpace(usernameOrEmail) || isNullOrWhiteSpace(password)) {
+        console.warn("[Auth] Login rejected — missing credentials");
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Username/email and password are required" });
         return;
     }
-    
-    const unit = await Unit.create(false);
-    const playerService = new PlayerService(unit);
-    const sessionService = new SessionService(unit);
-    const loginHistoryService = new LoginHistoryService(unit);
+    if (password.length > 128) {
+        console.warn("[Auth] Login rejected — password too long");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Password too long" });
+        return;
+    }
+
+    // Phase 1: Find player with a read-only unit (no transaction overhead)
+    const lookupUnit = await Unit.create(true);
+    const playerService = new PlayerService(lookupUnit);
+    let player: PlayerRow | null = null;
 
     try {
-        // Try to find player by username first, then by email
-        let player = await playerService.getPlayerByUsername(usernameOrEmail);
+        player = await playerService.getPlayerWithCredentialsByUsername(usernameOrEmail);
         if (player === null) {
-            player = await playerService.getPlayerByEmail(usernameOrEmail);
+            player = await playerService.getPlayerWithCredentialsByEmail(usernameOrEmail);
         }
-        
-        if (player === null) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
-            await unit.complete(false);
-            return;
-        }
+        await lookupUnit.complete();
+    } catch (err) {
+        await lookupUnit.complete(false);
+        console.error("[Auth] Login DB error during player lookup:", (err as Error).message);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        return;
+    }
 
-        // Check password (supports both bcrypt hashes and legacy plain text)
-        let passwordValid = false;
-        if (player.password === null) {
-            passwordValid = false;
-        } else if (isHashed(player.password)) {
-            passwordValid = await comparePassword(password, player.password);
-        } else {
-            // Legacy plain-text password — check and migrate to hash
-            passwordValid = player.password === password;
-            if (passwordValid) {
-                const hashed = await hashPassword(password);
-                await playerService.updatePlayerPassword(player.playerId, hashed);
-            }
-        }
+    if (player === null) {
+        console.warn("[Auth] Login failed — no player found");
+        // Constant-time path to prevent username enumeration via timing
+        await comparePassword(password, "$2b$10$dummy.hash.for.constant.time.comparison.dummy.hash.dummy.hash.");
+        logSecurityEvent({
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] as string | undefined,
+            eventType: "failed_login",
+            path: req.path,
+            method: req.method,
+            details: `No player found for ${usernameOrEmail}`,
+        });
+        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+        return;
+    }
+    console.log(`[Auth] Player found — playerId=${player.playerId}`);
 
-        if (!passwordValid) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
-            await unit.complete(false);
-            return;
-        }
+    // Phase 2: Verify password WITHOUT holding a DB connection
+    let passwordValid = false;
+    if (player.password === null) {
+        console.log("[Auth] Player has no password (OAuth account)");
+        passwordValid = false;
+    } else if (isHashed(player.password)) {
+        passwordValid = await comparePassword(password, player.password);
+        // Password comparison result intentionally not logged
+    } else {
+        console.warn("[Auth] Player has plaintext password — forcing invalid");
+        passwordValid = false;
+    }
 
+    if (!passwordValid) {
+        console.warn(`[Auth] Login failed — invalid password for playerId=${player.playerId}`);
+        try {
+            const punishmentUnit = await Unit.create(false);
+            const punishmentService = new PunishmentService(punishmentUnit);
+            await punishmentService.recordViolation(getClientIp(req), player?.playerId ?? null, "brute_force_login", `Failed login for ${usernameOrEmail}`);
+            await punishmentUnit.complete(true);
+        } catch {
+            // Ignore punishment errors
+        }
+        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+        return;
+    }
+
+    // Phase 3: Create session with a fresh write unit
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    const loginHistoryService = new LoginHistoryService(unit);
+    const twoFactorService = new TwoFactorService(unit);
+    let ok = false;
+
+    try {
         // Reject banned players
         if (player.bannedAt) {
+            console.warn(`[Auth] Login rejected — playerId=${player.playerId} is banned`);
             res.status(StatusCodes.FORBIDDEN).json({ error: "Account banned", reason: player.banReason || "No reason provided" });
             await unit.complete(false);
             return;
         }
 
+        // SECURITY: Admin accounts MUST have a verified email — no soft-gate exception.
+        // This prevents compromised admin passwords from being usable while email is unverified.
+        if (player.isAdmin && !player.emailVerified && !player.provider) {
+            console.warn(`[Auth] Login rejected — admin playerId=${player.playerId} email not verified`);
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid username/email or password" });
+            await unit.complete(false);
+            return;
+        }
+
         // Check if 2FA is enabled
-        const twoFactorService = new TwoFactorService(unit);
         const totpEnabled = await twoFactorService.isEnabled(player.playerId);
+        console.log(`[Auth] 2FA check — playerId=${player.playerId}, totpEnabled=${totpEnabled}`);
 
         if (totpEnabled) {
-            // Issue a temporary challenge instead of a full session
             const challengeId = await twoFactorService.createChallenge(player.playerId);
-            await unit.complete(true);
+            ok = true;
             res.status(StatusCodes.OK).json({ requires2FA: true, challengeId });
+            await unit.complete(true);
             return;
         }
 
         const sessionId = crypto.randomUUID();
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24); // 24-hour session
+        expiresAt.setHours(expiresAt.getHours() + 24);
 
         const success = await sessionService.createSession(sessionId, player.playerId, expiresAt);
         if (success) {
             await loginHistoryService.create(player.playerId, sessionId);
-            await unit.complete(true);
-            res.status(StatusCodes.OK).json({ sessionId, playerId: player.playerId });
+            ok = true;
+            const requiresEmailVerification = !player.emailVerified && !player.provider;
+            if (requiresEmailVerification) {
+                console.log(`[Auth] Login success (unverified) — playerId=${player.playerId}, sessionId=${sessionId.slice(0, 8)}...`);
+            } else {
+                console.log(`[Auth] Login success — playerId=${player.playerId}, sessionId=${sessionId.slice(0, 8)}...`);
+            }
+            res.status(StatusCodes.OK).json({ sessionId, playerId: player.playerId, requiresEmailVerification });
         } else {
+            console.error("[Auth] createSession returned false");
             throw new Error("Failed to create session");
         }
     } catch (err) {
         await unit.complete(false);
+        console.error("[Auth] Login error during session creation:", (err as Error).message);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        return;
+    } finally {
+        if (ok) await unit.complete(true);
     }
 });
 
@@ -209,13 +437,7 @@ authRouter.post("/auth/login", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.patch("/auth/me", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.patch("/auth/me", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const { email } = req.body;
     
     if (isNullOrWhiteSpace(email)) {
@@ -231,37 +453,77 @@ authRouter.patch("/auth/me", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
+        const playerId = req.playerId!;
 
         // Check if email already exists for another user
         const existingByEmail = await playerService.getPlayerByEmail(email);
-        if (existingByEmail && existingByEmail.playerId !== session.playerId) {
+        if (existingByEmail && existingByEmail.playerId !== playerId) {
             res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
             await unit.complete(false);
             return;
         }
 
-        // Update email
-        const success = await playerService.updatePlayerEmail(session.playerId, email);
+        const player = await playerService.getInfoByID(playerId);
+        const isLocalAccount = !player?.provider;
+        let success: boolean;
+        if (isLocalAccount) {
+            success = await playerService.updatePlayerEmailAndResetVerification(playerId, email);
+        } else {
+            success = await playerService.updatePlayerEmail(playerId, email);
+        }
         if (success) {
             ok = true;
+            if (isLocalAccount) {
+                try {
+                    await unit.prepare(
+                        `DELETE FROM EmailVerificationToken WHERE playerId = @playerId`,
+                        { playerId }
+                    ).run();
+                    const verifyToken = crypto.randomBytes(32).toString("hex");
+                    const now = new Date();
+                    const verifyExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                    await unit.prepare(
+                        `INSERT INTO EmailVerificationToken (token, playerId, email, createdAt, expiresAt)
+                         VALUES (@token, @playerId, @email, @createdAt, @expiresAt)`,
+                        {
+                            token: verifyToken,
+                            playerId,
+                            email,
+                            createdAt: now.toISOString(),
+                            expiresAt: verifyExpiresAt.toISOString(),
+                        }
+                    ).run();
+                    await unit.complete(true);
+                    try {
+                        await sendVerificationEmail(email, verifyToken);
+                    } catch (err) {
+                        console.error("Failed to send verification email after email change:", err);
+                    }
+                    res.status(StatusCodes.OK).json({ message: "Email updated. Please verify your new email address — a verification link has been sent." });
+                    return;
+                } catch {
+                    // Fall through to normal response
+                }
+            }
             res.status(StatusCodes.OK).json({ message: "Profile updated successfully" });
         } else {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         }
     } catch (err) {
         if (isConstraintError(err)) {
-            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
+            const pgErr = err as { detail?: string };
+            const detail = pgErr.detail || "";
+            let message = "This account information conflicts with an existing account.";
+            if (detail.includes("email")) {
+                message = "This email is already associated with another account.";
+            } else if (detail.includes("username") || detail.includes("playerName")) {
+                message = "This username is already taken.";
+            }
+            res.status(StatusCodes.CONFLICT).json({ error: message });
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
@@ -324,13 +586,7 @@ authRouter.patch("/auth/me", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.patch("/auth/password", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.patch("/auth/password", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     
     if (isNullOrWhiteSpace(currentPassword) || isNullOrWhiteSpace(newPassword)) {
@@ -344,19 +600,12 @@ authRouter.patch("/auth/password", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const player = await playerService.getInfoByID(session.playerId);
+        const playerId = req.playerId!;
+        const player = await playerService.getPlayerWithCredentialsById(playerId);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             await unit.complete(false);
@@ -372,7 +621,7 @@ authRouter.patch("/auth/password", async (req, res) => {
 
         // Hash and update password
         const hashedPassword = await hashPassword(newPassword);
-        const success = await playerService.updatePlayerPassword(session.playerId, hashedPassword);
+        const success = await playerService.updatePlayerPassword(playerId, hashedPassword);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Password changed successfully" });
@@ -420,28 +669,16 @@ authRouter.patch("/auth/password", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-authRouter.delete("/auth/me", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.delete("/auth/me", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
+        const playerId = req.playerId!;
 
         // Delete player (cascade will handle related data)
-        const success = await playerService.deletePlayer(session.playerId);
+        const success = await playerService.deletePlayer(playerId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Account deleted successfully" });
@@ -639,53 +876,138 @@ authRouter.delete("/auth/sessions", async (req, res) => {
     }
 });
 
-authRouter.post("/auth/register", async (req, res) => {
+/**
+ * GET /auth/challenge — Returns a proof-of-work challenge for registration.
+ * The client must find a nonce such that SHA256(challenge + nonce) starts
+ * with `difficulty` hex zeros.
+ */
+authRouter.get("/auth/challenge", challengeRateLimiter.middleware(), (req, res) => {
+    const ch = createPowChallenge(getClientIp(req));
+    powStore.set(ch.challenge, ch);
+    // Prune expired challenges periodically (simple sweep)
+    if (powStore.size > 5000) {
+        const now = Date.now();
+        for (const [key, val] of powStore) {
+            if (val.expiresAt < now) powStore.delete(key);
+        }
+    }
+    res.json({ challenge: ch.challenge, difficulty: ch.difficulty });
+});
+
+authRouter.post("/auth/register", datacenterGuard, registerRateLimiter.middleware(), timingGuard, headerGuard, turnstileMiddleware, behaviorGuard, async (req, res) => {
     const { username, password, email } = req.body;
+
+    // Bot detection — HARD BLOCK on Turnstile failure (no fake success)
+    const turnstileFailed = res.locals.turnstileFailed as boolean;
+    const honeypotTriggered = checkHoneypot(req);
+
+    if (turnstileFailed) {
+        logBot(req, "register-blocked: invalid-turnstile-token");
+        try {
+            const punishmentUnit = await Unit.create(false);
+            const punishmentService = new PunishmentService(punishmentUnit);
+            await punishmentService.recordViolation(getClientIp(req), null, "turnstile_failed", "Registration blocked: invalid Turnstile");
+            await punishmentUnit.complete(true);
+        } catch { /* ignore */ }
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
+        return;
+    }
+
+    if (honeypotTriggered) {
+        logBot(req, "register-blocked: honeypot");
+        try {
+            const punishmentUnit = await Unit.create(false);
+            const punishmentService = new PunishmentService(punishmentUnit);
+            await punishmentService.recordViolation(getClientIp(req), null, "honeypot_triggered", "Registration blocked: honeypot filled");
+            await punishmentUnit.complete(true);
+        } catch { /* ignore */ }
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Registration failed. Please try again." });
+        return;
+    }
+
+    // Proof-of-work verification
+    const { powChallenge, powNonce } = req.body as Record<string, unknown>;
+    if (!powChallenge || !powNonce || typeof powChallenge !== "string" || typeof powNonce !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing proof-of-work challenge. Please refresh the page and try again." });
+        return;
+    }
+    const stored = powStore.get(powChallenge);
+    if (!stored || stored.used || stored.expiresAt < Date.now()) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid or expired challenge. Please refresh the page and try again." });
+        return;
+    }
+    if (stored.clientIp !== getClientIp(req)) {
+        logBot(req, "register-blocked: pow-ip-mismatch");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
+        return;
+    }
+    // Atomically claim the challenge to prevent concurrent reuse (TOCTOU fix)
+    const claimed = powStore.delete(powChallenge);
+    if (!claimed) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Challenge already used. Please refresh the page and try again." });
+        return;
+    }
+    if (!verifyPow(powChallenge, powNonce, stored.difficulty)) {
+        logBot(req, "register-blocked: invalid-pow");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security verification failed. Please refresh the page and try again." });
+        return;
+    }
+
+    // Phase 1: Validate everything before touching the DB or hashing
+    if (isNullOrWhiteSpace(username) || isNullOrWhiteSpace(password) || isNullOrWhiteSpace(email)) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Username, password, and email are required" });
+        return;
+    }
+
+    const validationError = validateRegistrationInput(username, password, email);
+    if (validationError) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: validationError });
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid email format" });
+        return;
+    }
+
+    // Block disposable / throwaway email domains
+    if (isDisposableEmail(email)) {
+        logBot(req, "register-blocked: disposable-email");
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Please use a permanent email address." });
+        return;
+    }
+
+    // Phase 2: Hash password BEFORE acquiring a DB connection.
+    // bcrypt is CPU-bound and can take 50-100ms. Holding a DB connection
+    // during hashing is the #1 cause of pool exhaustion under registration floods.
+    const hashedPassword = await hashPassword(password);
+
+    // Phase 3: Atomically create the player and all related records
     const unit = await Unit.create(false);
     const playerService = new PlayerService(unit);
     const playerStatisticsService = new PlayerStatisticsService(unit);
-    const sessionService = new SessionService(unit);
     let ok = false;
 
     try {
-        // Validation
-        if (isNullOrWhiteSpace(username) || isNullOrWhiteSpace(password) || isNullOrWhiteSpace(email)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Username, password, and email are required" });
-            await unit.complete(false);
-            return;
-        }
-
-        if (password.length < 6) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Password must be at least 6 characters" });
-            await unit.complete(false);
-            return;
-        }
-
-        // Basic email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid email format" });
-            await unit.complete(false);
-            return;
-        }
-
-        // Check if username or email already exists
-        const existingByUsername = await playerService.getPlayerByUsername(username);
-        if (existingByUsername) {
-            res.status(StatusCodes.CONFLICT).json({ error: "Username already exists" });
-            await unit.complete(false);
-            return;
-        }
-
+        // Check if email already exists
         const existingByEmail = await playerService.getPlayerByEmail(email);
         if (existingByEmail) {
-            res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
+            // Block re-registration regardless of verification status to prevent email squatting.
+            // Unverified accounts are no longer deleted — they must verify or wait for token expiry.
+            res.status(StatusCodes.CONFLICT).json({ error: "An account with this email already exists. Please log in instead." });
             await unit.complete(false);
             return;
         }
 
-        // Hash password and create player with default values (1000 coins, 10 lootboxes)
-        const hashedPassword = await hashPassword(password);
+        // Check if username already exists
+        const existingByUsername = await playerService.getPlayerByUsername(username);
+        if (existingByUsername) {
+            res.status(StatusCodes.CONFLICT).json({ error: "Username already taken. Please choose another." });
+            await unit.complete(false);
+            return;
+        }
+
         const [success, playerId] = await playerService.createPlayer(username, hashedPassword, email, 1000, 10);
 
         if (!success) {
@@ -694,7 +1016,6 @@ authRouter.post("/auth/register", async (req, res) => {
             return;
         }
 
-        // Create player statistics record
         const [statsSuccess] = await playerStatisticsService.createDefaultPlayerStatistics(playerId);
         if (!statsSuccess) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create player statistics" });
@@ -702,26 +1023,130 @@ authRouter.post("/auth/register", async (req, res) => {
             return;
         }
 
-        // Create welcome notification
         try {
             const notificationService = new NotificationService(unit);
             await notificationService.create(
                 playerId,
                 "system",
                 "Welcome to Ember Exchange!",
-                "Your adventure begins now. Open your first lootbox and start trading!",
-                {}
+                "Your adventure begins now. Verify your email to start trading!",
+                {},
+                { priority: 'normal' }
             );
         } catch {
             // Ignore notification errors
         }
 
-        // Create session (auto-login)
+        // Create email verification token (24h expiry)
+        const verifyToken = crypto.randomBytes(32).toString("hex");
+        const now = new Date();
+        const verifyExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+        await unit.prepare(
+            `INSERT INTO EmailVerificationToken (token, playerId, email, createdAt, expiresAt)
+             VALUES (@token, @playerId, @email, @createdAt, @expiresAt)`,
+            {
+                token: verifyToken,
+                playerId,
+                email,
+                createdAt: now.toISOString(),
+                expiresAt: verifyExpiresAt.toISOString(),
+            }
+        ).run();
+
+        ok = true;
+        await unit.complete(true);
+
+        // Send verification email OUTSIDE the DB transaction so email failure
+        // doesn't roll back the account creation
+        try {
+            await sendVerificationEmail(email, verifyToken);
+        } catch (err) {
+            console.error("Failed to send verification email:", err);
+            // Still return success — user can request a resend
+        }
+
+        res.status(StatusCodes.CREATED).json({
+            message: "Account created! Check your email to verify your account."
+        });
+        return;
+    } catch (err) {
+        if (isConstraintError(err)) {
+            const pgErr = err as { detail?: string };
+            const detail = pgErr.detail || "";
+            let message = "This account information is already in use.";
+            if (detail.includes("email")) {
+                message = "An account with this email already exists. Please log in instead.";
+            } else if (detail.includes("username") || detail.includes("playerName")) {
+                message = "This username is already taken. Please choose another.";
+            }
+            res.status(StatusCodes.CONFLICT).json({ error: message });
+        } else {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        }
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+/**
+ * GET /auth/verify-email/:token
+ * Verifies an email address using a token from the verification email.
+ */
+authRouter.get("/auth/verify-email/:token", authRateLimiter.middleware(), async (req, res) => {
+    const { token } = req.params;
+    if (!token || typeof token !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid verification token" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const playerService = new PlayerService(unit);
+    const sessionService = new SessionService(unit);
+    let ok = false;
+
+    try {
+        // Look up the token
+        const tokenStmt = unit.prepare<{
+            playerId: number;
+            email: string;
+            expiresAt: string;
+        }>(
+            `SELECT playerId, email, expiresAt FROM EmailVerificationToken WHERE token = @token`,
+            { token }
+        );
+        const row = await tokenStmt.get();
+
+        if (!row) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid or expired verification token." });
+            await unit.complete(false);
+            return;
+        }
+
+        if (new Date(row.expiresAt) < new Date()) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Verification link has expired. Please request a new one." });
+            await unit.complete(false);
+            return;
+        }
+
+        // Verify the player's email
+        await unit.prepare(
+            `UPDATE Player SET emailVerified = 1, verifiedAt = @verifiedAt WHERE playerId = @playerId`,
+            { playerId: row.playerId, verifiedAt: new Date().toISOString() }
+        ).run();
+
+        // Delete the used token
+        await unit.prepare(
+            `DELETE FROM EmailVerificationToken WHERE token = @token`,
+            { token }
+        ).run();
+
+        // Create a session and auto-login
         const sessionId = crypto.randomUUID();
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
 
-        const sessionCreated = await sessionService.createSession(sessionId, playerId, expiresAt);
+        const sessionCreated = await sessionService.createSession(sessionId, row.playerId, expiresAt);
         if (!sessionCreated) {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create session" });
             await unit.complete(false);
@@ -729,13 +1154,93 @@ authRouter.post("/auth/register", async (req, res) => {
         }
 
         ok = true;
-        res.status(StatusCodes.CREATED).json({ sessionId, playerId });
+        res.status(StatusCodes.OK).json({
+            sessionId,
+            playerId: row.playerId,
+            message: "Email verified! Welcome to Ember Exchange."
+        });
     } catch (err) {
-        if (isConstraintError(err)) {
-            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
-        } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+/**
+ * POST /auth/resend-verification
+ * Resends the verification email. Rate-limited to prevent abuse.
+ */
+authRouter.post("/auth/resend-verification", authRateLimiter.middleware(), turnstileMiddleware, async (req, res) => {
+    if (res.locals.turnstileFailed) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Security check failed" });
+        return;
+    }
+    const { email } = req.body;
+    if (!email || typeof email !== "string") {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Email is required" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    let ok = false;
+
+    try {
+        // Find unverified player by email
+        const playerStmt = unit.prepare<{
+            playerId: number;
+            email: string;
+        }>(
+            `SELECT playerId, email FROM Player WHERE LOWER(email) = LOWER(@email) AND emailVerified = 0 AND provider IS NULL`,
+            { email: email.trim() }
+        );
+        const player = await playerStmt.get();
+
+        if (!player) {
+            // Return generic success to prevent email enumeration
+            res.status(StatusCodes.OK).json({ message: "If an unverified account exists, a verification email has been sent." });
+            ok = true;
+            await unit.complete(true);
+            return;
         }
+
+        // Delete any existing token for this player
+        await unit.prepare(
+            `DELETE FROM EmailVerificationToken WHERE playerId = @playerId`,
+            { playerId: player.playerId }
+        ).run();
+
+        // Create new token
+        const token = crypto.randomBytes(32).toString("hex");
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+        await unit.prepare(
+            `INSERT INTO EmailVerificationToken (token, playerId, email, createdAt, expiresAt)
+             VALUES (@token, @playerId, @email, @createdAt, @expiresAt)`,
+            {
+                token,
+                playerId: player.playerId,
+                email: player.email,
+                createdAt: now.toISOString(),
+                expiresAt: expiresAt.toISOString(),
+            }
+        ).run();
+
+        ok = true;
+        await unit.complete(true);
+
+        // Send email outside transaction
+        try {
+            await sendVerificationEmail(player.email, token);
+        } catch (err) {
+            console.error("Failed to resend verification email:", err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to send verification email. Please try again later." });
+            return;
+        }
+
+        res.status(StatusCodes.OK).json({ message: "If an unverified account exists, a verification email has been sent." });
+    } catch (err) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
         await unit.complete(ok);
     }
@@ -805,9 +1310,9 @@ authRouter.get("/auth/me", async (req, res) => {
             return;
         }
 
-        // Return player without password
-        const { password, ...playerWithoutPassword } = player;
-        res.status(StatusCodes.OK).json(playerWithoutPassword);
+        // Return player without sensitive fields (password/totpSecret already excluded by service)
+        const { violationCount, lastViolationAt, ...playerSafe } = player;
+        res.status(StatusCodes.OK).json(playerSafe);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
     } finally {
@@ -967,27 +1472,14 @@ authRouter.get("/auth/2fa/status", async (req, res) => {
  *                 qrCodeDataUrl:
  *                   type: string
  */
-authRouter.post("/auth/2fa/setup", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.post("/auth/2fa/setup", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     const twoFactorService = new TwoFactorService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const player = await playerService.getInfoByID(session.playerId);
+        const playerId = req.playerId!;
+        const player = await playerService.getPlayerWithCredentialsById(playerId);
         if (!player) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
             await unit.complete(false);
@@ -1000,7 +1492,7 @@ authRouter.post("/auth/2fa/setup", async (req, res) => {
             return;
         }
 
-        const result = await twoFactorService.generateSecret(session.playerId, player.username, player.email);
+        const result = await twoFactorService.generateSecret(playerId, player.username, player.email);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ secret: result.secret, qrCodeDataUrl: result.qrCodeDataUrl });
     } catch (err) {
@@ -1048,13 +1540,7 @@ authRouter.post("/auth/2fa/setup", async (req, res) => {
  *                   items:
  *                     type: string
  */
-authRouter.post("/auth/2fa/confirm", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.post("/auth/2fa/confirm", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const { token } = req.body;
     if (isNullOrWhiteSpace(token)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Token is required" });
@@ -1062,18 +1548,11 @@ authRouter.post("/auth/2fa/confirm", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const twoFactorService = new TwoFactorService(unit);
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const result = await twoFactorService.confirmSetup(session.playerId, token);
+        const playerId = req.playerId!;
+        const result = await twoFactorService.confirmSetup(playerId, token);
         if (!result.success) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: result.message });
             await unit.complete(false);
@@ -1119,7 +1598,7 @@ authRouter.post("/auth/2fa/confirm", async (req, res) => {
  *       401:
  *         description: Invalid challenge or code
  */
-authRouter.post("/auth/2fa/verify", async (req, res) => {
+authRouter.post("/auth/2fa/verify", twoFactorRateLimiter.middleware(), async (req, res) => {
     const { challengeId, token } = req.body;
     if (isNullOrWhiteSpace(challengeId) || isNullOrWhiteSpace(token)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Challenge ID and token are required" });
@@ -1141,6 +1620,10 @@ authRouter.post("/auth/2fa/verify", async (req, res) => {
 
         const result = await twoFactorService.verifyToken(playerId, token);
         if (!result.success) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), playerId, "2fa_brute_force", `Invalid 2FA code for challenge ${challengeId}`);
+            } catch { /* ignore */ }
             res.status(StatusCodes.UNAUTHORIZED).json({ error: result.message });
             await unit.complete(false);
             return;
@@ -1203,13 +1686,7 @@ authRouter.post("/auth/2fa/verify", async (req, res) => {
  *       200:
  *         description: 2FA disabled
  */
-authRouter.delete("/auth/2fa", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+authRouter.delete("/auth/2fa", authRateLimiter.middleware(), requireAuth, async (req, res) => {
     const { password } = req.body;
     if (isNullOrWhiteSpace(password)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Password is required" });
@@ -1217,20 +1694,13 @@ authRouter.delete("/auth/2fa", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const playerService = new PlayerService(unit);
     const twoFactorService = new TwoFactorService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            await unit.complete(false);
-            return;
-        }
-
-        const player = await playerService.getInfoByID(session.playerId);
+        const playerId = req.playerId!;
+        const player = await playerService.getPlayerWithCredentialsById(playerId);
         if (!player || !player.password) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid credentials" });
             await unit.complete(false);
@@ -1244,7 +1714,7 @@ authRouter.delete("/auth/2fa", async (req, res) => {
             return;
         }
 
-        await twoFactorService.disable(session.playerId);
+        await twoFactorService.disable(playerId);
         ok = true;
         res.status(StatusCodes.OK).json({ message: "Two-factor authentication disabled" });
     } catch (err) {

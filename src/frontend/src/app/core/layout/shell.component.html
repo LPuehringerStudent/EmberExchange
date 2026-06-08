@@ -3,6 +3,7 @@
   <a routerLink="/" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Home</a>
   <a routerLink="/marketplace" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Marketplace</a>
   <a routerLink="/lootboxes" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Lootboxes</a>
+  <a routerLink="/spin" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Lucky Wheel</a>
   <a routerLink="/statistics" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Statistics</a>
   <a routerLink="/update-log" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Update Log</a>
   <a routerLink="/glory" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Hall of Glory</a>
@@ -28,10 +29,10 @@
 </div>
 
 <!-- Top bar -->
-<header class="fixed top-0 left-0 z-[1000] flex items-center justify-between h-16 w-full px-6 topbar">
+<header class="fixed top-0 left-0 z-[1000] flex items-center justify-between h-16 w-full px-4 sm:px-6 topbar">
   <div class="flex items-center gap-4 relative z-[1001]">
-    <div class="flex items-center justify-center w-10 h-10 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 menu-btn" (click)="toggleSidebar()">☰</div>
-    <div class="flex items-center gap-2 px-4 py-2 rounded-lg text-[22px] font-bold text-white tracking-wide cursor-pointer relative z-[1002]" routerLink="/">
+    <div class="flex items-center justify-center w-11 h-11 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 menu-btn" (click)="toggleSidebar()">☰</div>
+    <div class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg text-[22px] font-bold text-white tracking-wide cursor-pointer relative z-[1002]" routerLink="/">
       Ember Exchange
     </div>
   </div>
@@ -41,31 +42,38 @@
 
     @if (isLoggedIn()) {
       <!-- Show inventory and user dropdown when logged in -->
-      <span title="Inventory" routerLink="/inventory" class="flex items-center justify-center w-10 h-10 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 topbar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-backpack" viewBox="0 0 16 16">
+      <span title="Inventory" routerLink="/inventory" class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 topbar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-backpack" viewBox="0 0 16 16">
     <path d="M4.04 7.43a4 4 0 0 1 7.92 0 .5.5 0 1 1-.99.14 3 3 0 0 0-5.94 0 .5.5 0 1 1-.99-.14M4 9.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm1 .5v3h6v-3h-1v.5a.5.5 0 0 1-1 0V10z"/>
     <path d="M6 2.341V2a2 2 0 1 1 4 0v.341c2.33.824 4 3.047 4 5.659v5.5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 13.5V8a6 6 0 0 1 4-5.659M7 2v.083a6 6 0 0 1 2 0V2a1 1 0 0 0-2 0m1 1a5 5 0 0 0-5 5v5.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V8a5 5 0 0 0-5-5"/></svg></span>
 
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[13px] font-semibold bg-[rgba(232,93,4,0.15)]">
+      <span title="Lucky Wheel" routerLink="/spin" class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 topbar-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-amber-400">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+      </span>
+
+      <div class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-full text-white text-[13px] font-semibold bg-[rgba(232,93,4,0.15)]">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#ffba08]">
           <circle cx="12" cy="12" r="10"/>
           <path d="M9 12h6M12 9v6"/>
         </svg>
-        <span>{{ coins().toLocaleString() }} Coal</span>
+        <span [class.coin-pulse]="coinAnimating()">{{ coins().toLocaleString() }}<span class="hidden sm:inline ml-1">Coal</span></span>
       </div>
 
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[13px] font-semibold bg-[rgba(255,87,34,0.15)]">
+      <div class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-full text-white text-[13px] font-semibold bg-[rgba(255,87,34,0.15)]">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#ff5722]">
           <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
         </svg>
-        <span>{{ sparks().toLocaleString() }} Sparks</span>
+        <app-info-tooltip class="hidden sm:block" text="A currency you get by breaking down unwanted stoves. Spend Sparks to re-roll a stove's Heat."><span [class.coin-pulse]="sparkAnimating()">{{ sparks().toLocaleString() }}<span class="hidden sm:inline ml-1">Sparks</span></span></app-info-tooltip>
       </div>
 
       <app-notification-bell />
 
       <!-- Account Popup -->
       <div class="relative inline-block outline-none account-popup" tabindex="0">
-        <button class="flex items-center gap-2 pl-1 pr-3 py-1 bg-transparent border-none rounded-full cursor-pointer text-white transition-all duration-300 account-button">
-          <span class="text-sm font-semibold tracking-wide pl-1">{{ currentUser()?.username || 'Player' }}</span>
+        <button class="flex items-center gap-2 pl-1 pr-2 sm:pr-3 py-1 bg-transparent border-none rounded-full cursor-pointer text-white transition-all duration-300 account-button">
+          <span class="hidden sm:inline text-sm font-semibold tracking-wide pl-1 truncate max-w-[80px]">{{ currentUser()?.username || 'Player' }}</span>
           <div class="w-8 h-8 rounded-full shrink-0">
             <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" class="w-full h-full block">
               <path fill="#FFCE8B" d="M1021.103385 510.551692A510.551692 510.551692 0 1 1 510.551692 0a510.551692 510.551692 0 0 1 510.551693 510.551692"></path>
@@ -102,7 +110,38 @@
   </div>
 </header>
 
+<!-- Email Verification Banner -->
+@if (showVerifyBanner()) {
+  <div class="fixed top-16 left-0 right-0 z-[999] bg-accent/15 border-b-2 border-accent px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-3 min-w-0">
+      <svg class="w-5 h-5 text-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <span class="text-sm text-text-primary">
+        <strong>Please verify your email</strong> to secure your account. <span class="hidden sm:inline">Current email: <code class="text-accent">{{ currentUser()?.email }}</code></span>
+      </span>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <button (click)="resendVerification()" class="px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-semibold hover:opacity-90 transition-opacity">
+        Resend Email
+      </button>
+      <button (click)="navigateToSettings()" class="px-3 py-1.5 rounded-lg border border-accent text-accent text-xs font-semibold hover:bg-accent/10 transition-colors">
+        Change Email
+      </button>
+      <button (click)="dismissBanner()" class="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors" title="Dismiss">
+        ✕
+      </button>
+    </div>
+  </div>
+}
+
 <!-- Main content -->
-<main class="mt-16 min-h-[calc(100vh-64px)] w-full content">
+<main class="mt-16 min-h-[calc(100vh-64px)] w-full content"
+      [class.mt-24]="showVerifyBanner()">
   <router-outlet></router-outlet>
 </main>
+
+<!-- Onboarding Tour -->
+@if (showOnboarding()) {
+  <app-onboarding-overlay />
+}

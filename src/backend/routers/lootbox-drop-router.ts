@@ -2,6 +2,7 @@ import express from "express";
 import { Unit } from "../utils/unit";
 import { LootboxDropService } from "../services/lootbox-drop-service";
 import { requireAdmin } from "../middleware/admin";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 
@@ -37,12 +38,14 @@ function isConstraintError(err: unknown): boolean {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.get("/lootbox-drops", async (_req, res) => {
+lootboxDropRouter.get("/lootbox-drops", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LootboxDropService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAll();
+        const response = await service.getAll(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -297,7 +300,7 @@ lootboxDropRouter.get("/lootbox-drops/stove/:stoveId", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.get("/players/:playerId/lootbox-drops", async (req, res) => {
+lootboxDropRouter.get("/players/:playerId/lootbox-drops", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LootboxDropService(unit);
     const playerId = req.params.playerId;
@@ -305,6 +308,11 @@ lootboxDropRouter.get("/players/:playerId/lootbox-drops", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(playerId) || isNaN(Number(playerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Player ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own lootbox drops" });
             return;
         }
 
@@ -447,7 +455,7 @@ lootboxDropRouter.post("/lootbox-drops", requireAdmin, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.delete("/lootbox-drops/:id", async (req, res) => {
+lootboxDropRouter.delete("/lootbox-drops/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new LootboxDropService(unit);
     const id = req.params.id;

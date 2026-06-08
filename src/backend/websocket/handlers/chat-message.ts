@@ -3,6 +3,8 @@ import { Unit } from "../../utils/unit";
 import { FriendService } from "../../services/friend-service";
 import { ChatMessageService } from "../../services/chat-message-service";
 import { NotificationService } from "../../services/notification-service";
+import { QuestService } from "../../services/quest-service";
+import { sanitizeText } from "../../utils/sanitize";
 
 export async function handleChatMessage(socketId: string, payload: Record<string, unknown>): Promise<void> {
     const meta = connectionManager.getMeta(socketId);
@@ -30,6 +32,15 @@ export async function handleChatMessage(socketId: string, payload: Record<string
         connectionManager.sendToSocket(socketId, {
             type: "error",
             payload: { code: "INVALID_STATE", message: "content is required", recoverable: true }
+        });
+        return;
+    }
+
+    const MAX_CHAT_LENGTH = 2000;
+    if (content.length > MAX_CHAT_LENGTH) {
+        connectionManager.sendToSocket(socketId, {
+            type: "error",
+            payload: { code: "INVALID_STATE", message: `Message too long (max ${MAX_CHAT_LENGTH} characters)`, recoverable: true }
         });
         return;
     }
@@ -62,8 +73,18 @@ export async function handleChatMessage(socketId: string, payload: Record<string
             return;
         }
 
+        const safeContent = sanitizeText(content.trim(), MAX_CHAT_LENGTH) ?? "";
+        if (!safeContent) {
+            connectionManager.sendToSocket(socketId, {
+                type: "error",
+                payload: { code: "INVALID_STATE", message: "Message content is invalid", recoverable: true }
+            });
+            await unit.complete(false);
+            return;
+        }
+
         const chatService = new ChatMessageService(unit);
-        const [success, messageId] = await chatService.create(senderId, receiverId, content.trim());
+        const [success, messageId] = await chatService.create(senderId, receiverId, safeContent);
 
         if (!success) {
             connectionManager.sendToSocket(socketId, {
@@ -76,6 +97,14 @@ export async function handleChatMessage(socketId: string, payload: Record<string
 
         ok = true;
 
+        // Track quest progress
+        try {
+            const questService = new QuestService(unit);
+            await questService.trackProgress(senderId, 'send_messages', 1);
+        } catch {
+            // Ignore quest tracking errors
+        }
+
         // Push to recipient if online
         const pushed = connectionManager.sendToPlayerGlobal(receiverId, {
             type: "chat_message",
@@ -83,7 +112,7 @@ export async function handleChatMessage(socketId: string, payload: Record<string
                 messageId,
                 senderId,
                 receiverId,
-                content: content.trim(),
+                content: safeContent,
                 sentAt: new Date().toISOString(),
                 isRead: false,
                 messageType: "text",
@@ -93,14 +122,19 @@ export async function handleChatMessage(socketId: string, payload: Record<string
 
         // If offline, create notification
         if (!pushed) {
-            const notificationService = new NotificationService(unit);
-            await notificationService.create(
-                receiverId,
-                "chat_message",
-                "New message",
-                content.trim().length > 60 ? content.trim().slice(0, 60) + "..." : content.trim(),
-                { senderId, messageId }
-            );
+            try {
+                const notificationService = new NotificationService(unit);
+                await notificationService.create(
+                    receiverId,
+                    "chat_message",
+                    "New message",
+                    safeContent.length > 60 ? safeContent.slice(0, 60) + "..." : safeContent,
+                    { senderId, messageId },
+                    { priority: 'normal' }
+                );
+            } catch {
+                // Ignore notification errors
+            }
         }
 
         // Acknowledge sender
@@ -110,7 +144,7 @@ export async function handleChatMessage(socketId: string, payload: Record<string
                 messageId,
                 senderId,
                 receiverId,
-                content: content.trim(),
+                content: safeContent,
                 sentAt: new Date().toISOString(),
                 isRead: false,
                 messageType: "text",

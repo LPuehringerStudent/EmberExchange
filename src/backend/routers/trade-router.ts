@@ -1,5 +1,6 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { TradeService } from "../services/trade-service";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { ListingService } from "../services/listing-service";
@@ -13,8 +14,22 @@ import { NotificationService } from "../services/notification-service";
 import { QuestService } from "../services/quest-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
+import { PunishmentService } from "../services/punishment-service";
 
 export const tradeRouter = express.Router();
+
+function getClientIp(req: express.Request): string {
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (typeof cfIp === "string" && cfIp.length > 0) return cfIp.trim();
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+        if (hops.length > 0) return hops[hops.length - 1];
+    }
+    return req.socket.remoteAddress ?? "unknown";
+}
 
 /**
  * @openapi
@@ -40,12 +55,14 @@ export const tradeRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/trades", async (_req, res) => {
+tradeRouter.get("/trades", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllTrades();
+        const response = await service.getAllTrades(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -89,7 +106,7 @@ tradeRouter.get("/trades", async (_req, res) => {
 tradeRouter.get("/trades/recent", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 10);
 
     try {
         const response = await service.getRecentTrades(limit);
@@ -304,7 +321,7 @@ tradeRouter.get("/listings/:listingId/trade", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/players/:buyerId/trades", async (req, res) => {
+tradeRouter.get("/players/:buyerId/trades", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const buyerId = req.params.buyerId;
@@ -312,6 +329,11 @@ tradeRouter.get("/players/:buyerId/trades", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(buyerId) || isNaN(Number(buyerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Buyer ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(buyerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
             return;
         }
 
@@ -376,7 +398,7 @@ tradeRouter.get("/players/:buyerId/trades", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.post("/trades", async (req, res) => {
+tradeRouter.post("/trades", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const tradeService = new TradeService(unit);
     const listingService = new ListingService(unit);
@@ -392,6 +414,16 @@ tradeRouter.post("/trades", async (req, res) => {
 
         if (typeof listingId !== "number" || typeof buyerId !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "listingId and buyerId are required" });
+            return;
+        }
+
+        if (req.playerId !== buyerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_trade", `Attempted to execute trade as buyer ${buyerId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only execute trades as yourself" });
+            await unit.complete(false);
             return;
         }
 
@@ -413,8 +445,21 @@ tradeRouter.post("/trades", async (req, res) => {
             return;
         }
 
-        // Check buyer has enough coins
+        // Check buyer is not banned
         const buyer = await playerService.getInfoByID(buyerId);
+        if (buyer?.bannedAt) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Account banned", reason: buyer.banReason || "No reason provided" });
+            return;
+        }
+
+        // Check seller is not banned
+        const sellerInfo = await playerService.getInfoByID(listing.sellerId);
+        if (sellerInfo?.bannedAt) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Seller account banned" });
+            return;
+        }
+
+        // Check buyer has enough coins (pre-check before atomic attempt)
         if (buyer === null) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Buyer not found" });
             return;
@@ -432,11 +477,19 @@ tradeRouter.post("/trades", async (req, res) => {
             return;
         }
 
-        // Transfer coins
-        const buyerCoinsUpdated = await playerService.updatePlayerCoins(buyerId, buyer.coins - listing.price);
-        const sellerCoinsUpdated = await playerService.updatePlayerCoins(listing.sellerId, seller.coins + listing.price);
-        if (!buyerCoinsUpdated || !sellerCoinsUpdated) {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer coins" });
+        // Atomically transfer coins — prevents race-condition double-spending
+        const buyerDeducted = await playerService.deductCoinsAtomic(buyerId, listing.price);
+        if (!buyerDeducted) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Insufficient coins (concurrent transaction)" });
+            await unit.complete(false);
+            return;
+        }
+        const sellerCredited = await playerService.addCoinsAtomic(listing.sellerId, listing.price);
+        if (!sellerCredited) {
+            // This should never happen if seller exists, but roll back buyer if it does
+            await playerService.addCoinsAtomic(buyerId, listing.price);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to credit seller" });
+            await unit.complete(false);
             return;
         }
 
@@ -522,14 +575,16 @@ tradeRouter.post("/trades", async (req, res) => {
                     "trade_offer",
                     "Trade completed",
                     `You purchased ${itemDescription} for ${listing.price} coal`,
-                    { tradeId: id, listingId, price: listing.price }
+                    { tradeId: id, listingId, price: listing.price },
+                    { priority: 'high' }
                 );
                 await notificationService.create(
                     listing.sellerId,
                     "trade_offer",
                     "Item sold",
                     `Your ${itemDescription} sold for ${listing.price} coal`,
-                    { tradeId: id, listingId, price: listing.price }
+                    { tradeId: id, listingId, price: listing.price },
+                    { priority: 'high' }
                 );
             } catch {
                 // Ignore notification errors
@@ -599,7 +654,7 @@ tradeRouter.post("/trades", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.delete("/trades/:id", async (req, res) => {
+tradeRouter.delete("/trades/:id", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new TradeService(unit);
     const id = req.params.id;
@@ -660,7 +715,7 @@ tradeRouter.delete("/trades/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-tradeRouter.get("/players/:buyerId/trades/count", async (req, res) => {
+tradeRouter.get("/players/:buyerId/trades/count", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new TradeService(unit);
     const buyerId = req.params.buyerId;
@@ -668,6 +723,11 @@ tradeRouter.get("/players/:buyerId/trades/count", async (req, res) => {
     try {
         if (isNullOrWhiteSpace(buyerId) || isNaN(Number(buyerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Buyer ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(buyerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
             return;
         }
 

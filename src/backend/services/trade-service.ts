@@ -11,9 +11,10 @@ export class TradeService extends ServiceBase {
      * Retrieves all trades from the database.
      * @returns An array of all TradeRow objects.
      */
-    async getAllTrades(): Promise<TradeRow[]> {
+    async getAllTrades(limit: number = 100, offset: number = 0): Promise<TradeRow[]> {
         const stmt = this.unit.prepare<TradeRow>(
-            "SELECT * FROM Trade"
+            "SELECT * FROM Trade LIMIT @limit OFFSET @offset",
+            { limit, offset }
         );
         return await stmt.all();
     }

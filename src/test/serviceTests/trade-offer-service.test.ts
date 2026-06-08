@@ -34,6 +34,7 @@ describe('TradeOfferService', () => {
             const unit = mockUnitSequence([
                 mockStmt(message), // getById
                 mockStmt({ currentOwnerId: 2 }), // stove ownership
+                mockStmt({ count: 0 }), // listing check
                 mockStmt({ playerId: 1, username: 'buyer', coins: 1000 }), // accepter
                 mockStmt({ playerId: 2, username: 'seller', coins: 500 }), // sender
                 mockStmt(), // update accepter coins
@@ -77,9 +78,10 @@ describe('TradeOfferService', () => {
             const unit2 = mockUnitSequence([
                 mockStmt(message),
                 mockStmt({ playerId: 2 }), // sender owns lootbox
+                mockStmt({ count: 0 }), // listing check
                 mockStmt({ playerId: 1, username: 'buyer', coins: 500 }),
                 mockStmt({ playerId: 2, username: 'seller', coins: 100 }),
-                mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt(),
+                mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt(),
             ]);
             const service2 = new TradeOfferService(unit2);
             const result = await service2.acceptTradeOffer(2, 1);

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal, inject, computed } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormGroup, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -43,6 +43,7 @@ export class SecurityComponent implements OnInit {
   twoFAError = signal<string>('');
   twoFADisablePassword = signal<string>('');
   isOAuthUser = signal<boolean>(false);
+  emailVerified = computed(() => this._authService.isEmailVerified());
 
   private _authService = inject(AuthService);
   private _router = inject(Router);

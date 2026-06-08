@@ -1,7 +1,9 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { TradeOfferService } from "../services/trade-offer-service";
-import { SessionService } from "../services/session-service";
+import { requireAuth } from "../middleware/require-auth";
+import { connectionManager } from "../websocket/connection-manager";
 import { StatusCodes } from "http-status-codes";
 
 export const tradeOfferRouter = express.Router();
@@ -37,13 +39,7 @@ export const tradeOfferRouter = express.Router();
  *       500:
  *         description: Server error
  */
-tradeOfferRouter.post("/trade-offers/:messageId/accept", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+tradeOfferRouter.post("/trade-offers/:messageId/accept", requireAuth, async (req, res) => {
     const messageId = Number(req.params.messageId);
     if (isNaN(messageId)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid message ID" });
@@ -51,21 +47,25 @@ tradeOfferRouter.post("/trade-offers/:messageId/accept", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const tradeOfferService = new TradeOfferService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             await unit.complete(false);
             return;
         }
 
-        const result = await tradeOfferService.acceptTradeOffer(messageId, session.playerId);
+        const result = await tradeOfferService.acceptTradeOffer(messageId, req.playerId!);
         if (result.success) {
             ok = true;
+            // Notify sender in real-time if online
+            if (result.senderId) {
+                connectionManager.sendToPlayerGlobal(result.senderId, {
+                    type: "trade_offer_update",
+                    payload: { messageId, status: "accepted" }
+                });
+            }
             res.status(StatusCodes.OK).json({ message: "Trade offer accepted" });
         } else {
             res.status(StatusCodes.CONFLICT).json({ error: result.error });
@@ -108,13 +108,7 @@ tradeOfferRouter.post("/trade-offers/:messageId/accept", async (req, res) => {
  *       500:
  *         description: Server error
  */
-tradeOfferRouter.post("/trade-offers/:messageId/decline", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
-        return;
-    }
-
+tradeOfferRouter.post("/trade-offers/:messageId/decline", requireAuth, async (req, res) => {
     const messageId = Number(req.params.messageId);
     if (isNaN(messageId)) {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid message ID" });
@@ -122,21 +116,25 @@ tradeOfferRouter.post("/trade-offers/:messageId/decline", async (req, res) => {
     }
 
     const unit = await Unit.create(false);
-    const sessionService = new SessionService(unit);
     const tradeOfferService = new TradeOfferService(unit);
     let ok = false;
 
     try {
-        const session = await sessionService.getSession(sessionId);
-        if (!session) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             await unit.complete(false);
             return;
         }
 
-        const result = await tradeOfferService.declineTradeOffer(messageId, session.playerId);
+        const result = await tradeOfferService.declineTradeOffer(messageId, req.playerId!);
         if (result.success) {
             ok = true;
+            // Notify sender in real-time if online
+            if (result.senderId) {
+                connectionManager.sendToPlayerGlobal(result.senderId, {
+                    type: "trade_offer_update",
+                    payload: { messageId, status: "declined" }
+                });
+            }
             res.status(StatusCodes.OK).json({ message: "Trade offer declined" });
         } else {
             res.status(StatusCodes.NOT_FOUND).json({ error: result.error });

@@ -15,7 +15,7 @@
   <div class="forge-glow"></div>
 
   <!-- Register Card -->
-  <div class="relative z-10 w-full max-w-[480px] bg-surface/95 backdrop-blur-lg rounded-3xl p-10 border-2 border-accent/25 shadow-[0_25px_80px_rgba(0,0,0,0.5),0_0_0_1px_rgba(232,93,4,0.15),inset_0_1px_0_rgba(255,255,255,0.3)]">
+  <div #trackContainer class="relative z-10 w-full max-w-[480px] bg-surface/95 backdrop-blur-lg rounded-3xl p-6 sm:p-10 border-2 border-accent/25 shadow-[0_25px_80px_rgba(0,0,0,0.5),0_0_0_1px_rgba(232,93,4,0.15),inset_0_1px_0_rgba(255,255,255,0.3)]" [class.animate-shake]="shakeForm()">
     <!-- Header with Anvil Icon -->
     <div class="text-center mb-8">
       <div class="w-[90px] h-[90px] mx-auto mb-5 bg-gradient-to-br from-[#4a4a4a] via-[#2d2d2d] to-[#1a1a1a] rounded-2xl flex items-center justify-center relative shadow-[0_12px_40px_rgba(0,0,0,0.4),inset_0_2px_0_rgba(255,255,255,0.1)] border-[3px] border-accent">
@@ -118,6 +118,9 @@
             class="w-full px-4 py-3.5 border-2 border-border rounded-xl text-base transition-all duration-200 bg-input-bg focus:outline-none focus:border-accent focus:bg-surface focus:shadow-[0_0_0_4px_rgba(232,93,4,0.1)] placeholder:text-text-tertiary"
           />
         </div>
+
+        <!-- Honeypot field — hidden from real users -->
+        <input type="text" [ngModel]="honeypotWebsite()" (ngModelChange)="honeypotWebsite.set($event)" name="website" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
         <button type="submit" class="flex items-center justify-center gap-2.5 px-6 py-4 bg-gradient-to-br from-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(232,93,4,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(232,93,4,0.5)] active:translate-y-0">
           <span>Continue to register</span>
@@ -242,7 +245,7 @@
     }
 
     @if (currentStep() === 3) {
-      <form (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+      <form #registerFormEl (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
         <div class="bg-gradient-to-br from-accent/5 to-[#f48c06]/5 border-2 border-accent/20 rounded-2xl p-6 mb-2.5">
           <h3 class="flex items-center gap-2.5 m-0 mb-4 text-[1.1rem] text-accent">
             <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -254,21 +257,50 @@
             </svg>
             Terms and Conditions
           </h3>
-          <div class="text-text-secondary text-[0.9rem] leading-relaxed mb-5">
-            <p class="m-0 mb-2.5">You will follow these rules:</p>
+          <div class="text-text-secondary text-[0.9rem] leading-relaxed mb-5 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+            <p class="m-0 mb-2.5">
+              By creating an account, you agree to our
+              <a routerLink="/terms" class="text-accent hover:underline">Terms of Service</a>
+              and
+              <a routerLink="/privacy" class="text-accent hover:underline">Privacy Policy</a>.
+              Key points:
+            </p>
             <ul class="m-0 pl-5">
-              <li class="mb-1.5">Respect the community</li>
-              <li class="mb-1.5">Keep playing fair</li>
-              <li class="mb-1.5">No copying from this website</li>
+              <li class="mb-1.5">You must be at least 13 years old.</li>
+              <li class="mb-1.5">Virtual items and currency have no real-world value.</li>
+              <li class="mb-1.5">Cheating, exploitation, harassment, and real-money trading are prohibited.</li>
+              <li class="mb-1.5">We may suspend accounts that violate the rules.</li>
+              <li class="mb-1.5">Your data is processed per our Privacy Policy and GDPR.</li>
             </ul>
           </div>
 
           <label class="auth-checkbox-wrapper mt-2.5">
             <input type="checkbox" [ngModel]="acceptedTerms()" (ngModelChange)="acceptedTerms.set($event)" name="acceptedTerms" />
             <span class="auth-checkmark"></span>
-            <span class="text-[0.9rem] text-text-primary font-medium">I accept the terms and conditions!</span>
+            <span class="text-[0.9rem] text-text-primary font-medium">
+              I have read and agree to the
+              <a routerLink="/terms" class="text-accent hover:underline">Terms of Service</a>
+              and
+              <a routerLink="/privacy" class="text-accent hover:underline">Privacy Policy</a>.
+            </span>
           </label>
         </div>
+
+        @if (turnstileError()) {
+          <div class="flex flex-col gap-2 px-[18px] py-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-[0.95rem] animate-shake">
+            <div class="flex items-center gap-3">
+              <svg class="w-[22px] h-[22px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please complete the security check</span>
+            </div>
+            @if (isWrongDomain()) {
+              <span class="text-xs opacity-80">Are you on the correct domain? Try <a href="https://emberexchange.xyz/register" class="underline hover:text-white">emberexchange.xyz</a></span>
+            }
+          </div>
+        }
 
         <div class="flex gap-3 mt-2.5">
           <button type="button" class="flex items-center justify-center gap-2.5 px-5 py-4 bg-surface-secondary text-text-secondary rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 border-none hover:bg-surface-secondary hover:-translate-y-0.5 flex-[0_0_auto]" (click)="prevStep()">
@@ -294,6 +326,11 @@
       </form>
     }
 
+    <!-- Turnstile Widget (hidden on localhost) -->
+    @if (!isLocalhost()) {
+      <div #turnstileContainer class="flex justify-center my-4"></div>
+    }
+
     <!-- Divider -->
     <div class="auth-divider my-7">
       <span>or join with</span>
@@ -301,7 +338,13 @@
 
     <!-- Social Register -->
     <div class="flex gap-3 justify-center">
-      <button type="button" class="flex items-center justify-center w-[52px] h-[52px] border-2 border-border rounded-[14px] bg-surface cursor-pointer transition-all duration-200 hover:border-accent hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(0,0,0,0.1)]">
+      <button
+        type="button"
+        class="flex items-center justify-center w-[52px] h-[52px] border-2 border-border rounded-[14px] bg-surface cursor-pointer transition-all duration-200 hover:border-accent hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(0,0,0,0.1)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+        (click)="registerWithGoogle()"
+        [disabled]="!googleEnabled() || (!isLocalhost() && !turnstileReady())"
+        [attr.title]="googleEnabled() ? 'Register with Google' : 'Google OAuth not configured'"
+      >
         <svg class="w-[26px] h-[26px]" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -309,7 +352,13 @@
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
       </button>
-      <button type="button" class="flex items-center justify-center w-[52px] h-[52px] border-2 border-border rounded-[14px] bg-surface cursor-pointer transition-all duration-200 hover:border-accent hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(0,0,0,0.1)]">
+      <button
+        type="button"
+        class="flex items-center justify-center w-[52px] h-[52px] border-2 border-border rounded-[14px] bg-surface cursor-pointer transition-all duration-200 hover:border-accent hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(0,0,0,0.1)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+        (click)="registerWithGitHub()"
+        [disabled]="!githubEnabled() || (!isLocalhost() && !turnstileReady())"
+        [attr.title]="githubEnabled() ? 'Register with GitHub' : 'GitHub OAuth not configured'"
+      >
         <svg class="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
         </svg>

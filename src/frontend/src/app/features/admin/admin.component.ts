@@ -23,6 +23,22 @@ import { RouterLink, RouterOutlet } from '@angular/router';
              class="px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:bg-[rgba(232,93,4,0.1)] hover:text-accent transition-colors">
             Stove Types
           </a>
+          <a routerLink="/admin/bot-traps" routerLinkActive="active-admin-link"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:bg-[rgba(232,93,4,0.1)] hover:text-accent transition-colors">
+            Bot Traps
+          </a>
+          <a routerLink="/admin/banned-ips" routerLinkActive="active-admin-link"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:bg-[rgba(232,93,4,0.1)] hover:text-accent transition-colors">
+            Banned IPs
+          </a>
+          <a routerLink="/admin/request-logs" routerLinkActive="active-admin-link"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:bg-[rgba(232,93,4,0.1)] hover:text-accent transition-colors">
+            Request Logs
+          </a>
+          <a routerLink="/admin/codes" routerLinkActive="active-admin-link"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:bg-[rgba(232,93,4,0.1)] hover:text-accent transition-colors">
+            Codes
+          </a>
         </nav>
       </aside>
 

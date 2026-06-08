@@ -5,7 +5,8 @@ import {
   inject,
   OnInit,
   HostListener,
-  ElementRef
+  ElementRef,
+  effect
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService, NotificationItem } from '../../core/services/notification.service';
@@ -34,6 +35,15 @@ export class NotificationBellComponent implements OnInit {
   ngOnInit(): void {
     void this.notificationService.refresh();
     this.lastCount = this.unreadCount();
+
+    effect(() => {
+      const notif = this.notificationService.lastHighPriorityNotification();
+      if (notif) {
+        this.toastService.success(notif.title, notif.message);
+        this.shakeBell.set(true);
+        setTimeout(() => this.shakeBell.set(false), 600);
+      }
+    });
 
     // Poll every 15s for new notifications
     setInterval(() => {
@@ -90,6 +100,7 @@ export class NotificationBellComponent implements OnInit {
       case 'daily_reward': return '🎁';
       case 'friend_request': return '👤';
       case 'system': return '🔔';
+      case 'quest_complete': return '🏆';
       default: return '•';
     }
   }
@@ -101,11 +112,14 @@ export class NotificationBellComponent implements OnInit {
       case 'daily_reward': return 'Reward';
       case 'friend_request': return 'Friend';
       case 'system': return 'System';
+      case 'quest_complete': return 'Quest';
       default: return type;
     }
   }
 
-  relativeTime(dateStr: string): string {
+  relativeTime(dateStr: string | undefined): string {
+    if (!dateStr) return '';
+
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();

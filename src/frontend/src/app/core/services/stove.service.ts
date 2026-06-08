@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable, Subject, tap } from 'rxjs';
+import { HttpHeaders } from '@angular/common/http';
 import { ApiService } from './api.service';
+import { AuthService } from './auth.service';
 import type { StoveRow as Stove, StoveTypeRow as StoveType } from '@shared/model';
 import { Rarity } from '@shared/model';
 
@@ -32,6 +34,7 @@ export interface SuccessMessage {
 @Injectable({ providedIn: 'root' })
 export class StoveService {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
   private refreshSubject = new Subject<void>();
   refresh$ = this.refreshSubject.asObservable();
 
@@ -45,7 +48,9 @@ export class StoveService {
   }
 
   getStovesByPlayerId(playerId: number): Observable<Stove[]> {
-    return this.api.get<Stove[]>(`/players/${playerId}/stoves`);
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.get<Stove[]>(`/players/${playerId}/stoves`, headers);
   }
 
   getStovesByTypeId(typeId: number): Observable<Stove[]> {
@@ -67,7 +72,9 @@ export class StoveService {
   }
 
   countStovesByPlayer(playerId: number): Observable<CountResponse> {
-    return this.api.get<CountResponse>(`/players/${playerId}/stoves/count`);
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.get<CountResponse>(`/players/${playerId}/stoves/count`, headers);
   }
 
   countStovesByType(typeId: number): Observable<CountResponse> {

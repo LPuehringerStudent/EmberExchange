@@ -36,7 +36,7 @@ export async function handleJoinRoom(socketId: string, payload: Record<string, u
         const roomPlayerService = new RoomPlayerService(unit);
         const gameStateService = new GameStateService(unit);
 
-        const room = await roomService.getRoomById(roomId);
+        const room = await roomService.getRoomByIdForUpdate(roomId);
         if (!room) {
             connectionManager.sendToSocket(socketId, {
                 type: "error",

@@ -51,6 +51,18 @@
           Danger Zone
         </li>
       </ul>
+
+      <div class="mt-6 pt-6 border-t border-border">
+        <button
+          (click)="replayTutorial()"
+          class="w-full px-4 py-3 rounded-xl text-sm font-semibold text-text-secondary bg-surface-secondary border border-border hover:border-accent/40 hover:text-accent transition-all duration-200"
+        >
+          Replay Tutorial
+        </button>
+        @if (replaySuccess()) {
+          <p class="mt-2 text-xs text-accent text-center">{{ replaySuccess() }}</p>
+        }
+      </div>
     </aside>
 
     <!-- Content -->

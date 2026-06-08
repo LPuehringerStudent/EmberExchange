@@ -23,6 +23,22 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'stove-types',
         loadComponent: () => import('./pages/stove-types/stove-types.component').then(m => m.StoveTypesComponent)
+      },
+      {
+        path: 'bot-traps',
+        loadComponent: () => import('./pages/bot-traps/bot-traps.component').then(m => m.BotTrapsComponent)
+      },
+      {
+        path: 'banned-ips',
+        loadComponent: () => import('./pages/banned-ips/banned-ips.component').then(m => m.BannedIPsComponent)
+      },
+      {
+        path: 'request-logs',
+        loadComponent: () => import('./pages/request-logs/request-logs.component').then(m => m.RequestLogsComponent)
+      },
+      {
+        path: 'codes',
+        loadComponent: () => import('./pages/codes/codes.component').then(m => m.CodesComponent)
       }
     ]
   }

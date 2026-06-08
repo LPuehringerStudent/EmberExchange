@@ -1,5 +1,8 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
+import { requireAuth } from "../middleware/require-auth";
+import { requireAdmin } from "../middleware/admin";
 import { PlayerService } from "../services/player-service";
 import { SessionService } from "../services/session-service";
 import { PlayerSettingsService } from "../services/player-settings-service";
@@ -8,10 +11,13 @@ import { PlayerStatisticsService } from "../services/player-statistics-service";
 import { GloryCustomizationService } from "../services/glory-customization-service";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { PlayerAchievementService } from "../services/player-achievement-service";
+import { PunishmentService } from "../services/punishment-service";
 import { ACHIEVEMENT_DEFINITIONS } from "../services/achievement-engine";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
-import { hashPassword } from "../utils/password";
+import { sanitizeText } from "../utils/sanitize";
+import crypto from "crypto";
+import { sendVerificationEmail } from "../services/email-service";
 
 export const playerRouter = express.Router();
 
@@ -19,6 +25,17 @@ function isConstraintError(err: unknown): boolean {
     const pgErr = err as { code?: string };
     return pgErr.code === "23503" || 
            pgErr.code === "23505";
+}
+
+function getClientIp(req: express.Request): string {
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (typeof cfIp === "string" && cfIp.length > 0) return cfIp.trim();
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+        if (hops.length > 0) return hops[hops.length - 1];
+    }
+    return req.socket.remoteAddress ?? "unknown";
 }
 
 /**
@@ -50,7 +67,7 @@ playerRouter.get("/players", async (_req, res) => {
     const service = new PlayerService(unit);
 
     try {
-        const response = await service.getAllPlayers();
+        const response = await service.getAllPublicPlayers();
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -193,6 +210,11 @@ playerRouter.patch("/players/:id/profile", async (req, res) => {
             return;
         }
 
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            await unit.complete(false);
+            return;
+        }
+
         if (username !== undefined) {
             const existing = await playerService.getPlayerByUsername(username);
             if (existing && existing.playerId !== playerId) {
@@ -221,16 +243,64 @@ playerRouter.patch("/players/:id/profile", async (req, res) => {
                 await unit.complete(false);
                 return;
             }
-            const success = await playerService.updatePlayerEmail(playerId, email);
+
+            const player = await playerService.getInfoByID(playerId);
+            const isLocalAccount = !player?.provider;
+            let success: boolean;
+            if (isLocalAccount) {
+                success = await playerService.updatePlayerEmailAndResetVerification(playerId, email);
+            } else {
+                success = await playerService.updatePlayerEmail(playerId, email);
+            }
             if (!success) {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update email" });
                 await unit.complete(false);
                 return;
             }
+
+            // For local accounts, send a new verification email
+            if (isLocalAccount) {
+                try {
+                    await unit.prepare(
+                        `DELETE FROM EmailVerificationToken WHERE playerId = @playerId`,
+                        { playerId }
+                    ).run();
+                    const verifyToken = crypto.randomBytes(32).toString("hex");
+                    const now = new Date();
+                    const verifyExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                    await unit.prepare(
+                        `INSERT INTO EmailVerificationToken (token, playerId, email, createdAt, expiresAt)
+                         VALUES (@token, @playerId, @email, @createdAt, @expiresAt)`,
+                        {
+                            token: verifyToken,
+                            playerId,
+                            email,
+                            createdAt: now.toISOString(),
+                            expiresAt: verifyExpiresAt.toISOString(),
+                        }
+                    ).run();
+                    await unit.complete(true);
+                    try {
+                        await sendVerificationEmail(email, verifyToken);
+                    } catch (err) {
+                        console.error("Failed to send verification email after email change:", err);
+                    }
+                    res.status(StatusCodes.OK).json({ message: "Profile updated. Please verify your new email address — a verification link has been sent." });
+                    return;
+                } catch {
+                    // Fall through to normal response if token creation fails
+                }
+            }
         }
 
         if (motto !== undefined) {
-            const success = await playerService.updatePlayerMotto(playerId, motto);
+            const safeMotto = sanitizeText(motto, 100);
+            if (safeMotto === null) {
+                res.status(StatusCodes.BAD_REQUEST).json({ error: "motto must be a non-empty string (max 100 characters)" });
+                await unit.complete(false);
+                return;
+            }
+            const success = await playerService.updatePlayerMotto(playerId, safeMotto);
             if (!success) {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to update motto" });
                 await unit.complete(false);
@@ -407,6 +477,11 @@ playerRouter.patch("/players/:id/settings", async (req, res) => {
             return;
         }
 
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            await unit.complete(false);
+            return;
+        }
+
         const success = await settingsService.updateSettings(playerId, req.body);
         ok = true;
         if (success) {
@@ -434,7 +509,7 @@ playerRouter.get("/players/:id", async (req, res) => {
             return;
         }
 
-        const response = await service.getInfoByID(Number(id));
+        const response = await service.getPublicPlayerById(Number(id));
         if (response === null) {
             res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
         } else {
@@ -609,7 +684,7 @@ async function buildGloryProfile(
         motto: player.motto,
         coins: player.coins,
         joinedAt: player.joinedAt,
-        isAdmin: player.isAdmin,
+        isAdmin: false,  // Never expose admin status on public profiles
         provider: player.provider,
         stats,
         topStoves: displayStoves,
@@ -745,136 +820,21 @@ playerRouter.get("/players/username/:username/glory", async (req, res) => {
  * /players:
  *   post:
  *     summary: Create a new player
- *     description: Creates a new player with the given username, password, email and optional initial values
+ *     description: |
+ *       **DEPRECATED — Use `/auth/register` instead.**
+ *       This endpoint is disabled. All player creation must go through
+ *       `/auth/register` which enforces rate limiting, Turnstile, honeypot,
+ *       timing analysis, proof-of-work, and disposable-email blocking.
  *     tags:
  *       - Players
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - username
- *               - password
- *               - email
- *             properties:
- *               username:
- *                 type: string
- *                 description: Unique username for the player
- *                 example: "player123"
- *               password:
- *                 type: string
- *                 description: Player password (should be pre-hashed)
- *                 example: "hashedpassword123"
- *               email:
- *                 type: string
- *                 format: email
- *                 description: Unique email address for the player
- *                 example: "player@example.com"
- *               coins:
- *                 type: integer
- *                 description: Initial coin amount (default 1000)
- *                 example: 1500
- *               lootboxCount:
- *                 type: integer
- *                 description: Initial lootbox count (default 10)
- *                 example: 5
  *     responses:
- *       201:
- *         description: Player created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CreatePlayerResponse'
- *       400:
- *         description: Username, password, or email is required or invalid
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       409:
- *         description: Username or email already exists
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *       410:
+ *         description: Player creation via this endpoint has been permanently disabled.
  */
-playerRouter.post("/players", async (req, res) => {
-    const unit = await Unit.create(false);
-    const service = new PlayerService(unit);
-    let ok = false;
-
-    try {
-        const { username, password, email, coins, lootboxCount } = req.body;
-
-        // Validate required fields
-        if (isNullOrWhiteSpace(username)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Username is required" });
-            return;
-        }
-
-        if (isNullOrWhiteSpace(password)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Password is required" });
-            return;
-        }
-
-        if (isNullOrWhiteSpace(email)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Email is required" });
-            return;
-        }
-
-        // Basic email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid email format" });
-            return;
-        }
-
-        // Check if username already exists
-        const existingUsername = await service.getPlayerByUsername(username);
-        if (existingUsername !== null) {
-            res.status(StatusCodes.CONFLICT).json({ error: "Username already exists" });
-            return;
-        }
-
-        // Check if email already exists
-        const existingEmail = await service.getPlayerByEmail(email);
-        if (existingEmail !== null) {
-            res.status(StatusCodes.CONFLICT).json({ error: "Email already exists" });
-            return;
-        }
-
-        const hashedPassword = await hashPassword(password);
-        const [success, id] = await service.createPlayer(
-            username,
-            hashedPassword,
-            email,
-            coins ?? 1000,
-            lootboxCount ?? 10
-        );
-
-        if (success) {
-            ok = true;
-            res.status(StatusCodes.CREATED).json({ playerId: id, username });
-        } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create player" });
-        }
-    } catch (err) {
-        if (isConstraintError(err)) {
-            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
-        } else {
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
-        }
-    } finally {
-        await unit.complete(ok);
-    }
+playerRouter.post("/players", (_req, res) => {
+    res.status(StatusCodes.GONE).json({
+        error: "This endpoint is permanently disabled. Use /auth/register instead."
+    });
 });
 
 /**
@@ -940,7 +900,7 @@ playerRouter.post("/players", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.patch("/players/:id/coins", async (req, res) => {
+playerRouter.patch("/players/:id/coins", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
@@ -952,13 +912,19 @@ playerRouter.patch("/players/:id/coins", async (req, res) => {
             return;
         }
 
+        const playerId = Number(id);
+
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
+
         const { coins } = req.body;
         if (typeof coins !== "number" || coins < 0) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Coins must be a non-negative number" });
             return;
         }
 
-        const success = await service.updatePlayerCoins(Number(id), coins);
+        const success = await service.updatePlayerCoins(playerId, coins);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Coins updated" });
@@ -967,7 +933,15 @@ playerRouter.patch("/players/:id/coins", async (req, res) => {
         }
     } catch (err) {
         if (isConstraintError(err)) {
-            res.status(StatusCodes.CONFLICT).json({ error: String(err) });
+            const pgErr = err as { detail?: string };
+            const detail = pgErr.detail || "";
+            let message = "This account information conflicts with an existing account.";
+            if (detail.includes("email")) {
+                message = "This email is already associated with another account.";
+            } else if (detail.includes("username") || detail.includes("playerName")) {
+                message = "This username is already taken.";
+            }
+            res.status(StatusCodes.CONFLICT).json({ error: message });
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
         }
@@ -1039,7 +1013,7 @@ playerRouter.patch("/players/:id/coins", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.patch("/players/:id/lootboxes", async (req, res) => {
+playerRouter.patch("/players/:id/lootboxes", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
@@ -1051,13 +1025,27 @@ playerRouter.patch("/players/:id/lootboxes", async (req, res) => {
             return;
         }
 
+        const playerId = Number(id);
+        if (req.playerId !== playerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "lootbox_tampering", `Attempted to modify lootboxes for player ${playerId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only update your own lootbox count" });
+            await unit.complete(false);
+            return;
+        }
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
+
         const { lootboxCount } = req.body;
         if (typeof lootboxCount !== "number" || lootboxCount < 0) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "LootboxCount must be a non-negative number" });
             return;
         }
 
-        const success = await service.updatePlayerLootboxCount(Number(id), lootboxCount);
+        const success = await service.updatePlayerLootboxCount(playerId, lootboxCount);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Lootbox count updated" });
@@ -1124,7 +1112,7 @@ playerRouter.patch("/players/:id/lootboxes", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.delete("/players/:id", async (req, res) => {
+playerRouter.delete("/players/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;
@@ -1136,7 +1124,21 @@ playerRouter.delete("/players/:id", async (req, res) => {
             return;
         }
 
-        const success = await service.deletePlayer(Number(id));
+        const playerId = Number(id);
+        if (req.playerId !== playerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "account_deletion_attempt", `Attempted to delete player ${playerId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only delete your own account" });
+            await unit.complete(false);
+            return;
+        }
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
+
+        const success = await service.deletePlayer(playerId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Player deleted" });

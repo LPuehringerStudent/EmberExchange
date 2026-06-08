@@ -5,8 +5,22 @@ import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { ListingRow } from "../../shared/model";
+import { checkPlayerBanned } from "../middleware/ban-check";
+import { requireAuth } from "../middleware/require-auth";
+import { PunishmentService } from "../services/punishment-service";
 
 export const listingRouter = express.Router();
+
+function getClientIp(req: express.Request): string {
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (typeof cfIp === "string" && cfIp.length > 0) return cfIp.trim();
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string") {
+        const hops = forwarded.split(",").map(s => s.trim()).filter(Boolean);
+        if (hops.length > 0) return hops[hops.length - 1];
+    }
+    return req.socket.remoteAddress ?? "unknown";
+}
 
 /**
  * @openapi
@@ -32,12 +46,14 @@ export const listingRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/listings", async (_req, res) => {
+listingRouter.get("/listings", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAllListings();
+        const response = await service.getAllListings(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -73,6 +89,8 @@ listingRouter.get("/listings", async (_req, res) => {
 listingRouter.get("/listings/active", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
+    const limit = Math.min(Number(req.query.limit) || 100, 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
         const { rarity, collection, minPrice, maxPrice, itemType, sortBy, search } = req.query;
@@ -89,9 +107,9 @@ listingRouter.get("/listings/active", async (req, res) => {
                 itemType: itemType === 'stove' || itemType === 'lootbox' ? itemType : undefined,
                 sortBy: sortBy === 'price_asc' || sortBy === 'price_desc' || sortBy === 'newest' ? sortBy : undefined,
                 search: search ? String(search) : undefined,
-            });
+            }, limit, offset);
         } else {
-            response = await service.getActiveListings();
+            response = await service.getActiveListings(limit, offset);
         }
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
@@ -203,7 +221,7 @@ listingRouter.get("/listings/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/players/:sellerId/listings", async (req, res) => {
+listingRouter.get("/players/:sellerId/listings", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const sellerId = req.params.sellerId;
@@ -214,7 +232,13 @@ listingRouter.get("/players/:sellerId/listings", async (req, res) => {
             return;
         }
 
-        const response = await service.getListingsBySellerId(Number(sellerId));
+        const parsedSellerId = Number(sellerId);
+        if (req.playerId !== parsedSellerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const response = await service.getListingsBySellerId(parsedSellerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -260,7 +284,7 @@ listingRouter.get("/players/:sellerId/listings", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/players/:sellerId/listings/active", async (req, res) => {
+listingRouter.get("/players/:sellerId/listings/active", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const sellerId = req.params.sellerId;
@@ -271,7 +295,13 @@ listingRouter.get("/players/:sellerId/listings/active", async (req, res) => {
             return;
         }
 
-        const response = await service.getActiveListingsBySellerId(Number(sellerId));
+        const parsedSellerId = Number(sellerId);
+        if (req.playerId !== parsedSellerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
+            return;
+        }
+
+        const response = await service.getActiveListingsBySellerId(parsedSellerId);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -424,7 +454,46 @@ listingRouter.get("/lootboxes/:lootboxId/listing", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.post("/listings", async (req, res) => {
+/**
+ * Trace a stove back to the player who originally acquired it.
+ * 1. Ownership table (for traded stoves)
+ * 2. LootboxDrop → Lootbox (for lootbox-origin stoves)
+ * 3. Stove.currentOwnerId (fallback — never traded)
+ */
+async function getStoveOriginPlayerId(unit: Unit, stoveId: number): Promise<number | null> {
+    // Method 1: Ownership history (traded stoves)
+    const ownershipStmt = unit.prepare<{ playerId: number }>(
+        `SELECT playerId FROM Ownership WHERE stoveId = @stoveId ORDER BY acquiredAt ASC LIMIT 1`,
+        { stoveId }
+    );
+    const firstOwnership = await ownershipStmt.get();
+    if (firstOwnership) {
+        return firstOwnership.playerId;
+    }
+
+    // Method 2: Lootbox drop chain (lootbox-origin stoves)
+    const lootboxStmt = unit.prepare<{ playerId: number }>(
+        `SELECT l.playerId
+         FROM LootboxDrop ld
+         JOIN Lootbox l ON l.lootboxId = ld.lootboxId
+         WHERE ld.stoveId = @stoveId`,
+        { stoveId }
+    );
+    const lootboxOrigin = await lootboxStmt.get();
+    if (lootboxOrigin) {
+        return lootboxOrigin.playerId;
+    }
+
+    // Method 3: Fallback — current owner is also original owner
+    const stoveStmt = unit.prepare<{ currentOwnerId: number }>(
+        `SELECT currentOwnerId FROM Stove WHERE stoveId = @stoveId`,
+        { stoveId }
+    );
+    const stove = await stoveStmt.get();
+    return stove?.currentOwnerId ?? null;
+}
+
+listingRouter.post("/listings", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ListingService(unit);
     let ok = false;
@@ -434,6 +503,21 @@ listingRouter.post("/listings", async (req, res) => {
 
         if (typeof sellerId !== "number" || typeof price !== "number") {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "sellerId and price are required" });
+            return;
+        }
+
+        if (req.playerId !== sellerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_listing", `Attempted to create listing as seller ${sellerId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only create listings for your own items" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, sellerId, res)) {
+            await unit.complete(false);
             return;
         }
 
@@ -450,6 +534,48 @@ listingRouter.post("/listings", async (req, res) => {
         if (price < 1) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive number" });
             return;
+        }
+
+        // Verify seller actually owns the item
+        if (stoveId !== undefined && stoveId !== null) {
+            const stoveStmt = unit.prepare<{ currentOwnerId: number }>(
+                `SELECT currentOwnerId FROM Stove WHERE stoveId = @stoveId`,
+                { stoveId }
+            );
+            const stove = await stoveStmt.get();
+            if (!stove || stove.currentOwnerId !== sellerId) {
+                res.status(StatusCodes.FORBIDDEN).json({ error: "You do not own this stove" });
+                await unit.complete(false);
+                return;
+            }
+
+            // Check if stove originated from a banned account
+            const originPlayerId = await getStoveOriginPlayerId(unit, stoveId);
+            if (originPlayerId !== null) {
+                const playerStmt = unit.prepare<{ bannedAt: string | null }>(
+                    `SELECT bannedAt FROM Player WHERE playerId = @playerId`,
+                    { playerId: originPlayerId }
+                );
+                const originPlayer = await playerStmt.get();
+                if (originPlayer?.bannedAt) {
+                    res.status(StatusCodes.FORBIDDEN).json({ error: "This item cannot be listed because it originated from a banned account" });
+                    await unit.complete(false);
+                    return;
+                }
+            }
+        }
+
+        if (lootboxId !== undefined && lootboxId !== null) {
+            const lootboxStmt = unit.prepare<{ playerId: number }>(
+                `SELECT playerId FROM Lootbox WHERE lootboxId = @lootboxId`,
+                { lootboxId }
+            );
+            const lootbox = await lootboxStmt.get();
+            if (!lootbox || lootbox.playerId !== sellerId) {
+                res.status(StatusCodes.FORBIDDEN).json({ error: "You do not own this lootbox" });
+                await unit.complete(false);
+                return;
+            }
         }
 
         // Check if item is already listed
@@ -546,7 +672,7 @@ listingRouter.post("/listings", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.patch("/listings/:id/price", async (req, res) => {
+listingRouter.patch("/listings/:id/price", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ListingService(unit);
     const id = req.params.id;
@@ -558,13 +684,30 @@ listingRouter.patch("/listings/:id/price", async (req, res) => {
             return;
         }
 
+        const listingId = Number(id);
+        const listing = await service.getListingById(listingId);
+        if (!listing) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Listing not found" });
+            await unit.complete(false);
+            return;
+        }
+        if (req.playerId !== listing.sellerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_listing", `Attempted to update listing ${listingId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only update your own listings" });
+            await unit.complete(false);
+            return;
+        }
+
         const { price } = req.body;
         if (typeof price !== "number" || price < 1) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "price must be a positive number" });
             return;
         }
 
-        const success = await service.updatePrice(Number(id), price);
+        const success = await service.updatePrice(listingId, price);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Price updated" });
@@ -621,7 +764,7 @@ listingRouter.patch("/listings/:id/price", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.patch("/listings/:id/cancel", async (req, res) => {
+listingRouter.patch("/listings/:id/cancel", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ListingService(unit);
     const id = req.params.id;
@@ -633,7 +776,24 @@ listingRouter.patch("/listings/:id/cancel", async (req, res) => {
             return;
         }
 
-        const success = await service.cancelListing(Number(id));
+        const listingId = Number(id);
+        const listing = await service.getListingById(listingId);
+        if (!listing) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Listing not found" });
+            await unit.complete(false);
+            return;
+        }
+        if (req.playerId !== listing.sellerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_listing", `Attempted to cancel listing ${listingId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only cancel your own listings" });
+            await unit.complete(false);
+            return;
+        }
+
+        const success = await service.cancelListing(listingId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Listing cancelled" });
@@ -690,7 +850,7 @@ listingRouter.patch("/listings/:id/cancel", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.delete("/listings/:id", async (req, res) => {
+listingRouter.delete("/listings/:id", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new ListingService(unit);
     const id = req.params.id;
@@ -702,7 +862,24 @@ listingRouter.delete("/listings/:id", async (req, res) => {
             return;
         }
 
-        const success = await service.deleteListing(Number(id));
+        const listingId = Number(id);
+        const listing = await service.getListingById(listingId);
+        if (!listing) {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Listing not found" });
+            await unit.complete(false);
+            return;
+        }
+        if (req.playerId !== listing.sellerId) {
+            try {
+                const punishmentService = new PunishmentService(unit);
+                await punishmentService.recordViolation(getClientIp(req), req.playerId ?? null, "unauthorized_listing", `Attempted to delete listing ${listingId}`);
+            } catch { /* ignore */ }
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only delete your own listings" });
+            await unit.complete(false);
+            return;
+        }
+
+        const success = await service.deleteListing(listingId);
         if (success) {
             ok = true;
             res.status(StatusCodes.OK).json({ message: "Listing deleted" });
@@ -751,7 +928,7 @@ listingRouter.delete("/listings/:id", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-listingRouter.get("/players/:sellerId/active-listings/count", async (req, res) => {
+listingRouter.get("/players/:sellerId/active-listings/count", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);
     const sellerId = req.params.sellerId;
@@ -759,6 +936,11 @@ listingRouter.get("/players/:sellerId/active-listings/count", async (req, res) =
     try {
         if (isNullOrWhiteSpace(sellerId) || isNaN(Number(sellerId))) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Seller ID must be a valid number" });
+            return;
+        }
+
+        if (req.playerId !== Number(sellerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only view your own data" });
             return;
         }
 

@@ -1,7 +1,8 @@
 import express from "express";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { SparksService } from "../services/sparks-service";
-import { SessionService } from "../services/session-service";
+import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 
 export const sparksRouter = express.Router();
@@ -27,24 +28,11 @@ export const sparksRouter = express.Router();
  *       401:
  *         description: Unauthorized
  */
-sparksRouter.get("/player/sparks", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Missing session-id header" });
-        return;
-    }
-
+sparksRouter.get("/player/sparks", requireAuth, async (req, res) => {
     const unit = await Unit.create(true);
     try {
-        const sessionService = new SessionService(unit);
-        const session = await sessionService.getSession(sessionId);
-        if (!session || new Date(session.expiresAt) < new Date()) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
-            return;
-        }
-
         const sparksService = new SparksService(unit);
-        const balance = await sparksService.getSparksBalance(session.playerId);
+        const balance = await sparksService.getSparksBalance(req.playerId!);
         res.status(StatusCodes.OK).json({ sparks: balance });
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -80,13 +68,7 @@ sparksRouter.get("/player/sparks", async (req, res) => {
  *       401:
  *         description: Unauthorized
  */
-sparksRouter.post("/sparks/salvage", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Missing session-id header" });
-        return;
-    }
-
+sparksRouter.post("/sparks/salvage", requireAuth, async (req, res) => {
     const { stoveId } = req.body;
     if (!stoveId || typeof stoveId !== "number") {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "stoveId is required" });
@@ -95,15 +77,12 @@ sparksRouter.post("/sparks/salvage", async (req, res) => {
 
     const unit = await Unit.create(true);
     try {
-        const sessionService = new SessionService(unit);
-        const session = await sessionService.getSession(sessionId);
-        if (!session || new Date(session.expiresAt) < new Date()) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             return;
         }
 
         const sparksService = new SparksService(unit);
-        const result = await sparksService.salvageStove(session.playerId, stoveId);
+        const result = await sparksService.salvageStove(req.playerId!, stoveId);
 
         if (result.success) {
             res.status(StatusCodes.OK).json(result);
@@ -144,13 +123,7 @@ sparksRouter.post("/sparks/salvage", async (req, res) => {
  *       401:
  *         description: Unauthorized
  */
-sparksRouter.post("/sparks/reroll-heat", async (req, res) => {
-    const sessionId = req.headers["session-id"] as string;
-    if (!sessionId) {
-        res.status(StatusCodes.UNAUTHORIZED).json({ error: "Missing session-id header" });
-        return;
-    }
-
+sparksRouter.post("/sparks/reroll-heat", requireAuth, async (req, res) => {
     const { stoveId } = req.body;
     if (!stoveId || typeof stoveId !== "number") {
         res.status(StatusCodes.BAD_REQUEST).json({ error: "stoveId is required" });
@@ -159,15 +132,12 @@ sparksRouter.post("/sparks/reroll-heat", async (req, res) => {
 
     const unit = await Unit.create(true);
     try {
-        const sessionService = new SessionService(unit);
-        const session = await sessionService.getSession(sessionId);
-        if (!session || new Date(session.expiresAt) < new Date()) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid or expired session" });
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
             return;
         }
 
         const sparksService = new SparksService(unit);
-        const result = await sparksService.reRollHeat(session.playerId, stoveId);
+        const result = await sparksService.reRollHeat(req.playerId!, stoveId);
 
         if (result.success) {
             res.status(StatusCodes.OK).json(result);

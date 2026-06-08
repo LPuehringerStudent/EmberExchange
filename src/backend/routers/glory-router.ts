@@ -1,10 +1,13 @@
 import express from "express";
 import { StatusCodes } from "http-status-codes";
 import { Unit } from "../utils/unit";
+import { checkPlayerBanned } from "../middleware/ban-check";
 import { GloryCustomizationService } from "../services/glory-customization-service";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { PlayerAchievementService } from "../services/player-achievement-service";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { sanitizeText } from "../utils/sanitize";
+import { requireAuth } from "../middleware/require-auth";
 
 export const gloryRouter = express.Router();
 
@@ -78,7 +81,7 @@ gloryRouter.get("/glory/customization/:playerId", async (req, res) => {
  *       500:
  *         description: Server error
  */
-gloryRouter.post("/glory/showcase", async (req, res) => {
+gloryRouter.post("/glory/showcase", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
     const { playerId, slotIndex, stoveId } = req.body;
@@ -90,6 +93,14 @@ gloryRouter.post("/glory/showcase", async (req, res) => {
         }
         if (slotIndex < 0 || slotIndex > 5) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Slot index must be 0-5" });
+            return;
+        }
+        if (req.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only modify your own showcase" });
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, playerId, res)) {
             return;
         }
 
@@ -128,13 +139,20 @@ gloryRouter.post("/glory/showcase", async (req, res) => {
  *       200: { description: Showcase slot cleared }
  *       500: { description: Server error }
  */
-gloryRouter.delete("/glory/showcase/:playerId/:slotIndex", async (req, res) => {
+gloryRouter.delete("/glory/showcase/:playerId/:slotIndex", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
     const playerId = Number(req.params.playerId);
     const slotIndex = Number(req.params.slotIndex);
 
     try {
+        if (req.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only modify your own showcase" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.removeShowcaseSlot(playerId, slotIndex);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Showcase slot cleared" });
@@ -164,12 +182,19 @@ gloryRouter.delete("/glory/showcase/:playerId/:slotIndex", async (req, res) => {
  *               achievementId: { type: string }
  *               slotIndex: { type: integer }
  */
-gloryRouter.post("/glory/achievements", async (req, res) => {
+gloryRouter.post("/glory/achievements", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
     const { playerId, achievementId, slotIndex } = req.body;
 
     try {
+        if (req.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only modify your own achievements" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.setFeaturedAchievement(playerId, achievementId, slotIndex);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Achievement pinned" });
@@ -200,12 +225,20 @@ gloryRouter.post("/glory/achievements", async (req, res) => {
  *       200: { description: Achievement unpinned }
  *       500: { description: Server error }
  */
-gloryRouter.delete("/glory/achievements/:playerId/:achievementId", async (req, res) => {
+gloryRouter.delete("/glory/achievements/:playerId/:achievementId", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
-    const { playerId, achievementId } = req.params;
+    const playerId = req.params.playerId as string;
+    const achievementId = req.params.achievementId as string;
 
     try {
+        if (req.playerId !== Number(playerId)) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only modify your own achievements" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, Number(playerId), res)) {
+            return;
+        }
         await service.removeFeaturedAchievement(Number(playerId), achievementId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Achievement unpinned" });
@@ -268,12 +301,19 @@ gloryRouter.get("/glory/themes/:playerId", async (req, res) => {
  *       200: { description: Theme activated }
  *       500: { description: Server error }
  */
-gloryRouter.post("/glory/theme", async (req, res) => {
+gloryRouter.post("/glory/theme", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
     const { playerId, themeId } = req.body;
 
     try {
+        if (req.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only modify your own theme" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.activateTheme(playerId, themeId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Theme activated" });
@@ -336,12 +376,19 @@ gloryRouter.get("/glory/titles/:playerId", async (req, res) => {
  *       200: { description: Title activated }
  *       500: { description: Server error }
  */
-gloryRouter.post("/glory/title", async (req, res) => {
+gloryRouter.post("/glory/title", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
     const { playerId, titleId } = req.body;
 
     try {
+        if (req.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only modify your own title" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.activateTitle(playerId, titleId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Title activated" });
@@ -404,12 +451,19 @@ gloryRouter.get("/glory/banners/:playerId", async (req, res) => {
  *       200: { description: Banner activated }
  *       500: { description: Server error }
  */
-gloryRouter.post("/glory/banner", async (req, res) => {
+gloryRouter.post("/glory/banner", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
     const { playerId, bannerId } = req.body;
 
     try {
+        if (req.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only modify your own banner" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
         await service.activateBanner(playerId, bannerId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Banner activated" });
@@ -458,7 +512,7 @@ gloryRouter.post("/glory/banner", async (req, res) => {
  *       200: { description: Visit recorded }
  *       500: { description: Server error }
  */
-gloryRouter.post("/glory/visit", async (req, res) => {
+gloryRouter.post("/glory/visit", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
     const { visitorId, profileId } = req.body;
@@ -468,8 +522,15 @@ gloryRouter.post("/glory/visit", async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid parameters" });
             return;
         }
+        if (req.playerId !== visitorId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only record visits as yourself" });
+            return;
+        }
         if (visitorId === profileId) {
             res.status(StatusCodes.OK).json({ message: "Self-visits are not recorded" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, visitorId, res)) {
             return;
         }
         await service.recordVisit(profileId, visitorId);
@@ -551,7 +612,7 @@ gloryRouter.get("/glory/guestbook/:playerId", async (req, res) => {
  *       400: { description: Invalid message length }
  *       500: { description: Server error }
  */
-gloryRouter.post("/glory/guestbook", async (req, res) => {
+gloryRouter.post("/glory/guestbook", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
     const { playerId, authorId, message } = req.body;
@@ -561,7 +622,19 @@ gloryRouter.post("/glory/guestbook", async (req, res) => {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Message must be 1-200 characters" });
             return;
         }
-        await service.addGuestbookEntry(playerId, authorId, message);
+        if (req.playerId !== authorId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only post as yourself" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, authorId, res)) {
+            return;
+        }
+        const sanitized = sanitizeText(message, 200);
+        if (!sanitized) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Message must be 1-200 characters" });
+            return;
+        }
+        await service.addGuestbookEntry(playerId, authorId, sanitized);
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Guestbook entry added" });
     } catch (err) {
@@ -597,12 +670,19 @@ gloryRouter.post("/glory/guestbook", async (req, res) => {
  *       403: { description: Not authorized }
  *       500: { description: Server error }
  */
-gloryRouter.delete("/glory/guestbook/:entryId", async (req, res) => {
+gloryRouter.delete("/glory/guestbook/:entryId", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new GloryCustomizationService(unit);
     const { requestingPlayerId } = req.body;
 
     try {
+        if (req.playerId !== requestingPlayerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "Not authorized to delete this entry" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, requestingPlayerId, res)) {
+            return;
+        }
         const success = await service.deleteGuestbookEntry(Number(req.params.entryId), requestingPlayerId);
         if (!success) {
             res.status(StatusCodes.FORBIDDEN).json({ error: "Not authorized to delete this entry" });
@@ -702,16 +782,24 @@ gloryRouter.get("/players/:playerId/prestige", async (req, res) => {
  *       400: { description: Not eligible for prestige }
  *       500: { description: Server error }
  */
-gloryRouter.post("/players/:playerId/prestige", async (req, res) => {
+gloryRouter.post("/players/:playerId/prestige", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerPrestigeService(unit);
     try {
-        const can = await service.canPrestige(Number(req.params.playerId));
+        const playerId = Number(req.params.playerId);
+        if (req.playerId !== playerId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only prestige your own account" });
+            return;
+        }
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            return;
+        }
+        const can = await service.canPrestige(playerId);
         if (!can) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "Not eligible for prestige" });
             return;
         }
-        const result = await service.doPrestige(Number(req.params.playerId));
+        const result = await service.doPrestige(playerId);
         await unit.complete(true);
         res.status(StatusCodes.OK).json(result);
     } catch (err) {

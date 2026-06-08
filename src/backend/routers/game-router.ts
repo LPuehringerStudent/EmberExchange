@@ -5,11 +5,13 @@ import { StatusCodes } from "http-status-codes";
 
 export const gameRouter = express.Router();
 
-gameRouter.get("/games", async (_req, res) => {
+gameRouter.get("/games", async (req, res) => {
     const unit = await Unit.create(true);
     try {
         const gameService = new GameService(unit);
-        const games = await gameService.getAllGames();
+        const limit = Math.min(Number(req.query.limit) || 100, 100);
+        const offset = Math.max(Number(req.query.offset) || 0, 0);
+        const games = await gameService.getAllGames(limit, offset);
         res.status(StatusCodes.OK).json(games);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });

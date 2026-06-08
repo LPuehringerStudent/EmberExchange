@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { DailyStatisticsService } from "../services/daily-statistics-service";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { requireAdmin } from "../middleware/admin";
 
 export const dailyStatisticsRouter = express.Router();
 
@@ -30,12 +31,14 @@ export const dailyStatisticsRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.get("/daily-statistics", async (_req, res) => {
+dailyStatisticsRouter.get("/daily-statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
+    const limit = Math.min(Number(req.query.limit) || 500, 500);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
     try {
-        const response = await service.getAll();
+        const response = await service.getAll(limit, offset);
         res.status(StatusCodes.OK).json(response);
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: String(err) });
@@ -131,7 +134,7 @@ dailyStatisticsRouter.get("/daily-statistics/today", async (_req, res) => {
 dailyStatisticsRouter.get("/daily-statistics/summary", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new DailyStatisticsService(unit);
-    const days = parseInt(req.query.days as string) || 7;
+    const days = Math.min(365, Math.max(1, parseInt(req.query.days as string) || 7));
 
     try {
         const response = await service.getSummary(days);
@@ -322,7 +325,7 @@ dailyStatisticsRouter.get("/daily-statistics/:date", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.post("/daily-statistics", async (req, res) => {
+dailyStatisticsRouter.post("/daily-statistics", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new DailyStatisticsService(unit);
     let ok = false;
@@ -392,10 +395,10 @@ dailyStatisticsRouter.post("/daily-statistics", async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-dailyStatisticsRouter.delete("/daily-statistics/:date", async (req, res) => {
+dailyStatisticsRouter.delete("/daily-statistics/:date", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new DailyStatisticsService(unit);
-    const date = req.params.date;
+    const date = req.params.date as string;
     let ok = false;
 
     try {

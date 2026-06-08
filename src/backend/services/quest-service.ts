@@ -17,6 +17,7 @@ export interface PlayerQuestRow {
     playerId: number;
     questType: string;
     templateId: string;
+    label: string;
     targetValue: number;
     currentValue: number;
     rewardCoins: number;
@@ -86,9 +87,9 @@ export class QuestService {
 
         for (const t of templates) {
             await this.unit.prepare(
-                `INSERT INTO PlayerQuest (playerId, questType, templateId, targetValue, currentValue, rewardCoins, rewardXP, rewardLootboxTypeId, isCompleted, isClaimed, expiresAt, createdAt)
-                 VALUES (@playerId, 'daily', @templateId, @targetValue, 0, @rewardCoins, @rewardXP, @rewardLootboxTypeId, 0, 0, @expiresAt, @createdAt)`,
-                { playerId, templateId: t.templateId, targetValue: t.targetValue, rewardCoins: t.rewardCoins, rewardXP: t.rewardXP, rewardLootboxTypeId: t.rewardLootboxTypeId ?? null, expiresAt, createdAt: now }
+                `INSERT INTO PlayerQuest (playerId, questType, templateId, label, targetValue, currentValue, rewardCoins, rewardXP, rewardLootboxTypeId, isCompleted, isClaimed, expiresAt, createdAt)
+                 VALUES (@playerId, 'daily', @templateId, @label, @targetValue, 0, @rewardCoins, @rewardXP, @rewardLootboxTypeId, 0, 0, @expiresAt, @createdAt)`,
+                { playerId, templateId: t.templateId, label: t.label, targetValue: t.targetValue, rewardCoins: t.rewardCoins, rewardXP: t.rewardXP, rewardLootboxTypeId: t.rewardLootboxTypeId ?? null, expiresAt, createdAt: now }
             ).run();
         }
     }
@@ -109,9 +110,9 @@ export class QuestService {
 
         for (const t of templates) {
             await this.unit.prepare(
-                `INSERT INTO PlayerQuest (playerId, questType, templateId, targetValue, currentValue, rewardCoins, rewardXP, rewardLootboxTypeId, isCompleted, isClaimed, expiresAt, createdAt)
-                 VALUES (@playerId, 'weekly', @templateId, @targetValue, 0, @rewardCoins, @rewardXP, @rewardLootboxTypeId, 0, 0, @expiresAt, @createdAt)`,
-                { playerId, templateId: t.templateId, targetValue: t.targetValue, rewardCoins: t.rewardCoins, rewardXP: t.rewardXP, rewardLootboxTypeId: t.rewardLootboxTypeId ?? null, expiresAt, createdAt: now }
+                `INSERT INTO PlayerQuest (playerId, questType, templateId, label, targetValue, currentValue, rewardCoins, rewardXP, rewardLootboxTypeId, isCompleted, isClaimed, expiresAt, createdAt)
+                 VALUES (@playerId, 'weekly', @templateId, @label, @targetValue, 0, @rewardCoins, @rewardXP, @rewardLootboxTypeId, 0, 0, @expiresAt, @createdAt)`,
+                { playerId, templateId: t.templateId, label: t.label, targetValue: t.targetValue, rewardCoins: t.rewardCoins, rewardXP: t.rewardXP, rewardLootboxTypeId: t.rewardLootboxTypeId ?? null, expiresAt, createdAt: now }
             ).run();
         }
     }
@@ -145,6 +146,22 @@ export class QuestService {
                 `UPDATE PlayerQuest SET currentValue = @newValue, isCompleted = @completed WHERE questId = @questId`,
                 { newValue, completed, questId: quest.questId }
             ).run();
+
+            if (completed === 1 && quest.isCompleted === 0) {
+                try {
+                    const notificationService = new (await import("./notification-service")).NotificationService(this.unit);
+                    await notificationService.create(
+                        playerId,
+                        "quest_complete",
+                        "Quest completed!",
+                        `You completed "${quest.label}". Claim your reward!`,
+                        { questId: quest.questId, templateId: quest.templateId, label: quest.label },
+                        { priority: 'high' }
+                    );
+                } catch {
+                    // Ignore notification errors
+                }
+            }
         }
     }
 
@@ -160,9 +177,8 @@ export class QuestService {
 
         // Award coins
         const playerService = new PlayerService(this.unit);
-        const player = await playerService.getInfoByID(playerId);
-        if (player) {
-            await playerService.updatePlayerCoins(playerId, player.coins + quest.rewardCoins);
+        if (quest.rewardCoins > 0) {
+            await playerService.addCoinsAtomic(playerId, quest.rewardCoins);
         }
 
         // Award XP
@@ -184,6 +200,25 @@ export class QuestService {
             `UPDATE PlayerQuest SET isClaimed = 1 WHERE questId = @questId`,
             { questId }
         ).run();
+
+        // Notify about reward
+        try {
+            const notificationService = new (await import("./notification-service")).NotificationService(this.unit);
+            const rewardParts: string[] = [];
+            if (quest.rewardCoins > 0) rewardParts.push(`${quest.rewardCoins} coins`);
+            if (quest.rewardXP > 0) rewardParts.push(`${quest.rewardXP} XP`);
+            if (quest.rewardLootboxTypeId) rewardParts.push(`1 lootbox`);
+            await notificationService.create(
+                playerId,
+                "system",
+                "Quest reward claimed",
+                `You claimed ${rewardParts.join(" + ")} for "${quest.label}"`,
+                { questId, rewards: { coins: quest.rewardCoins, xp: quest.rewardXP, lootboxTypeId: quest.rewardLootboxTypeId ?? undefined } },
+                { priority: 'normal' }
+            );
+        } catch {
+            // Ignore notification errors
+        }
 
         return {
             success: true,

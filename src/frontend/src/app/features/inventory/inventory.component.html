@@ -1,30 +1,32 @@
-<div class="flex h-[calc(100vh-80px)] bg-gradient-to-br from-body to-surface-secondary rounded-[18px] overflow-hidden">
+<div class="flex flex-col md:flex-row h-[calc(100vh-80px)] bg-gradient-to-br from-body to-surface-secondary rounded-[18px] overflow-hidden">
 
   <!-- Sidebar -->
-  <aside class="w-[240px] bg-gradient-to-b from-surface to-surface-secondary p-7 px-5 border-r border-border shadow-[4px_0_15px_rgba(0,0,0,0.05)]">
-    <h2 class="text-[22px] mb-6 text-accent font-bold">Inventory</h2>
+  <aside class="w-full md:w-[240px] shrink-0 bg-gradient-to-b from-surface to-surface-secondary p-4 md:p-7 px-4 md:px-5 border-b md:border-b-0 md:border-r border-border shadow-[4px_0_15px_rgba(0,0,0,0.05)]">
+    <h2 class="text-[22px] mb-4 md:mb-6 text-accent font-bold hidden md:block">Inventory</h2>
 
-    <button
-      class="sidebar-btn w-full text-left px-[18px] py-3.5 mb-3 rounded-xl bg-transparent text-text-secondary text-[15px] font-medium cursor-pointer transition-all duration-250 border-none"
-      [class.active]="activeTab === 'lootboxes'"
-      (click)="activeTab = 'lootboxes'">
-      Lootboxes
-    </button>
+    <div class="flex md:flex-col gap-2 md:gap-0">
+      <button
+        class="sidebar-btn flex-1 md:w-full text-center md:text-left px-[18px] py-2.5 md:py-3.5 md:mb-3 rounded-xl bg-transparent text-text-secondary text-[15px] font-medium cursor-pointer transition-all duration-250 border-none"
+        [class.active]="activeTab === 'lootboxes'"
+        (click)="activeTab = 'lootboxes'">
+        Lootboxes
+      </button>
 
-    <button
-      class="sidebar-btn w-full text-left px-[18px] py-3.5 mb-3 rounded-xl bg-transparent text-text-secondary text-[15px] font-medium cursor-pointer transition-all duration-250 border-none"
-      [class.active]="activeTab === 'items'"
-      (click)="activeTab = 'items'">
-      Items
-    </button>
+      <button
+        class="sidebar-btn flex-1 md:w-full text-center md:text-left px-[18px] py-2.5 md:py-3.5 md:mb-3 rounded-xl bg-transparent text-text-secondary text-[15px] font-medium cursor-pointer transition-all duration-250 border-none"
+        [class.active]="activeTab === 'items'"
+        (click)="activeTab = 'items'">
+        Items
+      </button>
+    </div>
   </aside>
 
   <!-- Main Inventory -->
-  <section class="flex-1 p-[30px_40px] flex flex-col overflow-y-auto">
+  <section class="flex-1 p-4 md:p-[30px_40px] flex flex-col overflow-y-auto">
 
     <div class="flex items-start justify-between gap-4 mb-7">
       <div>
-        <h1 class="text-[28px] text-text-primary font-bold mb-1.5">{{ activeTab === 'lootboxes' ? 'Lootboxes' : 'Items' }}</h1>
+        <h1 class="text-[22px] md:text-[28px] text-text-primary font-bold mb-1.5">{{ activeTab === 'lootboxes' ? 'Lootboxes' : 'Items' }}</h1>
         <span class="text-sm text-text-secondary">
           {{ activeTab === 'lootboxes'
           ? 'Your unopened lootboxes'
@@ -42,9 +44,18 @@
 
     <!-- Loading State -->
     @if (loading) {
-      <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
-        <div class="w-8 h-8 border-4 border-accent/20 border-t-accent rounded-full animate-spin mb-4"></div>
-        <p class="text-lg font-semibold text-text-primary m-0 mb-2">Loading your inventory...</p>
+      <div class="flex-1 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6 p-2 content-start">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skeleton-card p-5 flex flex-col gap-4">
+            <div class="skeleton-shimmer skeleton-img rounded-xl"></div>
+            <div class="skeleton-shimmer skeleton-line short"></div>
+            <div class="skeleton-shimmer skeleton-line"></div>
+            <div class="flex gap-2 mt-2">
+              <div class="skeleton-shimmer h-10 rounded-lg flex-1"></div>
+              <div class="skeleton-shimmer h-10 rounded-lg flex-1"></div>
+            </div>
+          </div>
+        }
       </div>
     }
 
@@ -71,11 +82,7 @@
       @if (activeTab === 'lootboxes' && lootboxes.length === 0) {
         <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
           <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-            <svg class="w-12 h-12 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <line x1="3" y1="9" x2="21" y2="9"/>
-              <line x1="9" y1="21" x2="9" y2="9"/>
-            </svg>
+            <span class="text-4xl">🎁</span>
           </div>
           <p class="text-lg font-semibold text-text-primary m-0 mb-2">No lootboxes yet</p>
           <span class="text-sm text-text-secondary mb-6">Open or buy lootboxes to see them here</span>
@@ -119,13 +126,10 @@
       @if (activeTab === 'items' && items.length === 0) {
         <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
           <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-            <svg class="w-12 h-12 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
-              <circle cx="12" cy="5" r="2"/>
-            </svg>
+            <span class="text-4xl">🔥</span>
           </div>
-          <p class="text-lg font-semibold text-text-primary m-0 mb-2">No items yet</p>
-          <span class="text-sm text-text-secondary mb-6">Open lootboxes to collect stoves</span>
+          <p class="text-lg font-semibold text-text-primary m-0 mb-2">No stoves yet</p>
+          <span class="text-sm text-text-secondary mb-6">Open a lootbox to get your first stove!</span>
           <button class="btn-primary" routerLink="/lootboxes">Open a Lootbox</button>
         </div>
       }
@@ -148,10 +152,18 @@
                 }
               </div>
               <span [class]="'rarity-badge absolute top-2.5 right-2.5 px-3 py-1.5 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)] ' + item.rarity.toLowerCase()">
-                {{item.rarity}}
+                @if ($first) {
+                  <app-info-tooltip text="How rare this stove is. Higher rarity means fewer exist and they're worth more.">{{item.rarity}}</app-info-tooltip>
+                } @else {
+                  {{item.rarity}}
+                }
               </span>
               <span class="heat-badge heat-{{item.heatLevel | heatTier | lowercase}}">
-                {{item.heatLevel | heatTier}}
+                @if ($first) {
+                  <app-info-tooltip text="A score from 1–100. Hotter stoves are more valuable and produce more in the Factory.">{{item.heatLevel | heatTier}}</app-info-tooltip>
+                } @else {
+                  {{item.heatLevel | heatTier}}
+                }
               </span>
               @if (isStoveListed(item.stoveId)) {
                 <span class="listed-badge absolute bottom-2.5 right-2.5 px-3 py-1 rounded-[20px] text-[11px] font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(0,0,0,0.15)]">Listed</span>

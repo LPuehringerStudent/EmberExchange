@@ -46,10 +46,10 @@
 | Chat backend – real-time | Done | Laurenz | WebSocket `chat_message` handler; messages stored in `ChatMessage`; read receipts via `isRead`; paginated history (20 msg/fetch); blocked users cannot send | 1h | ~1h |
 | Chat UI – conversation list | Done | David | Sidebar shows friends with unread count badge; last message preview; online status; click opens conversation | 1.5h | ~1.5h |
 | Chat UI – message thread | Done | David | Bubble-style messages (own right, other left); timestamps; auto-scroll; send button + Enter; emoji picker | 1.5h | ~1.5h |
-| Direct sales offers in chat | Partial | David | "Make Offer" button in chat; modal to select stove/lootbox and set price; offer sent as structured message; recipient accepts/rejects; atomic trade execution partially implemented | 1h | ~1h |
+| Direct sales offers in chat | Done | David | "Make Offer" button in chat; modal to select stove/lootbox and set price; offer sent as structured message; recipient accepts/rejects; atomic trade execution (coins + ownership transfer + transaction logging); WebSocket real-time status push to sender; lootbox support in trade modal | 1h | ~1.5h |
 | Social router & tests | Done | Laurenz / Ayan | `POST /friends/request`, `POST /friends/respond`, `DELETE /friends/:id`, `GET /friends/list`, `GET /chat/history/:friendId`; tests cover request flow, block, message CRUD | 1.5h | ~1.5h |
 
-**Epic Total:** 10h planned → **~9.5h actual**
+**Epic Total:** 10h planned → **~10h actual**
 
 ---
 
@@ -179,7 +179,7 @@
 |------|---------|--------|--------|
 | Forgery | 7.5h | ~8.5h | Complete |
 | Shop | 9h | ~9.5h | Complete |
-| Social | 10h | ~9.5h | Mostly complete (trade offers partial) |
+| Social | 10h | ~10h | Complete |
 | Hall of Glory | 8h | ~8.25h | Complete |
 | Settings | 7h | ~5.5h | Complete |
 | **Roulette** | — | **~10.5h** | **Complete** |
