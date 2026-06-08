@@ -248,7 +248,7 @@
   <!-- Winners Banner -->
   @if (resultRevealed() && winners().length > 0) {
     <div class="rl-winners">
-      @for (w of winners(); track w.playerId) {
+      @for (w of winners(); track $index) {
         <div class="rl-winner">
           {{ getPlayerName(w.playerId) }} won {{ w.amount }} coins!
         </div>

@@ -75,6 +75,38 @@ describe("Roulette Engine", () => {
     expect(result.valid).toBe(false);
   });
 
+  test("straight bet rejects null number", () => {
+    const state = engine.createInitialState(mockPlayers);
+    const result = engine.processAction(state, { type: "bet", amount: 10, betType: "straight", number: null as any }, 1);
+    expect(result.valid).toBe(false);
+  });
+
+  test("straight bet rejects float number", () => {
+    const state = engine.createInitialState(mockPlayers);
+    const result = engine.processAction(state, { type: "bet", amount: 10, betType: "straight", number: 7.5 }, 1);
+    expect(result.valid).toBe(false);
+  });
+
+  test("straight bet with valid number is accepted", () => {
+    let state = engine.createInitialState(mockPlayers);
+    const result = engine.processAction(state, { type: "bet", amount: 10, betType: "straight", number: 7 }, 1);
+    expect(result.valid).toBe(true);
+    const player = (result.newFullState.players as Array<{ bets: Array<{ number?: number }> }>)[0];
+    expect(player.bets[0].number).toBe(7);
+  });
+
+  test("bet action rejects NaN amount", () => {
+    const state = engine.createInitialState(mockPlayers);
+    const result = engine.processAction(state, { type: "bet", amount: NaN, betType: "red" }, 1);
+    expect(result.valid).toBe(false);
+  });
+
+  test("bet action rejects Infinity amount", () => {
+    const state = engine.createInitialState(mockPlayers);
+    const result = engine.processAction(state, { type: "bet", amount: Infinity, betType: "red" }, 1);
+    expect(result.valid).toBe(false);
+  });
+
   test("spin resolves the round and sets winningNumber", () => {
     let state = engine.createInitialState(mockPlayers);
     state = engine.processAction(state, { type: "bet", amount: 50, betType: "red" }, 1).newFullState;
