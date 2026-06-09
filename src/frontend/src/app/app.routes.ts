@@ -153,6 +153,7 @@ export const routes: Routes = [
   {
     path: 'investing',
     loadComponent: () => import('./features/investing/investing').then(m => m.Investing),
+    canActivate: [authGuard]
   },
   {
     path: '**',

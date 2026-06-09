@@ -14,6 +14,7 @@ const COLUMN_MAP: Record<string, string> = {
     "amount": "amount",
     "averagelistingprice": "averageListingPrice",
     "avgprice": "avgPrice",
+    "avgbuyprice": "avgBuyPrice",
     "averagelistingpricetoday": "averageListingPriceToday",
     "averageplayernetworth": "averagePlayerNetWorth",
     "averagesaleprice": "averageSalePrice",
@@ -133,7 +134,9 @@ const COLUMN_MAP: Record<string, string> = {
     "password": "password",
     "percentoftotalsupply": "percentOfTotalSupply",
     "playerid": "playerId",
+    "positionid": "positionId",
     "price": "price",
+    "priceperunit": "pricePerUnit",
     "purchaseid": "purchaseId",
     "purchasedat": "purchasedAt",
     "pricechangepercent": "priceChangePercent",
@@ -178,6 +181,7 @@ const COLUMN_MAP: Record<string, string> = {
     "stateblob": "stateBlob",
     "eventid": "eventId",
     "servertimestamp": "serverTimestamp",
+    "snapshotid": "snapshotId",
     "clienttimestamp": "clientTimestamp",
     "sequencenumber": "sequenceNumber",
     "result": "result",
@@ -216,6 +220,8 @@ const COLUMN_MAP: Record<string, string> = {
     "totalcoinsspent": "totalCoinsSpent",
     "totalcoinsspentonlootboxes": "totalCoinsSpentOnLootboxes",
     "totalcoins": "totalCoins",
+    "totalamount": "totalAmount",
+    "totalinvested": "totalInvested",
     "totaldroppedfromlootboxes": "totalDroppedFromLootboxes",
     "totalglobalmessages": "totalGlobalMessages",
     "totallistingscancelled": "totalListingsCancelled",
@@ -1343,6 +1349,73 @@ export class DB {
             )
         `);
 
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS InvestmentPosition (
+                positionId SERIAL PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                assetId INTEGER NOT NULL,
+                category TEXT NOT NULL CHECK (category IN ('stove', 'lootbox')),
+                quantity INTEGER NOT NULL DEFAULT 0,
+                avgBuyPrice INTEGER NOT NULL DEFAULT 0,
+                totalInvested INTEGER NOT NULL DEFAULT 0,
+                createdAt TEXT NOT NULL DEFAULT NOW(),
+                updatedAt TEXT NOT NULL DEFAULT NOW(),
+                UNIQUE(playerId, assetId, category)
+            )
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS InvestmentTransaction (
+                transactionId SERIAL PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                assetId INTEGER NOT NULL,
+                category TEXT NOT NULL CHECK (category IN ('stove', 'lootbox')),
+                type TEXT NOT NULL CHECK (type IN ('buy', 'sell')),
+                quantity INTEGER NOT NULL,
+                pricePerUnit INTEGER NOT NULL,
+                totalAmount INTEGER NOT NULL,
+                createdAt TEXT NOT NULL DEFAULT NOW()
+            )
+        `);
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS StovePriceHistory (
+                historyId SERIAL PRIMARY KEY,
+                typeId INTEGER NOT NULL,
+                price INTEGER NOT NULL,
+                timestamp TEXT NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
+            CREATE INDEX IF NOT EXISTS idx_price_history_type_time ON StovePriceHistory(typeId, timestamp)
+        `);
+
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS PortfolioSnapshot (
+                snapshotId SERIAL PRIMARY KEY,
+                playerId INTEGER NOT NULL REFERENCES Player(playerId),
+                totalValue INTEGER NOT NULL,
+                totalCost INTEGER NOT NULL,
+                totalPL INTEGER NOT NULL,
+                timestamp TEXT NOT NULL DEFAULT NOW()
+            )
+        `);
+
+        await connection.query(`
+            CREATE INDEX IF NOT EXISTS idx_portfolio_snapshot_player ON PortfolioSnapshot(playerId, timestamp)
+        `);
+
+        // Add costCoins to StoveType for investment pricing fallback
+        await connection.query(`
+            ALTER TABLE StoveType
+            ADD COLUMN IF NOT EXISTS costCoins INTEGER NOT NULL DEFAULT 100
+        `).catch(() => {});
+
+        // Performance indexes for investment tables
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_investment_position_lookup ON InvestmentPosition(playerId, assetId, category)`);
+        await connection.query(`CREATE INDEX IF NOT EXISTS idx_investment_transaction_lookup ON InvestmentTransaction(playerId, assetId, category, type)`);
+
         // Performance indexes
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_stove_owner ON Stove(currentOwnerId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_stove_type ON Stove(typeId)`);
@@ -1448,6 +1521,10 @@ export class Unit {
 
 export async function resetDatabase(connection: PoolClient): Promise<void> {
     await connection.query(`
+        DROP TABLE IF EXISTS StovePriceHistory CASCADE;
+        DROP TABLE IF EXISTS PortfolioSnapshot CASCADE;
+        DROP TABLE IF EXISTS InvestmentTransaction CASCADE;
+        DROP TABLE IF EXISTS InvestmentPosition CASCADE;
         DROP TABLE IF EXISTS PlayerStatistics CASCADE;
         DROP TABLE IF EXISTS DailyStatistics CASCADE;
         DROP TABLE IF EXISTS StoveTypeStatistics CASCADE;
