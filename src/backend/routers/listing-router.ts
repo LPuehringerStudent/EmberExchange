@@ -529,13 +529,14 @@ listingRouter.post("/listings", requireAuth, async (req, res) => {
             return;
         }
 
-        if ((stoveId === undefined || stoveId === null) && (lootboxId === undefined || lootboxId === null)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Either stoveId or lootboxId is required" });
+        /* ── Lootboxes are account-bound: only stoves can be listed ── */
+        if (lootboxId !== undefined && lootboxId !== null) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Lootboxes can no longer be listed on the marketplace. Open them or keep them in your inventory." });
             return;
         }
 
-        if (stoveId !== undefined && stoveId !== null && lootboxId !== undefined && lootboxId !== null) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Provide either stoveId or lootboxId, not both" });
+        if (stoveId === undefined || stoveId === null) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "stoveId is required" });
             return;
         }
 
