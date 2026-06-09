@@ -242,14 +242,8 @@ export class MarketplaceComponent implements OnInit {
   }
 
   async loadRecentSales(): Promise<void> {
-    try {
-      const sold = await firstValueFrom(
-        this._listingService.getSoldListings?.() ?? of([])
-      );
-      this.recentSales.set((sold as Listing[]).slice(0, 10));
-    } catch {
-      this.recentSales.set([]);
-    }
+    // TODO: backend endpoint for sold listings not yet available
+    this.recentSales.set([]);
   }
 
   /* ── Detail panel ── */
