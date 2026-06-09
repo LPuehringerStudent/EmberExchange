@@ -336,9 +336,11 @@ export class LootboxService extends ServiceBase {
         const dropId = await this.unit.getLastRowId();
         if (!dropId) return [false, null];
 
-        // 6. Decrement player lootbox count for original frontend compatibility
+        // 6. Sync player lootbox count to actual unopened lootbox count
         await this.unit.prepare(
-            "UPDATE Player SET lootboxCount = lootboxCount - 1 WHERE playerId = @playerId",
+            `UPDATE Player SET lootboxCount = (
+                SELECT COUNT(*) FROM Lootbox WHERE playerId = @playerId AND openedAt IS NULL
+            ) WHERE playerId = @playerId`,
             { playerId }
         ).run();
 
