@@ -11,7 +11,8 @@ export type SecurityEventType =
     | "csrf_fail"
     | "suspicious_request"
     | "registration_blocked"
-    | "admin_access_denied";
+    | "admin_access_denied"
+    | "ticket_abuse";
 
 export interface SecurityEventData {
     ipAddress: string;

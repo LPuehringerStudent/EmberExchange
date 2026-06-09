@@ -1051,13 +1051,23 @@ export class DB {
             CREATE TABLE IF NOT EXISTS SupportTicket (
                 ticketId SERIAL PRIMARY KEY,
                 reporterId INTEGER NOT NULL REFERENCES Player(playerId),
+                ipAddress TEXT NOT NULL DEFAULT '',
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
                 type TEXT NOT NULL CHECK (type IN ('bug', 'feature', 'support')),
                 priority TEXT NOT NULL CHECK (priority IN ('high', 'medium', 'low')),
+                status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'resolved', 'closed')),
                 createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 notifiedAt TIMESTAMPTZ
             )
+        `);
+
+        await connection.query(`
+            ALTER TABLE SupportTicket ADD COLUMN IF NOT EXISTS ipAddress TEXT NOT NULL DEFAULT ''
+        `);
+
+        await connection.query(`
+            ALTER TABLE SupportTicket ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'resolved', 'closed'))
         `);
 
         await connection.query(`

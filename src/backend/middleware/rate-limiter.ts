@@ -160,6 +160,13 @@ export const challengeRateLimiter = new ExpressRateLimiter({
     message: "Too many challenge requests. Please try again in a minute."
 });
 
+/** Limit for support tickets — prevents spam/abuse of the help desk */
+export const supportRateLimiter = new ExpressRateLimiter({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: 5,
+    message: "Too many support tickets from this IP. Please try again in an hour."
+});
+
 /** General read limiter for public data endpoints — prevents scraping floods */
 export const readRateLimiter = new ExpressRateLimiter({
     windowMs: 60 * 1000, // 1 minute
