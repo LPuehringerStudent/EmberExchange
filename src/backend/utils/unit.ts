@@ -12,6 +12,7 @@ const COLUMN_MAP: Record<string, string> = {
     "alltimehighprice": "allTimeHighPrice",
     "alltimelowprice": "allTimeLowPrice",
     "amount": "amount",
+    "assetid": "assetId",
     "averagelistingprice": "averageListingPrice",
     "avgprice": "avgPrice",
     "avgbuyprice": "avgBuyPrice",

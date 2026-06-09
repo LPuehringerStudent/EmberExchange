@@ -123,7 +123,9 @@ export class Investing implements OnInit {
   });
 
   chartModel = computed<ChartModel | null>(() => {
-    const data = this.priceHistory();
+    const data = this.priceHistory().filter(
+      (d) => Number.isFinite(d.price) && d.price >= 0
+    );
     if (data.length < 2) return null;
 
     const prices = data.map((d) => d.price);
@@ -233,9 +235,17 @@ export class Investing implements OnInit {
     const stocks = this.ownedStocks();
     const assets = this.allAssets();
     return stocks.reduce((sum, s) => {
-      const price = s.currentPrice ?? assets.find(
-        (a) => a.id === s.assetId
-      )?.currentPrice ?? s.avgBuyPrice;
+      let rawPrice = s.currentPrice;
+      if (!Number.isFinite(rawPrice) || rawPrice === undefined || rawPrice <= 0) {
+        rawPrice = assets.find((a) => a.id === s.assetId)?.currentPrice;
+      }
+      if (!Number.isFinite(rawPrice) || rawPrice === undefined || rawPrice <= 0) {
+        rawPrice = s.avgBuyPrice;
+      }
+      if (!Number.isFinite(rawPrice) || rawPrice === undefined || rawPrice <= 0) {
+        rawPrice = 0;
+      }
+      const price = rawPrice;
       return sum + s.quantity * price;
     }, 0);
   });
@@ -259,7 +269,17 @@ export class Investing implements OnInit {
 
     for (const stock of stocks) {
       const asset = assets.find((a) => a.id === stock.assetId);
-      const currentPrice = stock.currentPrice ?? asset?.currentPrice ?? stock.avgBuyPrice;
+      let rawPrice = stock.currentPrice;
+      if (!Number.isFinite(rawPrice) || rawPrice === undefined || rawPrice <= 0) {
+        rawPrice = asset?.currentPrice;
+      }
+      if (!Number.isFinite(rawPrice) || rawPrice === undefined || rawPrice <= 0) {
+        rawPrice = stock.avgBuyPrice;
+      }
+      if (!Number.isFinite(rawPrice) || rawPrice === undefined || rawPrice <= 0) {
+        rawPrice = 0;
+      }
+      const currentPrice = rawPrice;
       const value = stock.quantity * currentPrice;
       const cost = stock.quantity * stock.avgBuyPrice;
       const pl = cost > 0 ? ((currentPrice - stock.avgBuyPrice) / stock.avgBuyPrice) * 100 : 0;
@@ -325,9 +345,16 @@ export class Investing implements OnInit {
       let totalValue = 0;
       for (const stock of stocks) {
         const asset = assets.find((a) => a.id === stock.assetId);
-        const basePrice = asset?.currentPrice ?? stock.avgBuyPrice;
+        let rawBase = asset?.currentPrice;
+        if (!Number.isFinite(rawBase) || rawBase === undefined || rawBase <= 0) {
+          rawBase = stock.avgBuyPrice;
+        }
+        if (!Number.isFinite(rawBase) || rawBase === undefined || rawBase <= 0) {
+          rawBase = 1; // absolute fallback to prevent NaN
+        }
+        const basePrice = rawBase;
         const volatility = range === '1d' ? 0.008 : range === '1w' ? 0.015 : 0.03;
-        const seed = stock.assetId * 9301 + i * 233280;
+        const seed = (stock.assetId || 0) * 9301 + i * 233280;
         const pseudoRandom = ((seed * 16807) % 2147483647) / 2147483647;
         const change = (pseudoRandom - 0.48) * basePrice * volatility;
         const price = Math.max(basePrice * 0.4, basePrice + change);
@@ -345,7 +372,9 @@ export class Investing implements OnInit {
   });
 
   portfolioChartModel = computed<ChartModel | null>(() => {
-    const data = this.portfolioPriceHistory();
+    const data = this.portfolioPriceHistory().filter(
+      (d) => Number.isFinite(d.price) && d.price >= 0
+    );
     if (data.length < 2) return null;
 
     const prices = data.map((d) => d.price);

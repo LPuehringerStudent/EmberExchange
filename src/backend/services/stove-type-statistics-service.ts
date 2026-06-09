@@ -135,6 +135,8 @@ export class StoveTypeStatisticsService extends ServiceBase {
         return {
             statId: stoveTypeId,
             stoveTypeId: stoveTypeId,
+            name: stoveType.name,
+            rarity: stoveType.rarity,
             totalMinted: totalMinted,
             currentlyOwned: currentlyOwned,
             currentlyListed: currentlyListed,
