@@ -63,7 +63,7 @@ function getClientIp(req: express.Request): string {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.get("/players", readRateLimiter.middleware(), async (_req, res) => {
+playerRouter.get("/players", requireAuth, readRateLimiter.middleware(), async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerService(unit);
 

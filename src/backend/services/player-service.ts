@@ -31,7 +31,8 @@ export class PlayerService extends ServiceBase {
         >(
             `SELECT playerId, username, motto, coins, sparks, lootboxCount,
                     isPublic, joinedAt, totpEnabled
-             FROM Player`
+             FROM Player
+             WHERE isPublic = 1`
         );
         return await stmt.all();
     }
