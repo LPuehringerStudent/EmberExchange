@@ -412,7 +412,7 @@ lootboxRouter.post("/lootboxes", requireAdmin, async (req, res) => {
  *               $ref: '#/components/schemas/Error'
  */
 lootboxRouter.post("/lootboxes/:id/open", requireAuth, async (req, res) => {
-    const unit = await Unit.create(false);
+    const unit = await Unit.create(false, "READ COMMITTED");
     const service = new LootboxService(unit);
     const id = req.params.id;
     const playerId = req.playerId!;

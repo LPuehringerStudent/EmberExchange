@@ -1467,10 +1467,14 @@ export class Unit {
         this.inTransaction = inTransaction;
     }
 
-    public static async create(readOnly: boolean): Promise<Unit> {
+    public static async create(readOnly: boolean, isolationLevel?: string): Promise<Unit> {
         const client = await DB.createDBConnection();
         if (!readOnly) {
-            await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
+            const validLevels = ["READ UNCOMMITTED", "READ COMMITTED", "REPEATABLE READ", "SERIALIZABLE"];
+            const level = isolationLevel && validLevels.includes(isolationLevel.toUpperCase())
+                ? isolationLevel.toUpperCase()
+                : "SERIALIZABLE";
+            await client.query(`BEGIN ISOLATION LEVEL ${level}`);
         }
         return new Unit(client, !readOnly);
     }

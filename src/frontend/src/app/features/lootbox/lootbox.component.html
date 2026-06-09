@@ -41,21 +41,33 @@
         <h2 class="text-[26px] font-bold text-text-primary m-0">{{ selectedTypeName() }}</h2>
 
         @if (lootboxCount() > 0) {
-          <button
-            class="open-btn inline-flex items-center gap-2.5 mt-2 px-8 py-3.5 bg-gradient-to-br from-[#e85d04] to-[#f48c06] text-white border-none rounded-xl text-[15px] font-bold cursor-pointer shadow-[0_4px_16px_rgba(232,93,4,0.35)] w-full md:w-fit justify-center md:justify-start"
-            (click)="openBox()"
-            [disabled]="!canOpen()"
-            [attr.aria-label]="isOpening() ? 'Opening, please wait' : 'Open lootbox'">
-            @if (isOpening()) {
-              <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-[spin_0.7s_linear_infinite] shrink-0" aria-hidden="true"></span>
-              Opening…
-            } @else {
-              <svg class="w-[18px] h-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+          <div class="flex flex-col md:flex-row gap-2.5 mt-2 w-full md:w-fit">
+            <button
+              class="open-btn inline-flex items-center gap-2.5 px-8 py-3.5 bg-gradient-to-br from-[#e85d04] to-[#f48c06] text-white border-none rounded-xl text-[15px] font-bold cursor-pointer shadow-[0_4px_16px_rgba(232,93,4,0.35)] justify-center"
+              (click)="openBox()"
+              [disabled]="!canOpen()"
+              [attr.aria-label]="isOpening() ? 'Opening, please wait' : 'Open lootbox'">
+              @if (isOpening()) {
+                <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-[spin_0.7s_linear_infinite] shrink-0" aria-hidden="true"></span>
+                Opening…
+              } @else {
+                <svg class="w-[18px] h-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                </svg>
+                Open Lootbox
+              }
+            </button>
+            <button
+              class="inline-flex items-center gap-2 px-6 py-3.5 bg-surface-secondary text-text-secondary border border-border rounded-xl text-[14px] font-bold cursor-pointer hover:bg-surface hover:text-text-primary transition-colors justify-center"
+              (click)="quickOpen()"
+              [disabled]="!canOpen()"
+              title="Skip animation and open instantly">
+              <svg class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
               </svg>
-              Open Lootbox
-            }
-          </button>
+              Quick Open
+            </button>
+          </div>
           @if (selectedLootboxId() === null && !isOpening()) {
             <p class="text-sm text-text-muted m-0">Select a lootbox below to open it.</p>
           }
@@ -234,10 +246,9 @@
     id="overlay"
     role="dialog"
     aria-modal="true"
-    aria-label="Rolling for your reward"
-    (click)="resetAll()">
+    aria-label="Rolling for your reward">
 
-    <div class="flex flex-col items-center gap-3" (click)="$event.stopPropagation()">
+    <div class="flex flex-col items-center gap-3">
       <p class="text-[13px] font-semibold tracking-[2px] uppercase text-white/55 m-0" aria-live="polite">Rolling your reward…</p>
 
       <div id="roller">
