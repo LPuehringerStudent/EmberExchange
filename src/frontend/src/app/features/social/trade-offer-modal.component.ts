@@ -16,12 +16,12 @@ export interface TradeableItem {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center" (click)="onClose.emit()">
-      <div class="bg-surface border border-border rounded-[20px] p-7 max-w-[500px] w-full mx-4 max-h-[80vh] flex flex-col" (click)="$event.stopPropagation()">
+      <div class="bg-surface border border-border rounded-[1.25rem] p-7 max-w-[31.25rem] w-full mx-4 max-h-[80vh] flex flex-col" (click)="$event.stopPropagation()">
         <h3 class="text-xl font-bold text-text-primary mb-4">Make Trade Offer</h3>
         <p class="text-sm text-text-secondary mb-3">Select an item from your inventory and set a price.</p>
 
         <!-- Item list -->
-        <div class="flex-1 overflow-y-auto mb-4 space-y-2 max-h-[300px]">
+        <div class="flex-1 overflow-y-auto mb-4 space-y-2 max-h-[18.75rem]">
           @for (item of items(); track item.id + item.type) {
             <div
               (click)="selectedItem = item"

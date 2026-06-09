@@ -11,7 +11,7 @@ import { LootboxService } from '../../core/services/lootbox.service';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { FriendListComponent, type FriendWithPreview } from './friend-list.component';
+import { FriendListComponent, type FriendWithPreview, type MarketplaceThread } from './friend-list.component';
 import { ChatThreadComponent } from './chat-thread.component';
 import { AddFriendModalComponent } from './add-friend-modal.component';
 import { TradeOfferModalComponent, type TradeableItem } from './trade-offer-modal.component';
@@ -47,11 +47,17 @@ export class SocialComponent implements OnInit, OnDestroy {
   pendingRequests = signal<FriendWithUser[]>([]);
   selectedFriend = signal<FriendWithUser | null>(null);
   messages = signal<ChatMessageRow[]>([]);
-  activeTab = signal<'friends' | 'requests'>('friends');
+  activeTab = signal<'friends' | 'requests' | 'marketplace'>('friends');
   showAddFriendModal = signal(false);
   showTradeOfferModal = signal(false);
   tradeItems = signal<TradeableItem[]>([]);
   currentPlayerId = signal(0);
+
+  /* ── Marketplace messages ── */
+  marketplaceThreads = signal<MarketplaceThread[]>([]);
+  selectedMarketplaceThread = signal<MarketplaceThread | null>(null);
+  marketplaceMessages = signal<ChatMessageRow[]>([]);
+  private marketplaceUnreadCounts = new Map<number, number>();
 
   private unreadCounts = new Map<number, number>();
   private wsSub?: () => void;
@@ -65,6 +71,7 @@ export class SocialComponent implements OnInit, OnDestroy {
     this.loadFriends();
     this.loadPendingRequests();
     this.loadInventory();
+    this.loadMarketplaceMessages();
 
     // Ensure WebSocket is connected
     this.ws.connect();
@@ -332,9 +339,150 @@ export class SocialComponent implements OnInit, OnDestroy {
     }
   }
 
+  /* ── Marketplace messages ── */
+
+  async loadMarketplaceMessages(): Promise<void> {
+    const playerId = this.currentPlayerId();
+    if (!playerId) return;
+
+    try {
+      const [sent, received] = await Promise.all([
+        firstValueFrom(this.chatService.getSentMessages(playerId)),
+        firstValueFrom(this.chatService.getReceivedMessages(playerId))
+      ]);
+
+      const all = [...sent, ...received];
+      const marketplaceMsgs = all.filter(
+        m => m.data && (m.data as Record<string, unknown>)['source'] === 'marketplace'
+      );
+
+      // Group by other player
+      const threads = new Map<number, { username: string; messages: ChatMessageRow[] }>();
+      for (const msg of marketplaceMsgs) {
+        const otherId = msg.senderId === playerId ? (msg.receiverId ?? 0) : msg.senderId;
+        if (!otherId) continue;
+        const existing = threads.get(otherId);
+        if (existing) {
+          existing.messages.push(msg);
+        } else {
+          threads.set(otherId, { username: `User #${otherId}`, messages: [msg] });
+        }
+      }
+
+      // Look up usernames
+      for (const [otherId, thread] of threads) {
+        try {
+          const player = await firstValueFrom(this.playerService.getPlayerById(otherId));
+          if (player && player.username) {
+            thread.username = player.username;
+          }
+        } catch {
+          // keep fallback username
+        }
+      }
+
+      // Build thread list
+      const result: MarketplaceThread[] = [];
+      for (const [otherId, thread] of threads) {
+        thread.messages.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+        const last = thread.messages[thread.messages.length - 1];
+        const unread = thread.messages.filter(
+          m => m.senderId !== playerId && !m.isRead
+        ).length;
+        result.push({
+          playerId: otherId,
+          username: thread.username,
+          lastMessage: last.content,
+          lastMessageAt: new Date(last.sentAt),
+          unreadCount: unread + (this.marketplaceUnreadCounts.get(otherId) ?? 0)
+        });
+      }
+
+      result.sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
+      this.marketplaceThreads.set(result);
+    } catch (err) {
+      console.error('Failed to load marketplace messages:', err);
+    }
+  }
+
+  async selectMarketplaceThread(thread: MarketplaceThread): Promise<void> {
+    this.selectedMarketplaceThread.set(thread);
+    this.selectedFriend.set(null);
+    this.activeTab.set('marketplace');
+
+    // Clear unread
+    this.marketplaceUnreadCounts.set(thread.playerId, 0);
+    this.marketplaceThreads.update(list =>
+      list.map(t => t.playerId === thread.playerId ? { ...t, unreadCount: 0 } : t)
+    );
+
+    // Load conversation
+    try {
+      const msgs = await firstValueFrom(
+        this.chatService.getConversationPaginated(this.currentPlayerId(), thread.playerId, 50, 0)
+      );
+      // Filter to only marketplace messages
+      const filtered = msgs.filter(
+        m => m.data && (m.data as Record<string, unknown>)['source'] === 'marketplace'
+      );
+      this.marketplaceMessages.set(filtered);
+    } catch (err) {
+      console.error('Failed to load marketplace conversation:', err);
+    }
+  }
+
+  async sendMarketplaceMessage(text: string): Promise<void> {
+    const thread = this.selectedMarketplaceThread();
+    if (!thread) return;
+
+    const otherId = thread.playerId;
+
+    const optimisticMsg: ChatMessageRow = {
+      messageId: 0,
+      senderId: this.currentPlayerId(),
+      receiverId: otherId,
+      content: text,
+      sentAt: new Date(),
+      isRead: true,
+      messageType: 'text',
+      data: { source: 'marketplace' }
+    };
+    this.marketplaceMessages.update(msgs => [...msgs, optimisticMsg]);
+
+    const wsConnected = this.ws.connectionState() === 'open';
+    this.ws.sendChatMessage(otherId, text);
+
+    if (!wsConnected) {
+      try {
+        await firstValueFrom(
+          this.chatService.sendChatMessage(this.currentPlayerId(), text, otherId, 'text', { source: 'marketplace' })
+        );
+      } catch (err) {
+        console.error('Failed to send marketplace message:', err);
+        this.toast.error('Failed to send message');
+        this.marketplaceMessages.update(msgs =>
+          msgs.filter(m => !(m.messageId === 0 && m.content === text && m.senderId === this.currentPlayerId()))
+        );
+        return;
+      }
+    }
+
+    // Refresh
+    try {
+      const msgs = await firstValueFrom(
+        this.chatService.getConversationPaginated(this.currentPlayerId(), otherId, 50, 0)
+      );
+      const filtered = msgs.filter(
+        m => m.data && (m.data as Record<string, unknown>)['source'] === 'marketplace'
+      );
+      this.marketplaceMessages.set(filtered);
+      this.loadMarketplaceMessages(); // refresh thread list
+    } catch (err) {
+      console.error('Failed to refresh marketplace conversation:', err);
+    }
+  }
+
   private subscribeToChatMessages(): () => void {
-    // Poll the signal for changes since Angular signals don't have explicit subscribe
-    // We'll use a simple interval to check for new messages
     const interval = setInterval(() => {
       const msg = this.ws.incomingChatMessage();
       if (msg) {
@@ -353,17 +501,45 @@ export class SocialComponent implements OnInit, OnDestroy {
   }
 
   private handleIncomingMessage(msg: ChatMessageRow): void {
+    const isMarketplace = msg.data && (msg.data as Record<string, unknown>)['source'] === 'marketplace';
+    const playerId = this.currentPlayerId();
+
     // If this is our own message (WS ack), replace the optimistic version
-    if (msg.senderId === this.currentPlayerId()) {
-      this.messages.update(msgs => {
-        const idx = msgs.findIndex(m => m.messageId === 0 && m.content === msg.content);
-        if (idx !== -1) {
-          const updated = [...msgs];
-          updated[idx] = msg;
-          return updated;
-        }
-        return msgs;
-      });
+    if (msg.senderId === playerId) {
+      if (isMarketplace) {
+        this.marketplaceMessages.update(msgs => {
+          const idx = msgs.findIndex(m => m.messageId === 0 && m.content === msg.content);
+          if (idx !== -1) {
+            const updated = [...msgs];
+            updated[idx] = msg;
+            return updated;
+          }
+          return msgs;
+        });
+      } else {
+        this.messages.update(msgs => {
+          const idx = msgs.findIndex(m => m.messageId === 0 && m.content === msg.content);
+          if (idx !== -1) {
+            const updated = [...msgs];
+            updated[idx] = msg;
+            return updated;
+          }
+          return msgs;
+        });
+      }
+      return;
+    }
+
+    if (isMarketplace) {
+      const otherId = msg.senderId === playerId ? (msg.receiverId ?? 0) : msg.senderId;
+      const thread = this.selectedMarketplaceThread();
+      if (thread && thread.playerId === otherId) {
+        this.marketplaceMessages.update(msgs => [...msgs, msg]);
+      } else {
+        const current = this.marketplaceUnreadCounts.get(otherId) ?? 0;
+        this.marketplaceUnreadCounts.set(otherId, current + 1);
+        this.loadMarketplaceMessages();
+      }
       return;
     }
 
@@ -372,13 +548,11 @@ export class SocialComponent implements OnInit, OnDestroy {
     if (exists) return;
 
     const friend = this.selectedFriend();
-    const otherId = msg.senderId === this.currentPlayerId() ? msg.receiverId : msg.senderId;
+    const otherId = msg.senderId === playerId ? msg.receiverId : msg.senderId;
 
     if (friend && (friend.requesterId === otherId || friend.addresseeId === otherId)) {
-      // Append to current conversation
       this.messages.update(msgs => [...msgs, msg]);
     } else {
-      // Increment unread count for the friend
       const friendEntry = this.friends().find(
         f => f.requesterId === otherId || f.addresseeId === otherId
       );

@@ -1023,7 +1023,7 @@ playerRouter.patch("/players/:id/coins", requireAdmin, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-playerRouter.patch("/players/:id/lootboxes", requireAuth, async (req, res) => {
+playerRouter.patch("/players/:id/lootboxes", requireAdmin, async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PlayerService(unit);
     const id = req.params.id;

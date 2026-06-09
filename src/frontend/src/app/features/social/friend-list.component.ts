@@ -9,6 +9,14 @@ export interface FriendWithPreview extends FriendWithUser {
   lastMessageAt?: Date;
 }
 
+export interface MarketplaceThread {
+  playerId: number;
+  username: string;
+  lastMessage: string;
+  lastMessageAt: Date;
+  unreadCount: number;
+}
+
 @Component({
   selector: 'app-friend-list',
   standalone: true,
@@ -17,13 +25,17 @@ export interface FriendWithPreview extends FriendWithUser {
     <div class="h-full flex flex-col bg-surface border-r border-border">
       <!-- Header -->
       <div class="p-4 border-b border-border flex items-center justify-between">
-        <h2 class="text-lg font-bold text-text-primary">Friends</h2>
-        <button
-          (click)="onAddFriend.emit()"
-          class="px-3 py-1.5 rounded-lg bg-accent text-white text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          + Add
-        </button>
+        <h2 class="text-lg font-bold text-text-primary">
+          @if (activeTab() === 'marketplace') { Messages } @else { Friends }
+        </h2>
+        @if (activeTab() !== 'marketplace') {
+          <button
+            (click)="onAddFriend.emit()"
+            class="px-3 py-1.5 rounded-lg bg-accent text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            + Add
+          </button>
+        }
       </div>
 
       <!-- Tabs -->
@@ -53,6 +65,21 @@ export interface FriendWithPreview extends FriendWithUser {
             </span>
           }
         </button>
+        <button
+          (click)="onTabChange.emit('marketplace')"
+          [class.border-b-2]="activeTab() === 'marketplace'"
+          [class.border-accent]="activeTab() === 'marketplace'"
+          [class.text-text-primary]="activeTab() === 'marketplace'"
+          [class.text-text-secondary]="activeTab() !== 'marketplace'"
+          class="flex-1 py-2.5 text-sm font-medium transition-colors"
+        >
+          Marketplace
+          @if (marketplaceUnreadCount() > 0) {
+            <span class="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-xs font-bold">
+              {{ marketplaceUnreadCount() }}
+            </span>
+          }
+        </button>
       </div>
 
       <!-- Friends list -->
@@ -76,7 +103,7 @@ export interface FriendWithPreview extends FriendWithUser {
                   <div class="flex items-center gap-1.5">
                     <button
                       (click)="$event.stopPropagation(); onViewGlory.emit(getFriendPlayerId(friend))"
-                      class="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[10px] font-semibold hover:bg-accent hover:text-white transition-colors"
+                      class="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[0.625rem] font-semibold hover:bg-accent hover:text-white transition-colors"
                       title="View Hall of Glory"
                     >
                       ✦ Glory
@@ -149,6 +176,44 @@ export interface FriendWithPreview extends FriendWithUser {
           }
         </div>
       }
+
+      <!-- Marketplace messages list -->
+      @if (activeTab() === 'marketplace') {
+        <div class="flex-1 overflow-y-auto">
+          @for (thread of marketplaceThreads(); track thread.playerId) {
+            <div
+              (click)="onSelectMarketplaceThread.emit(thread)"
+              [class.bg-accent/10]="selectedMarketplacePlayerId() === thread.playerId"
+              class="flex items-center gap-3 p-3 cursor-pointer hover:bg-surface-hover transition-colors border-b border-border/50"
+            >
+              <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">
+                {{ thread.username.charAt(0).toUpperCase() }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-text-primary truncate">{{ thread.username }}</span>
+                  @if (thread.unreadCount > 0) {
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-xs font-bold">
+                      {{ thread.unreadCount }}
+                    </span>
+                  }
+                </div>
+                @if (thread.lastMessage) {
+                  <p class="text-xs text-text-secondary truncate mt-0.5">{{ thread.lastMessage }}</p>
+                }
+              </div>
+            </div>
+          } @empty {
+            <div class="flex flex-col items-center justify-center py-16 px-5 text-center">
+              <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+                💬
+              </div>
+              <p class="text-base font-semibold text-text-primary m-0 mb-1">No marketplace messages</p>
+              <span class="text-sm text-text-secondary">Messages from buyers or sellers will appear here</span>
+            </div>
+          }
+        </div>
+      }
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -156,15 +221,22 @@ export interface FriendWithPreview extends FriendWithUser {
 export class FriendListComponent {
   friends = input.required<FriendWithPreview[]>();
   pendingRequests = input.required<FriendWithUser[]>();
+  marketplaceThreads = input.required<MarketplaceThread[]>();
   selectedFriendId = input<number | null>(null);
-  activeTab = input.required<'friends' | 'requests'>();
+  selectedMarketplacePlayerId = input<number | null>(null);
+  activeTab = input.required<'friends' | 'requests' | 'marketplace'>();
   currentPlayerId = input<number>(0);
 
   onSelectFriend = output<FriendWithUser>();
-  onViewGlory = output<number>(); // emits friend playerId
+  onSelectMarketplaceThread = output<MarketplaceThread>();
+  onViewGlory = output<number>();
   onAddFriend = output<void>();
   onRespondRequest = output<{ friendId: number; accept: boolean }>();
-  onTabChange = output<'friends' | 'requests'>();
+  onTabChange = output<'friends' | 'requests' | 'marketplace'>();
+
+  marketplaceUnreadCount = computed(() =>
+    this.marketplaceThreads().reduce((sum, t) => sum + t.unreadCount, 0)
+  );
 
   getFriendPlayerId(friend: FriendWithUser): number {
     const currentId = this.currentPlayerId();
