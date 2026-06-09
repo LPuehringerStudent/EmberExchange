@@ -59,6 +59,7 @@ describe('Player API', () => {
 
     await request(createApp())
       .get('/api/players')
+      .set('session-id', 'test-session')
       .expect(200)
       .expect(res => {
         expect(res.body).toEqual([player]);

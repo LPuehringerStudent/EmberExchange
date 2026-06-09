@@ -23,13 +23,14 @@ describe('SupportService', () => {
       const unit = mockUnit(stmt);
       const service = new SupportService(unit);
 
-      const result = await service.create(1, 'Bug', 'Something broke', 'bug', 'high');
+      const result = await service.create(1, '127.0.0.1', 'Bug', 'Something broke', 'bug', 'high');
 
       expect(result).toEqual([true, 1]);
       expect(unit.prepare).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO SupportTicket'),
         {
           reporterId: 1,
+          ipAddress: '127.0.0.1',
           title: 'Bug',
           description: 'Something broke',
           type: 'bug',
@@ -46,7 +47,7 @@ describe('SupportService', () => {
       } as unknown as Unit;
       const service = new SupportService(unit);
 
-      const result = await service.create(1, 'Bug', 'Something broke', 'bug', 'high');
+      const result = await service.create(1, '127.0.0.1', 'Bug', 'Something broke', 'bug', 'high');
 
       expect(result).toEqual([false, 0]);
     });

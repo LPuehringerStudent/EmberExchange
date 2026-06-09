@@ -96,7 +96,7 @@ describe("Roulette Engine edge cases", () => {
     expect(invalidType.errorMessage).toBe("Invalid bet type: split");
     expect(invalidType.newFullState).toBe(state);
     expect(invalidNumber.valid).toBe(false);
-    expect(invalidNumber.errorMessage).toBe("Straight bet requires a number 0-36");
+    expect(invalidNumber.errorMessage).toBe("Straight bet requires an integer number 0-36");
     expect(invalidNumber.newFullState).toBe(state);
   });
 });
