@@ -339,31 +339,45 @@ export class Investing implements OnInit {
         break;
     }
 
+    /* Build smooth cumulative random walks per stock so the chart
+       looks natural instead of a harsh independent zig-zag. */
+    const stockWalks = new Map<number, number[]>();
+    for (const stock of stocks) {
+      const asset = assets.find((a) => a.id === stock.assetId);
+      let basePrice = asset?.currentPrice;
+      if (!Number.isFinite(basePrice) || basePrice === undefined || basePrice <= 0) {
+        basePrice = stock.avgBuyPrice;
+      }
+      if (!Number.isFinite(basePrice) || basePrice === undefined || basePrice <= 0) {
+        basePrice = 1;
+      }
+
+      const volatility = range === '1d' ? 0.003 : range === '1w' ? 0.006 : 0.012;
+      const walk: number[] = new Array(count);
+      let price = basePrice;
+      for (let step = 0; step < count; step++) {
+        walk[count - 1 - step] = price; // newest → oldest
+        const seed = ((stock.assetId || 0) * 9301 + step * 233280) % 2147483647;
+        const pseudoRandom = ((seed * 16807) % 2147483647) / 2147483647;
+        const delta = (pseudoRandom - 0.5) * basePrice * volatility;
+        price = Math.max(basePrice * 0.85, Math.min(basePrice * 1.15, price - delta));
+      }
+      stockWalks.set(stock.assetId, walk);
+    }
+
     const points: PricePoint[] = [];
-    for (let i = count - 1; i >= 0; i--) {
-      const timestamp = new Date(now.getTime() - i * intervalMs);
+    for (let i = 0; i < count; i++) {
+      const timestamp = new Date(now.getTime() - (count - 1 - i) * intervalMs);
       let totalValue = 0;
       for (const stock of stocks) {
-        const asset = assets.find((a) => a.id === stock.assetId);
-        let rawBase = asset?.currentPrice;
-        if (!Number.isFinite(rawBase) || rawBase === undefined || rawBase <= 0) {
-          rawBase = stock.avgBuyPrice;
-        }
-        if (!Number.isFinite(rawBase) || rawBase === undefined || rawBase <= 0) {
-          rawBase = 1; // absolute fallback to prevent NaN
-        }
-        const basePrice = rawBase;
-        const volatility = range === '1d' ? 0.008 : range === '1w' ? 0.015 : 0.03;
-        const seed = (stock.assetId || 0) * 9301 + i * 233280;
-        const pseudoRandom = ((seed * 16807) % 2147483647) / 2147483647;
-        const change = (pseudoRandom - 0.48) * basePrice * volatility;
-        const price = Math.max(basePrice * 0.4, basePrice + change);
+        const walk = stockWalks.get(stock.assetId);
+        const price = walk ? walk[i] : stock.avgBuyPrice;
         totalValue += Math.round(price * 100) / 100 * stock.quantity;
       }
       points.push({ timestamp, price: Math.round(totalValue * 100) / 100 });
     }
 
-    /* Smooth toward actual current portfolio value */
+    /* Pin the last point to the actual current value */
     const currentValue = this.portfolioCurrentValue();
     if (points.length > 0 && currentValue > 0) {
       points[points.length - 1].price = currentValue;
