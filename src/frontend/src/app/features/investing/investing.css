@@ -1461,3 +1461,78 @@ input:focus-visible {
   outline: 0.125rem solid var(--color-accent);
   outline-offset: 0.125rem;
 }
+
+/* ---- Error Banner ---- */
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1.5rem;
+  background: var(--color-red-dim);
+  border: 0.0625rem solid var(--color-red);
+  border-radius: 0.75rem;
+  color: var(--color-red);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.error-banner:hover {
+  opacity: 0.85;
+}
+
+/* ---- Leaderboard ---- */
+.leaderboard-card {
+  padding: 1.25rem;
+  overflow-x: auto;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.leaderboard-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  border-bottom: 0.0625rem solid var(--color-border);
+}
+
+.leaderboard-table td {
+  padding: 0.875rem 1rem;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  border-bottom: 0.0625rem solid var(--color-border);
+}
+
+.leaderboard-table tr:last-child td {
+  border-bottom: none;
+}
+
+.leaderboard-table .rank-cell {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.leaderboard-table td.positive {
+  color: var(--color-green);
+}
+
+.leaderboard-table td.negative {
+  color: var(--color-red);
+}
+
+.leaderboard-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 2rem 1rem;
+}
