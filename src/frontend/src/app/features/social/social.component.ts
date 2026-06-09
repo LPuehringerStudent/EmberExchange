@@ -170,11 +170,12 @@ export class SocialComponent implements OnInit, OnDestroy {
     if (!friend) return;
 
     const otherId = friend.requesterId === this.currentPlayerId() ? friend.addresseeId : friend.requesterId;
+    const playerId = this.currentPlayerId();
 
     // Optimistically add message to UI
     const optimisticMsg: ChatMessageRow = {
       messageId: 0,
-      senderId: this.currentPlayerId(),
+      senderId: playerId,
       receiverId: otherId,
       content: text,
       sentAt: new Date(),
@@ -184,42 +185,42 @@ export class SocialComponent implements OnInit, OnDestroy {
     };
     this.messages.update(msgs => [...msgs, optimisticMsg]);
 
-    // Send via WebSocket for real-time delivery (also stores in DB)
     const wsConnected = this.ws.connectionState() === 'open';
-    this.ws.sendChatMessage(otherId, text);
 
-    // Only use REST fallback if WebSocket is not connected
-    if (!wsConnected) {
+    if (wsConnected) {
+      // WebSocket path: handler ack replaces the optimistic message.
+      // Do NOT poll REST here — it races with the ack and causes duplicates.
+      this.ws.sendChatMessage(otherId, text);
+    } else {
+      // REST fallback: replace optimistic with the real message returned by the server
       try {
-        await firstValueFrom(
-          this.chatService.sendChatMessage(this.currentPlayerId(), text, otherId)
+        const result = await firstValueFrom(
+          this.chatService.sendChatMessage(playerId, text, otherId)
         );
+        const realMsg: ChatMessageRow = {
+          messageId: result.messageId,
+          senderId: result.senderId,
+          receiverId: result.receiverId ?? otherId,
+          content: text,
+          sentAt: new Date(),
+          isRead: true,
+          messageType: 'text',
+          data: {}
+        };
+        this.messages.update(msgs => {
+          const idx = msgs.findIndex(m => m.messageId === 0 && m.content === text && m.senderId === playerId);
+          if (idx === -1) return [...msgs, realMsg];
+          const updated = [...msgs];
+          updated[idx] = realMsg;
+          return updated;
+        });
       } catch (err) {
         console.error('Failed to send message:', err);
         this.toast.error('Failed to send message');
-        // Remove optimistic message on failure
         this.messages.update(msgs =>
-          msgs.filter(m => !(m.messageId === 0 && m.content === text && m.senderId === this.currentPlayerId()))
+          msgs.filter(m => !(m.messageId === 0 && m.content === text && m.senderId === playerId))
         );
-        return;
       }
-    }
-
-    // Refresh to sync any messages we might have missed (merge, don't replace)
-    try {
-      const msgs = await firstValueFrom(
-        this.chatService.getConversationPaginated(this.currentPlayerId(), otherId, 50, 0)
-      );
-      this.messages.update(current => {
-        const currentIds = new Set(current.map(m => m.messageId));
-        const newMsgs = msgs.filter(m => !currentIds.has(m.messageId));
-        if (newMsgs.length === 0) return current;
-        return [...current, ...newMsgs].sort((a, b) =>
-          new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
-        );
-      });
-    } catch (err) {
-      console.error('Failed to refresh conversation:', err);
     }
   }
 
@@ -436,10 +437,11 @@ export class SocialComponent implements OnInit, OnDestroy {
     if (!thread) return;
 
     const otherId = thread.playerId;
+    const playerId = this.currentPlayerId();
 
     const optimisticMsg: ChatMessageRow = {
       messageId: 0,
-      senderId: this.currentPlayerId(),
+      senderId: playerId,
       receiverId: otherId,
       content: text,
       sentAt: new Date(),
@@ -450,35 +452,39 @@ export class SocialComponent implements OnInit, OnDestroy {
     this.marketplaceMessages.update(msgs => [...msgs, optimisticMsg]);
 
     const wsConnected = this.ws.connectionState() === 'open';
-    this.ws.sendChatMessage(otherId, text);
 
-    if (!wsConnected) {
+    if (wsConnected) {
+      this.ws.sendChatMessage(otherId, text);
+    } else {
       try {
-        await firstValueFrom(
-          this.chatService.sendChatMessage(this.currentPlayerId(), text, otherId, 'text', { source: 'marketplace' })
+        const result = await firstValueFrom(
+          this.chatService.sendChatMessage(playerId, text, otherId, 'text', { source: 'marketplace' })
         );
+        const realMsg: ChatMessageRow = {
+          messageId: result.messageId,
+          senderId: result.senderId,
+          receiverId: result.receiverId ?? otherId,
+          content: text,
+          sentAt: new Date(),
+          isRead: true,
+          messageType: 'text',
+          data: { source: 'marketplace' }
+        };
+        this.marketplaceMessages.update(msgs => {
+          const idx = msgs.findIndex(m => m.messageId === 0 && m.content === text && m.senderId === playerId);
+          if (idx === -1) return [...msgs, realMsg];
+          const updated = [...msgs];
+          updated[idx] = realMsg;
+          return updated;
+        });
+        this.loadMarketplaceMessages();
       } catch (err) {
         console.error('Failed to send marketplace message:', err);
         this.toast.error('Failed to send message');
         this.marketplaceMessages.update(msgs =>
-          msgs.filter(m => !(m.messageId === 0 && m.content === text && m.senderId === this.currentPlayerId()))
+          msgs.filter(m => !(m.messageId === 0 && m.content === text && m.senderId === playerId))
         );
-        return;
       }
-    }
-
-    // Refresh
-    try {
-      const msgs = await firstValueFrom(
-        this.chatService.getConversationPaginated(this.currentPlayerId(), otherId, 50, 0)
-      );
-      const filtered = msgs.filter(
-        m => m.data && (m.data as Record<string, unknown>)['source'] === 'marketplace'
-      );
-      this.marketplaceMessages.set(filtered);
-      this.loadMarketplaceMessages(); // refresh thread list
-    } catch (err) {
-      console.error('Failed to refresh marketplace conversation:', err);
     }
   }
 
