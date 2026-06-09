@@ -30,6 +30,8 @@ interface ForgeSlot {
   stove: ShowedStove | null;
 }
 
+type MergePhase = 'charging' | 'igniting' | 'converging' | 'flash' | null;
+
 @Component({
   selector: 'app-forgery',
   standalone: true,
@@ -55,6 +57,14 @@ export class ForgeryComponent {
 
   result = signal<ForgeryResult | null>(null);
   showResult = signal(false);
+
+  // ─── Merge Animation State ───
+  mergeAnimating = signal(false);
+  mergeAnimSlot = signal<number>(-1);
+  mergePhase = signal<MergePhase>(null);
+  mergeResultData = signal<ForgeryResult | null>(null);
+  readonly blueFireGif = 'assets/animation/blue-fire.gif';
+  private mergeTimeouts: ReturnType<typeof setTimeout>[] = [];
 
   // ─── Computed ───
   selectedStoveIds = computed(() => {
@@ -141,7 +151,8 @@ export class ForgeryComponent {
                     ...stove,
                     stoveName: type.name,
                     rarity: type.rarity,
-                    imageUrl: type.imageUrl ?? ''
+                    imageUrl: type.imageUrl ?? '',
+                    collection: type.collection ?? 'Unknown'
                   }))
                 )
               )
@@ -211,7 +222,7 @@ export class ForgeryComponent {
 
   // ─── Forging ───
   async onForge(): Promise<void> {
-    if (!this.canForge()) return;
+    if (!this.canForge() || this.mergeAnimating()) return;
 
     const sessionId = this.auth.getSessionId();
     if (!sessionId) {
@@ -228,13 +239,12 @@ export class ForgeryComponent {
 
     try {
       const res = await this.forgeryService.forge(sessionId, stoveIds);
-      this.result.set(res);
-      this.showResult.set(true);
 
       if (res.success) {
-        // Refresh inventory
-        await this.loadStoves();
-        this.clearSlots();
+        this.startMergeAnimation(res);
+      } else {
+        this.result.set(res);
+        this.showResult.set(true);
       }
     } catch (err: any) {
       console.error('Forge failed:', err);
@@ -242,6 +252,60 @@ export class ForgeryComponent {
     } finally {
       this.forging.set(false);
     }
+  }
+
+  private startMergeAnimation(result: ForgeryResult): void {
+    this.mergeTimeouts.forEach(clearTimeout);
+    this.mergeTimeouts = [];
+    this.mergeAnimating.set(true);
+    this.mergeAnimSlot.set(-1);
+    this.mergePhase.set('charging');
+    this.mergeResultData.set(result);
+
+    const t = (fn: () => void, delay: number) => {
+      this.mergeTimeouts.push(setTimeout(fn, delay));
+    };
+
+    // Phase 1: Charging (0-700ms)
+    t(() => {
+      this.mergePhase.set('igniting');
+
+      // Phase 2: Ignite slots one by one, 750ms apart
+      for (let i = 0; i < 6; i++) {
+        t(() => {
+          this.mergeAnimSlot.set(i);
+        }, 700 + i * 750);
+      }
+
+      // Phase 3: Convergence to center
+      t(() => {
+        this.mergePhase.set('converging');
+      }, 700 + 6 * 750 + 1500);
+
+      // Phase 4: Flash explosion
+      t(() => {
+        this.mergePhase.set('flash');
+        t(() => {
+          this.finishMergeAnimation();
+        }, 900);
+      }, 700 + 6 * 750 + 1500 + 1000);
+    }, 100);
+  }
+
+  skipMergeAnimation(): void {
+    this.mergeTimeouts.forEach(clearTimeout);
+    this.mergeTimeouts = [];
+    this.finishMergeAnimation();
+  }
+
+  private finishMergeAnimation(): void {
+    this.mergePhase.set(null);
+    this.mergeAnimating.set(false);
+    this.mergeAnimSlot.set(-1);
+    this.slots.set(Array.from({ length: 6 }, () => ({ stove: null })));
+    this.result.set(this.mergeResultData());
+    this.showResult.set(true);
+    this.loadStoves();
   }
 
   closeResult(): void {
@@ -300,5 +364,13 @@ export class ForgeryComponent {
       [Rarity.SECRET]: 'text-emerald-500',
     };
     return map[rarity] || 'text-gray-500';
+  }
+
+  getHeatColor(heat: number): string {
+    if (heat >= 80) return '#ffd700';
+    if (heat >= 60) return '#ff4500';
+    if (heat >= 40) return '#f59e0b';
+    if (heat >= 20) return '#dc2626';
+    return '#64748b';
   }
 }

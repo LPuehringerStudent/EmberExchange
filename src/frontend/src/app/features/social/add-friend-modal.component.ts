@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center" (click)="onClose.emit()">
-      <div class="bg-surface border border-border rounded-[20px] p-7 max-w-[400px] w-full mx-4" (click)="$event.stopPropagation()">
+      <div class="bg-surface border border-border rounded-[1.25rem] p-7 max-w-[25rem] w-full mx-4" (click)="$event.stopPropagation()">
         <h3 class="text-xl font-bold text-text-primary mb-4">Add Friend</h3>
         <p class="text-sm text-text-secondary mb-4">Enter the player's username or ID to send a friend request.</p>
         <input

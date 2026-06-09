@@ -5,7 +5,7 @@
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 0.375rem;
 }
 
 ::-webkit-scrollbar-track {
@@ -14,7 +14,7 @@
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
-  border-radius: 3px;
+  border-radius: 0.1875rem;
 }
 
 ::-webkit-scrollbar-thumb:hover {

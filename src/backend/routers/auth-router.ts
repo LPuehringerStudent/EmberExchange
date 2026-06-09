@@ -22,6 +22,7 @@ import { handleBotDetection, fakeAuthResponse, checkHoneypot, logBot, tarPit, se
 import { sendVerificationEmail } from "../services/email-service";
 import { requireAuth } from "../middleware/require-auth";
 import { logSecurityEvent } from "../services/security-event-service";
+import disposableEmailDomains from "disposable-email-domains";
 
 /* ─── Proof-of-work challenge store (in-memory, 10-min expiry) ─── */
 interface PowChallenge {
@@ -79,69 +80,25 @@ function validateRegistrationInput(username: string, password: string, email: st
     return null;
 }
 
-/** Known disposable / throwaway email domains. Registrations from these are rejected. */
-const DISPOSABLE_EMAIL_DOMAINS = new Set([
-    "mailinator.com",
-    "mailinator.net",
-    "mailinator.org",
-    "guerrillamail.com",
-    "guerrillamail.net",
-    "guerrillamail.org",
-    "sharklasers.com",
-    "tempmail.com",
-    "temp-mail.org",
-    "tempmailaddress.com",
-    "throwawaymail.com",
-    "yopmail.com",
-    "yopmail.fr",
-    "yopmail.net",
-    "cool.fr.nf",
-    "jetable.fr.nf",
-    "nospam.ze.tc",
-    "nomail.xl.cx",
-    "mega.zik.dj",
-    "speed.1s.fr",
-    "courriel.fr.nf",
-    "moncourrier.fr.nf",
-    "monemail.fr.nf",
-    "monmail.fr.nf",
-    "10minutemail.com",
-    "10minutemail.net",
-    "10minute-mail.com",
-    "temp-mail.ru",
-    "tempmail.ninja",
-    "tmpmail.org",
-    "burnermail.io",
-    "dispomail.eu",
-    "emailondeck.com",
-    "fake-email.net",
-    "getairmail.com",
-    "getnada.com",
-    "inboxbear.com",
-    "mailcatch.com",
-    "maildrop.cc",
-    "mailnesia.com",
-    "mailnull.com",
-    "mailsac.com",
-    "mintemail.com",
-    "mytrashmail.com",
-    "nwytg.net",
-    "spam4.me",
-    "spamgourmet.com",
-    "tempinbox.com",
-    "trashmail.com",
-    "trashmail.net",
-    "trashmail.org",
-    "trash-mail.com",
-    "wegwerfmail.de",
-    "wegwerfmail.net",
-    "wegwerfmail.org",
-]);
+/** Disposable / throwaway email domain check.
+ *  Uses the community-maintained disposable-email-domains list
+ *  (121k+ domains) plus exact-match and wildcard subdomain checks.
+ */
+const DISPOSABLE_SET = new Set<string>(disposableEmailDomains);
 
 function isDisposableEmail(email: string): boolean {
     const domain = email.split("@")[1]?.toLowerCase();
     if (!domain) return false;
-    return DISPOSABLE_EMAIL_DOMAINS.has(domain);
+
+    // Exact match
+    if (DISPOSABLE_SET.has(domain)) return true;
+
+    // Wildcard subdomain check: e.g. abc.temp-mail.org
+    for (const blocked of DISPOSABLE_SET) {
+        if (domain.endsWith("." + blocked)) return true;
+    }
+
+    return false;
 }
 
 /**

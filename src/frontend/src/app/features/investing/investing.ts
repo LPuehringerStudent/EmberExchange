@@ -1,13 +1,10 @@
 import { Component, ChangeDetectionStrategy, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '@core/services/auth.service';
-import { StoveService } from '@core/services/stove.service';
-import { LootboxService } from '@core/services/lootbox.service';
-import { PriceHistoryService } from '@core/services/price-history.service';
-import { LootboxRow, LootboxTypeRow, StoveTypeRow, PriceHistoryRow } from '@shared/model';
+import { InvestmentService, PortfolioPosition, LeaderboardEntry } from '@core/services/investment.service';
 
 /* ─── Models ─── */
 
@@ -15,19 +12,16 @@ interface InvestableAsset {
   id: number;
   ticker: string;
   name: string;
-  description: string;
-  category: 'stove' | 'lootbox';
   rarity: string;
   currentPrice: number;
   previousPrice: number;
+  change24h: number;
+  change24hAmount: number;
   basePrice: number;
   imageUrl: string;
-  heatLevel?: number;
-  collection?: string;
-  typeId: number;
-  acquiredHow?: string;
-  totalSupply: number;
-  volume24h: number;
+  volume30d: number;
+  totalMinted: number;
+  currentlyListed: number;
 }
 
 interface PricePoint {
@@ -65,13 +59,13 @@ interface ChartModel {
 
 interface OwnedStock {
   assetId: number;
-  category: 'stove' | 'lootbox';
   ticker: string;
   name: string;
   quantity: number;
   avgBuyPrice: number;
   imageUrl: string;
   rarity: string;
+  currentPrice?: number;
 }
 
 interface PortfolioStock extends OwnedStock {
@@ -81,38 +75,7 @@ interface PortfolioStock extends OwnedStock {
 }
 
 type TimeRange = '1d' | '1w' | '1m';
-type Category = 'all' | 'stoves' | 'lootboxes';
 type View = 'overview' | 'market';
-
-/* ─── Pricing helpers ─── */
-
-function getStoveBasePrice(rarity: string): number {
-  switch (rarity.toLowerCase()) {
-    case 'common': return 30;
-    case 'uncommon': return 75;
-    case 'rare': return 180;
-    case 'epic': return 450;
-    case 'legendary': return 1500;
-    case 'limited': return 3000;
-    case 'secret': return 8000;
-    default: return 25;
-  }
-}
-
-function getLootboxBasePrice(typeName: string): number {
-  const name = typeName.toLowerCase();
-  if (name.includes('dragon')) return 950;
-  if (name.includes('winter')) return 650;
-  if (name.includes('legendary')) return 750;
-  if (name.includes('golden')) return 400;
-  if (name.includes('epic')) return 500;
-  return 120;
-}
-
-function generateTicker(name: string, category: 'stove' | 'lootbox'): string {
-  const clean = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
-  return clean.slice(0, 4) || (category === 'stove' ? 'STV' : 'BOX');
-}
 
 @Component({
   selector: 'app-investing',
@@ -123,17 +86,14 @@ function generateTicker(name: string, category: 'stove' | 'lootbox'): string {
 })
 export class Investing implements OnInit {
   private authService = inject(AuthService);
-  private stoveService = inject(StoveService);
-  private lootboxService = inject(LootboxService);
-  private priceHistoryService = inject(PriceHistoryService);
+  private investmentService = inject(InvestmentService);
 
   readonly gridLineYs = [0, 10, 20, 30, 40];
 
   playerId = signal<number | null>(null);
-  balance = signal<number>(0);
+  balance = computed(() => this.authService.user()?.coins ?? 0);
 
   currentView = signal<View>('overview');
-  activeCategory = signal<Category>('all');
   selectedAsset = signal<InvestableAsset | null>(null);
   timeRange = signal<TimeRange>('1w');
   priceHistory = signal<PricePoint[]>([]);
@@ -143,26 +103,17 @@ export class Investing implements OnInit {
   sellHoverIndex = signal<number>(-1);
   loading = signal<boolean>(true);
   searchQuery = signal<string>('');
+  error = signal<string>('');
 
   stoveAssets = signal<InvestableAsset[]>([]);
-  lootboxAssets = signal<InvestableAsset[]>([]);
   ownedStocks = signal<OwnedStock[]>([]);
+  leaderboard = signal<LeaderboardEntry[]>([]);
 
-  allAssets = computed<InvestableAsset[]>(() => [
-    ...this.stoveAssets(),
-    ...this.lootboxAssets(),
-  ]);
-
-  filteredAssets = computed<InvestableAsset[]>(() => {
-    const cat = this.activeCategory();
-    if (cat === 'stoves') return this.stoveAssets();
-    if (cat === 'lootboxes') return this.lootboxAssets();
-    return this.allAssets();
-  });
+  allAssets = computed<InvestableAsset[]>(() => this.stoveAssets());
 
   searchedAssets = computed<InvestableAsset[]>(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    const assets = this.filteredAssets();
+    const assets = this.allAssets();
     if (!query) return assets;
     return assets.filter(
       (a) =>
@@ -282,10 +233,10 @@ export class Investing implements OnInit {
     const stocks = this.ownedStocks();
     const assets = this.allAssets();
     return stocks.reduce((sum, s) => {
-      const asset = assets.find(
-        (a) => a.id === s.assetId && a.category === s.category
-      );
-      return sum + s.quantity * (asset?.currentPrice ?? s.avgBuyPrice);
+      const price = s.currentPrice ?? assets.find(
+        (a) => a.id === s.assetId
+      )?.currentPrice ?? s.avgBuyPrice;
+      return sum + s.quantity * price;
     }, 0);
   });
 
@@ -307,16 +258,14 @@ export class Investing implements OnInit {
     const performers: PortfolioStock[] = [];
 
     for (const stock of stocks) {
-      const asset = assets.find(
-        (a) => a.id === stock.assetId && a.category === stock.category
-      );
-      if (!asset) continue;
-      const value = stock.quantity * asset.currentPrice;
+      const asset = assets.find((a) => a.id === stock.assetId);
+      const currentPrice = stock.currentPrice ?? asset?.currentPrice ?? stock.avgBuyPrice;
+      const value = stock.quantity * currentPrice;
       const cost = stock.quantity * stock.avgBuyPrice;
-      const pl = cost > 0 ? ((asset.currentPrice - stock.avgBuyPrice) / stock.avgBuyPrice) * 100 : 0;
+      const pl = cost > 0 ? ((currentPrice - stock.avgBuyPrice) / stock.avgBuyPrice) * 100 : 0;
       totalValue += value;
       totalCost += cost;
-      performers.push({ ...stock, currentPrice: asset.currentPrice, value, pl });
+      performers.push({ ...stock, currentPrice, value, pl });
     }
 
     const sorted = [...performers].sort((a, b) => b.pl - a.pl);
@@ -331,9 +280,7 @@ export class Investing implements OnInit {
     const asset = this.selectedAsset();
     if (!asset) return null;
     return (
-      this.ownedStocks().find(
-        (s) => s.assetId === asset.id && s.category === asset.category
-      ) ?? null
+      this.ownedStocks().find((s) => s.assetId === asset.id) ?? null
     );
   });
 
@@ -377,10 +324,10 @@ export class Investing implements OnInit {
       const timestamp = new Date(now.getTime() - i * intervalMs);
       let totalValue = 0;
       for (const stock of stocks) {
-        const asset = assets.find((a) => a.id === stock.assetId && a.category === stock.category);
+        const asset = assets.find((a) => a.id === stock.assetId);
         const basePrice = asset?.currentPrice ?? stock.avgBuyPrice;
         const volatility = range === '1d' ? 0.008 : range === '1w' ? 0.015 : 0.03;
-        const seed = stock.assetId * 9301 + stock.category.length * 49297 + i * 233280;
+        const seed = stock.assetId * 9301 + i * 233280;
         const pseudoRandom = ((seed * 16807) % 2147483647) / 2147483647;
         const change = (pseudoRandom - 0.48) * basePrice * volatility;
         const price = Math.max(basePrice * 0.4, basePrice + change);
@@ -468,42 +415,31 @@ export class Investing implements OnInit {
     const user = this.authService.getCurrentUser();
     if (user) {
       this.playerId.set(user.playerId);
-      this.balance.set(user.coins ?? 0);
-      this.loadPortfolio(user.playerId);
     }
 
-    await Promise.all([this.loadStoves(), this.loadLootboxes()]);
+    await this.loadAssets();
+    await this.loadPortfolio();
+    await this.loadLeaderboard();
 
     this.loading.set(false);
 
-    const assets = this.filteredAssets();
+    const assets = this.searchedAssets();
     if (assets.length > 0 && !this.selectedAsset()) {
       this.selectAsset(assets[0]);
-    }
-  }
-
-  setCategory(category: Category): void {
-    this.activeCategory.set(category);
-    const assets = this.filteredAssets();
-    if (assets.length > 0) {
-      this.selectAsset(assets[0]);
-    } else {
-      this.selectedAsset.set(null);
-      this.priceHistory.set([]);
     }
   }
 
   selectAsset(asset: InvestableAsset): void {
     this.selectedAsset.set(asset);
     this.quantity.set(1);
-    this.loadPriceHistory(asset);
+    this.loadPriceHistory(asset.id, this.timeRange());
   }
 
   setTimeRange(range: TimeRange): void {
     this.timeRange.set(range);
     const asset = this.selectedAsset();
     if (asset) {
-      this.loadPriceHistory(asset);
+      this.loadPriceHistory(asset.id, range);
     }
   }
 
@@ -554,85 +490,63 @@ export class Investing implements OnInit {
   }
 
   viewAsset(stock: OwnedStock | PortfolioStock): void {
-    const asset = this.allAssets().find(
-      (a) => a.id === stock.assetId && a.category === stock.category
-    );
+    const asset = this.allAssets().find((a) => a.id === stock.assetId);
     if (asset) {
       this.selectAsset(asset);
     } else {
-      this.activeCategory.set('all');
       this.selectedAsset.set(null);
       this.priceHistory.set([]);
     }
     this.currentView.set('market');
   }
 
-  executeInvestment(): void {
+  async executeInvestment(): Promise<void> {
     const asset = this.selectedAsset();
-    const cost = this.totalCost();
     const qty = this.quantity();
-    if (!asset || cost > this.balance()) return;
+    if (!asset || qty < 1 || this.totalCost() > this.balance()) return;
 
-    this.balance.update((b) => b - cost);
-
-    const existing = this.ownedStocks().find(
-      (s) => s.assetId === asset.id && s.category === asset.category
-    );
-
-    if (existing) {
-      const totalQty = existing.quantity + qty;
-      const totalCost = existing.quantity * existing.avgBuyPrice + qty * asset.currentPrice;
-      const newAvg = Math.round((totalCost / totalQty) * 100) / 100;
-
-      this.ownedStocks.update((stocks) =>
-        stocks.map((s) =>
-          s.assetId === asset.id && s.category === asset.category
-            ? { ...s, quantity: totalQty, avgBuyPrice: newAvg }
-            : s
-        )
-      );
-    } else {
-      const newStock: OwnedStock = {
-        assetId: asset.id,
-        category: asset.category,
-        ticker: asset.ticker,
-        name: asset.name,
-        quantity: qty,
-        avgBuyPrice: asset.currentPrice,
-        imageUrl: asset.imageUrl,
-        rarity: asset.rarity,
-      };
-      this.ownedStocks.update((stocks) => [...stocks, newStock]);
+    try {
+      const result = await firstValueFrom(this.investmentService.buy(asset.id, qty));
+      if (result.success) {
+        await this.authService.refreshUser();
+        await this.loadPortfolio();
+        await this.loadPriceHistory(asset.id, this.timeRange());
+        this.quantity.set(1);
+        this.error.set('');
+      } else {
+        this.error.set(result.error || 'Buy failed');
+      }
+    } catch (err: any) {
+      this.error.set(err?.message || 'Buy failed');
     }
-
-    this.savePortfolio();
   }
 
-  executeSale(): void {
+  async executeSale(): Promise<void> {
     const asset = this.selectedAsset();
     const qty = this.sellQuantity();
-    const value = this.totalSaleValue();
     const pos = this.selectedAssetPosition();
     if (!asset || !pos || qty > pos.quantity || qty < 1) return;
 
-    this.balance.update((b) => b + value);
-
-    if (qty === pos.quantity) {
-      this.ownedStocks.update((stocks) =>
-        stocks.filter((s) => !(s.assetId === asset.id && s.category === asset.category))
-      );
-    } else {
-      this.ownedStocks.update((stocks) =>
-        stocks.map((s) =>
-          s.assetId === asset.id && s.category === asset.category
-            ? { ...s, quantity: s.quantity - qty }
-            : s
-        )
-      );
+    try {
+      const result = await firstValueFrom(this.investmentService.sell(asset.id, qty));
+      if (result.success) {
+        console.log('Sale fee:', result.fee);
+        await this.authService.refreshUser();
+        await this.loadPortfolio();
+        await this.loadPriceHistory(asset.id, this.timeRange());
+        this.sellQuantity.set(1);
+        this.error.set('');
+      } else {
+        this.error.set(result.error || 'Sell failed');
+      }
+    } catch (err: any) {
+      const msg = err?.message || '';
+      if (err?.status === 429 || msg.includes('Cooldown')) {
+        this.error.set('Cooldown active — please wait before selling again');
+      } else {
+        this.error.set(msg || 'Sell failed');
+      }
     }
-
-    this.sellQuantity.set(1);
-    this.savePortfolio();
   }
 
   updateSellQuantity(event: Event): void {
@@ -654,36 +568,9 @@ export class Investing implements OnInit {
   }
 
   getStockCurrentPrice(stock: OwnedStock): number {
-    const asset = this.allAssets().find(
-      (a) => a.id === stock.assetId && a.category === stock.category
-    );
+    if (stock.currentPrice !== undefined) return stock.currentPrice;
+    const asset = this.allAssets().find((a) => a.id === stock.assetId);
     return asset?.currentPrice ?? stock.avgBuyPrice;
-  }
-
-  /* ── Portfolio persistence ── */
-  private portfolioKey(): string {
-    const id = this.playerId();
-    return id !== null ? `investing_portfolio_${id}` : 'investing_portfolio_guest';
-  }
-
-  private loadPortfolio(playerId: number): void {
-    try {
-      const raw = localStorage.getItem(`investing_portfolio_${playerId}`);
-      if (raw) {
-        const parsed = JSON.parse(raw) as OwnedStock[];
-        this.ownedStocks.set(parsed);
-      }
-    } catch {
-      this.ownedStocks.set([]);
-    }
-  }
-
-  private savePortfolio(): void {
-    try {
-      localStorage.setItem(this.portfolioKey(), JSON.stringify(this.ownedStocks()));
-    } catch {
-      /* ignore storage errors */
-    }
   }
 
   formatCoal(value: number): string {
@@ -722,205 +609,81 @@ export class Investing implements OnInit {
     }
   }
 
-  getLootboxImage(typeName: string): string {
-    const name = typeName.toLowerCase();
-    if (name.includes('dragon')) return 'assets/animation/dragon-chest-idle-animation.gif';
-    if (name.includes('winter')) return 'assets/animation/winter-chest-idle-animation.gif';
-    if (name.includes('legendary')) return 'assets/animation/legendary-chest-idle-animation.gif';
-    if (name.includes('golden')) return 'assets/animation/chest-idle-gold.gif';
-    return 'assets/animation/chest-idle.gif';
-  }
-
-  getAssetImageUrl(asset: InvestableAsset): string {
-    if (asset.category === 'lootbox') {
-      return this.getLootboxImage(asset.name);
-    }
-    return asset.imageUrl;
-  }
-
   /* ─── Data loading ─── */
 
-  private async loadStoves(): Promise<void> {
+  async loadPortfolio(): Promise<void> {
     try {
-      const types = await firstValueFrom(this.stoveService.getAllStoveTypes());
-      if (types.length === 0) {
-        this.stoveAssets.set([]);
-        return;
-      }
-
-      const assets = types.map((type: StoveTypeRow) => {
-        const base = getStoveBasePrice(type.rarity);
-        const heat = (type.minHeat + type.maxHeat) / 2;
-        const price = Math.round(base * (1 + heat * 2.5) * 100) / 100;
-        const prev = Math.round(price * 0.98 * 100) / 100;
-
+      const result = await firstValueFrom(this.investmentService.getPortfolio());
+      const assets = this.allAssets();
+      const positions = result.positions.map((pos: PortfolioPosition) => {
+        const asset = assets.find((a) => a.id === pos.assetId);
         return {
-          id: type.typeId,
-          ticker: generateTicker(type.name, 'stove'),
-          name: type.name,
-          description: `A ${type.rarity} stove from the ${type.collection} collection.`,
-          category: 'stove' as const,
-          rarity: type.rarity,
-          currentPrice: price,
-          previousPrice: prev,
-          basePrice: base,
-          imageUrl: type.imageUrl ?? '',
-          collection: type.collection ?? 'Unknown',
-          typeId: type.typeId,
-          totalSupply: 10000,
-          volume24h: 250000,
-        } satisfies InvestableAsset;
+          assetId: pos.assetId,
+          ticker: asset?.ticker ?? '',
+          name: asset?.name ?? '',
+          quantity: pos.quantity,
+          avgBuyPrice: pos.avgBuyPrice,
+          imageUrl: asset?.imageUrl ?? '',
+          rarity: asset?.rarity ?? '',
+          currentPrice: pos.currentPrice,
+        } satisfies OwnedStock;
       });
-
-      this.stoveAssets.set(assets);
+      this.ownedStocks.set(positions);
     } catch (err) {
-      console.error('Failed to load stove types:', err);
-      this.stoveAssets.set([]);
+      console.error('Failed to load portfolio:', err);
+      this.ownedStocks.set([]);
     }
   }
 
-  private async loadLootboxes(): Promise<void> {
+  async loadLeaderboard(): Promise<void> {
     try {
-      const types = await firstValueFrom(this.lootboxService.getAllLootboxTypes());
-      if (types.length === 0) {
-        this.lootboxAssets.set([]);
-        return;
-      }
-
-      const assets = types.map((type: LootboxTypeRow) => {
-        const name = type.name;
-        const base = getLootboxBasePrice(name);
-        const price = base;
-        const prev = Math.round(price * 0.98 * 100) / 100;
-
-        return {
-          id: type.lootboxTypeId,
-          ticker: generateTicker(name, 'lootbox'),
-          name,
-          description: type.description ?? `A sealed ${name} lootbox.`,
-          category: 'lootbox' as const,
-          rarity: 'lootbox',
-          currentPrice: price,
-          previousPrice: prev,
-          basePrice: base,
-          imageUrl: this.getLootboxImage(name),
-          typeId: type.lootboxTypeId,
-          totalSupply: 50000,
-          volume24h: 450000,
-        } satisfies InvestableAsset;
-      });
-
-      this.lootboxAssets.set(assets);
+      const result = await firstValueFrom(this.investmentService.getLeaderboard(10));
+      this.leaderboard.set(result.investors);
     } catch (err) {
-      console.error('Failed to load lootbox types:', err);
-      this.lootboxAssets.set([]);
+      console.error('Failed to load leaderboard:', err);
+      this.leaderboard.set([]);
     }
   }
 
-  private async loadPriceHistory(asset: InvestableAsset): Promise<void> {
-    if (asset.category === 'stove') {
-      try {
-        const svc = this.priceHistoryService as unknown as {
-          getPriceHistoryByTypeId?: (typeId: number) => Observable<PriceHistoryRow[]>;
+  async loadAssets(): Promise<void> {
+    try {
+      const result = await firstValueFrom(this.investmentService.getAssets());
+      this.stoveAssets.set(result.assets.map(a => {
+        const change24hAmount = a.currentPrice - a.previousPrice;
+        const change24h = a.previousPrice > 0
+          ? Math.round((change24hAmount / a.previousPrice) * 10000) / 100
+          : 0;
+        return {
+          id: a.assetId,
+          ticker: a.ticker,
+          name: a.name,
+          rarity: a.rarity,
+          currentPrice: a.currentPrice,
+          previousPrice: a.previousPrice,
+          change24h,
+          change24hAmount,
+          basePrice: a.basePrice,
+          imageUrl: a.imageUrl,
+          volume30d: a.volume30d,
+          totalMinted: a.totalMinted,
+          currentlyListed: a.currentlyListed,
         };
-
-        if (svc.getPriceHistoryByTypeId) {
-          const raw = await firstValueFrom(svc.getPriceHistoryByTypeId(asset.typeId));
-          if (raw && raw.length > 0) {
-            const bucketed = this.bucketByDay(raw);
-            const sorted = bucketed.sort(
-              (a, b) => new Date(a.saleDate).getTime() - new Date(b.saleDate).getTime()
-            );
-
-            const points: PricePoint[] = sorted.map((h) => ({
-              timestamp: new Date(h.saleDate),
-              price: h.avgPrice,
-            }));
-
-            const filtered = this.filterByTimeRange(points, this.timeRange());
-            this.priceHistory.set(filtered);
-            return;
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load real price history:', err);
-      }
+      }));
+    } catch (err) {
+      console.error('Failed to load assets:', err);
     }
-
-    /* Fallback to flat base-price history */
-    const history = this.generateFlatHistory(asset.basePrice, this.timeRange());
-    this.priceHistory.set(history);
   }
 
-  private bucketByDay(
-    records: { saleDate: Date | string; salePrice: number }[]
-  ): { saleDate: string; avgPrice: number }[] {
-    const map = new Map<string, number[]>();
-
-    for (const r of records) {
-      const day = new Date(r.saleDate).toISOString().slice(0, 10);
-      const arr = map.get(day) ?? [];
-      arr.push(r.salePrice);
-      map.set(day, arr);
+  async loadPriceHistory(typeId: number, range: '1d' | '1w' | '1m' = '1w'): Promise<void> {
+    try {
+      const result = await firstValueFrom(this.investmentService.getPriceHistory(typeId, range));
+      this.priceHistory.set(result.prices.map(p => ({
+        timestamp: new Date(p.timestamp),
+        price: p.price,
+      })));
+    } catch (err) {
+      console.error('Failed to load price history:', err);
+      this.priceHistory.set([]);
     }
-
-    const result: { saleDate: string; avgPrice: number }[] = [];
-    for (const [day, prices] of map) {
-      const avg = Math.round(prices.reduce((s, p) => s + p, 0) / prices.length);
-      result.push({ saleDate: day, avgPrice: avg });
-    }
-
-    return result;
-  }
-
-  private filterByTimeRange(points: PricePoint[], range: TimeRange): PricePoint[] {
-    if (points.length === 0) return [];
-
-    const now = new Date();
-    let cutoff = new Date();
-
-    switch (range) {
-      case '1d':
-        cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case '1w':
-        cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case '1m':
-        cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-    }
-
-    const filtered = points.filter((p) => p.timestamp >= cutoff);
-    return filtered.length >= 2 ? filtered : points;
-  }
-
-  private generateFlatHistory(basePrice: number, range: TimeRange): PricePoint[] {
-    const now = new Date();
-    let count: number;
-    let intervalMs: number;
-
-    switch (range) {
-      case '1d':
-        count = 48;
-        intervalMs = 30 * 60 * 1000;
-        break;
-      case '1w':
-        count = 56;
-        intervalMs = 3 * 60 * 60 * 1000;
-        break;
-      case '1m':
-        count = 30;
-        intervalMs = 24 * 60 * 60 * 1000;
-        break;
-    }
-
-    const points: PricePoint[] = [];
-    for (let i = count - 1; i >= 0; i--) {
-      const timestamp = new Date(now.getTime() - i * intervalMs);
-      points.push({ timestamp, price: basePrice });
-    }
-
-    return points;
   }
 }

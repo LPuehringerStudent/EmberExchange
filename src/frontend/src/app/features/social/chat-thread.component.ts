@@ -1,4 +1,4 @@
-import { Component, input, output, viewChild, ChangeDetectionStrategy, AfterViewChecked, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, input, output, viewChild, ChangeDetectionStrategy, AfterViewChecked, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { ChatMessageRow } from '@shared/model';
@@ -72,7 +72,7 @@ import type { ChatMessageRow } from '@shared/model';
                     {{ $any(msg.data)['status'] | titlecase }}
                   </p>
                 }
-                <p class="text-[10px] text-text-secondary mt-2">{{ msg.sentAt | date:'shortTime' }}</p>
+                <p class="text-[0.625rem] text-text-secondary mt-2">{{ msg.sentAt | date:'shortTime' }}</p>
               </div>
             } @else {
               <div
@@ -83,7 +83,7 @@ import type { ChatMessageRow } from '@shared/model';
                 class="max-w-[75%] rounded-2xl px-4 py-2.5 text-sm"
               >
                 <p>{{ msg.content }}</p>
-                <p class="text-[10px] mt-1 opacity-70">{{ msg.sentAt | date:'shortTime' }}</p>
+                <p class="text-[0.625rem] mt-1 opacity-70">{{ msg.sentAt | date:'shortTime' }}</p>
               </div>
             }
           </div>
@@ -126,7 +126,7 @@ import type { ChatMessageRow } from '@shared/model';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ChatThreadComponent implements AfterViewChecked, OnChanges {
+export class ChatThreadComponent implements AfterViewChecked {
   friend = input<{ username: string } | null>(null);
   messages = input.required<ChatMessageRow[]>();
   currentPlayerId = input.required<number>();
@@ -140,10 +140,12 @@ export class ChatThreadComponent implements AfterViewChecked, OnChanges {
   private messagesContainer = viewChild<HTMLDivElement>('messagesContainer');
   private shouldScroll = false;
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['messages']) {
+  constructor() {
+    effect(() => {
+      // Trigger scroll when messages change
+      const _ = this.messages();
       this.shouldScroll = true;
-    }
+    });
   }
 
   ngAfterViewChecked(): void {

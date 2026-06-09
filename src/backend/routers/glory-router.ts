@@ -5,6 +5,7 @@ import { checkPlayerBanned } from "../middleware/ban-check";
 import { GloryCustomizationService } from "../services/glory-customization-service";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
 import { PlayerAchievementService } from "../services/player-achievement-service";
+import { QuestService } from "../services/quest-service";
 import { isNullOrWhiteSpace } from "../utils/util";
 import { sanitizeText } from "../utils/sanitize";
 import { requireAuth } from "../middleware/require-auth";
@@ -545,6 +546,15 @@ gloryRouter.post("/glory/visit", requireAuth, async (req, res) => {
             return;
         }
         await service.recordVisit(profileId, visitorId);
+
+        // Track quest progress
+        try {
+            const questService = new QuestService(unit);
+            await questService.trackProgress(visitorId, 'visit_glory', 1);
+        } catch {
+            // Ignore quest tracking errors
+        }
+
         await unit.complete(true);
         res.status(StatusCodes.OK).json({ message: "Visit recorded" });
     } catch (err) {

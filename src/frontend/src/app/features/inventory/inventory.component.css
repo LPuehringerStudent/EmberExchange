@@ -10,12 +10,12 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 3px;
+  height: 0.1875rem;
   background: linear-gradient(90deg, var(--accent), #f48c06);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  border-radius: 3px 3px 0 0;
+  border-radius: 0.1875rem 0.1875rem 0 0;
 }
 
 .sidebar-btn:hover {
@@ -121,4 +121,192 @@
 .listed-badge {
   background: #e85d04;
   color: white;
+}
+
+/* Inspect button */
+.inspect-btn {
+  background: rgba(232, 93, 4, 0.1);
+  color: #e85d04;
+  border: 1px solid rgba(232, 93, 4, 0.2);
+}
+.inspect-btn:hover {
+  background: rgba(232, 93, 4, 0.2);
+  border-color: rgba(232, 93, 4, 0.4);
+}
+
+/* Inspect Overlay */
+.inspect-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: inspect-fade-in 0.3s ease forwards;
+}
+
+.inspect-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+}
+
+.inspect-content {
+  position: relative;
+  z-index: 1;
+  width: 90%;
+  max-width: 45rem;
+  animation: inspect-scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.inspect-close {
+  position: absolute;
+  top: -4rem;
+  right: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.inspect-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.inspect-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.inspect-tilt-wrap {
+  width: 25rem;
+  height: 25rem;
+  border-radius: 2rem;
+  transition: transform 0.1s ease-out;
+  cursor: grab;
+  transform-style: preserve-3d;
+}
+.inspect-tilt-wrap:active {
+  cursor: grabbing;
+}
+
+.inspect-image-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 2rem;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.inspect-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 1.5rem;
+}
+
+.inspect-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: 2rem;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+  background-size: 200% 200%;
+  pointer-events: none;
+  transition: background-position 0.1s ease-out;
+  mix-blend-mode: overlay;
+}
+
+.inspect-info {
+  text-align: center;
+  color: #fff;
+}
+
+.inspect-name {
+  font-size: 2.1rem;
+  font-weight: 800;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.inspect-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+
+.inspect-rarity {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.375rem 0.875rem;
+  border-radius: 624.9375rem;
+}
+.inspect-rarity.common    { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+.inspect-rarity.uncommon  { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.inspect-rarity.rare      { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.inspect-rarity.epic      { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.inspect-rarity.legendary { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.inspect-rarity.secret    { background: rgba(217, 70, 239, 0.2); color: #d946ef; }
+
+.inspect-collection {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.inspect-heat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.inspect-heat-icon {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.inspect-heat-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.inspect-heat-tier {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.inspect-hint {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0;
+}
+
+@keyframes inspect-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes inspect-scale-in {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }

@@ -179,9 +179,31 @@ async function handleDisconnect(socketId: string): Promise<void> {
                     if (!rp || rp.connectionState !== "disconnected") return;
 
                     const engine = engineRegistry.get(afRoom.gameType);
+
+                    // Determine the most conservative auto-action based on what the engine allows
+                    const validActions = engine.getValidActions(
+                        state.stateBlob as Record<string, unknown>,
+                        playerId
+                    );
+
+                    // Pick the most conservative action that requires no extra parameters
+                    const conservativeTypes = ["fold", "stand", "check", "decline_insurance"];
+                    let autoActionType: string | undefined;
+                    for (const actionType of conservativeTypes) {
+                        if (validActions.some((a) => a.type === actionType)) {
+                            autoActionType = actionType;
+                            break;
+                        }
+                    }
+
+                    if (!autoActionType) {
+                        // No conservative auto-action available (e.g., must bet, or not player's turn)
+                        return;
+                    }
+
                     const result = engine.processAction(
                         state.stateBlob as Record<string, unknown>,
-                        { type: "fold" },
+                        { type: autoActionType },
                         playerId
                     );
 

@@ -1,5 +1,11 @@
 <div class="exchange-page">
   <div class="content-wrapper relative z-10">
+    @if (error()) {
+      <div class="error-banner" (click)="error.set('')">
+        <span>{{ error() }}</span>
+      </div>
+    }
+
     <!-- ═══════════════════════════════════════════════════════
          OVERVIEW
     ═══════════════════════════════════════════════════════ -->
@@ -7,7 +13,7 @@
       <header class="page-header">
         <div class="header-content">
           <div>
-            <p class="header-label">Stove Exchange</p>
+            <p class="header-label">Ember Exchange</p>
             <h1 class="header-title">Portfolio Overview</h1>
           </div>
           <div class="header-pills">
@@ -131,7 +137,7 @@
             <div class="divider-line right"></div>
           </div>
           <div class="performer-grid">
-            @for (stock of portfolioSummary().topGainers; track stock.assetId + '-' + stock.category) {
+            @for (stock of portfolioSummary().topGainers; track stock.assetId) {
               <div
                 class="performer-card glass-panel"
                 (click)="viewAsset(stock)"
@@ -178,7 +184,7 @@
             <div class="divider-line right"></div>
           </div>
           <div class="performer-grid">
-            @for (stock of portfolioSummary().topLosers; track stock.assetId + '-' + stock.category) {
+            @for (stock of portfolioSummary().topLosers; track stock.assetId) {
               <div
                 class="performer-card glass-panel"
                 (click)="viewAsset(stock)"
@@ -225,7 +231,7 @@
             <div class="divider-line right"></div>
           </div>
           <div class="holdings-list">
-            @for (stock of portfolioSummary().performers; track stock.assetId + '-' + stock.category) {
+            @for (stock of portfolioSummary().performers; track stock.assetId) {
               <div
                 class="holding-row glass-panel"
                 (click)="viewAsset(stock)"
@@ -292,12 +298,61 @@
           </button>
         </div>
       }
+
+      <!-- Leaderboard -->
+      <div class="overview-section">
+        <div class="section-divider">
+          <div class="divider-line left"></div>
+          <span class="divider-label">Top Investors</span>
+          <div class="divider-line right"></div>
+        </div>
+        <div class="leaderboard-card glass-panel">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Total Invested</th>
+                <th>Total Value</th>
+                <th>P&L</th>
+                <th>P&L %</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of leaderboard(); track entry.playerId; let i = $index) {
+                <tr>
+                  <td class="rank-cell">#{{ i + 1 }}</td>
+                  <td>{{ entry.name }}</td>
+                  <td>{{ formatCoal(entry.totalInvested) }}</td>
+                  <td>{{ formatCoal(entry.totalValue) }}</td>
+                  <td [class.positive]="entry.totalPL >= 0" [class.negative]="entry.totalPL < 0">
+                    {{ formatCoal(entry.totalPL) }}
+                  </td>
+                  <td [class.positive]="entry.plPercent >= 0" [class.negative]="entry.plPercent < 0">
+                    {{ formatPercent(entry.plPercent) }}
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="leaderboard-empty">No leaderboard data available.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
     }
 
     <!-- ═══════════════════════════════════════════════════════
          MARKET
     ═══════════════════════════════════════════════════════ -->
     @if (currentView() === 'market') {
+      @if (error()) {
+        <div class="error-banner" (click)="error.set('')">
+          <span>{{ error() }}</span>
+        </div>
+      }
+
       <header class="page-header">
         <div class="header-content">
           <div class="header-brand">
@@ -312,7 +367,7 @@
               </svg>
             </button>
             <div>
-              <p class="header-label">Stove Exchange</p>
+              <p class="header-label">Ember Exchange</p>
               <h1 class="header-title">Investment Terminal</h1>
             </div>
           </div>
@@ -356,38 +411,10 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Search assets..."
+              placeholder="Search indices..."
               [value]="searchQuery()"
               (input)="searchQuery.set($any($event.target).value)"
             />
-          </div>
-
-          <!-- Category tabs -->
-          <div class="category-tabs">
-            <button
-              type="button"
-              class="category-tab"
-              [class.active]="activeCategory() === 'all'"
-              (click)="setCategory('all')"
-            >
-              All
-            </button>
-            <button
-              type="button"
-              class="category-tab"
-              [class.active]="activeCategory() === 'stoves'"
-              (click)="setCategory('stoves')"
-            >
-              Stoves
-            </button>
-            <button
-              type="button"
-              class="category-tab"
-              [class.active]="activeCategory() === 'lootboxes'"
-              (click)="setCategory('lootboxes')"
-            >
-              Lootboxes
-            </button>
           </div>
 
           <!-- Loading -->
@@ -401,15 +428,15 @@
           <!-- Asset list -->
           @if (!loading()) {
             <div class="asset-list">
-              @for (asset of searchedAssets(); track asset.id + '-' + asset.category) {
+              @for (asset of searchedAssets(); track asset.id) {
                 <button
                   type="button"
                   class="asset-item"
-                  [class.active]="selectedAsset()?.id === asset.id && selectedAsset()?.category === asset.category"
+                  [class.active]="selectedAsset()?.id === asset.id"
                   (click)="selectAsset(asset)"
                 >
                   <div class="asset-icon" [style.--rarity-color]="getRarityColor(asset.rarity)">
-                    @if (getAssetImageUrl(asset); as imgUrl) {
+                    @if (asset.imageUrl; as imgUrl) {
                       <img [src]="imgUrl" [alt]="asset.name" class="asset-thumb" />
                     } @else {
                       <svg class="icon-fallback" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -433,23 +460,18 @@
                       </span>
                     </div>
                     <div class="asset-meta">
-                      @if (asset.category === 'stove') {
-                        <span class="meta-badge" [style.background]="getRarityColor(asset.rarity) + '22'" [style.color]="getRarityColor(asset.rarity)">
-                          {{ asset.rarity }}
-                        </span>
-                        <span class="meta-badge">{{ asset.collection }}</span>
-                      } @else {
-                        <span class="meta-badge" style="background: rgba(232,93,4,0.15); color: #ff8c42;">
-                          Lootbox
-                        </span>
-                        <span class="meta-badge">{{ asset.acquiredHow }}</span>
-                      }
+                      <span class="meta-badge" [style.background]="getRarityColor(asset.rarity) + '22'" [style.color]="getRarityColor(asset.rarity)">
+                        {{ asset.rarity }}
+                      </span>
+                      <span class="meta-badge" style="background: rgba(148,163,184,0.12); color: #94a3b8;">
+                        {{ formatNumber(asset.volume30d) }} Vol
+                      </span>
                     </div>
                   </div>
                 </button>
               } @empty {
                 <div class="list-empty">
-                  <p>No assets match your search.</p>
+                  <p>No stoves match your search.</p>
                 </div>
               }
             </div>
@@ -464,7 +486,7 @@
               <div class="detail-header glass-panel">
                 <div class="detail-identity">
                   <div class="detail-sprite" [style.--rarity-color]="getRarityColor(asset.rarity)">
-                    @if (getAssetImageUrl(asset); as imgUrl) {
+                    @if (asset.imageUrl; as imgUrl) {
                       <img [src]="imgUrl" [alt]="asset.name" class="sprite-img" />
                     } @else {
                       <svg class="sprite-fallback" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -477,16 +499,11 @@
                       {{ asset.name }}
                       <span class="detail-ticker">{{ asset.ticker }}</span>
                     </h2>
-                    <p class="detail-meta">{{ asset.description }}</p>
+                    <p class="detail-meta">Stove type</p>
                     <div class="detail-badges">
                       <span class="detail-badge" [style.background]="getRarityColor(asset.rarity) + '22'" [style.color]="getRarityColor(asset.rarity)">
-                        {{ asset.category === 'stove' ? asset.rarity : 'Lootbox' }}
+                        {{ asset.rarity }}
                       </span>
-                      @if (asset.category === 'stove' && asset.collection) {
-                        <span class="detail-badge" style="background: rgba(148,163,184,0.12); color: #94a3b8;">
-                          {{ asset.collection }}
-                        </span>
-                      }
                     </div>
                   </div>
                 </div>
@@ -637,20 +654,26 @@
                       </span>
                     </div>
                     <div class="stat-cell">
-                      <span class="stat-label">Market Cap</span>
-                      <span class="stat-value">{{ formatCoal(asset.currentPrice * asset.totalSupply) }}</span>
+                      <span class="stat-label">24h Change</span>
+                      <span
+                        class="stat-value"
+                        [class.positive]="asset.change24h >= 0"
+                        [class.negative]="asset.change24h < 0"
+                      >
+                        {{ formatPercent(asset.change24h) }}
+                      </span>
                     </div>
                     <div class="stat-cell">
-                      <span class="stat-label">Volume (24h)</span>
-                      <span class="stat-value">{{ formatCoal(asset.volume24h) }}</span>
+                      <span class="stat-label">30d Volume</span>
+                      <span class="stat-value">{{ formatCoal(asset.volume30d) }}</span>
                     </div>
                     <div class="stat-cell">
-                      <span class="stat-label">Supply</span>
-                      <span class="stat-value">{{ formatNumber(asset.totalSupply) }}</span>
+                      <span class="stat-label">Total Minted</span>
+                      <span class="stat-value">{{ formatNumber(asset.totalMinted) }}</span>
                     </div>
                     <div class="stat-cell">
-                      <span class="stat-label">Base Price</span>
-                      <span class="stat-value">{{ formatCoal(asset.basePrice) }}</span>
+                      <span class="stat-label">Listed</span>
+                      <span class="stat-value">{{ formatNumber(asset.currentlyListed) }}</span>
                     </div>
                   </div>
                 </div>
@@ -774,7 +797,7 @@
             </div>
           } @else {
             <div class="empty-state glass-panel">
-              <p>Select an asset from the market to begin trading</p>
+              <p>Select a stove from the market to begin trading</p>
             </div>
           }
         </main>
@@ -790,7 +813,7 @@
           </div>
 
           <div class="portfolio-grid">
-            @for (stock of ownedStocks(); track stock.assetId + '-' + stock.category) {
+            @for (stock of ownedStocks(); track stock.assetId) {
               <div
                 class="portfolio-card glass-panel"
                 (click)="viewAsset(stock)"

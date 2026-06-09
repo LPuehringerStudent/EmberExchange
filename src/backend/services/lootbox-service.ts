@@ -149,29 +149,7 @@ export class LootboxService extends ServiceBase {
             "SELECT * FROM Lootbox WHERE playerId = @playerId AND openedAt IS NULL",
             { playerId }
         );
-        let lootboxes = await stmt.all();
-
-        // Reconcile: if Player.lootboxCount exceeds actual unopened rows, create missing ones
-        const countStmt = this.unit.prepare<{ lootboxCount: number }>(
-            "SELECT lootboxCount FROM Player WHERE playerId = @playerId",
-            { playerId }
-        );
-        const player = await countStmt.get();
-        const expectedCount = player?.lootboxCount ?? 0;
-
-        if (lootboxes.length === 0 && expectedCount > 0) {
-            for (let i = 0; i < expectedCount; i++) {
-                const insertStmt = this.unit.prepare<LootboxRow>(
-                    `INSERT INTO Lootbox (lootboxTypeId, playerId, openedAt, acquiredHow) 
-                     VALUES (@lootboxTypeId, @playerId, null, @acquiredHow)`,
-                    { lootboxTypeId: 1, playerId, acquiredHow: 'reward' }
-                );
-                await insertStmt.run();
-            }
-            lootboxes = await stmt.all();
-        }
-
-        return lootboxes;
+        return await stmt.all();
     }
 
     /**
@@ -336,9 +314,11 @@ export class LootboxService extends ServiceBase {
         const dropId = await this.unit.getLastRowId();
         if (!dropId) return [false, null];
 
-        // 6. Decrement player lootbox count for original frontend compatibility
+        // 6. Sync player lootbox count to actual unopened lootbox count
         await this.unit.prepare(
-            "UPDATE Player SET lootboxCount = lootboxCount - 1 WHERE playerId = @playerId",
+            `UPDATE Player SET lootboxCount = (
+                SELECT COUNT(*) FROM Lootbox WHERE playerId = @playerId AND openedAt IS NULL
+            ) WHERE playerId = @playerId`,
             { playerId }
         ).run();
 

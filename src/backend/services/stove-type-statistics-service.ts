@@ -360,4 +360,5 @@ export class StoveTypeStatisticsService extends ServiceBase {
     delete(_stoveTypeId: number): boolean {
         return true;
     }
+
 }

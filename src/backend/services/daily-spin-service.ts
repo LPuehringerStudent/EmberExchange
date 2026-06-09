@@ -169,7 +169,7 @@ export class DailySpinService {
         // Quest tracking
         try {
             const questService = new QuestService(this.unit);
-            await questService.trackProgress(playerId, "daily_spin", 1);
+            await questService.trackProgress(playerId, "claim_daily", 1);
         } catch {
             // Ignore quest errors
         }

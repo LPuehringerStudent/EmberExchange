@@ -690,3 +690,82 @@ export interface ForgeryResult {
     newStove?: ForgedStove;
     error?: string;
 }
+
+export interface InvestmentPosition {
+    positionId: number;
+    playerId: number;
+    assetId: number;
+    category: 'stove' | 'lootbox';
+    quantity: number;
+    avgBuyPrice: number;
+    totalInvested: number;
+    createdAt: string;
+    updatedAt: string;
+}
+export interface InvestmentPositionRow extends InvestmentPosition {}
+
+export interface InvestmentTransaction {
+    transactionId: number;
+    playerId: number;
+    assetId: number;
+    category: 'stove' | 'lootbox';
+    type: 'buy' | 'sell';
+    quantity: number;
+    pricePerUnit: number;
+    totalAmount: number;
+    createdAt: string;
+}
+export interface InvestmentTransactionRow extends InvestmentTransaction {}
+
+export interface PortfolioPosition {
+    positionId: number;
+    assetId: number;
+    category: 'stove' | 'lootbox';
+    quantity: number;
+    avgBuyPrice: number;
+    currentPrice: number;
+    currentValue: number;
+    unrealizedPL: number;
+}
+
+export interface LeaderboardEntry {
+    playerId: number;
+    name: string;
+    totalInvested: number;
+    totalValue: number;
+    totalPL: number;
+    plPercent: number;
+}
+
+export interface StovePriceHistory {
+    historyId: number;
+    typeId: number;
+    price: number;
+    timestamp: string;
+}
+export interface StovePriceHistoryRow extends StovePriceHistory {}
+
+export interface PortfolioSnapshot {
+    snapshotId: number;
+    playerId: number;
+    totalValue: number;
+    totalCost: number;
+    totalPL: number;
+    timestamp: string;
+}
+export interface PortfolioSnapshotRow extends PortfolioSnapshot {}
+
+export interface InvestableAsset {
+    assetId: number;
+    ticker: string;
+    name: string;
+    description: string;
+    rarity: string;
+    currentPrice: number;
+    previousPrice: number;
+    basePrice: number;
+    imageUrl: string;
+    volume30d: number;
+    totalMinted: number;
+    currentlyListed: number;
+}

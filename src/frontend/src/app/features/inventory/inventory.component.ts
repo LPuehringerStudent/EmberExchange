@@ -58,6 +58,14 @@ export class InventoryComponent implements OnInit, OnDestroy {
   detailLoading = false;
   detailError: string | null = null;
 
+  // Inspect modal (3D tilt)
+  showInspectModal = false;
+  inspectStove: ShowedStove | null = null;
+  inspectRotateX = 0;
+  inspectRotateY = 0;
+  inspectGlareX = 50;
+  inspectGlareY = 50;
+
   // Sell modal (for lootboxes)
   showSellModal = false;
   selectedLootbox: InventoryLootbox | null = null;
@@ -208,6 +216,57 @@ export class InventoryComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  // ── Inspect Modal (3D Tilt) ─────────────────────────────────
+
+  openInspectModal(item: ShowedStove, event: Event): void {
+    event.stopPropagation();
+    this.inspectStove = item;
+    this.inspectRotateX = 0;
+    this.inspectRotateY = 0;
+    this.inspectGlareX = 50;
+    this.inspectGlareY = 50;
+    this.showInspectModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeInspectModal(): void {
+    this.showInspectModal = false;
+    this.inspectStove = null;
+    this.cdr.markForCheck();
+  }
+
+  onInspectMouseMove(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    // Normalize to -1 to 1
+    const xPct = (x - centerX) / centerX;
+    const yPct = (y - centerY) / centerY;
+
+    // Max tilt angle
+    const maxTilt = 20;
+    this.inspectRotateX = -yPct * maxTilt;
+    this.inspectRotateY = xPct * maxTilt;
+
+    // Glare moves opposite to tilt
+    this.inspectGlareX = 50 + xPct * 40;
+    this.inspectGlareY = 50 + yPct * 40;
+    this.cdr.markForCheck();
+  }
+
+  onInspectMouseLeave(): void {
+    this.inspectRotateX = 0;
+    this.inspectRotateY = 0;
+    this.inspectGlareX = 50;
+    this.inspectGlareY = 50;
+    this.cdr.markForCheck();
+  }
+
   async onDetailSell(price: number): Promise<void> {
     if (!this.detailStove || this.playerId === null) return;
     this.detailLoading = true;
@@ -351,6 +410,14 @@ export class InventoryComponent implements OnInit, OnDestroy {
 
   openLootbox(box: InventoryLootbox): void {
     void this.router.navigate(['/lootboxes'], { queryParams: { id: box.id } });
+  }
+
+  getHeatColor(heat: number): string {
+    if (heat >= 80) return '#ffd700';
+    if (heat >= 60) return '#ff4500';
+    if (heat >= 40) return '#f59e0b';
+    if (heat >= 20) return '#dc2626';
+    return '#64748b';
   }
 
   getLootboxImage(typeName: string): string {

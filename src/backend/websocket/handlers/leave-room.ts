@@ -38,7 +38,6 @@ export async function handleLeaveRoom(socketId: string, payload: Record<string, 
         // If player was never in this room, don't broadcast anything
         if (!existingPlayer) {
             ok = true;
-            await unit.complete(true);
             connectionManager.sendToSocket(socketId, {
                 type: "error",
                 payload: { code: ErrorCode.INVALID_STATE, message: "You are not in this room", recoverable: true }
