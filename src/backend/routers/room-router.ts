@@ -5,6 +5,7 @@ import { RoomPlayerService } from "../services/room-player-service";
 import { GameStateService } from "../services/game-state-service";
 import { StatusCodes } from "http-status-codes";
 import { requireAuth } from "../middleware/require-auth";
+import { engineRegistry } from "../game-engines";
 
 export const roomRouter = express.Router();
 
@@ -14,12 +15,20 @@ roomRouter.post("/rooms", requireAuth, async (req, res) => {
     try {
         const { maxPlayers, gameType, settings } = req.body;
         const mp = typeof maxPlayers === "number" ? maxPlayers : 4;
-        if (mp < 2) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "maxPlayers must be at least 2" });
-            return;
-        }
         if (typeof gameType !== "string" || gameType.trim().length === 0) {
             res.status(StatusCodes.BAD_REQUEST).json({ error: "gameType is required" });
+            return;
+        }
+
+        const trimmedGameType = gameType.trim();
+        if (!engineRegistry.has(trimmedGameType)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: `Unknown game type: ${trimmedGameType}` });
+            return;
+        }
+
+        const engine = engineRegistry.get(trimmedGameType);
+        if (mp < engine.minPlayers) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: `maxPlayers must be at least ${engine.minPlayers}` });
             return;
         }
 
@@ -27,7 +36,7 @@ roomRouter.post("/rooms", requireAuth, async (req, res) => {
         const gameStateService = new GameStateService(unit);
 
         const roomSettings = (settings && typeof settings === "object") ? settings as Record<string, unknown> : {};
-        const room = await roomService.createRoom(mp, gameType.trim(), roomSettings);
+        const room = await roomService.createRoom(mp, trimmedGameType, roomSettings);
         await gameStateService.createInitialState(room.roomId, { players: [], status: "waiting", log: [] });
 
         ok = true;

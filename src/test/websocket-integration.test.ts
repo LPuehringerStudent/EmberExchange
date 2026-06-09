@@ -161,23 +161,34 @@ describe("WebSocket Integration", () => {
         return new Promise((resolve, reject) => {
             const url = `${baseUrl}/ws`;
             const ws = sessionId ? new WebSocket(url, sessionId) : new WebSocket(url);
+            let opened = false;
+            let resolveTimer: NodeJS.Timeout | null = null;
             const timeout = setTimeout(() => {
                 ws.terminate();
                 reject(new Error("WS connect timeout"));
             }, 3000);
 
             ws.on("open", () => {
+                opened = true;
                 clearTimeout(timeout);
-                setTimeout(() => resolve(ws), 100);
+                // Wait briefly to see if server immediately closes (auth rejection)
+                resolveTimer = setTimeout(() => resolve(ws), 100);
             });
 
             ws.on("close", () => {
                 clearTimeout(timeout);
-                setTimeout(() => resolve(ws), 100);
+                if (resolveTimer) {
+                    clearTimeout(resolveTimer);
+                    reject(new Error("WebSocket connection closed by server"));
+                } else if (!opened) {
+                    reject(new Error("WebSocket connection closed before opening"));
+                }
+                // If already resolved, ignore — normal close after successful use
             });
 
             ws.on("error", (err) => {
                 clearTimeout(timeout);
+                if (resolveTimer) clearTimeout(resolveTimer);
                 reject(err);
             });
         });
@@ -259,13 +270,11 @@ describe("WebSocket Integration", () => {
     }
 
     it("should reject connection without sessionId", async () => {
-        const ws = await connectWs();
-        expect(ws.readyState).not.toBe(WebSocket.OPEN);
+        await expect(connectWs()).rejects.toThrow();
     });
 
     it("should reject connection with invalid sessionId", async () => {
-        const ws = await connectWs("invalid_session_12345");
-        expect(ws.readyState).not.toBe(WebSocket.OPEN);
+        await expect(connectWs("invalid_session_12345")).rejects.toThrow();
     });
 
     it("should accept connection with valid sessionId", async () => {
