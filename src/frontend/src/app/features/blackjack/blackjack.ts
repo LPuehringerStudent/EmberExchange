@@ -308,8 +308,9 @@ export class BlackjackComponent {
   readonly isHost = computed(() => {
     const me = this.auth.getCurrentUser()?.playerId ?? 0;
     const ps = this.ws.playersInRoom();
-    if (ps.length > 0) {
-      const host = ps.filter(p => p.connectionState === 'connected').sort((a, b) => a.seatIndex - b.seatIndex)[0];
+    const connected = ps.filter(p => p.connectionState === 'connected');
+    if (connected.length > 0) {
+      const host = connected.sort((a, b) => a.seatIndex - b.seatIndex)[0];
       return host?.playerId === me;
     }
     // Fallback when room state isn't synced (e.g. after reconnect): solo player is host
