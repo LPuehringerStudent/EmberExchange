@@ -1202,6 +1202,14 @@ export class DB {
             ADD COLUMN IF NOT EXISTS updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
         `).catch(() => {});
 
+        // Migration: add quest_complete to notification type constraint
+        await connection.query(`
+            ALTER TABLE Notification
+            DROP CONSTRAINT IF EXISTS notification_type_check,
+            ADD CONSTRAINT notification_type_check
+            CHECK (type IN ('friend_request', 'chat_message', 'trade_offer', 'daily_reward', 'system', 'quest_complete'))
+        `).catch(() => {});
+
         await connection.query(`
             CREATE INDEX IF NOT EXISTS idx_notification_player_group ON Notification(playerId, type, groupKey, isRead, updatedAt)
         `);

@@ -64,9 +64,10 @@ questRouter.post("/quests/:id/claim", requireAuth, async (req, res) => {
         return;
     }
 
-    const unit = await Unit.create(true);
+    const unit = await Unit.create(false);
     try {
         if (await checkPlayerBanned(unit, req.playerId!, res)) {
+            await unit.complete(false);
             return;
         }
 
@@ -74,14 +75,15 @@ questRouter.post("/quests/:id/claim", requireAuth, async (req, res) => {
         const result = await questService.claimReward(req.playerId!, questId);
 
         if (result.success) {
+            await unit.complete(true);
             res.status(StatusCodes.OK).json(result);
         } else {
+            await unit.complete(false);
             res.status(StatusCodes.BAD_REQUEST).json(result);
         }
     } catch (err) {
+        await unit.complete(false);
         console.error("Route error:", err);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
-    } finally {
-        await unit.complete();
     }
 });
