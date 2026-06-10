@@ -12,6 +12,10 @@ export interface AdminSystemStats {
   totalCoinsInCirculation: number;
   totalLootboxesOpened: number;
   recentSignups7d: number;
+  activePlayers24h: number;
+  bannedPlayers: number;
+  totalListings: number;
+  totalCoinTransactions: number;
 }
 
 export interface AdminPlayerList {

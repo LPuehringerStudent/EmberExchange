@@ -42,6 +42,10 @@ export interface AdminSystemStats {
     totalCoinsInCirculation: number;
     totalLootboxesOpened: number;
     recentSignups7d: number;
+    activePlayers24h: number;
+    bannedPlayers: number;
+    totalListings: number;
+    totalCoinTransactions: number;
 }
 
 export interface CoinAdjustmentRequest {
@@ -187,32 +191,48 @@ export class AdminService extends ServiceBase {
     // ── System Stats ───────────────────────────────────────────
 
     async getSystemStats(): Promise<AdminSystemStats> {
-        const [totalPlayers] = await Promise.all([
-            this.unit.prepare<{ cnt: number }>("SELECT COUNT(*)::int as cnt FROM Player WHERE username != '__shop__'").get(),
-        ]);
-        const [totalStoves] = await Promise.all([
-            this.unit.prepare<{ cnt: number }>("SELECT COUNT(*)::int as cnt FROM Stove").get(),
-        ]);
-        const [totalTrades] = await Promise.all([
-            this.unit.prepare<{ cnt: number }>("SELECT COUNT(*)::int as cnt FROM Trade").get(),
-        ]);
-        const [totalCoins] = await Promise.all([
-            this.unit.prepare<{ total: number }>("SELECT COALESCE(SUM(coins), 0)::int as total FROM Player WHERE username != '__shop__'").get(),
-        ]);
-        const [totalLootboxes] = await Promise.all([
-            this.unit.prepare<{ cnt: number }>("SELECT COUNT(*)::int as cnt FROM Lootbox WHERE openedAt IS NOT NULL").get(),
-        ]);
-        const [recentSignups] = await Promise.all([
-            this.unit.prepare<{ cnt: number }>("SELECT COUNT(*)::int as cnt FROM Player WHERE joinedAt::timestamp > NOW() - INTERVAL '7 days'").get(),
-        ]);
+        const totalPlayers = await this.unit.prepare<{ cnt: number }>(
+            "SELECT COUNT(*)::int as cnt FROM Player WHERE username != '__shop__'"
+        ).get();
+        const totalStoves = await this.unit.prepare<{ cnt: number }>(
+            "SELECT COUNT(*)::int as cnt FROM Stove"
+        ).get();
+        const totalTrades = await this.unit.prepare<{ cnt: number }>(
+            "SELECT COUNT(*)::int as cnt FROM Trade"
+        ).get();
+        const totalCoins = await this.unit.prepare<{ total: string }>(
+            "SELECT COALESCE(SUM(coins), 0)::bigint as total FROM Player WHERE username != '__shop__'"
+        ).get();
+        const totalLootboxes = await this.unit.prepare<{ cnt: number }>(
+            "SELECT COUNT(*)::int as cnt FROM Lootbox WHERE openedAt IS NOT NULL"
+        ).get();
+        const recentSignups = await this.unit.prepare<{ cnt: number }>(
+            "SELECT COUNT(*)::int as cnt FROM Player WHERE joinedAt::timestamp > NOW() - INTERVAL '7 days'"
+        ).get();
+        const activePlayers = await this.unit.prepare<{ cnt: number }>(
+            "SELECT COUNT(DISTINCT playerId)::int as cnt FROM LoginHistory WHERE loggedInAt::timestamp > NOW() - INTERVAL '24 hours'"
+        ).get();
+        const bannedPlayers = await this.unit.prepare<{ cnt: number }>(
+            "SELECT COUNT(*)::int as cnt FROM Player WHERE bannedAt IS NOT NULL"
+        ).get();
+        const totalListings = await this.unit.prepare<{ cnt: number }>(
+            "SELECT COUNT(*)::int as cnt FROM Listing WHERE status = 'active'"
+        ).get();
+        const totalCoinTx = await this.unit.prepare<{ cnt: number }>(
+            "SELECT COUNT(*)::int as cnt FROM CoinTransaction"
+        ).get();
 
         return {
             totalPlayers: totalPlayers?.cnt ?? 0,
             totalStoves: totalStoves?.cnt ?? 0,
             totalTrades: totalTrades?.cnt ?? 0,
-            totalCoinsInCirculation: totalCoins?.total ?? 0,
+            totalCoinsInCirculation: totalCoins?.total ? parseInt(totalCoins.total, 10) : 0,
             totalLootboxesOpened: totalLootboxes?.cnt ?? 0,
             recentSignups7d: recentSignups?.cnt ?? 0,
+            activePlayers24h: activePlayers?.cnt ?? 0,
+            bannedPlayers: bannedPlayers?.cnt ?? 0,
+            totalListings: totalListings?.cnt ?? 0,
+            totalCoinTransactions: totalCoinTx?.cnt ?? 0,
         };
     }
 
