@@ -8,6 +8,22 @@ export class ListingService extends ServiceBase {
         super(unit);
     }
 
+    private readonly enrichedSelect = `
+        SELECT
+            l.listingId, l.sellerId, l.stoveId, l.lootboxId, l.price, l.status, l.listedAt,
+            p.username as sellerName,
+            st.name as stoveName, st.rarity, st.imageUrl, st.collection,
+            s.heatLevel,
+            s.typeId as typeId,
+            lt.lootboxTypeId as lootboxTypeId, lt.name as lootboxTypeName
+        FROM Listing l
+        JOIN Player p ON l.sellerId = p.playerId
+        LEFT JOIN Stove s ON l.stoveId = s.stoveId
+        LEFT JOIN StoveType st ON s.typeId = st.typeId
+        LEFT JOIN Lootbox lb ON l.lootboxId = lb.lootboxId
+        LEFT JOIN LootboxType lt ON lb.lootboxTypeId = lt.lootboxTypeId
+    `;
+
     /**
      * Retrieves all listings from the database.
      * @param limit - Maximum number of listings to return (default 100).
@@ -16,9 +32,7 @@ export class ListingService extends ServiceBase {
      */
     async getAllListings(limit: number = 100, offset: number = 0): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
-            `SELECT l.*, p.username as sellerName 
-             FROM Listing l
-             JOIN Player p ON l.sellerId = p.playerId
+            `${this.enrichedSelect}
              WHERE p.bannedAt IS NULL
              ORDER BY l.listedAt DESC
              LIMIT @limit OFFSET @offset`,
@@ -34,9 +48,7 @@ export class ListingService extends ServiceBase {
      */
     async getListingById(id: number): Promise<ListingRow | null> {
         const stmt = this.unit.prepare<ListingRow>(
-            `SELECT l.*, p.username as sellerName 
-             FROM Listing l
-             JOIN Player p ON l.sellerId = p.playerId
+            `${this.enrichedSelect}
              WHERE l.listingId = @id
                AND p.bannedAt IS NULL`,
             { id }
@@ -52,9 +64,7 @@ export class ListingService extends ServiceBase {
      */
     async getActiveListings(limit: number = 100, offset: number = 0): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
-            `SELECT l.*, p.username as sellerName 
-             FROM Listing l
-             JOIN Player p ON l.sellerId = p.playerId
+            `${this.enrichedSelect}
              WHERE l.status = 'active'
                AND p.bannedAt IS NULL
              ORDER BY l.listedAt DESC
@@ -94,26 +104,19 @@ export class ListingService extends ServiceBase {
             params.maxPrice = filters.maxPrice;
         }
 
-        let join = "";
-        if (filters.rarity?.length || filters.collection || filters.search) {
-            join += ` JOIN Stove s ON l.stoveId = s.stoveId JOIN StoveType st ON s.typeId = st.typeId `;
-            if (filters.rarity?.length) {
-                const placeholders = filters.rarity.map((_, i) => `@rarity${i}`).join(", ");
-                where += ` AND st.rarity IN (${placeholders})`;
-                filters.rarity.forEach((r, i) => { params[`rarity${i}`] = r; });
-            }
-            if (filters.collection) {
-                where += " AND st.collection = @collection";
-                params.collection = filters.collection;
-            }
-            if (filters.search) {
-                where += " AND (LOWER(st.name) LIKE @search OR LOWER(p.username) LIKE @search)";
-                const escaped = filters.search.toLowerCase().replace(/[%_\\]/g, "\\$&");
-                params.search = `%${escaped}%`;
-            }
-        } else if (filters.search) {
-            // Search without needing StoveType join (search by seller name only)
-            where += " AND LOWER(p.username) LIKE @search";
+        if (filters.rarity?.length) {
+            const placeholders = filters.rarity.map((_, i) => `@rarity${i}`).join(", ");
+            where += ` AND st.rarity IN (${placeholders})`;
+            filters.rarity.forEach((r, i) => { params[`rarity${i}`] = r; });
+        }
+
+        if (filters.collection) {
+            where += " AND st.collection = @collection";
+            params.collection = filters.collection;
+        }
+
+        if (filters.search) {
+            where += " AND (LOWER(st.name) LIKE @search OR LOWER(p.username) LIKE @search)";
             const escaped = filters.search.toLowerCase().replace(/[%_\\]/g, "\\$&");
             params.search = `%${escaped}%`;
         }
@@ -126,10 +129,7 @@ export class ListingService extends ServiceBase {
         params.offset = offset;
 
         const stmt = this.unit.prepare<ListingRow>(
-            `SELECT l.*, p.username as sellerName 
-             FROM Listing l
-             JOIN Player p ON l.sellerId = p.playerId
-             ${join}
+            `${this.enrichedSelect}
              WHERE ${where}
              ORDER BY ${orderBy}
              LIMIT @limit OFFSET @offset`,
@@ -145,9 +145,7 @@ export class ListingService extends ServiceBase {
      */
     async getListingsBySellerId(sellerId: number): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
-            `SELECT l.*, p.username as sellerName 
-             FROM Listing l
-             JOIN Player p ON l.sellerId = p.playerId
+            `${this.enrichedSelect}
              WHERE l.sellerId = @sellerId ORDER BY l.listedAt DESC`,
             { sellerId }
         );
@@ -161,9 +159,7 @@ export class ListingService extends ServiceBase {
      */
     async getActiveListingsBySellerId(sellerId: number): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
-            `SELECT l.*, p.username as sellerName 
-             FROM Listing l
-             JOIN Player p ON l.sellerId = p.playerId
+            `${this.enrichedSelect}
              WHERE l.sellerId = @sellerId AND l.status = 'active' AND p.bannedAt IS NULL ORDER BY l.listedAt DESC`,
             { sellerId }
         );
@@ -177,9 +173,7 @@ export class ListingService extends ServiceBase {
      */
     async getActiveListingByStoveId(stoveId: number): Promise<ListingRow | null> {
         const stmt = this.unit.prepare<ListingRow>(
-            `SELECT l.*, p.username as sellerName 
-             FROM Listing l
-             JOIN Player p ON l.sellerId = p.playerId
+            `${this.enrichedSelect}
              WHERE l.stoveId = @stoveId AND l.status = 'active' AND p.bannedAt IS NULL`,
             { stoveId }
         );
@@ -193,9 +187,7 @@ export class ListingService extends ServiceBase {
      */
     async getActiveListingByLootboxId(lootboxId: number): Promise<ListingRow | null> {
         const stmt = this.unit.prepare<ListingRow>(
-            `SELECT l.*, p.username as sellerName 
-             FROM Listing l
-             JOIN Player p ON l.sellerId = p.playerId
+            `${this.enrichedSelect}
              WHERE l.lootboxId = @lootboxId AND l.status = 'active' AND p.bannedAt IS NULL`,
             { lootboxId }
         );

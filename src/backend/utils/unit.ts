@@ -2270,6 +2270,9 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
         return "inserted";
     }
 
+    // Always ensure games exist (independent of player sample data — safe to re-run thanks to ON CONFLICT)
+    await insertGames();
+
     // Always ensure shop listings exist (independent of player sample data)
     const shopCheck = unit.prepare<{ cnt: number }>(`SELECT COUNT(*) as cnt FROM ShopListing`);
     const shopResult = await shopCheck.get();

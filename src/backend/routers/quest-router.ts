@@ -37,6 +37,110 @@ questRouter.get("/quests", requireAuth, async (req, res) => {
 
 /**
  * @openapi
+ * /quests/stats:
+ *   get:
+ *     summary: Get quest statistics
+ *     description: Returns aggregated quest stats for the logged-in player
+ *     tags:
+ *       - Quests
+ *     responses:
+ *       200:
+ *         description: Quest stats
+ *       401:
+ *         description: Unauthorized
+ */
+questRouter.get("/quests/stats", requireAuth, async (req, res) => {
+    const unit = await Unit.create(true);
+    try {
+        const questService = new QuestService(unit);
+        const stats = await questService.getQuestStats(req.playerId!);
+        res.status(StatusCodes.OK).json(stats);
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
+ * /quests/history:
+ *   get:
+ *     summary: Get quest history
+ *     description: Returns claimed quest history for the logged-in player
+ *     tags:
+ *       - Quests
+ *     parameters:
+ *       - name: limit
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *     responses:
+ *       200:
+ *         description: Quest history
+ *       401:
+ *         description: Unauthorized
+ */
+questRouter.get("/quests/history", requireAuth, async (req, res) => {
+    const unit = await Unit.create(true);
+    try {
+        const questService = new QuestService(unit);
+        const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+        const history = await questService.getQuestHistory(req.playerId!, limit);
+        res.status(StatusCodes.OK).json(history);
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
+ * /quests/claim-all:
+ *   post:
+ *     summary: Claim all quest rewards
+ *     description: Claims rewards for all completed unclaimed quests at once
+ *     tags:
+ *       - Quests
+ *     responses:
+ *       200:
+ *         description: Rewards claimed
+ *       400:
+ *         description: No quests to claim
+ *       401:
+ *         description: Unauthorized
+ */
+questRouter.post("/quests/claim-all", requireAuth, async (req, res) => {
+    const unit = await Unit.create(false);
+    try {
+        if (await checkPlayerBanned(unit, req.playerId!, res)) {
+            await unit.complete(false);
+            return;
+        }
+
+        const questService = new QuestService(unit);
+        const result = await questService.claimAllRewards(req.playerId!);
+
+        if (result.success) {
+            await unit.complete(true);
+            res.status(StatusCodes.OK).json(result);
+        } else {
+            await unit.complete(false);
+            res.status(StatusCodes.BAD_REQUEST).json(result);
+        }
+    } catch (err) {
+        await unit.complete(false);
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    }
+});
+
+/**
+ * @openapi
  * /quests/{id}/claim:
  *   post:
  *     summary: Claim quest reward
