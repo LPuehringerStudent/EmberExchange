@@ -350,7 +350,9 @@
             <p class="sidebar-empty text-[0.85rem] text-[var(--text-muted)] italic">No winners this round.</p>
           }
         </div>
-        <button class="action-btn action-btn--primary py-[10px] px-[22px] rounded-[10px] border text-[0.95rem] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1" (click)="handlePlayAgain()">Next Game</button>
+        @if (isHost()) {
+          <button class="action-btn action-btn--primary py-[10px] px-[22px] rounded-[10px] border text-[0.95rem] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1" (click)="handlePlayAgain()">Next Game</button>
+        }
       } @else {
         <!-- Player List -->
         <h2 class="sidebar-title mb-0.5 text-[0.8rem] font-semibold uppercase tracking-[0.10em] text-[var(--text-muted)]">Players</h2>

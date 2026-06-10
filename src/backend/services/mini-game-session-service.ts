@@ -95,6 +95,7 @@ export class MiniGameSessionService extends ServiceBase {
                 const engine = new AchievementEngine(this.unit);
                 await engine.checkMiniGameAchievements(playerId);
                 await engine.checkWealthAchievements(playerId);
+                await engine.checkLevelAchievements(playerId);
             } catch {
                 try { await this.unit.rollbackToSavepoint('achievements'); } catch { /* ignore */ }
             }

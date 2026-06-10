@@ -117,6 +117,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   resultImageUrl = signal<string>('');
   selectedLootboxId = signal<number | null>(null);
   selectedTypeName  = signal<string>('Standard Lootbox');
+  activeLootboxTypeId = signal<number | null>(null);
   returnToInventory = signal<boolean>(false);
 
   // Selector state
@@ -219,8 +220,10 @@ export class LootboxComponent implements AfterViewInit, OnInit {
           this.resultText.set('Selected lootbox is not available (it may be listed or already opened).');
           this.showPopup.set(true);
           this.selectedLootboxId.set(null);
+          this.activeLootboxTypeId.set(null);
         } else {
           this.selectedTypeName.set(this.getLootboxTypeName(found.lootboxTypeId));
+          this.activeLootboxTypeId.set(found.lootboxTypeId);
         }
       }
     } catch (err) {
@@ -239,10 +242,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   }
 
   getSelectedLootboxTypeId(): number | null {
-    const selectedId = this.selectedLootboxId();
-    if (selectedId === null) return null;
-    const box = this.availableLootboxes().find(b => b.lootboxId === selectedId);
-    return box?.lootboxTypeId ?? null;
+    return this.activeLootboxTypeId();
   }
 
   isDragonCrate(): boolean {
@@ -255,13 +255,14 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getRatesLabel(): string {
     const typeId = this.getSelectedLootboxTypeId();
-    if (typeId === null) return 'Standard Lootbox rates';
+    if (typeId === null) return 'Select a lootbox to see rates';
     const name = this.getLootboxTypeName(typeId);
     return `${name} rates`;
   }
 
   getDropRate(rarity: string): string {
-    const typeId = this.getSelectedLootboxTypeId() ?? 1; // default to Standard
+    const typeId = this.getSelectedLootboxTypeId();
+    if (typeId === null) return '-';
     const table = this.dropRates[typeId];
     if (!table) return '-';
     const entry = table.find(r => r.rarity === rarity);
@@ -295,11 +296,13 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     const box = this.availableLootboxes().find(b => b.lootboxId === lootboxId);
     if (box) {
       this.selectedTypeName.set(this.getLootboxTypeName(box.lootboxTypeId));
+      this.activeLootboxTypeId.set(box.lootboxTypeId);
     }
   }
 
   getPityForSelected(): PityProgress | undefined {
-    const typeId = this.getSelectedLootboxTypeId() ?? 1;
+    const typeId = this.getSelectedLootboxTypeId();
+    if (typeId === null) return undefined;
     return this.pityCounters()[typeId];
   }
 
@@ -369,6 +372,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
       if (available.length === 0) {
         this.selectedLootboxId.set(null);
+        this.activeLootboxTypeId.set(null);
         this.resultText.set(lootboxes.length > 0
           ? 'All your lootboxes are listed. Cancel a listing to open them.'
           : 'You have no lootboxes available.');
@@ -381,6 +385,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       const target = available.find(lb => lb.lootboxId === targetId);
       if (!target) {
         this.selectedLootboxId.set(null);
+        this.activeLootboxTypeId.set(null);
         this.resultText.set('Selected lootbox is not available (it may be listed or already opened).');
         this.showPopup.set(true);
         this.isOpening.set(false);
@@ -388,6 +393,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       }
 
       this.selectedTypeName.set(typeMap.get(target.lootboxTypeId) || 'Standard Lootbox');
+      this.activeLootboxTypeId.set(target.lootboxTypeId);
 
       const result = await firstValueFrom(this.lootboxApi.openLootbox(target.lootboxId, this.playerId));
 
@@ -472,6 +478,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     this.showPopup.set(false);
     this.isOpening.set(false);
     this.playingGif.set(false);
+    this.activeLootboxTypeId.set(null);
 
     const itemsEl = this.itemsElement()?.nativeElement;
     if (itemsEl) {
@@ -482,6 +489,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   closePopup(): void {
     if (this.returnToInventory()) {
+      this.activeLootboxTypeId.set(null);
       void this.router.navigate(['/inventory']);
     } else {
       this.resetAll();

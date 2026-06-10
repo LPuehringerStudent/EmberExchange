@@ -1,1 +1,57 @@
-/* No component-scoped styles needed — all styling is handled by Tailwind utilities */
+/* Card entrance animation */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.room-card {
+  animation: card-in 0.35s ease both;
+}
+.room-card:nth-child(1) { animation-delay: 0ms; }
+.room-card:nth-child(2) { animation-delay: 80ms; }
+.room-card:nth-child(3) { animation-delay: 160ms; }
+.room-card:nth-child(4) { animation-delay: 240ms; }
+.room-card:nth-child(5) { animation-delay: 320ms; }
+.room-card:nth-child(6) { animation-delay: 400ms; }
+
+/* Modal animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Range slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, #e85d04 var(--value, 50%), #2a2a3a var(--value, 50%));
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e85d04, #f48c06);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(232, 93, 4, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e85d04, #f48c06);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(232, 93, 4, 0.4);
+  cursor: pointer;
+}

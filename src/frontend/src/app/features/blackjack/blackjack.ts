@@ -305,6 +305,13 @@ export class BlackjackComponent {
     this.ws.sendAction('next_hand', {});
   }
 
+  readonly isHost = computed(() => {
+    const me = this.auth.getCurrentUser()?.playerId ?? 0;
+    const ps = this.ws.playersInRoom();
+    const host = ps.filter(p => p.connectionState === 'connected').sort((a, b) => a.seatIndex - b.seatIndex)[0];
+    return host?.playerId === me;
+  });
+
   executeBet(): void {
     const action = this.validActions().find((a) => a.type === 'bet');
     if (!action) return;

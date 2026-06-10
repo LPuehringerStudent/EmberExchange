@@ -9,8 +9,7 @@
           (click)="toggleFilter(); $event.stopPropagation()"
           [attr.aria-expanded]="filterOpen()"
           aria-haspopup="true"
-          aria-label="Filter options"
-        >
+          aria-label="Filter options">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                class="w-[18px] h-[18px] text-accent flex-shrink-0">
@@ -82,8 +81,37 @@
     </div>
   </header>
 
+  <!-- ───── LOADING STATE ───── -->
+  @if (gameService.loading()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      @for (_ of [1,2,3]; track $index) {
+        <div class="game-card skeleton bg-surface border border-border rounded-[20px] p-6 animate-pulse">
+          <div class="w-16 h-16 rounded-2xl bg-surface-secondary mb-4"></div>
+          <div class="h-5 w-32 bg-surface-secondary rounded mb-2"></div>
+          <div class="h-4 w-24 bg-surface-secondary rounded mb-4"></div>
+          <div class="h-3 w-full bg-surface-secondary rounded mb-2"></div>
+          <div class="h-3 w-2/3 bg-surface-secondary rounded"></div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ───── ERROR STATE ───── -->
+  @if (gameService.error()) {
+    <div class="flex flex-col items-center justify-center gap-3 py-16 text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+           class="w-10 h-10 text-red-500/60">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p class="text-text-secondary font-semibold">Failed to load games</p>
+      <p class="text-text-muted text-sm">{{ gameService.error() }}</p>
+      <button class="btn-primary mt-2" (click)="gameService.fetchGames()">Retry</button>
+    </div>
+  }
+
   <!-- ───── TRENDING STRIP ───── -->
-  @if (activeFilter() === 'all') {
+  @if (activeFilter() === 'all' && !gameService.loading() && !gameService.error()) {
     <section class="mb-9" aria-label="Trending games">
       <div class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.7px] text-accent mb-4">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -99,14 +127,9 @@
           <button class="trending-card flex items-center gap-3 px-[18px] py-3.5 bg-surface/85 backdrop-blur-[10px] border border-accent/15 rounded-[14px] min-w-[220px] cursor-pointer transition-all duration-250 shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex-shrink-0 text-left"
                   (click)="openGame(game)"
                   [attr.aria-label]="'Go to ' + game.title">
-            <span class="trending-icon flex items-center justify-center w-12 h-12 rounded-xl flex-shrink-0 p-2 box-border"
+            <span class="trending-icon flex items-center justify-center w-12 h-12 rounded-xl flex-shrink-0 text-2xl"
                   [style.background]="'linear-gradient(135deg, ' + game.accentColor + '22, ' + game.accentColor + '0a)'">
-              <svg viewBox="0 0 504.694 504.694" xmlns="http://www.w3.org/2000/svg"
-                   class="w-full h-full"
-                   [style.fill]="game.accentColor">
-                <path d="M338.357,18.713C335,5.284,320.731-3.11,308.141,1.087L23.603,65.717C10.173,69.074,2.619,83.343,5.977,96.772 l104.079,389.456c1.679,6.715,5.875,11.751,11.751,15.108c4.197,2.518,8.393,3.357,12.59,3.357c2.518,0,4.197,0,6.715-0.839 l5.036-1.679c-5.036-6.715-7.554-15.108-7.554-23.502v-41.967c-3.357,0-6.715-2.518-8.393-5.875 c-9.233-35.253-19.305-70.505-28.538-106.597C91.59,288.982,82.357,252.89,73.124,218.477c-0.839-4.197,1.679-9.233,5.875-10.072 s9.233,1.679,10.072,5.875c9.233,35.252,19.305,70.505,28.538,105.757c6.715,25.18,14.269,51.2,20.984,76.38V155.526 c-3.357,3.357-8.393,2.518-11.751-0.839l-11.751-13.43c0,0-0.839,0-0.839,0.839l-32.734,8.393c-0.839,0-0.839,0-1.679,0 l-3.357,17.626c-0.839,4.197-4.197,6.715-8.393,6.715c-0.839,0-0.839,0-1.679,0c-4.197-0.839-7.554-5.036-6.715-10.072 l15.108-73.023c0.839-3.357,3.357-5.875,5.875-6.715c3.357-0.839,6.715,0,8.393,2.518l49.521,55.397V75.789 c0-23.502,18.466-41.967,41.967-41.967h162.833L338.357,18.713z"/>
-                <path d="M474.331,50.608H180.56c-14.269,0-25.18,10.911-25.18,25.18v402.885c0,14.269,10.911,25.18,25.18,25.18h293.77 c14.269,0,25.18-10.911,25.18-25.18V75.789C499.511,61.52,488.6,50.608,474.331,50.608z M306.462,84.182h151.082 c5.036,0,8.393,3.357,8.393,8.393V343.54c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-242.57H306.462 c-5.036,0-8.393-3.357-8.393-8.393S301.426,84.182,306.462,84.182z M188.954,92.576c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v26.859L232.6,86.7c3.357-3.357,8.393-4.197,11.751-0.839s4.197,8.393,0.839,11.751l-22.662,26.859 l31.056,47.003c2.518,4.197,1.679,9.233-2.518,11.751c0,0.839-1.679,1.679-3.357,1.679c-2.518,0-5.036-1.679-6.715-3.357 l-28.538-42.807l-6.715,7.554v30.216c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393V92.576z M365.216,470.28 l-167.869,0.839c-2.518,0-4.197-0.839-5.875-2.518c-1.679-1.679-2.518-3.357-2.518-5.875V210.923c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v243.41l159.475-0.839c5.036,0,8.393,3.357,8.393,8.393C373.609,466.084,370.252,470.28,365.216,470.28z M361.859,351.094l7.554,18.466c1.679,3.357,1.679,7.554-0.839,10.911c-2.518,3.357-5.875,5.875-10.072,5.875H296.39 c-4.197,0-8.393-2.518-10.072-5.875c-1.679-3.357-2.518-7.554-0.839-10.911l5.875-18.466c-4.197,1.679-7.554,1.679-11.751,1.679 c-15.948,0-31.056-6.715-41.967-18.466c-10.911-10.911-15.948-26.02-15.108-40.289c0.839-16.787,10.911-32.734,27.698-43.646 c8.393-5.036,15.948-8.393,24.341-8.393c-2.518-5.875-3.357-13.43-3.357-20.984c0-16.787,7.554-32.734,20.984-43.646 c13.43-10.911,30.216-15.108,47.003-10.911c21.823,4.197,38.61,21.823,42.807,43.646c2.518,11.751,1.679,22.662-1.679,31.895 c8.393,0.839,15.948,3.357,24.341,9.233c16.787,10.911,26.859,26.02,27.698,43.646c0.839,15.108-4.197,29.377-15.108,40.289 c-10.911,11.751-26.859,18.466-41.967,18.466C370.252,352.772,366.055,351.933,361.859,351.094z M467.616,461.887h-1.679 c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-26.859l-26.859,32.734c-1.679,1.679-4.197,2.518-6.715,2.518 c-1.679,0-4.197-0.839-5.036-1.679c-3.357-3.357-4.197-8.393-0.839-11.751l22.662-26.859l-31.056-47.003 c-2.518-4.197-1.679-9.233,2.518-11.751c4.197-2.518,9.233-1.679,11.751,2.518l28.538,42.807l6.715-7.554v-31.056 c0-5.036,3.357-8.393,8.393-8.393c5.036,0,8.393,3.357,8.393,8.393V461.887z"/>
-              </svg>
+              {{ game.icon }}
             </span>
             <div class="flex flex-col gap-[3px] flex-1">
               <span class="text-sm font-bold text-text-primary">{{ game.title }}</span>
@@ -119,145 +142,112 @@
     </section>
   }
 
-  <!-- ───── GAMES LIST ───── -->
-  <section class="flex-1" aria-label="Games list">
-    <div class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.7px] text-accent mb-4">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-           class="w-4 h-4">
-        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-        <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-      </svg>
-      {{ filterLabel() }} &mdash; {{ filteredGames().length }} Results
-    </div>
-
-    @if (filteredGames().length === 0) {
-      <div class="flex flex-col items-center justify-center gap-3.5 py-16 px-5 text-center bg-surface-secondary/60 rounded-[20px] border border-dashed border-accent/20">
+  <!-- ───── GAMES GRID ───── -->
+  @if (!gameService.loading() && !gameService.error()) {
+    <section aria-label="Games list">
+      <div class="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.7px] text-accent mb-4">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-             class="w-10 h-10 text-accent/35">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             class="w-4 h-4">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
         </svg>
-        <p class="m-0 text-text-muted text-[15px]">No favorites yet — star a game to save it here.</p>
+        {{ filterLabel() }} — {{ filteredGames().length }} Results
       </div>
-    }
 
-    <div class="flex flex-col bg-surface/85 backdrop-blur-[12px] border border-accent/12 rounded-[20px] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.07)]">
-      @for (game of filteredGames(); track game.id; let i = $index) {
-        <article
-          class="game-row flex items-center gap-0 px-6 py-5 cursor-pointer transition-colors duration-200 border-b border-black/5 relative last:border-b-0 hover:bg-accent/4"
-          [style.--accent]="game.accentColor"
-          [style.animation-delay]="(i * 70) + 'ms'"
-          (click)="openGame(game)"
-          tabindex="0"
-          role="button"
-          [attr.aria-label]="'Open ' + game.title"
-          (keydown.enter)="openGame(game)"
-        >
-          <!-- Left: icon thumbnail -->
-          <div class="row-icon-wrap">
-            <svg viewBox="0 0 504.694 504.694" xmlns="http://www.w3.org/2000/svg"
-                 class="row-card-svg" aria-hidden="true">
-              <path d="M338.357,18.713C335,5.284,320.731-3.11,308.141,1.087L23.603,65.717C10.173,69.074,2.619,83.343,5.977,96.772 l104.079,389.456c1.679,6.715,5.875,11.751,11.751,15.108c4.197,2.518,8.393,3.357,12.59,3.357c2.518,0,4.197,0,6.715-0.839 l5.036-1.679c-5.036-6.715-7.554-15.108-7.554-23.502v-41.967c-3.357,0-6.715-2.518-8.393-5.875 c-9.233-35.253-19.305-70.505-28.538-106.597C91.59,288.982,82.357,252.89,73.124,218.477c-0.839-4.197,1.679-9.233,5.875-10.072 s9.233,1.679,10.072,5.875c9.233,35.252,19.305,70.505,28.538,105.757c6.715,25.18,14.269,51.2,20.984,76.38V155.526 c-3.357,3.357-8.393,2.518-11.751-0.839l-11.751-13.43c0,0-0.839,0-0.839,0.839l-32.734,8.393c-0.839,0-0.839,0-1.679,0 l-3.357,17.626c-0.839,4.197-4.197,6.715-8.393,6.715c-0.839,0-0.839,0-1.679,0c-4.197-0.839-7.554-5.036-6.715-10.072 l15.108-73.023c0.839-3.357,3.357-5.875,5.875-6.715c3.357-0.839,6.715,0,8.393,2.518l49.521,55.397V75.789 c0-23.502,18.466-41.967,41.967-41.967h162.833L338.357,18.713z"/>
-              <path d="M474.331,50.608H180.56c-14.269,0-25.18,10.911-25.18,25.18v402.885c0,14.269,10.911,25.18,25.18,25.18h293.77 c14.269,0,25.18-10.911,25.18-25.18V75.789C499.511,61.52,488.6,50.608,474.331,50.608z M306.462,84.182h151.082 c5.036,0,8.393,3.357,8.393,8.393V343.54c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-242.57H306.462 c-5.036,0-8.393-3.357-8.393-8.393S301.426,84.182,306.462,84.182z M188.954,92.576c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v26.859L232.6,86.7c3.357-3.357,8.393-4.197,11.751-0.839s4.197,8.393,0.839,11.751l-22.662,26.859 l31.056,47.003c2.518,4.197,1.679,9.233-2.518,11.751c0,0.839-1.679,1.679-3.357,1.679c-2.518,0-5.036-1.679-6.715-3.357 l-28.538-42.807l-6.715,7.554v30.216c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393V92.576z M365.216,470.28 l-167.869,0.839c-2.518,0-4.197-0.839-5.875-2.518c-1.679-1.679-2.518-3.357-2.518-5.875V210.923c0-5.036,3.357-8.393,8.393-8.393 s8.393,3.357,8.393,8.393v243.41l159.475-0.839c5.036,0,8.393,3.357,8.393,8.393C373.609,466.084,370.252,470.28,365.216,470.28z M361.859,351.094l7.554,18.466c1.679,3.357,1.679,7.554-0.839,10.911c-2.518,3.357-5.875,5.875-10.072,5.875H296.39 c-4.197,0-8.393-2.518-10.072-5.875c-1.679-3.357-2.518-7.554-0.839-10.911l5.875-18.466c-4.197,1.679-7.554,1.679-11.751,1.679 c-15.948,0-31.056-6.715-41.967-18.466c-10.911-10.911-15.948-26.02-15.108-40.289c0.839-16.787,10.911-32.734,27.698-43.646 c8.393-5.036,15.948-8.393,24.341-8.393c-2.518-5.875-3.357-13.43-3.357-20.984c0-16.787,7.554-32.734,20.984-43.646 c13.43-10.911,30.216-15.108,47.003-10.911c21.823,4.197,38.61,21.823,42.807,43.646c2.518,11.751,1.679,22.662-1.679,31.895 c8.393,0.839,15.948,3.357,24.341,9.233c16.787,10.911,26.859,26.02,27.698,43.646c0.839,15.108-4.197,29.377-15.108,40.289 c-10.911,11.751-26.859,18.466-41.967,18.466C370.252,352.772,366.055,351.933,361.859,351.094z M467.616,461.887h-1.679 c0,5.036-3.357,8.393-8.393,8.393s-8.393-3.357-8.393-8.393v-26.859l-26.859,32.734c-1.679,1.679-4.197,2.518-6.715,2.518 c-1.679,0-4.197-0.839-5.036-1.679c-3.357-3.357-4.197-8.393-0.839-11.751l22.662-26.859l-31.056-47.003 c-2.518-4.197-1.679-9.233,2.518-11.751c4.197-2.518,9.233-1.679,11.751,2.518l28.538,42.807l6.715-7.554v-31.056 c0-5.036,3.357-8.393,8.393-8.393c5.036,0,8.393,3.357,8.393,8.393V461.887z"/>
-            </svg>
-          </div>
+      @if (filteredGames().length === 0) {
+        <div class="flex flex-col items-center justify-center gap-3.5 py-16 px-5 text-center bg-surface-secondary/60 rounded-[20px] border border-dashed border-accent/20">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+               class="w-10 h-10 text-accent/35">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <p class="m-0 text-text-muted text-[15px]">No games found.</p>
+        </div>
+      }
 
-          <!-- Center: info -->
-          <div class="flex-1 flex flex-col gap-1.5 min-w-0">
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <h3 class="row-title m-0 text-[1.05rem] font-bold text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">{{ game.title }}</h3>
-              @if (game.trending) {
-                <span class="px-2.5 py-[3px] bg-gradient-to-br from-accent to-[#f48c06] text-white rounded-full text-[10px] font-bold tracking-[0.4px] flex-shrink-0">Trending</span>
-              }
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        @for (game of filteredGames(); track game.id; let i = $index) {
+          <article
+            class="game-card group relative bg-surface border border-border rounded-[20px] p-6 cursor-pointer transition-all duration-300 overflow-hidden hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] hover:border-accent/20"
+            [style.--accent]="game.accentColor"
+            (click)="openGame(game)"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="'Open ' + game.title"
+            (keydown.enter)="openGame(game)">
+
+            <!-- Top accent bar -->
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--accent)] to-[#f48c06] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+            <div class="flex items-start justify-between mb-4">
+              <!-- Game icon -->
+              <div class="card-icon-wrap flex items-center justify-center w-16 h-16 rounded-2xl text-3xl"
+                   [style.background]="'linear-gradient(135deg, ' + game.accentColor + '18, ' + game.accentColor + '08)'"
+                   [style.border]="'1px solid ' + game.accentColor + '30'">
+                {{ game.icon }}
+              </div>
+
+              <!-- Favorite toggle -->
+              <button
+                class="fav-btn flex items-center justify-center w-9 h-9 bg-surface-secondary/90 border border-black/8 rounded-[10px] cursor-pointer transition-all duration-200 text-text-muted hover:bg-accent/8 hover:border-accent hover:text-accent"
+                [class.active]="game.isFavorite"
+                (click)="toggleFavorite(game, $event)"
+                [attr.aria-label]="game.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+                [attr.aria-pressed]="game.isFavorite">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                     [attr.fill]="game.isFavorite ? 'currentColor' : 'none'"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     class="w-[15px] h-[15px] transition-transform duration-200">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              </button>
             </div>
 
-            <p class="row-genre flex items-center gap-1.5 m-0 text-xs font-semibold">
-              <span class="genre-dot w-[7px] h-[7px] rounded-full flex-shrink-0" [style.background]="game.accentColor"></span>
-              {{ game.genre }}
-            </p>
+            <!-- Title & genre -->
+            <div class="mb-3">
+              <div class="flex items-center gap-2 mb-1">
+                <h3 class="m-0 text-lg font-bold text-text-primary">{{ game.title }}</h3>
+                @if (game.trending) {
+                  <span class="px-2 py-[3px] bg-gradient-to-br from-accent to-[#f48c06] text-white rounded-full text-[10px] font-bold tracking-[0.4px] flex-shrink-0">Trending</span>
+                }
+              </div>
+              <p class="m-0 text-xs font-semibold" [style.color]="game.accentColor">{{ game.genre }}</p>
+            </div>
 
-            <p class="row-desc m-0 text-[13px] text-text-muted leading-normal line-clamp-1">{{ game.description }}</p>
+            <!-- Description -->
+            <p class="m-0 text-[13px] text-text-muted leading-normal line-clamp-2 mb-4">{{ game.description }}</p>
 
-            <div class="row-meta-line flex items-center justify-between gap-3 flex-wrap mt-1">
+            <!-- Meta row -->
+            <div class="flex items-center justify-between gap-3 mt-auto">
               <div class="flex gap-1.5 flex-wrap">
-                @for (tag of game.tags; track tag) {
+                @for (tag of game.tags.slice(0, 3); track tag) {
                   <span class="px-2.5 py-[3px] bg-surface-secondary/95 border border-black/8 rounded-full text-[11px] font-semibold text-text-secondary">{{ tag }}</span>
                 }
               </div>
 
-              <div class="flex items-center gap-2.5 flex-shrink-0">
-                <!-- Friends -->
-                @if (game.friendsPlayed.length > 0) {
-                  <div class="friends-played flex items-center gap-1" [attr.aria-label]="game.friendsPlayed.length + ' friends played'">
-                    @for (friend of visibleFriends(game.friendsPlayed); track friend.name) {
-                      <span class="friend-avatar inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-accent to-[#f48c06] text-white text-[10px] font-bold border-2 border-surface shadow-[0_2px_6px_rgba(0,0,0,0.1)]" [attr.title]="friend.name">{{ friend.avatar }}</span>
-                    }
-                    @if (extraFriends(game.friendsPlayed) > 0) {
-                      <span class="friend-avatar extra inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-secondary text-text-muted text-[9px] font-bold border-2 border-surface shadow-[0_2px_6px_rgba(0,0,0,0.1)]">+{{ extraFriends(game.friendsPlayed) }}</span>
-                    }
-                    <span class="text-[11px] text-text-muted ml-1">played</span>
-                  </div>
-                }
-
-                <!-- Date -->
-                <span class="meta-chip flex items-center gap-1 text-xs text-text-muted font-medium">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                       class="w-3 h-3">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                  {{ formatDate(game.releaseDate) }}
-                </span>
-
-                <!-- Play count -->
-                <span class="meta-chip plays flex items-center gap-1 text-xs font-semibold">
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <span class="flex items-center gap-1 text-xs text-text-muted font-medium">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                        class="w-3 h-3">
                     <polygon points="5 3 19 12 5 21 5 3"/>
                   </svg>
-                  {{ formatPlayCount(game.playCount) }} plays
+                  {{ formatPlayCount(game.playCount) }}
                 </span>
               </div>
             </div>
-          </div>
 
-          <!-- Right: actions -->
-          <div class="flex flex-col items-center gap-2 ml-4 flex-shrink-0">
-            <button
-              class="fav-btn flex items-center justify-center w-[34px] h-[34px] bg-surface-secondary/90 border border-black/8 rounded-[10px] cursor-pointer transition-all duration-200 text-text-muted hover:bg-accent/8 hover:border-accent hover:text-accent"
-              [class.active]="game.isFavorite"
-              [class.bg-accent/10]="game.isFavorite"
-              [class.border-accent/40]="game.isFavorite"
-              [class.text-accent]="game.isFavorite"
-              (click)="toggleFavorite(game, $event)"
-              [attr.aria-label]="game.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
-              [attr.aria-pressed]="game.isFavorite"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                   [attr.fill]="game.isFavorite ? 'currentColor' : 'none'"
-                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                   class="w-[15px] h-[15px] transition-transform duration-200">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
-            </button>
-
-            <button class="play-arrow-btn flex items-center justify-center w-[34px] h-[34px] border-0 rounded-[10px] cursor-pointer text-white transition-all duration-200"
-                    [attr.aria-label]="'Play ' + game.title"
-                    (click)="openGame(game); $event.stopPropagation()">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                   class="w-[15px] h-[15px]">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-                <polyline points="12 5 19 12 12 19"/>
-              </svg>
-            </button>
-          </div>
-        </article>
-      }
-    </div>
-  </section>
+            <!-- Play button (visible on hover) -->
+            <div class="mt-4 pt-4 border-t border-border opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <button class="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-200 hover:-translate-y-0.5"
+                      [style.background]="'linear-gradient(135deg, ' + game.accentColor + ', #f48c06)'">
+                Play Now
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
 </div>

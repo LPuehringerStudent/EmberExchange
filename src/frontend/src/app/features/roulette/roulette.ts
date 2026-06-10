@@ -225,6 +225,13 @@ export class RouletteComponent {
     this.ws.sendAction('next_hand', {});
   }
 
+  readonly isHost = computed(() => {
+    const me = this.auth.getCurrentUser()?.playerId ?? 0;
+    const ps = this.ws.playersInRoom();
+    const host = ps.filter(p => p.connectionState === 'connected').sort((a, b) => a.seatIndex - b.seatIndex)[0];
+    return host?.playerId === me;
+  });
+
   getWinnerForPlayer(playerId: number): WinnerView | undefined {
     return this.winners().find((w) => w.playerId === playerId);
   }

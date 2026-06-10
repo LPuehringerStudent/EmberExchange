@@ -828,6 +828,17 @@ gloryRouter.post("/players/:playerId/prestige", requireAuth, async (req, res) =>
             return;
         }
         const result = await service.doPrestige(playerId);
+
+        // Check achievements after prestige
+        try {
+            const { AchievementEngine } = await import("../services/achievement-engine");
+            const engine = new AchievementEngine(unit);
+            await engine.checkLevelAchievements(playerId);
+            await engine.checkWealthAchievements(playerId);
+        } catch {
+            // Ignore achievement errors
+        }
+
         await unit.complete(true);
         res.status(StatusCodes.OK).json(result);
     } catch (err) {

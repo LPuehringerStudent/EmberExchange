@@ -48,17 +48,27 @@ export class RoomService extends ServiceBase {
         return (await stmt.run()).changes === 1;
     }
 
-    async listRoomsByGameType(gameType: string, status?: RoomStatus): Promise<RoomRow[]> {
+    async listRoomsByGameType(gameType: string, status?: RoomStatus): Promise<(RoomRow & { playerCount: number })[]> {
+        const sql = `
+            SELECT r.*, COALESCE(pc.count, 0) as "playerCount"
+            FROM Room r
+            LEFT JOIN (
+                SELECT roomId, COUNT(*) as count
+                FROM RoomPlayer
+                GROUP BY roomId
+            ) pc ON r.roomId = pc.roomId
+            WHERE r.gameType = @gameType
+            ${status ? "AND r.status = @status" : ""}
+            ORDER BY r.createdAt DESC
+        `;
         if (status) {
-            const stmt = this.unit.prepare<RoomRow, { gameType: string; status: string }>(
-                `SELECT * FROM Room WHERE gameType = @gameType AND status = @status ORDER BY createdAt DESC`,
-                { gameType, status }
+            const stmt = this.unit.prepare<RoomRow & { playerCount: number }, { gameType: string; status: string }>(
+                sql, { gameType, status }
             );
             return await stmt.all();
         }
-        const stmt = this.unit.prepare<RoomRow, { gameType: string }>(
-            `SELECT * FROM Room WHERE gameType = @gameType ORDER BY createdAt DESC`,
-            { gameType }
+        const stmt = this.unit.prepare<RoomRow & { playerCount: number }, { gameType: string }>(
+            sql, { gameType }
         );
         return await stmt.all();
     }

@@ -236,7 +236,7 @@
           Spin the Wheel
         </button>
       }
-      @if (canNextHand()) {
+      @if (canNextHand() && isHost()) {
         <button class="rl-btn rl-btn--next" (click)="nextHand()">Next Round</button>
       }
       @if (!canBet() && !canSpin() && !canNextHand()) {

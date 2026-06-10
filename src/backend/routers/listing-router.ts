@@ -614,6 +614,15 @@ listingRouter.post("/listings", requireAuth, async (req, res) => {
             } catch {
                 // Ignore XP errors
             }
+
+            // Check level achievements after XP gain
+            try {
+                const { AchievementEngine } = await import("../services/achievement-engine");
+                const engine = new AchievementEngine(unit);
+                await engine.checkLevelAchievements(sellerId);
+            } catch {
+                // Ignore achievement errors
+            }
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create listing" });
         }

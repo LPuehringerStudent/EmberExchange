@@ -1,88 +1,26 @@
-/* Player card states */
-.player-card.disconnected { opacity: 0.6; border-color: var(--border-color); }
-.player-card.disconnected .player-state { color: #dc2626; }
-
-/* Player banners - complex pseudo-element animations, keep in CSS */
-.player-banner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  border-radius: 16px 16px 0 0;
+/* Toast slide down */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-.player-banner.banner-particles::before,
-.player-banner.banner-golden::before,
-.player-banner.banner-neon::before,
-.player-banner.banner-fire::before,
-.player-banner.banner-ice::before,
-.player-banner.banner-royal::before,
-.player-banner.banner-celebration::before,
-.player-banner.banner-dragon::before,
-.player-banner.banner-winter::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 16px 16px 0 0;
+/* Chat slide up */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.player-banner.banner-golden::before {
-  background: linear-gradient(90deg, #e85d04, #ffd700, #e85d04);
-  background-size: 200% 100%;
-  animation: goldShimmer 3s linear infinite;
+/* Player card entrance */
+@keyframes player-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
 }
-
-.player-banner.banner-particles::before {
-  background:
-    radial-gradient(circle at 10% 30%, rgba(255, 107, 53, 0.55) 0%, transparent 45%),
-    radial-gradient(circle at 90% 70%, rgba(33, 150, 243, 0.5) 0%, transparent 45%),
-    radial-gradient(circle at 50% 15%, rgba(186, 74, 255, 0.4) 0%, transparent 40%);
-  animation: particleFloat 3s ease-in-out infinite;
+.player-card {
+  animation: player-in 0.3s ease both;
 }
-
-.player-banner.banner-neon::before {
-  background: linear-gradient(90deg, #00f260, #0575e6);
-  box-shadow: 0 0 8px rgba(0, 242, 96, 0.4);
-}
-
-.player-banner.banner-fire::before {
-  background: linear-gradient(90deg, #ff416c, #ff4b2b);
-  box-shadow: 0 0 8px rgba(255, 65, 108, 0.3);
-}
-
-.player-banner.banner-ice::before {
-  background: linear-gradient(90deg, #00c6ff, #0072ff);
-  box-shadow: 0 0 8px rgba(0, 198, 255, 0.3);
-}
-
-.player-banner.banner-royal::before {
-  background: linear-gradient(90deg, #ffd700, #ff8c00);
-  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
-}
-
-.player-banner.banner-celebration::before {
-  background: linear-gradient(90deg, #ff00cc, #333399);
-  box-shadow: 0 0 8px rgba(255, 0, 204, 0.3);
-}
-
-.player-banner.banner-dragon::before {
-  background: linear-gradient(90deg, #ff4500, #ff8c00, #ffd700);
-  box-shadow: 0 0 8px rgba(255, 69, 0, 0.4);
-}
-
-.player-banner.banner-winter::before {
-  background: linear-gradient(90deg, #00e5ff, #80deea, #e1f5fe);
-  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
-}
-
-@keyframes goldShimmer {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-
-@keyframes particleFloat {
-  0%, 100% { opacity: 0.8; transform: translateY(0) scale(1); }
-  33% { opacity: 1; transform: translateY(-1px) scale(1.02); }
-  66% { opacity: 0.9; transform: translateY(1px) scale(0.98); }
-}
+.player-card:nth-child(1) { animation-delay: 0ms; }
+.player-card:nth-child(2) { animation-delay: 60ms; }
+.player-card:nth-child(3) { animation-delay: 120ms; }
+.player-card:nth-child(4) { animation-delay: 180ms; }
+.player-card:nth-child(5) { animation-delay: 240ms; }
+.player-card:nth-child(6) { animation-delay: 300ms; }

@@ -63,9 +63,8 @@ export class Poker {
   private ws = inject(WebSocketService);
   private auth = inject(AuthService);
 
-  /* ── Base64 coal icon used as currency symbol ── */
-  readonly coalIconSrc =
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAAACLz2ctAAAABHNCSVQICAgIfAhkiAAAAL56VFh0UmF3IHByb2ZpbGUgdHlwZSBBUFAxAAAYlX1P0Q7CIAx85yv2CdcWCnwOMZtZYtTs/x8sAeZm1CNQetBez13n+7ytl+m5PZb1NrupggHns89cACQ0CEAMqtHOhh6F7GZFiD3nFjWnCH/4V3BCsB8qStF2K6hHbn38kBW2ZT0KvmmjDnnQ2CXkBx8++P7AKL564M6n4Xu0C5LU2ySkQVVZpTJClpPds+D/6iJNl9/+Altt6tzZN+11BvcCMLVWXKwegSQAAAMTSURBVHic7d3RThNRGIXRQRpLo4VClHhBfP/nMlyQaKTaxrYEg2+file:/C:/Users/david_bmq3pz5/Documents/htl_leonding/3IHIF/JavaScript/project_ember_exchange/EmberExchange/src/frontend/src/app/features/poker/poker.htmlg2+SYXWGt65N2Br6ci/lzptMEAAAAAAAAAAAAAADA/+akfQGj3Nx8fGpfw+/c3n56Nn/rkV61L4CXTYBUCZAqAVIlQKoESJUAqRIgVQKkSoBUCZCqWfsC/iSdcFxdraLPm83G3vLj42O6NLqPlzYxsQNSJUCqBEiVAKkSIFUCpEqAVAmQKgFSJUCqqk1CUvXJyWjpxKGF9IQjZQekSoBUCZAqAVIlQKoESJUAqRIgVQKkSoBUHf0kJJVOLEqYlNSYlJSAVAmQKgFSJUCqBEiVAKkSIFUCpEqAVB3954R0IvL+/n60brVaRetOTrIfVk/PmIQDk9joMyPX1++iddvtLvrDrNefh05M7IBUCZAqAVIlQKoESJUAqRIgVQKkSoBUCZCampCUun9+sVhE686O2Q+rp2dMwoFJbPQZkZyY2AGpEiBVAqRKgFQJkCoBUiVAqgRIlQCpqj0JmU4Y8uvr7AhH+oy0JLUDUiVAqgRIlQCpEiBVAqRKgFQJkCoBUiVAqmpPQh4dHUXrTk+zIxzpyUn6jDE7IFUCpEqAVAmQKgFSJUCqBEiVAKkSIFXVnoS8u7uL1qVnQNLJx+npWfQZk3BgEht9RiQnJnZAqgRIlQCpEiBVAqRKgFQJkCoBUiVAqo7+c0I6Ybi6WkWfN5uNveXHx8d0aXQfL21iYgekSoBUCZAqAVIlQKoESJUAqRIgVQKkSoBUCZCqWfsC/iSdcFxdraLPm83G3vLj42O6NLqPlzYxsQNSJUCqBEiVAKkSIFUCpEqAVAmQKgFSJUCqqk1CUvXJyWjpxKGF9IQjZQekSoBUCZAqAVIlQKoESJUAqRIgVQKkSoBUHf0kJJVOLEqYlNSYlJSAVAmQKgFSJUCqBEiVAKkSIFUCpEqAVB3954R0IvL+/n60brVaRetOTrIfVk/PmIQDk9joMyPX1++iddvtLvrDrNefh05M7IBUCZAqAVIlQKoESJUAqRIgVQKkSoBUCZCampCUun9+sVhE686O2Q+rp2dMwoFJbPQZkZyY2AGpEiBVAqRKgFQJkCoBUiVAqgRIlQCpqj0JmU4Y8uvr7AhH+oy0JLUDUiVAqgRIlQCpEiBVAqRKgFQJkCoBUiVAqmpPQh4dHUXrTk+zIxzpyUn6jDE7IFUCpEqAVAmQKgFSJUCqBEiVAKkSIFXVnoS8u7uL1qVnQNLJx+npWfQZk3BgEht9RiQnJnZAqgRIlQCpEiBVAqRKgFQJkCoBUiVAqo7+c0I6Ybi6WkWfN5uNveXHx8d0aXQfL21iYgekSoBUCZAqAVIlQKoESJUAqRIgVQKkSoBUCZCqWfsC/iSdcFxdraLPm83G3vLj42O6NLqPlzYxsQNSJUCqBEiVAKkSIFUCpEqAVAmQKgFSJUCqqk1CUvXJyWjpxKGF9IQjZQekSoBUCZAqAVIlQKoESJUAqRIgVQKkSoBUHf0kJJVOLHKSkgD/ASG6zY0QrTsoAAAAAElFTkSuQmCC';
+  /* ── Tiny SVG coal icon used as currency symbol ── */
+  readonly coalIconSrc = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e85d04"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="9" r="3" fill="%23f48c06" opacity="0.6"/><circle cx="16" cy="15" r="2" fill="%23f48c06" opacity="0.4"/></svg>';
 
   readonly stateBlob = this.ws.stateBlob;
   readonly lastError = this.ws.lastError;
@@ -361,23 +360,21 @@ export class Poker {
   /* ─── Start game flow ─── */
 
   handleStartGame(): void {
-    this.isLoading.set(true);
-    setTimeout(() => {
-      this.isLoading.set(false);
-      this.gameStarted.set(true);
-      this.ws.sendStartGame();
-    }, 2500);
+    this.ws.sendStartGame();
   }
 
   /* ─── Play again flow ─── */
 
   handlePlayAgain(): void {
-    this.isLoading.set(true);
-    setTimeout(() => {
-      this.isLoading.set(false);
-      this.ws.sendAction('next_hand', {});
-    }, 2500);
+    this.ws.sendAction('next_hand', {});
   }
+
+  readonly isHost = computed(() => {
+    const me = this.auth.getCurrentUser()?.playerId ?? 0;
+    const ps = this.ws.playersInRoom();
+    const host = ps.filter(p => p.connectionState === 'connected').sort((a, b) => a.seatIndex - b.seatIndex)[0];
+    return host?.playerId === me;
+  });
 
   /* ─── Card helpers ─── */
 

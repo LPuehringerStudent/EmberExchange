@@ -39,6 +39,8 @@ export class WebSocketService {
   readonly incomingChatMessage = signal<ChatMessageRow | null>(null);
   readonly incomingTradeUpdate = signal<{ messageId: number; status: string } | null>(null);
   readonly incomingNotification = signal<Partial<NotificationRow> | null>(null);
+  readonly roomChatMessages = signal<Array<{ playerId: number; username: string; content: string; timestamp: number }>>([]);
+  readonly roomChatUnread = signal<number>(0);
 
   connect(): void {
     if (this.ws) {
@@ -185,6 +187,16 @@ export class WebSocketService {
     });
   }
 
+  sendRoomChat(content: string): void {
+    if (!this.currentRoomId) return;
+    this.send({
+      type: 'room_chat',
+      payload: { roomId: this.currentRoomId, content },
+      clientTimestamp: Date.now(),
+      sequenceNumber: this.nextSeq()
+    });
+  }
+
   private send(msg: Record<string, unknown>): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg));
@@ -245,6 +257,15 @@ export class WebSocketService {
       case 'chat_message': {
         const chatMsg = payload as unknown as ChatMessageRow;
         this.incomingChatMessage.set(chatMsg);
+        break;
+      }
+      case 'room_chat_message': {
+        const rc = payload as { playerId: number; content: string; timestamp: number } | undefined;
+        if (rc) {
+          const username = (this.playersInRoom().find(p => p.playerId === rc.playerId)?.username) || `Player ${rc.playerId}`;
+          this.roomChatMessages.update(msgs => [...msgs, { ...rc, username }]);
+          this.roomChatUnread.update(n => n + 1);
+        }
         break;
       }
       case 'trade_offer_update': {

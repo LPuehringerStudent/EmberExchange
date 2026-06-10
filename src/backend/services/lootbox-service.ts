@@ -339,6 +339,7 @@ export class LootboxService extends ServiceBase {
             const engine = new AchievementEngine(this.unit);
             await engine.checkLootboxAchievements(playerId);
             await engine.checkWealthAchievements(playerId);
+            await engine.checkLevelAchievements(playerId);
         } catch {
             try { await this.unit.rollbackToSavepoint('lootbox_achievements'); } catch { /* ignore */ }
         }
