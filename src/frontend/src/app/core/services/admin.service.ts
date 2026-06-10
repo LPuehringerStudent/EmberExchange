@@ -16,6 +16,7 @@ export interface AdminSystemStats {
   bannedPlayers: number;
   totalListings: number;
   totalCoinTransactions: number;
+  totalEligiblePlayers: number;
 }
 
 export interface AdminPlayerList {

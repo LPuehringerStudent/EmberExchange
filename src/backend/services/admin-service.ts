@@ -46,6 +46,7 @@ export interface AdminSystemStats {
     bannedPlayers: number;
     totalListings: number;
     totalCoinTransactions: number;
+    totalEligiblePlayers: number;
 }
 
 export interface CoinAdjustmentRequest {
@@ -191,6 +192,9 @@ export class AdminService extends ServiceBase {
     // ── System Stats ───────────────────────────────────────────
 
     async getSystemStats(): Promise<AdminSystemStats> {
+        // Exclude shop NPC, WebSocket test bots, e2e test accounts, and banned players
+        const eligibleWhere = "WHERE username != '__shop__' AND bannedAt IS NULL AND username NOT ILIKE 'ws_test_%' AND username NOT ILIKE 'e2e_%'";
+
         const totalPlayers = await this.unit.prepare<{ cnt: number }>(
             "SELECT COUNT(*)::int as cnt FROM Player WHERE username != '__shop__'"
         ).get();
@@ -207,10 +211,10 @@ export class AdminService extends ServiceBase {
             "SELECT COUNT(*)::int as cnt FROM Lootbox WHERE openedAt IS NOT NULL"
         ).get();
         const recentSignups = await this.unit.prepare<{ cnt: number }>(
-            "SELECT COUNT(*)::int as cnt FROM Player WHERE joinedAt::timestamp > NOW() - INTERVAL '7 days'"
+            `SELECT COUNT(*)::int as cnt FROM Player ${eligibleWhere} AND joinedAt::timestamp > NOW() - INTERVAL '7 days'`
         ).get();
         const activePlayers = await this.unit.prepare<{ cnt: number }>(
-            "SELECT COUNT(DISTINCT playerId)::int as cnt FROM LoginHistory WHERE loggedInAt::timestamp > NOW() - INTERVAL '24 hours'"
+            `SELECT COUNT(DISTINCT lh.playerId)::int as cnt FROM LoginHistory lh INNER JOIN Player p ON lh.playerId = p.playerId ${eligibleWhere.replace("WHERE", "WHERE p")} AND lh.loggedInAt::timestamp > NOW() - INTERVAL '24 hours'`
         ).get();
         const bannedPlayers = await this.unit.prepare<{ cnt: number }>(
             "SELECT COUNT(*)::int as cnt FROM Player WHERE bannedAt IS NOT NULL"
@@ -220,6 +224,9 @@ export class AdminService extends ServiceBase {
         ).get();
         const totalCoinTx = await this.unit.prepare<{ cnt: number }>(
             "SELECT COUNT(*)::int as cnt FROM CoinTransaction"
+        ).get();
+        const totalEligiblePlayers = await this.unit.prepare<{ cnt: number }>(
+            `SELECT COUNT(*)::int as cnt FROM Player ${eligibleWhere}`
         ).get();
 
         return {
@@ -233,6 +240,7 @@ export class AdminService extends ServiceBase {
             bannedPlayers: bannedPlayers?.cnt ?? 0,
             totalListings: totalListings?.cnt ?? 0,
             totalCoinTransactions: totalCoinTx?.cnt ?? 0,
+            totalEligiblePlayers: totalEligiblePlayers?.cnt ?? 0,
         };
     }
 

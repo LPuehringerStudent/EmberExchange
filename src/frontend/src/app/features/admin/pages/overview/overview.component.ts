@@ -95,14 +95,14 @@ interface StatCard {
           <div class="bg-surface border border-border rounded-2xl p-5">
             <div class="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted mb-3">Engagement</div>
             <div class="flex items-end gap-2 mb-2">
-              <span class="text-3xl font-bold text-text-primary">{{ pct(s.activePlayers24h, s.totalPlayers).toFixed(1) }}</span>
+              <span class="text-3xl font-bold text-text-primary">{{ pct(s.activePlayers24h, s.totalEligiblePlayers).toFixed(1) }}</span>
               <span class="text-sm text-text-muted font-medium mb-1">%</span>
             </div>
             <div class="h-2 rounded-full bg-surface-secondary overflow-hidden">
               <div class="h-full rounded-full bg-gradient-to-r from-accent to-[#f48c06] transition-all duration-700"
-                   [style.width.%]="pct(s.activePlayers24h, s.totalPlayers)"></div>
+                   [style.width.%]="pct(s.activePlayers24h, s.totalEligiblePlayers)"></div>
             </div>
-            <p class="text-xs text-text-muted mt-2">{{ s.activePlayers24h }} of {{ s.totalPlayers }} players active in the last 24h</p>
+            <p class="text-xs text-text-muted mt-2">{{ s.activePlayers24h }} of {{ s.totalEligiblePlayers }} eligible players active in the last 24h</p>
           </div>
 
           <!-- Signup Momentum -->
