@@ -245,12 +245,17 @@
     </div>
   </div>
 
-  <!-- Winners Banner -->
-  @if (resultRevealed() && winners().length > 0) {
-    <div class="rl-winners">
+  <!-- Results Banner -->
+  @if (resultRevealed() && (winners().length > 0 || losers().length > 0)) {
+    <div class="rl-round-results">
       @for (w of winners(); track $index) {
-        <div class="rl-winner">
+        <div class="rl-round-result rl-round-result--won">
           {{ getPlayerName(w.playerId) }} won {{ w.amount }} coins!
+        </div>
+      }
+      @for (player of losers(); track player.playerId) {
+        <div class="rl-round-result rl-round-result--lost">
+          {{ player.username }} lost this round.
         </div>
       }
     </div>

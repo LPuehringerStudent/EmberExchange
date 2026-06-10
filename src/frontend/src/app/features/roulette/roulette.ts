@@ -66,6 +66,7 @@ export class RouletteComponent {
   readonly winningNumber = computed(() => (this.stateBlob()?.['winningNumber'] as number | null) ?? null);
   readonly winningColor = computed(() => (this.stateBlob()?.['winningColor'] as string | null) ?? null);
   readonly winners = computed(() => (this.stateBlob()?.['winners'] as WinnerView[]) ?? []);
+  readonly losers = computed(() => this.displayPlayers().filter((player) => player.result === 'lost'));
   readonly validActions = computed(() => (this.stateBlob()?.['validActions'] as Array<{ type: string }>) ?? []);
   readonly allBets = computed(() => (this.stateBlob()?.['bets'] as Array<{ playerId: number; betType: string; amount: number; number?: number }>) ?? []);
 
