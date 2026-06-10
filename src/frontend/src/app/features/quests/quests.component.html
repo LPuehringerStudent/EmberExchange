@@ -1,150 +1,252 @@
-<div class="p-[30px_40px] max-w-[1400px] mx-auto max-mobile:p-5">
-  <!-- Header -->
-  <div class="flex items-start justify-between gap-4 mb-6 max-mobile:flex-col max-mobile:gap-3">
-    <div>
-      <h1 class="text-[28px] text-text-primary font-bold m-0 mb-1.5">Quests</h1>
-      <p class="m-0 text-text-secondary text-sm">Complete quests to earn coins, XP, and lootboxes</p>
-    </div>
-  </div>
-
-  @if (error()) {
-    <div class="flex items-center gap-2.5 mb-5 px-4 py-3 bg-red-500/[0.08] border border-red-500/25 rounded-xl text-red-500 text-sm">
-      <svg class="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
-      <span>{{ error() }}</span>
-      <button class="ml-auto bg-transparent border-none text-red-500 text-xs font-semibold cursor-pointer underline" (click)="loadQuests()">Retry</button>
+<div class="quests-page">
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading quests...</p>
     </div>
   }
 
-  @if (loading()) {
-    <div class="flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
-      <div class="w-10 h-10 border-[3px] border-accent/20 border-t-accent rounded-full animate-spin mb-4"></div>
-      <p class="text-lg font-semibold text-text-primary m-0 mb-2">Loading quests...</p>
+  <!-- Error -->
+  @if (error()) {
+    <div class="error-banner">
+      <span>⚠️ {{ error() }}</span>
+      <button (click)="loadQuests()">Retry</button>
     </div>
-  } @else {
-    <!-- Daily Quests -->
-    <div class="mb-8">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="h-px flex-1 bg-gradient-to-r from-border to-transparent"></div>
-        <span class="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Daily Quests</span>
-        <div class="h-px flex-1 bg-gradient-to-l from-border to-transparent"></div>
+  }
+
+  @if (!loading() && !error()) {
+    <!-- Hero Dashboard -->
+    <div class="hero-section">
+      <div class="hero-header">
+        <h1>⚔️ Quests</h1>
+        <p>Complete quests to earn coins, XP, and lootboxes</p>
       </div>
-      @if (dailyQuests().length === 0) {
-        <div class="flex flex-col items-center justify-center py-16 px-5 text-text-secondary text-center">
-          <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-            ✨
-          </div>
-          <p class="text-base font-semibold text-text-primary m-0 mb-1">All caught up!</p>
-          <span class="text-sm text-text-secondary">Check back tomorrow for new daily quests</span>
-        </div>
-      } @else {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          @for (quest of dailyQuests(); track quest.questId) {
-            <div class="relative bg-surface rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border-border transition-all duration-250"
-                 [class.opacity-60]="quest.isClaimed">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/10 text-accent">Daily</span>
-                <span class="text-[11px] text-text-muted">{{ getTimeLeft(quest.expiresAt) }}</span>
-              </div>
-              <h3 class="text-base font-bold text-text-primary m-0 mb-1">{{ getTemplateLabel(quest.templateId) }}</h3>
-              <p class="text-sm text-text-secondary m-0 mb-4">{{ quest.currentValue }} / {{ quest.targetValue }}</p>
 
-              <!-- Progress bar -->
-              <div class="w-full h-2 bg-surface-secondary rounded-full overflow-hidden mb-4">
-                <div class="h-full rounded-full transition-all duration-500"
-                     [class.bg-accent]="!quest.isCompleted"
-                     [class.bg-emerald-500]="quest.isCompleted"
-                     [style.width.%]="getProgressPercent(quest)"></div>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2 text-sm text-text-secondary">
-                  <span class="text-amber-500 font-semibold">{{ quest.rewardCoins }} Coal</span>
-                  <span>+ {{ quest.rewardXP }} XP</span>
-                  @if (quest.rewardLootboxTypeId) {
-                    <span class="text-rarity-epic font-semibold">+ Lootbox</span>
-                  }
-                </div>
-                @if (quest.isClaimed) {
-                  <span class="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Claimed</span>
-                } @else if (quest.isCompleted) {
-                  <button class="btn-primary px-4 py-2 rounded-[10px] text-xs font-semibold"
-                          [disabled]="claimingId() === quest.questId"
-                          (click)="claimReward(quest)">
-                    @if (claimingId() === quest.questId) {
-                      <span class="w-3 h-3 border-2 border-white/35 border-t-white rounded-full animate-spin inline-block mr-1"></span>
-                    }
-                    Claim
-                  </button>
-                } @else {
-                  <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">In Progress</span>
-                }
-              </div>
+      <div class="hero-dashboard">
+        <!-- Daily Ring -->
+        <div class="ring-card">
+          <div class="ring-wrap">
+            <svg class="progress-ring" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="50" />
+              <circle
+                class="ring-fill daily"
+                cx="60"
+                cy="60"
+                r="50"
+                [attr.stroke-dasharray]="getRingCircumference(50)"
+                [attr.stroke-dashoffset]="getRingOffset(getDailyPercent(), 50)"
+              />
+            </svg>
+            <div class="ring-center">
+              <span class="ring-value">{{ stats()?.dailyCompleted ?? 0 }}/{{ stats()?.dailyTotal ?? 0 }}</span>
+              <span class="ring-label">Daily</span>
             </div>
-          }
+          </div>
         </div>
+
+        <!-- Weekly Ring -->
+        <div class="ring-card">
+          <div class="ring-wrap">
+            <svg class="progress-ring" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="50" />
+              <circle
+                class="ring-fill weekly"
+                cx="60"
+                cy="60"
+                r="50"
+                [attr.stroke-dasharray]="getRingCircumference(50)"
+                [attr.stroke-dashoffset]="getRingOffset(getWeeklyPercent(), 50)"
+              />
+            </svg>
+            <div class="ring-center">
+              <span class="ring-value">{{ stats()?.weeklyCompleted ?? 0 }}/{{ stats()?.weeklyTotal ?? 0 }}</span>
+              <span class="ring-label">Weekly</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats & Claim All -->
+        <div class="hero-info">
+          <div class="stat-badges">
+            @if (stats()?.readyToClaim) {
+              <div class="stat-badge claimable">
+                <span class="dot"></span>
+                <span>{{ stats()?.readyToClaim }} ready to claim</span>
+              </div>
+            }
+            <div class="stat-badge">
+              <span class="dot coins"></span>
+              <span>{{ formatNumber(stats()?.totalCoinsEarned ?? 0) }} earned</span>
+            </div>
+            <div class="stat-badge">
+              <span class="dot xp"></span>
+              <span>{{ formatNumber(stats()?.totalXPEarned ?? 0) }} XP earned</span>
+            </div>
+          </div>
+          <button
+            class="claim-all-btn"
+            [disabled]="!hasClaimable() || claimingAll()"
+            (click)="claimAll()"
+          >
+            @if (claimingAll()) {
+              <span class="btn-spinner"></span>
+              Claiming...
+            } @else {
+              🎁 Claim All Rewards ({{ claimableCount() }})
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      @for (chip of getFilterChips(); track chip.id) {
+        <button
+          class="filter-chip"
+          [class.active]="activeFilter() === chip.id"
+          (click)="setFilter(chip.id)"
+        >
+          <span class="chip-icon">{{ chip.icon }}</span>
+          {{ chip.label }}
+        </button>
       }
     </div>
 
-    <!-- Weekly Quests -->
-    <div>
-      <div class="flex items-center gap-3 mb-4">
-        <div class="h-px flex-1 bg-gradient-to-r from-border to-transparent"></div>
-        <span class="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Weekly Quests</span>
-        <div class="h-px flex-1 bg-gradient-to-l from-border to-transparent"></div>
+    <!-- Empty State -->
+    @if (filteredQuests().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🎉</div>
+        <h3>All caught up!</h3>
+        <p>No quests match your current filter.</p>
       </div>
-      @if (weeklyQuests().length === 0) {
-        <div class="flex flex-col items-center justify-center py-16 px-5 text-text-secondary text-center">
-          <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-            🎯
-          </div>
-          <p class="text-base font-semibold text-text-primary m-0 mb-1">No weekly quests</p>
-          <span class="text-sm text-text-secondary">Check back later for new challenges</span>
-        </div>
-      } @else {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          @for (quest of weeklyQuests(); track quest.questId) {
-            <div class="relative bg-surface rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border-border transition-all duration-250"
-                 [class.opacity-60]="quest.isClaimed">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-rarity-legendary/10 text-rarity-legendary">Weekly</span>
-                <span class="text-[11px] text-text-muted">{{ getTimeLeft(quest.expiresAt) }}</span>
-              </div>
-              <h3 class="text-base font-bold text-text-primary m-0 mb-1">{{ getTemplateLabel(quest.templateId) }}</h3>
-              <p class="text-sm text-text-secondary m-0 mb-4">{{ quest.currentValue }} / {{ quest.targetValue }}</p>
+    }
 
-              <!-- Progress bar -->
-              <div class="w-full h-2 bg-surface-secondary rounded-full overflow-hidden mb-4">
-                <div class="h-full rounded-full transition-all duration-500"
-                     [class.bg-rarity-legendary]="!quest.isCompleted"
-                     [class.bg-emerald-500]="quest.isCompleted"
-                     [style.width.%]="getProgressPercent(quest)"></div>
-              </div>
+    <!-- Quest Grid -->
+    @if (filteredQuests().length > 0) {
+      <div class="quest-grid">
+        @for (quest of filteredQuests(); track quest.questId) {
+          <div
+            class="quest-card"
+            [class.completed]="quest.isCompleted && !quest.isClaimed"
+            [class.claimed]="quest.isClaimed"
+            [style.--accent]="getTemplateColor(quest.templateId)"
+          >
+            <div class="card-glow"></div>
 
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2 text-sm text-text-secondary">
-                  <span class="text-amber-500 font-semibold">{{ quest.rewardCoins }} Coal</span>
-                  <span>+ {{ quest.rewardXP }} XP</span>
-                  @if (quest.rewardLootboxTypeId) {
-                    <span class="text-rarity-epic font-semibold">+ Lootbox</span>
-                  }
-                </div>
-                @if (quest.isClaimed) {
-                  <span class="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Claimed</span>
-                } @else if (quest.isCompleted) {
-                  <button class="btn-primary px-4 py-2 rounded-[10px] text-xs font-semibold"
-                          [disabled]="claimingId() === quest.questId"
-                          (click)="claimReward(quest)">
-                    @if (claimingId() === quest.questId) {
-                      <span class="w-3 h-3 border-2 border-white/35 border-t-white rounded-full animate-spin inline-block mr-1"></span>
-                    }
-                    Claim
-                  </button>
-                } @else {
-                  <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">In Progress</span>
+            <div class="card-header">
+              <span
+                class="quest-type-badge"
+                [class.weekly]="quest.questType === 'weekly'"
+              >
+                {{ quest.questType === 'weekly' ? '★ Weekly' : '● Daily' }}
+              </span>
+              <span
+                class="quest-timer"
+                [class.urgent]="getTimeLeftUrgent(quest.expiresAt)"
+              >
+                ⏱ {{ getTimeLeft(quest.expiresAt) }}
+              </span>
+            </div>
+
+            <div class="card-body">
+              <div class="quest-icon">{{ getTemplateIcon(quest.templateId) }}</div>
+              <h3 class="quest-title">{{ quest.label }}</h3>
+              <p class="quest-desc">{{ getTemplateDescription(quest.templateId) }}</p>
+            </div>
+
+            <div class="card-progress">
+              <div class="progress-track">
+                <div
+                  class="progress-bar"
+                  [style.width.%]="getProgressPercent(quest)"
+                ></div>
+              </div>
+              <div class="progress-meta">
+                <span class="progress-text">{{ quest.currentValue }} / {{ quest.targetValue }}</span>
+                <span class="progress-percent">{{ getProgressPercent(quest) }}%</span>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <div class="rewards">
+                @if (quest.rewardCoins > 0) {
+                  <span class="reward">🪙 {{ quest.rewardCoins }}</span>
+                }
+                @if (quest.rewardXP > 0) {
+                  <span class="reward">⭐ {{ quest.rewardXP }}</span>
+                }
+                @if (quest.rewardLootboxTypeId) {
+                  <span class="reward lootbox">📦 Lootbox</span>
                 }
               </div>
+              <div class="action">
+                @if (quest.isClaimed) {
+                  <button class="btn-claimed" disabled>
+                    <span>✓ Claimed</span>
+                  </button>
+                } @else if (quest.isCompleted) {
+                  <button
+                    class="btn-claim"
+                    [disabled]="claimingId() === quest.questId"
+                    (click)="claimReward(quest)"
+                  >
+                    @if (claimingId() === quest.questId) {
+                      <span class="btn-spinner"></span>
+                    } @else {
+                      <span>Claim Reward</span>
+                    }
+                  </button>
+                } @else {
+                  <span class="status-inprogress">{{ getProgressPercent(quest) }}%</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- History Toggle -->
+    <div class="history-section">
+      <button class="history-toggle" (click)="toggleHistory()">
+        @if (showHistory()) {
+          <span>▲ Hide Quest History</span>
+        } @else {
+          <span>▼ Show Quest History</span>
+        }
+      </button>
+
+      @if (showHistory()) {
+        <div class="history-panel">
+          @if (history().length === 0) {
+            <p class="history-empty">No completed quests yet. Get to work!</p>
+          } @else {
+            <div class="history-list">
+              @for (h of history(); track h.questId) {
+                <div class="history-row">
+                  <div class="history-icon">{{ getTemplateIcon(h.templateId) }}</div>
+                  <div class="history-info">
+                    <span class="history-name">{{ h.label }}</span>
+                    <span class="history-type" [class.weekly]="h.questType === 'weekly'">
+                      {{ h.questType }}
+                    </span>
+                  </div>
+                  <div class="history-rewards">
+                    @if (h.rewardCoins > 0) {
+                      <span>🪙 {{ h.rewardCoins }}</span>
+                    }
+                    @if (h.rewardXP > 0) {
+                      <span>⭐ {{ h.rewardXP }}</span>
+                    }
+                    @if (h.rewardLootboxTypeId) {
+                      <span>📦</span>
+                    }
+                  </div>
+                  <div class="history-status">✓</div>
+                </div>
+              }
             </div>
           }
         </div>

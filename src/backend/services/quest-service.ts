@@ -238,4 +238,122 @@ export class QuestService {
             },
         };
     }
+
+    async claimAllRewards(playerId: number): Promise<{ success: boolean; claimed: number; totalCoins: number; totalXP: number; lootboxes: number; error?: string }> {
+        const quests = await this.unit.prepare<PlayerQuestRow>(
+            `SELECT * FROM PlayerQuest WHERE playerId = @playerId AND isCompleted = 1 AND isClaimed = 0`,
+            { playerId }
+        ).all();
+
+        if (quests.length === 0) {
+            return { success: false, error: "No completed quests to claim", claimed: 0, totalCoins: 0, totalXP: 0, lootboxes: 0 };
+        }
+
+        const playerService = new PlayerService(this.unit);
+        let totalCoins = 0;
+        let totalXP = 0;
+        let lootboxes = 0;
+
+        for (const quest of quests) {
+            if (quest.rewardCoins > 0) {
+                await playerService.addCoinsAtomic(playerId, quest.rewardCoins);
+                totalCoins += quest.rewardCoins;
+            }
+
+            try {
+                const prestigeService = new PlayerPrestigeService(this.unit);
+                await prestigeService.addXP(playerId, quest.rewardXP, 'quest_complete', `Completed quest: ${quest.templateId}`);
+                totalXP += quest.rewardXP;
+            } catch {
+                // ignore XP errors
+            }
+
+            if (quest.rewardLootboxTypeId) {
+                const lootboxService = new LootboxService(this.unit);
+                await lootboxService.createLootbox(quest.rewardLootboxTypeId, playerId, 'reward');
+                lootboxes++;
+            }
+
+            await this.unit.prepare(
+                `UPDATE PlayerQuest SET isClaimed = 1 WHERE questId = @questId`,
+                { questId: quest.questId }
+            ).run();
+        }
+
+        // Check level achievements once after all XP gains
+        try {
+            const { AchievementEngine } = await import("./achievement-engine");
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkLevelAchievements(playerId);
+        } catch {
+            // ignore achievement errors
+        }
+
+        // Single summary notification
+        try {
+            const notificationService = new (await import("./notification-service")).NotificationService(this.unit);
+            const rewardParts: string[] = [];
+            if (totalCoins > 0) rewardParts.push(`${totalCoins} coins`);
+            if (totalXP > 0) rewardParts.push(`${totalXP} XP`);
+            if (lootboxes > 0) rewardParts.push(`${lootboxes} lootbox${lootboxes > 1 ? 'es' : ''}`);
+            await notificationService.create(
+                playerId,
+                "system",
+                "Quest rewards claimed",
+                `You claimed ${rewardParts.join(" + ")} from ${quests.length} quest${quests.length > 1 ? 's' : ''}`,
+                { claimed: quests.length, rewards: { coins: totalCoins, xp: totalXP, lootboxes } },
+                { priority: 'normal' }
+            );
+        } catch {
+            // Ignore notification errors
+        }
+
+        return { success: true, claimed: quests.length, totalCoins, totalXP, lootboxes };
+    }
+
+    async getQuestHistory(playerId: number, limit: number = 50): Promise<PlayerQuestRow[]> {
+        const stmt = this.unit.prepare<PlayerQuestRow>(
+            `SELECT * FROM PlayerQuest WHERE playerId = @playerId AND isClaimed = 1 ORDER BY questId DESC LIMIT @limit`,
+            { playerId, limit }
+        );
+        return await stmt.all();
+    }
+
+    async getQuestStats(playerId: number): Promise<{
+        dailyCompleted: number;
+        dailyTotal: number;
+        weeklyCompleted: number;
+        weeklyTotal: number;
+        readyToClaim: number;
+        totalCoinsEarned: number;
+        totalXPEarned: number;
+    }> {
+        const now = new Date().toISOString();
+
+        const active = await this.unit.prepare<PlayerQuestRow>(
+            `SELECT * FROM PlayerQuest WHERE playerId = @playerId AND expiresAt > @now`,
+            { playerId, now }
+        ).all();
+
+        const dailyTotal = active.filter(q => q.questType === 'daily').length;
+        const dailyCompleted = active.filter(q => q.questType === 'daily' && q.isCompleted).length;
+        const weeklyTotal = active.filter(q => q.questType === 'weekly').length;
+        const weeklyCompleted = active.filter(q => q.questType === 'weekly' && q.isCompleted).length;
+        const readyToClaim = active.filter(q => q.isCompleted && !q.isClaimed).length;
+
+        const earnings = await this.unit.prepare<{ totalCoins: number; totalXP: number }>(
+            `SELECT COALESCE(SUM(rewardCoins), 0) as totalCoins, COALESCE(SUM(rewardXP), 0) as totalXP FROM PlayerQuest WHERE playerId = @playerId AND isClaimed = 1`,
+            { playerId }
+        ).get();
+
+        return {
+            dailyCompleted,
+            dailyTotal,
+            weeklyCompleted,
+            weeklyTotal,
+            readyToClaim,
+            totalCoinsEarned: earnings?.totalCoins ?? 0,
+            totalXPEarned: earnings?.totalXP ?? 0,
+        };
+    }
 }
