@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, inject, viewChild, ChangeDetector
 import { NgOptimizedImage } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LootBoxHelper, LootItem } from './lootbox-helper';
-import { LootboxService, Lootbox, LootboxType } from '@core/services/lootbox.service';
+import { LootboxService, Lootbox, LootboxType, OpenLootboxResponse } from '@core/services/lootbox.service';
 import { ListingService } from '@core/services/listing.service';
 import { AuthService } from '@core/services/auth.service';
 import { PityService, PityProgress } from '@core/services/pity.service';
@@ -117,6 +117,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   resultImageUrl = signal<string>('');
   selectedLootboxId = signal<number | null>(null);
   selectedTypeName  = signal<string>('Standard Lootbox');
+  activeLootboxTypeId = signal<number | null>(null);
   returnToInventory = signal<boolean>(false);
 
   // Selector state
@@ -219,8 +220,10 @@ export class LootboxComponent implements AfterViewInit, OnInit {
           this.resultText.set('Selected lootbox is not available (it may be listed or already opened).');
           this.showPopup.set(true);
           this.selectedLootboxId.set(null);
+          this.activeLootboxTypeId.set(null);
         } else {
           this.selectedTypeName.set(this.getLootboxTypeName(found.lootboxTypeId));
+          this.activeLootboxTypeId.set(found.lootboxTypeId);
         }
       }
     } catch (err) {
@@ -239,10 +242,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   }
 
   getSelectedLootboxTypeId(): number | null {
-    const selectedId = this.selectedLootboxId();
-    if (selectedId === null) return null;
-    const box = this.availableLootboxes().find(b => b.lootboxId === selectedId);
-    return box?.lootboxTypeId ?? null;
+    return this.activeLootboxTypeId();
   }
 
   isDragonCrate(): boolean {
@@ -255,13 +255,14 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getRatesLabel(): string {
     const typeId = this.getSelectedLootboxTypeId();
-    if (typeId === null) return 'Standard Lootbox rates';
+    if (typeId === null) return 'Select a lootbox to see rates';
     const name = this.getLootboxTypeName(typeId);
     return `${name} rates`;
   }
 
   getDropRate(rarity: string): string {
-    const typeId = this.getSelectedLootboxTypeId() ?? 1; // default to Standard
+    const typeId = this.getSelectedLootboxTypeId();
+    if (typeId === null) return '-';
     const table = this.dropRates[typeId];
     if (!table) return '-';
     const entry = table.find(r => r.rarity === rarity);
@@ -295,11 +296,13 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     const box = this.availableLootboxes().find(b => b.lootboxId === lootboxId);
     if (box) {
       this.selectedTypeName.set(this.getLootboxTypeName(box.lootboxTypeId));
+      this.activeLootboxTypeId.set(box.lootboxTypeId);
     }
   }
 
   getPityForSelected(): PityProgress | undefined {
-    const typeId = this.getSelectedLootboxTypeId() ?? 1;
+    const typeId = this.getSelectedLootboxTypeId();
+    if (typeId === null) return undefined;
     return this.pityCounters()[typeId];
   }
 
@@ -340,12 +343,15 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   // ── Open flow ──────────────────────────────────────────────
 
-  async openBox(): Promise<void> {
+  /** Shared core logic: validates selection, calls API, updates state. Returns result or null. */
+  private async doOpen(): Promise<OpenLootboxResponse | null> {
     if (this.isOpening() || this.playerId === null || this.selectedLootboxId() === null) {
-      return;
+      return null;
     }
 
-    // Re-fetch fresh data to validate selection is still valid
+    this.isOpening.set(true);
+    this.showPopup.set(false);
+
     try {
       const [lootboxes, listings, types] = await Promise.all([
         firstValueFrom(this.lootboxApi.getLootboxesByPlayerId(this.playerId)),
@@ -361,80 +367,101 @@ export class LootboxComponent implements AfterViewInit, OnInit {
       const listedLootboxIds = new Set(listings.filter(l => l.lootboxId).map(l => l.lootboxId!));
       const available = lootboxes.filter(lb => !listedLootboxIds.has(lb.lootboxId));
 
-      // Update selector state with fresh data
       this.availableLootboxes.set(available);
       this.lootboxCount.set(available.length);
 
       if (available.length === 0) {
         this.selectedLootboxId.set(null);
+        this.activeLootboxTypeId.set(null);
         this.resultText.set(lootboxes.length > 0
           ? 'All your lootboxes are listed. Cancel a listing to open them.'
           : 'You have no lootboxes available.');
         this.showPopup.set(true);
-        return;
+        this.isOpening.set(false);
+        return null;
       }
 
       const targetId = this.selectedLootboxId();
       const target = available.find(lb => lb.lootboxId === targetId);
       if (!target) {
         this.selectedLootboxId.set(null);
+        this.activeLootboxTypeId.set(null);
         this.resultText.set('Selected lootbox is not available (it may be listed or already opened).');
         this.showPopup.set(true);
-        return;
+        this.isOpening.set(false);
+        return null;
       }
 
       this.selectedTypeName.set(typeMap.get(target.lootboxTypeId) || 'Standard Lootbox');
+      this.activeLootboxTypeId.set(target.lootboxTypeId);
 
-      // Execute open
       const result = await firstValueFrom(this.lootboxApi.openLootbox(target.lootboxId, this.playerId));
 
       this.lootboxCount.update(count => Math.max(0, count - 1));
       void this.authService.refreshUser();
-      await this.loadPityData(); // refresh pity counter immediately
+      await this.loadPityData();
 
-      // Remove opened lootbox from available list
       this.availableLootboxes.set(available.filter(lb => lb.lootboxId !== target.lootboxId));
       this.selectedLootboxId.set(null);
 
-      this.isOpening.set(true);
-      this.playingGif.set(true);
-      this.showPopup.set(false);
-      this.cdr.detectChanges();
-
-      setTimeout(() => {
-        this.playingGif.set(false);
-        this.lootBoxHelper.buildStripFor(result.rarity);
-        this.items = this.lootBoxHelper.items;
-        this.finalItem = this.lootBoxHelper.finalItem;
-        this.showOverlay.set(true);
-        this.cdr.detectChanges();
-
-        setTimeout(() => {
-          const itemsEl = this.itemsElement()?.nativeElement;
-          if (!itemsEl) { this.isOpening.set(false); return; }
-
-          const itemEl = itemsEl.querySelector('.item') as HTMLElement;
-          if (!itemEl) { this.isOpening.set(false); return; }
-
-          const style = window.getComputedStyle(itemEl);
-          const itemWidth = itemEl.offsetWidth
-            + parseInt(style.marginLeft || '0')
-            + parseInt(style.marginRight || '0');
-          const rollerEl = document.getElementById('roller');
-          const rollerWidth = rollerEl?.offsetWidth || 620;
-          const offset = -(40 * itemWidth) + rollerWidth / 2 - itemWidth / 2;
-
-          itemsEl.style.transform = `translateX(${offset}px)`;
-          setTimeout(() => this.showResult(result.stoveName, result.imageUrl), 4000);
-        }, 100);
-      }, 1400);
+      return result;
     } catch (err) {
       console.error('Failed to open lootbox:', err);
       this.resultText.set('Failed to open lootbox. Please try again.');
       this.showPopup.set(true);
       this.isOpening.set(false);
       this.playingGif.set(false);
+      return null;
     }
+  }
+
+  /** Full animated open. */
+  async openBox(): Promise<void> {
+    const result = await this.doOpen();
+    if (!result) return;
+
+    this.playingGif.set(true);
+    this.cdr.detectChanges();
+
+    setTimeout(() => {
+      this.playingGif.set(false);
+      this.lootBoxHelper.buildStripFor(result.rarity);
+      this.items = this.lootBoxHelper.items;
+      this.finalItem = this.lootBoxHelper.finalItem;
+      this.showOverlay.set(true);
+      this.cdr.detectChanges();
+
+      setTimeout(() => {
+        const itemsEl = this.itemsElement()?.nativeElement;
+        if (!itemsEl) { this.isOpening.set(false); return; }
+
+        const itemEl = itemsEl.querySelector('.item') as HTMLElement;
+        if (!itemEl) { this.isOpening.set(false); return; }
+
+        const style = window.getComputedStyle(itemEl);
+        const itemWidth = itemEl.offsetWidth
+          + parseInt(style.marginLeft || '0')
+          + parseInt(style.marginRight || '0');
+        const rollerEl = document.getElementById('roller');
+        const rollerWidth = rollerEl?.offsetWidth || 620;
+        const offset = -(40 * itemWidth) + rollerWidth / 2 - itemWidth / 2;
+
+        itemsEl.style.transform = `translateX(${offset}px)`;
+        setTimeout(() => this.showResult(result.stoveName, result.imageUrl), 4000);
+      }, 100);
+    }, 1400);
+  }
+
+  /** Quick open — skips animation and shows result immediately. */
+  async quickOpen(): Promise<void> {
+    const result = await this.doOpen();
+    if (!result) return;
+
+    this.resultText.set(`You got: ${result.stoveName}`);
+    this.resultImageUrl.set(result.imageUrl);
+    this.showPopup.set(true);
+    this.isOpening.set(false);
+    this.cdr.detectChanges();
   }
 
   private showResult(stoveName: string, imageUrl: string): void {
@@ -451,6 +478,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     this.showPopup.set(false);
     this.isOpening.set(false);
     this.playingGif.set(false);
+    this.activeLootboxTypeId.set(null);
 
     const itemsEl = this.itemsElement()?.nativeElement;
     if (itemsEl) {
@@ -461,6 +489,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   closePopup(): void {
     if (this.returnToInventory()) {
+      this.activeLootboxTypeId.set(null);
       void this.router.navigate(['/inventory']);
     } else {
       this.resetAll();

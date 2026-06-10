@@ -234,9 +234,9 @@ export class LootboxService extends ServiceBase {
         lootboxId: number,
         playerId: number
     ): Promise<[boolean, { stoveId: number; stoveName: string; rarity: string; imageUrl: string; lootboxId: number } | null]> {
-        // 1. Verify lootbox exists, is unopened, and belongs to player
+        // 1. Verify lootbox exists, is unopened, and belongs to player (lock row)
         const verifyStmt = this.unit.prepare<LootboxRow>(
-            "SELECT * FROM Lootbox WHERE lootboxId = @lootboxId AND playerId = @playerId AND openedAt IS NULL",
+            "SELECT * FROM Lootbox WHERE lootboxId = @lootboxId AND playerId = @playerId AND openedAt IS NULL FOR UPDATE",
             { lootboxId, playerId }
         );
         const lootbox = await verifyStmt.get();
@@ -288,12 +288,13 @@ export class LootboxService extends ServiceBase {
         }
         const stoveStmt = this.unit.prepare<{ stoveId: number }>(
             `INSERT INTO Stove (typeId, currentOwnerId, mintedAt, heatLevel) 
-             VALUES (@typeId, @playerId, NOW(), @heatLevel)`,
+             VALUES (@typeId, @playerId, NOW(), @heatLevel)
+             RETURNING stoveId`,
             { typeId: stoveType.typeId, playerId, heatLevel }
         );
-        await stoveStmt.run();
-        const stoveId = await this.unit.getLastRowId();
-        if (!stoveId) return [false, null];
+        const stoveRow = await stoveStmt.get();
+        if (!stoveRow) return [false, null];
+        const stoveId = stoveRow.stoveId;
 
         // 4. Mark lootbox as opened
         const opened = await this.unit.prepare(
@@ -305,14 +306,15 @@ export class LootboxService extends ServiceBase {
         }
 
         // 5. Create lootbox drop
-        const dropStmt = this.unit.prepare<LootboxDropRow>(
+        const dropStmt = this.unit.prepare<{ dropId: number }>(
             `INSERT INTO LootboxDrop (lootboxId, stoveId) 
-             VALUES (@lootboxId, @stoveId)`,
+             VALUES (@lootboxId, @stoveId)
+             RETURNING dropId`,
             { lootboxId, stoveId }
         );
-        await dropStmt.run();
-        const dropId = await this.unit.getLastRowId();
-        if (!dropId) return [false, null];
+        const dropRow = await dropStmt.get();
+        if (!dropRow) return [false, null];
+        const dropId = dropRow.dropId;
 
         // 6. Sync player lootbox count to actual unopened lootbox count
         await this.unit.prepare(
@@ -337,6 +339,7 @@ export class LootboxService extends ServiceBase {
             const engine = new AchievementEngine(this.unit);
             await engine.checkLootboxAchievements(playerId);
             await engine.checkWealthAchievements(playerId);
+            await engine.checkLevelAchievements(playerId);
         } catch {
             try { await this.unit.rollbackToSavepoint('lootbox_achievements'); } catch { /* ignore */ }
         }

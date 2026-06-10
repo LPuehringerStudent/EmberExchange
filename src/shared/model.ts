@@ -462,6 +462,7 @@ export type ServerMessageType =
     | 'error'
     | 'event_replay'
     | 'chat_message'
+    | 'room_chat_message'
     | 'trade_offer_update'
     | 'notification';
 

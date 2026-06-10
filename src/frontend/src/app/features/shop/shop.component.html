@@ -11,7 +11,7 @@
         <circle cx="12" cy="12" r="10"/>
         <path d="M9 12h6M12 9v6"/>
       </svg>
-      <span>{{ coins().toLocaleString() }} Coal</span>
+      <span>{{ displayCoins().toLocaleString() }} Coal</span>
     </div>
   </div>
 
@@ -103,8 +103,49 @@
             </div>
           </div>
 
+          <!-- Progress Ring -->
           @if (!dailyStatus()!.canClaim && countdown()) {
-            <p class="text-sm text-secondary mb-5">Next claim in: <strong class="text-[var(--accent)] font-bold">{{ countdown() }}</strong></p>
+            <div class="flex flex-col items-center gap-2 mb-5">
+              <div class="relative w-24 h-24">
+                <svg class="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border-color)" stroke-width="8"/>
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="url(#progressGradient)" stroke-width="8"
+                    stroke-linecap="round"
+                    [attr.stroke-dasharray]="2 * 3.14159 * 42"
+                    [attr.stroke-dashoffset]="2 * 3.14159 * 42 * (1 - getCooldownPercent() / 100)"
+                    class="progress-ring-circle"/>
+                  <defs>
+                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#e85d04"/>
+                      <stop offset="100%" stop-color="#f48c06"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="text-lg font-bold text-primary">{{ getCooldownPercent() | number:'1.0-0' }}%</span>
+                  <span class="text-[10px] text-secondary font-medium">Complete</span>
+                </div>
+              </div>
+              <p class="text-sm text-secondary">Next claim in: <strong class="text-[var(--accent)] font-bold">{{ countdown() }}</strong></p>
+            </div>
+          } @else if (dailyStatus()!.canClaim) {
+            <div class="flex flex-col items-center gap-2 mb-5">
+              <div class="relative w-24 h-24">
+                <svg class="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(34,197,94,0.2)" stroke-width="8"/>
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#22c55e" stroke-width="8"
+                    stroke-linecap="round"
+                    [attr.stroke-dasharray]="2 * 3.14159 * 42"
+                    [attr.stroke-dashoffset]="0"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <svg class="w-8 h-8 text-[#22c55e]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-sm text-[#22c55e] font-semibold">Ready to claim!</p>
+            </div>
           }
 
           <div class="calendar-grid grid grid-cols-7 gap-3 mb-6">
@@ -157,6 +198,41 @@
     </div>
   }
 
+  <!-- Filter & Sort Bar (shared for Stoves & Lootboxes) -->
+  @if (activeTab() === 'stoves' || activeTab() === 'lootboxes') {
+    <div class="filter-bar flex flex-wrap items-center gap-3 mb-5 px-4 py-3 rounded-xl bg-[var(--surface-bg)] border border-[var(--border-color)]">
+      <!-- Rarity Filters -->
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold text-secondary uppercase tracking-wider">Filter</span>
+        @for (rarity of ['all','common','rare','epic','legendary','secret']; track rarity) {
+          <button
+            class="rarity-chip px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-200 border border-[var(--border-color)]"
+            [class.active]="rarityFilter() === rarity"
+            [style.--chip-color]="rarity === 'all' ? 'var(--text-secondary)' : getRarityColor(rarity)"
+            (click)="setRarityFilter(rarity)"
+          >
+            {{ rarity }}
+          </button>
+        }
+      </div>
+      <div class="w-px h-6 bg-[var(--border-color)] hidden md:block"></div>
+      <!-- Sort -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-secondary uppercase tracking-wider">Sort</span>
+        <select
+          class="sort-select px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--surface-bg-secondary)] border border-[var(--border-color)] text-primary cursor-pointer focus:outline-none focus:border-[var(--accent)]"
+          [value]="sortBy()"
+          (change)="setSortBy($any($event.target).value)"
+        >
+          <option value="featured">Featured First</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+          <option value="name">Name: A–Z</option>
+        </select>
+      </div>
+    </div>
+  }
+
   <!-- Stoves Tab -->
   @if (activeTab() === 'stoves') {
     <div>
@@ -173,7 +249,7 @@
         </div>
       } @else {
         <div class="item-grid grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-6">
-          @if (filteredItems('stove').length === 0) {
+          @if (getFilteredItems('stove').length === 0) {
             <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
               <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
                 <span class="text-4xl">🔥</span>
@@ -182,7 +258,7 @@
               <span class="text-sm text-text-secondary mb-6">Check back later for new arrivals</span>
             </div>
           }
-          @for (item of filteredItems('stove'); track item.listingId) {
+          @for (item of getFilteredItems('stove'); track item.listingId) {
             <div [class]="'item-card rounded-2xl p-5 border-2 border-transparent flex flex-col gap-4 relative transition-all duration-250 ' + getRarityClass(item)">
               @if (item.isFeatured) {
                 <span class="featured-badge absolute -top-2 right-3 px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(232,93,4,0.3)] z-[2]">Featured</span>
@@ -218,7 +294,7 @@
               <button
                 class="buy-btn w-full py-3 rounded-[10px] text-sm font-bold cursor-pointer transition-all duration-200 border-none inline-flex items-center justify-center gap-2 mt-auto"
                 [disabled]="coins() < item.price || item.stock === 0 || buyLoading() === item.listingId"
-                (click)="buyItem(item.listingId)"
+                (click)="onBuyClick(item.listingId)"
               >
                 @if (buyLoading() === item.listingId) {
                   <span class="btn-spinner"></span>
@@ -252,7 +328,7 @@
         </div>
       } @else {
         <div class="item-grid grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-6">
-          @if (filteredItems('lootbox').length === 0) {
+          @if (getFilteredItems('lootbox').length === 0) {
             <div class="col-span-full flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
               <div class="w-[100px] h-[100px] rounded-3xl bg-surface-secondary flex items-center justify-center text-5xl mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
                 <span class="text-4xl">🎁</span>
@@ -261,7 +337,7 @@
               <span class="text-sm text-text-secondary mb-6">Check back later for new arrivals</span>
             </div>
           }
-          @for (item of filteredItems('lootbox'); track item.listingId) {
+          @for (item of getFilteredItems('lootbox'); track item.listingId) {
             <div class="item-card rounded-2xl p-5 border-2 border-transparent flex flex-col gap-4 relative transition-all duration-250 rarity-common">
               @if (item.isFeatured) {
                 <span class="featured-badge absolute -top-2 right-3 px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider shadow-[0_2px_8px_rgba(232,93,4,0.3)] z-[2]">Featured</span>
@@ -285,10 +361,38 @@
                   <p class="item-stock unlimited text-[13px] text-[#22c55e] m-0 font-semibold">Unlimited</p>
                 }
               </div>
+
+              <!-- Odds Toggle -->
+              <button
+                class="odds-toggle text-xs font-semibold text-[var(--accent)] bg-[var(--accent-light)] px-3 py-1.5 rounded-lg border-none cursor-pointer hover:opacity-80 transition-opacity"
+                (click)="toggleOdds(item.listingId)"
+              >
+                {{ showOddsFor() === item.listingId ? 'Hide Odds' : 'Show Odds' }}
+              </button>
+
+              <!-- Odds Panel -->
+              @if (showOddsFor() === item.listingId) {
+                <div class="odds-panel bg-[var(--surface-bg-secondary)] rounded-xl p-3 flex flex-col gap-2">
+                  @for (entry of getLootboxOdds(item.itemId); track entry.rarity) {
+                    <div class="flex items-center gap-2">
+                      <span class="w-16 text-xs font-semibold capitalize text-secondary">{{ entry.rarity }}</span>
+                      <div class="flex-1 h-2 rounded-full bg-[var(--border-color)] overflow-hidden">
+                        <div
+                          class="h-full rounded-full transition-all duration-500"
+                          [style.width.%]="entry.rate === '0%' ? 0 : parseRatePercent(entry.rate)"
+                          [style.background-color]="getRarityColor(entry.rarity)"
+                        ></div>
+                      </div>
+                      <span class="w-10 text-xs font-bold text-right text-primary">{{ entry.rate }}</span>
+                    </div>
+                  }
+                </div>
+              }
+
               <button
                 class="buy-btn w-full py-3 rounded-[10px] text-sm font-bold cursor-pointer transition-all duration-200 border-none inline-flex items-center justify-center gap-2 mt-auto"
                 [disabled]="coins() < item.price || item.stock === 0 || buyLoading() === item.listingId"
-                (click)="buyItem(item.listingId)"
+                (click)="onBuyClick(item.listingId)"
               >
                 @if (buyLoading() === item.listingId) {
                   <span class="btn-spinner"></span>
@@ -296,7 +400,7 @@
                 } @else if (item.stock === 0) {
                   <span>Sold Out</span>
                 } @else {
-                  <span>Buy</span>
+                  <span>Open</span>
                 }
               </button>
             </div>
@@ -323,6 +427,16 @@
           <p class="text-[13px] text-secondary mt-1">Buy some from the shop or open lootboxes!</p>
         </div>
       } @else {
+        <!-- Marketplace Tip Banner -->
+        <div class="marketplace-tip flex items-center gap-3 mb-5 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500">
+          <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <div class="flex-1 text-sm">
+            <strong>Tip:</strong> The shop pays badly! You'll earn much more selling on the <a routerLink="/marketplace" class="underline font-bold hover:text-amber-400">Marketplace</a>.
+          </div>
+        </div>
+
         <div class="sell-grid grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-6">
           @for (stove of playerStoves(); track stove.stoveId) {
             <div [class]="'item-card rounded-2xl p-5 border-2 border-transparent flex flex-col gap-4 relative transition-all duration-250 rarity-' + stove.rarity.toLowerCase()">
@@ -335,6 +449,8 @@
               </div>
               <div class="item-info flex flex-col gap-1.5 text-center">
                 <h4 class="item-name m-0 text-base font-bold text-primary">{{ stove.name }}</h4>
+
+                <!-- Shop Price -->
                 <p class="item-price inline-flex items-center justify-center gap-1.5 text-lg font-bold text-[#ef4444] m-0">
                   <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/>
@@ -342,7 +458,18 @@
                   </svg>
                   {{ getSellPrice(stove.rarity).toLocaleString() }}
                 </p>
-                <p class="text-[11px] text-muted m-0 italic">The shop pays badly!</p>
+
+                <!-- Marketplace Comparison -->
+                @if (getMarketplaceTip(stove); as tip) {
+                  <p class="marketplace-avg text-xs font-semibold text-[#22c55e] m-0 flex items-center justify-center gap-1">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                    {{ tip }}
+                  </p>
+                } @else {
+                  <p class="text-[11px] text-muted m-0 italic">The shop pays badly!</p>
+                }
               </div>
               <button
                 class="sell-btn w-full py-3 rounded-[10px] text-sm font-bold cursor-pointer transition-all duration-200 border-none inline-flex items-center justify-center gap-2 mt-auto"
@@ -414,3 +541,71 @@
     </div>
   }
 </div>
+
+<!-- Buy Confirmation Modal -->
+@if (confirmModalOpen()) {
+  <div class="modal-backdrop fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="closeConfirmModal()">
+    <div class="modal-content bg-[var(--surface-bg)] rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.3)] p-6 md:p-8 max-w-[400px] w-full border border-[var(--border-color)]" (click)="$event.stopPropagation()">
+      <div class="text-center mb-5">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shadow-[0_4px_14px_var(--accent-glow)]">
+          <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9 12h6M12 9v6"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-primary m-0 mb-1">Confirm Purchase</h3>
+        <p class="text-sm text-secondary m-0">Are you sure you want to buy this item?</p>
+      </div>
+
+      @if (confirmModalItem(); as item) {
+        <div class="bg-[var(--surface-bg-secondary)] rounded-xl p-4 mb-5 flex items-center gap-4">
+          <div class="w-16 h-16 rounded-xl bg-[var(--surface-hover)] flex items-center justify-center shrink-0 overflow-hidden">
+            @if (getItemImage(item)) {
+              <img [src]="getItemImage(item)" [alt]="item.name" class="w-14 h-14 object-contain" />
+            }
+          </div>
+          <div class="flex-1 min-w-0 text-left">
+            <p class="font-bold text-primary text-sm m-0 truncate">{{ item.name }}</p>
+            <p class="text-xs text-secondary m-0 capitalize">{{ item.rarity }} {{ item.itemType }}</p>
+            <p class="text-lg font-bold text-[var(--accent)] m-0 flex items-center gap-1">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9 12h6M12 9v6"/>
+              </svg>
+              {{ item.price.toLocaleString() }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-sm mb-5 px-1">
+          <span class="text-secondary">Your balance:</span>
+          <span class="font-bold text-primary">{{ displayCoins().toLocaleString() }} Coal</span>
+        </div>
+        @if (coins() < item.price) {
+          <div class="text-sm text-[#ef4444] font-semibold mb-5">Insufficient coins!</div>
+        }
+      }
+
+      <div class="flex gap-3">
+        <button
+          class="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer transition-all duration-200 border-2 border-[var(--border-color)] bg-transparent text-secondary hover:bg-[var(--surface-hover)] hover:text-primary"
+          (click)="closeConfirmModal()"
+        >
+          Cancel
+        </button>
+        <button
+          class="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer transition-all duration-200 border-none text-white bg-gradient-to-r from-[#e85d04] to-[#f48c06] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="!confirmModalItem() || coins() < (confirmModalItem()?.price ?? 0) || buyLoading() === confirmModalItem()?.listingId"
+          (click)="confirmBuy()"
+        >
+          @if (buyLoading() === confirmModalItem()?.listingId) {
+            <span class="btn-spinner inline-block"></span>
+            <span>Buying...</span>
+          } @else {
+            <span>Confirm Buy</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

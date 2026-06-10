@@ -330,6 +330,7 @@ export class AchievementEngine extends ServiceBase {
         if (opened >= 100) await this.unlock(playerId, 'centurion');
         if (opened >= 500) await this.unlock(playerId, 'lootbox_god');
 
+        await this.checkLevelAchievements(playerId);
         await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
@@ -345,6 +346,7 @@ export class AchievementEngine extends ServiceBase {
         const purchases = await this.getCachedPurchaseCount(playerId);
         if (purchases >= 10) await this.unlock(playerId, 'active_trader');
 
+        await this.checkLevelAchievements(playerId);
         await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
@@ -363,6 +365,7 @@ export class AchievementEngine extends ServiceBase {
         if (games >= 500) await this.unlock(playerId, 'burnout');
         if (profit >= 10000) await this.unlock(playerId, 'profitable');
 
+        await this.checkLevelAchievements(playerId);
         await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
@@ -463,6 +466,7 @@ export class AchievementEngine extends ServiceBase {
         if (luckiest >= 10000)  await this.unlock(playerId, 'high_roller');
         if (luckiest >= 100000) await this.unlock(playerId, 'jackpot');
 
+        await this.checkLevelAchievements(playerId);
         await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
@@ -486,6 +490,7 @@ export class AchievementEngine extends ServiceBase {
         if (outputRarity === 'limited') await this.unlock(playerId, 'limited_forge');
         if (heatLevel !== undefined && heatLevel >= 0.95) await this.unlock(playerId, 'perfect_forge');
 
+        await this.checkLevelAchievements(playerId);
         await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
@@ -514,6 +519,7 @@ export class AchievementEngine extends ServiceBase {
         const streak = (await streakStmt.get())?.streakCount ?? 0;
         if (streak >= 7) await this.unlock(playerId, 'streak_master');
 
+        await this.checkLevelAchievements(playerId);
         await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
@@ -531,6 +537,7 @@ export class AchievementEngine extends ServiceBase {
         if (prizeId === 'lootbox') {
             await this.unlock(playerId, 'spin_lootbox');
         }
+        await this.checkLevelAchievements(playerId);
         await this.maybeCheckCosmeticUnlocks(playerId);
     }
 
@@ -551,6 +558,7 @@ export class AchievementEngine extends ServiceBase {
         if (visits >= 100) await this.unlock(playerId, 'famous');
         if (visits >= 1000) await this.unlock(playerId, 'celebrity');
 
+        await this.checkLevelAchievements(playerId);
         await this.maybeCheckCosmeticUnlocks(playerId);
     }
 

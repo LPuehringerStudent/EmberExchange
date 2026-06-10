@@ -34,10 +34,22 @@ export class ApiService {
     return throwError(() => new ApiError(message, error.status, body));
   }
 
+  private getSessionId(): string | null {
+    return localStorage.getItem('ember_session_id') ?? sessionStorage.getItem('ember_session_id');
+  }
+
+  private buildHeaders(headers?: HttpHeaders): HttpHeaders {
+    const h = headers ?? new HttpHeaders();
+    const withClient = h.set(this.clientHeader, this.clientHeaderValue);
+    const sessionId = this.getSessionId();
+    if (sessionId && !withClient.has('session-id')) {
+      return withClient.set('session-id', sessionId);
+    }
+    return withClient;
+  }
+
   get<T>(path: string, headers?: HttpHeaders, params?: HttpParams): Observable<T> {
-    const defaultHeaders = headers ?? new HttpHeaders();
-    const headersWithFingerprint = defaultHeaders.set(this.clientHeader, this.clientHeaderValue);
-    const options: { headers?: HttpHeaders; params?: HttpParams } = { headers: headersWithFingerprint };
+    const options: { headers?: HttpHeaders; params?: HttpParams } = { headers: this.buildHeaders(headers) };
     if (params) options.params = params;
     return this.http
       .get<T>(`${this.baseUrl}${path}`, options)
@@ -45,26 +57,24 @@ export class ApiService {
   }
 
   post<T>(path: string, body: unknown, headers?: HttpHeaders): Observable<T> {
-    const defaultHeaders = headers ?? new HttpHeaders({ 'Content-Type': 'application/json' });
-    const headersWithFingerprint = defaultHeaders.set(this.clientHeader, this.clientHeaderValue);
+    const h = this.buildHeaders(headers);
+    const withContentType = h.has('Content-Type') ? h : h.set('Content-Type', 'application/json');
     return this.http
-      .post<T>(`${this.baseUrl}${path}`, body, { headers: headersWithFingerprint })
+      .post<T>(`${this.baseUrl}${path}`, body, { headers: withContentType })
       .pipe(catchError(err => this.handleError(err)));
   }
 
   patch<T>(path: string, body: unknown, headers?: HttpHeaders): Observable<T> {
-    const defaultHeaders = headers ?? new HttpHeaders({ 'Content-Type': 'application/json' });
-    const headersWithFingerprint = defaultHeaders.set(this.clientHeader, this.clientHeaderValue);
+    const h = this.buildHeaders(headers);
+    const withContentType = h.has('Content-Type') ? h : h.set('Content-Type', 'application/json');
     return this.http
-      .patch<T>(`${this.baseUrl}${path}`, body, { headers: headersWithFingerprint })
+      .patch<T>(`${this.baseUrl}${path}`, body, { headers: withContentType })
       .pipe(catchError(err => this.handleError(err)));
   }
 
   delete<T>(path: string, headers?: HttpHeaders, body?: unknown): Observable<T> {
-    const defaultHeaders = headers ?? new HttpHeaders();
-    const headersWithFingerprint = defaultHeaders.set(this.clientHeader, this.clientHeaderValue);
     return this.http
-      .delete<T>(`${this.baseUrl}${path}`, { headers: headersWithFingerprint, body })
+      .delete<T>(`${this.baseUrl}${path}`, { headers: this.buildHeaders(headers), body })
       .pipe(catchError(err => this.handleError(err)));
   }
 }

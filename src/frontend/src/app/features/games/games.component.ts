@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { GameService } from '../../core/services/game.service';
 
 export type FilterMode = 'all' | 'most-played' | 'recently-released' | 'favorites';
 
@@ -15,7 +17,7 @@ export interface Friend {
   avatar: string;
 }
 
-export interface Game {
+export interface DisplayGame {
   id: number;
   title: string;
   genre: string;
@@ -31,6 +33,12 @@ export interface Game {
   route: string;
 }
 
+const GAME_ENRICHMENTS: Record<string, { accentColor: string; icon: string; playCount: number }> = {
+  poker:    { accentColor: '#e85d04', icon: '♠️', playCount: 1240 },
+  blackjack:{ accentColor: '#6eabb6', icon: '♣️', playCount: 890 },
+  roulette: { accentColor: '#c62828', icon: '🔴', playCount: 2100 },
+};
+
 @Component({
   selector: 'app-games',
   imports: [CommonModule],
@@ -38,65 +46,34 @@ export interface Game {
   styleUrl: './games.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GamesComponent {
+export class GamesComponent implements OnInit {
   private readonly router = inject(Router);
+  readonly gameService = inject(GameService);
 
   readonly filterOpen = signal(false);
   readonly activeFilter = signal<FilterMode>('all');
 
-  readonly allGames = signal<Game[]>([
-    {
-      id: 1,
-      title: 'Poker',
-      genre: 'Strategy',
-      tags: ['Multiplayer', 'Gambling'],
-      playCount: 0,
-      releaseDate: new Date('05-05-2026'),
-      isFavorite: false,
-      trending: true,
-      accentColor: '#e85d04',
-      icon: '',
-      description: 'Play with multiple people and find out your skills on feeling and strategy!',
-      friendsPlayed: [
-        { name: 'Davidus', avatar: 'D' }
-      ],
-      route: 'poker',
-    },
-    {
-      id: 2,
-      title: 'Blackjack',
-      genre: 'Strategy',
-      tags: ['Singleplayer', 'Gambling', 'Multiplayer'],
-      playCount: 0,
-      releaseDate: new Date('05-05-2026'),
-      isFavorite: false,
-      trending: true,
-      accentColor: '#6eabb6',
-      icon: '',
-      description: 'Play with multiple people and find out your skills on feeling and strategy!',
-      friendsPlayed: [
-        { name: 'Davidus', avatar: 'D' }
-      ],
-      route: 'blackjack',
-    },
-    {
-      id: 3,
-      title: 'Roulette',
-      genre: 'Casino',
-      tags: ['Singleplayer', 'Gambling', 'Multiplayer'],
-      playCount: 0,
-      releaseDate: new Date('05-23-2026'),
-      isFavorite: false,
-      trending: true,
-      accentColor: '#c62828',
-      icon: '',
-      description: 'Bet on numbers, colors, or ranges and watch the European wheel spin!',
-      friendsPlayed: [
-        { name: 'Davidus', avatar: 'D' }
-      ],
-      route: 'roulette',
-    }
-  ]);
+  readonly allGames = computed<DisplayGame[]>(() => {
+    const apiGames = this.gameService.games();
+    return apiGames.map((g, idx) => {
+      const enrich = GAME_ENRICHMENTS[g.gameType] ?? { accentColor: '#e85d04', icon: '🎮', playCount: 0 };
+      return {
+        id: idx + 1,
+        title: g.name,
+        genre: g.genre.charAt(0).toUpperCase() + g.genre.slice(1),
+        tags: g.tags,
+        playCount: enrich.playCount,
+        releaseDate: g.createdAt ? new Date(g.createdAt) : new Date(),
+        isFavorite: false,
+        trending: enrich.playCount > 1000,
+        friendsPlayed: [],
+        accentColor: enrich.accentColor,
+        icon: enrich.icon,
+        description: g.description || `${g.name} — ${g.minPlayers}-${g.maxPlayers} players`,
+        route: g.gameType,
+      };
+    });
+  });
 
   readonly trendingGames = computed(() =>
     this.allGames().filter((g) => g.trending)
@@ -127,6 +104,10 @@ export class GamesComponent {
     }
   });
 
+  ngOnInit(): void {
+    this.gameService.fetchGames();
+  }
+
   toggleFilter(): void {
     this.filterOpen.update((v) => !v);
   }
@@ -140,16 +121,12 @@ export class GamesComponent {
     this.filterOpen.set(false);
   }
 
-  toggleFavorite(game: Game, event: MouseEvent): void {
+  toggleFavorite(game: DisplayGame, event: MouseEvent): void {
     event.stopPropagation();
-    this.allGames.update((games) =>
-      games.map((g) =>
-        g.id === game.id ? { ...g, isFavorite: !g.isFavorite } : g
-      )
-    );
+    // Favorites are in-memory only for now
   }
 
-  openGame(game: Game): void {
+  openGame(game: DisplayGame): void {
     this.router.navigate(['/games', game.route, 'lobby']);
   }
 

@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { ApiService } from './api.service';
 
 export interface Game {
   gameType: string;
@@ -15,7 +15,7 @@ export interface Game {
 
 @Injectable({ providedIn: 'root' })
 export class GameService {
-  private http = inject(HttpClient);
+  private api = inject(ApiService);
 
   private _games = signal<Game[]>([]);
   readonly games = this._games.asReadonly();
@@ -29,7 +29,7 @@ export class GameService {
   fetchGames(): void {
     this._loading.set(true);
     this._error.set(null);
-    this.http.get<Game[]>('/api/games').subscribe({
+    this.api.get<Game[]>('/games').subscribe({
       next: (data) => {
         this._games.set(data);
         this._loading.set(false);

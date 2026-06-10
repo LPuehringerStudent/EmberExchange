@@ -2,12 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  OnDestroy,
   inject,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { ApiService } from '../../core/services/api.service';
 import { GameService, Game } from '../../core/services/game.service';
 
 interface RoomListItem {
@@ -18,6 +19,7 @@ interface RoomListItem {
   settings: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  playerCount: number;
 }
 
 @Component({
@@ -28,10 +30,10 @@ interface RoomListItem {
   styleUrl: './game-lobby.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GameLobbyComponent implements OnInit {
+export class GameLobbyComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private http = inject(HttpClient);
+  private api = inject(ApiService);
   private gameService = inject(GameService);
 
   gameType = signal<string>('');
@@ -43,6 +45,9 @@ export class GameLobbyComponent implements OnInit {
   showCreateModal = signal<boolean>(false);
   newMaxPlayers = signal<number>(4);
   newTurnTime = signal<number>(30);
+  live = signal<boolean>(false);
+
+  private refreshInterval: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit(): void {
     const gt = this.route.snapshot.paramMap.get('gameType');
@@ -59,21 +64,29 @@ export class GameLobbyComponent implements OnInit {
       this.gameService.fetchGames();
     }
     this.loadRooms();
+    this.refreshInterval = setInterval(() => this.loadRooms(), 5000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   loadRooms(): void {
-    this.loading.set(true);
-    this.error.set(null);
-    this.http
-      .get<RoomListItem[]>(`/api/rooms?gameType=${encodeURIComponent(this.gameType())}&status=waiting`)
+    this.live.set(true);
+    this.api
+      .get<RoomListItem[]>(`/rooms?gameType=${encodeURIComponent(this.gameType())}&status=waiting`)
       .subscribe({
         next: (data) => {
           this.rooms.set(data);
           this.loading.set(false);
+          this.live.set(false);
         },
         error: (err: Error) => {
           this.error.set(err.message || 'Failed to load rooms');
           this.loading.set(false);
+          this.live.set(false);
         },
       });
   }
@@ -104,8 +117,8 @@ export class GameLobbyComponent implements OnInit {
     }
 
     this.creating.set(true);
-    this.http
-      .post<RoomListItem>('/api/rooms', {
+    this.api
+      .post<RoomListItem>('/rooms', {
         maxPlayers,
         gameType: this.gameType(),
         settings: { turnTime },

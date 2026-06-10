@@ -569,6 +569,8 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
                 await engine.checkTradeAchievements(listing.sellerId);
                 await engine.checkWealthAchievements(buyerId);
                 await engine.checkWealthAchievements(listing.sellerId);
+                await engine.checkLevelAchievements(buyerId);
+                await engine.checkLevelAchievements(listing.sellerId);
             } catch {
                 try { await unit.rollbackToSavepoint('trade_achievements'); } catch { /* ignore */ }
             }

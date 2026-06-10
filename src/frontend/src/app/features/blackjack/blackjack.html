@@ -200,7 +200,9 @@
             <p class="sidebar-empty text-[0.85rem] text-[var(--text-muted)] italic">No winners this round.</p>
           }
         </div>
-        <button class="bj-btn bj-btn--primary bj-btn--full py-3 px-7 rounded-[10px] border-none text-[0.9rem] font-bold cursor-pointer mt-1" (click)="onNewRound()">Next Game</button>
+        @if (isHost()) {
+          <button class="bj-btn bj-btn--primary bj-btn--full py-3 px-7 rounded-[10px] border-none text-[0.9rem] font-bold cursor-pointer mt-1" (click)="onNewRound()">Next Game</button>
+        }
       } @else {
         <!-- Player List -->
         <h2 class="sidebar-title m-0 mb-0.5 text-[0.8rem] font-semibold uppercase tracking-[0.10em] text-[var(--text-muted)]">Players</h2>

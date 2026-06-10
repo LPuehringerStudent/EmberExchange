@@ -1,0 +1,1 @@
+{"nodes": [{"id": "register_register_auth_page", "label": "Register Auth Page", "file_type": "code", "source_file": "src/frontend/src/app/features/auth/pages/register/register.component.html", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

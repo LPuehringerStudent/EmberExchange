@@ -111,12 +111,7 @@
               <p class="m-0 text-xs text-text-muted">Unopened</p>
             </div>
             <div class="mt-auto flex flex-col gap-2">
-              @if (isLootboxListed(box.id)) {
-                <button class="btn-sell w-full px-2.5 py-2.5 rounded-[0.625rem] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" disabled>Listed</button>
-              } @else {
-                <button class="btn-open w-full px-2.5 py-2.5 rounded-[0.625rem] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" (click)="openLootbox(box)">Open</button>
-                <button class="btn-sell w-full px-2.5 py-2.5 rounded-[0.625rem] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" (click)="openSellLootboxModal(box)">Sell</button>
-              }
+              <button class="btn-open w-full px-2.5 py-2.5 rounded-[0.625rem] text-sm font-semibold cursor-pointer transition-all duration-200 border-none" (click)="openLootbox(box)">Open</button>
             </div>
           </div>
         }

@@ -12,6 +12,7 @@ const COLUMN_MAP: Record<string, string> = {
     "alltimehighprice": "allTimeHighPrice",
     "alltimelowprice": "allTimeLowPrice",
     "amount": "amount",
+    "assetid": "assetId",
     "averagelistingprice": "averageListingPrice",
     "avgprice": "avgPrice",
     "avgbuyprice": "avgBuyPrice",
@@ -1201,6 +1202,14 @@ export class DB {
             ADD COLUMN IF NOT EXISTS updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
         `).catch(() => {});
 
+        // Migration: add quest_complete to notification type constraint
+        await connection.query(`
+            ALTER TABLE Notification
+            DROP CONSTRAINT IF EXISTS notification_type_check,
+            ADD CONSTRAINT notification_type_check
+            CHECK (type IN ('friend_request', 'chat_message', 'trade_offer', 'daily_reward', 'system', 'quest_complete'))
+        `).catch(() => {});
+
         await connection.query(`
             CREATE INDEX IF NOT EXISTS idx_notification_player_group ON Notification(playerId, type, groupKey, isRead, updatedAt)
         `);
@@ -1467,10 +1476,14 @@ export class Unit {
         this.inTransaction = inTransaction;
     }
 
-    public static async create(readOnly: boolean): Promise<Unit> {
+    public static async create(readOnly: boolean, isolationLevel?: string): Promise<Unit> {
         const client = await DB.createDBConnection();
         if (!readOnly) {
-            await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
+            const validLevels = ["READ UNCOMMITTED", "READ COMMITTED", "REPEATABLE READ", "SERIALIZABLE"];
+            const level = isolationLevel && validLevels.includes(isolationLevel.toUpperCase())
+                ? isolationLevel.toUpperCase()
+                : "SERIALIZABLE";
+            await client.query(`BEGIN ISOLATION LEVEL ${level}`);
         }
         return new Unit(client, !readOnly);
     }

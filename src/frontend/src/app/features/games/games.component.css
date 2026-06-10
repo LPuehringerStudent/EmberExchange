@@ -14,50 +14,35 @@
 .trending-strip::-webkit-scrollbar { height: 4px; }
 .trending-strip::-webkit-scrollbar-thumb { background: rgba(232, 93, 4, 0.3); border-radius: 4px; }
 
-/* Row entrance animation */
-@keyframes row-in {
-  from { opacity: 0; transform: translateX(-12px); }
-  to   { opacity: 1; transform: translateX(0); }
+/* Card entrance animation */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.game-row { animation: row-in 0.35s ease both; }
+.game-card {
+  animation: card-in 0.4s ease both;
+  display: flex;
+  flex-direction: column;
+}
+.game-card:nth-child(1) { animation-delay: 0ms; }
+.game-card:nth-child(2) { animation-delay: 60ms; }
+.game-card:nth-child(3) { animation-delay: 120ms; }
+.game-card:nth-child(4) { animation-delay: 180ms; }
+.game-card:nth-child(5) { animation-delay: 240ms; }
+.game-card:nth-child(6) { animation-delay: 300ms; }
 
-/* Row hover accent bar */
-.game-row::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: var(--accent, #e85d04);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  border-radius: 0 2px 2px 0;
-}
-.game-row:hover::before { opacity: 1; }
-.game-row:focus-visible {
+/* Card focus */
+.game-card:focus-visible {
   outline: 3px solid var(--accent, #e85d04);
   outline-offset: -3px;
 }
 
-/* Accent-dependent styles */
-.row-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  min-width: 72px;
-  border-radius: 14px;
-  margin-right: 20px;
-  padding: 12px;
-  box-sizing: border-box;
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--accent, #e85d04) 15%, white),
-    color-mix(in srgb, var(--accent, #e85d04) 5%, white));
-  border: 1px solid color-mix(in srgb, var(--accent, #e85d04) 20%, transparent);
+/* Skeleton pulse */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
-.row-card-svg { fill: var(--accent, #e85d04); }
-.row-genre { color: var(--accent, #e85d04); }
-.meta-chip.plays { color: var(--accent, #e85d04); }
+.skeleton { animation: skeleton-pulse 1.5s ease-in-out infinite; }
 
 /* Filter option states */
 .filter-option:hover { background: rgba(232, 93, 4, 0.08); color: #e85d04; }
@@ -72,24 +57,13 @@
 /* Favorite button active */
 .fav-btn.active svg { transform: scale(1.1); }
 
-/* Friend avatar overlap */
-.friend-avatar { margin-left: -4px; }
-.friend-avatar:first-child { margin-left: 0; }
-
-/* Play arrow button */
-.play-arrow-btn { background: linear-gradient(135deg, var(--accent, #e85d04), #f48c06); box-shadow: 0 3px 10px rgba(232, 93, 4, 0.3); }
-.play-arrow-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(232, 93, 4, 0.4); }
-
 /* Trending card hover */
 .trending-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(232, 93, 4, 0.18); border-color: rgba(232, 93, 4, 0.4); }
 
 /* Responsive */
 @media (max-width: 768px) {
   .filter-label-text { display: none; }
-  .row-icon-wrap { width: 56px; height: 56px; min-width: 56px; }
-  .row-desc { display: none; }
 }
 @media (max-width: 480px) {
-  .row-meta-line { flex-direction: column; align-items: flex-start; }
   .trending-card { min-width: 180px; }
 }

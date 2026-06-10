@@ -189,6 +189,15 @@ export class QuestService {
             // ignore XP errors
         }
 
+        // Check level achievements after XP gain
+        try {
+            const { AchievementEngine } = await import("./achievement-engine");
+            const engine = new AchievementEngine(this.unit);
+            await engine.checkLevelAchievements(playerId);
+        } catch {
+            // ignore achievement errors
+        }
+
         // Award lootbox if applicable
         if (quest.rewardLootboxTypeId) {
             const lootboxService = new LootboxService(this.unit);

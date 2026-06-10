@@ -529,13 +529,14 @@ listingRouter.post("/listings", requireAuth, async (req, res) => {
             return;
         }
 
-        if ((stoveId === undefined || stoveId === null) && (lootboxId === undefined || lootboxId === null)) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Either stoveId or lootboxId is required" });
+        /* ── Lootboxes are account-bound: only stoves can be listed ── */
+        if (lootboxId !== undefined && lootboxId !== null) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Lootboxes can no longer be listed on the marketplace. Open them or keep them in your inventory." });
             return;
         }
 
-        if (stoveId !== undefined && stoveId !== null && lootboxId !== undefined && lootboxId !== null) {
-            res.status(StatusCodes.BAD_REQUEST).json({ error: "Provide either stoveId or lootboxId, not both" });
+        if (stoveId === undefined || stoveId === null) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "stoveId is required" });
             return;
         }
 
@@ -612,6 +613,15 @@ listingRouter.post("/listings", requireAuth, async (req, res) => {
                 await prestigeService.addXP(sellerId, 75, 'listing_created', 'Created a marketplace listing');
             } catch {
                 // Ignore XP errors
+            }
+
+            // Check level achievements after XP gain
+            try {
+                const { AchievementEngine } = await import("../services/achievement-engine");
+                const engine = new AchievementEngine(unit);
+                await engine.checkLevelAchievements(sellerId);
+            } catch {
+                // Ignore achievement errors
             }
         } else {
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to create listing" });
