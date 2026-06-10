@@ -77,7 +77,6 @@ export class MarketplaceComponent implements OnInit {
 
   /* ── Item metadata ── */
   stoveTypes = signal<Map<number, StoveType>>(new Map());
-  stoves = signal<Map<number, Stove>>(new Map());
   lootboxTypes = signal<Map<number, LootboxType>>(new Map());
 
   /* ── Detail modal state ── */
@@ -197,13 +196,12 @@ export class MarketplaceComponent implements OnInit {
     this.error.set(null);
 
     try {
-      const [all, mine, types, stoveList, lootboxTypeList] = await Promise.all([
+      const [all, mine, types, lootboxTypeList] = await Promise.all([
         firstValueFrom(this._listingService.getActiveListings()),
         this.playerId !== null
           ? firstValueFrom(this._listingService.getListingsBySellerId(this.playerId))
           : Promise.resolve([]),
         firstValueFrom(this._stoveService.getAllStoveTypes()),
-        firstValueFrom(this._stoveService.getAllStoves()),
         firstValueFrom(this._lootboxService.getAllLootboxTypes()),
       ]);
 
@@ -213,10 +211,6 @@ export class MarketplaceComponent implements OnInit {
       const typeMap = new Map<number, StoveType>();
       for (const t of types) typeMap.set(t.typeId, t);
       this.stoveTypes.set(typeMap);
-
-      const stoveMap = new Map<number, Stove>();
-      for (const s of stoveList) stoveMap.set(s.stoveId, s);
-      this.stoves.set(stoveMap);
 
       const lootboxTypeMap = new Map<number, LootboxType>();
       for (const lt of lootboxTypeList) lootboxTypeMap.set(lt.lootboxTypeId, lt);
@@ -256,8 +250,7 @@ export class MarketplaceComponent implements OnInit {
     this.messageSent.set(false);
 
     if (listing.stoveId) {
-      const stove = this.stoves().get(listing.stoveId);
-      const typeId = stove?.typeId;
+      const typeId = listing.typeId;
       if (typeId) {
         try {
           const history = await firstValueFrom(
@@ -476,26 +469,20 @@ export class MarketplaceComponent implements OnInit {
 
   getItemName(listing: Listing): string {
     if (listing.stoveId) {
-      const stove = this.stoves().get(listing.stoveId);
-      if (!stove) return `Stove #${listing.stoveId}`;
-      return this.stoveTypes().get(stove.typeId)?.name ?? `Stove #${listing.stoveId}`;
+      return listing.stoveName ?? `Stove #${listing.stoveId}`;
     }
     if (listing.lootboxId) {
-      const type = this.lootboxTypes().get(listing.lootboxId);
-      return type?.name ?? `Lootbox #${listing.lootboxId}`;
+      return listing.lootboxTypeName ?? `Lootbox #${listing.lootboxId}`;
     }
     return 'Unknown Item';
   }
 
   getItemDescription(listing: Listing): string {
     if (listing.stoveId) {
-      const stove = this.stoves().get(listing.stoveId);
-      if (!stove) return 'A mysterious stove.';
-      const type = this.stoveTypes().get(stove.typeId);
-      return `A ${type?.rarity ?? 'common'} stove from the ${type?.collection ?? 'Unknown'} collection.`;
+      return `A ${listing.rarity ?? 'common'} stove from the ${listing.collection ?? 'Unknown'} collection.`;
     }
     if (listing.lootboxId) {
-      const type = this.lootboxTypes().get(listing.lootboxId);
+      const type = this.lootboxTypes().get(listing.lootboxTypeId ?? -1);
       return type?.description ?? 'A sealed lootbox.';
     }
     return '';
@@ -503,9 +490,7 @@ export class MarketplaceComponent implements OnInit {
 
   getRarity(listing: Listing): string {
     if (listing.stoveId) {
-      const stove = this.stoves().get(listing.stoveId);
-      if (!stove) return 'common';
-      return this.stoveTypes().get(stove.typeId)?.rarity?.toLowerCase() ?? 'common';
+      return listing.rarity?.toLowerCase() ?? 'common';
     }
     return 'common';
   }
@@ -533,18 +518,16 @@ export class MarketplaceComponent implements OnInit {
   }
 
   getHeatLevel(listing: Listing): number | null {
-    if (listing.stoveId) return this.stoves().get(listing.stoveId)?.heatLevel ?? null;
+    if (listing.stoveId) return listing.heatLevel ?? null;
     return null;
   }
 
   getImageUrl(listing: Listing): string {
     if (listing.stoveId) {
-      const stove = this.stoves().get(listing.stoveId);
-      if (!stove) return '';
-      return this.stoveTypes().get(stove.typeId)?.imageUrl ?? '';
+      return listing.imageUrl ?? '';
     }
     if (listing.lootboxId) {
-      const type = this.lootboxTypes().get(listing.lootboxId);
+      const type = this.lootboxTypes().get(listing.lootboxTypeId ?? -1);
       if (!type) return '';
       const name = type.name.toLowerCase();
       if (name.includes('dragon')) return 'assets/animation/dragon-chest-idle-animation.gif';

@@ -6,11 +6,11 @@ import { HttpHeaders, HttpParams } from '@angular/common/http';
 
 export interface Listing {
   listingId: number;
-  stoveId: number;
+  stoveId: number | null;
   lootboxId: number | null;
-  stoveName: string;
-  rarity: string;
-  heatLevel: number;
+  stoveName: string | null;
+  rarity: string | null;
+  heatLevel: number | null;
   collection: string | null;
   imageUrl: string | null;
   price: number;
@@ -19,6 +19,9 @@ export interface Listing {
   status: string;
   listedAt: string;
   createdAt: string;
+  typeId: number | null;
+  lootboxTypeId: number | null;
+  lootboxTypeName: string | null;
 }
 
 export interface FilterParams {
