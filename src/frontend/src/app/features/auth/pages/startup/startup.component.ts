@@ -21,7 +21,7 @@ export class StartupComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    const nodes = this.elementRef.nativeElement.querySelectorAll('.reveal');
+    const nodes = this.elementRef.nativeElement.querySelectorAll('.reveal, .reveal-scale');
     const reveals = Array.from(nodes) as HTMLElement[];
 
     if (!reveals.length || typeof IntersectionObserver === 'undefined') {

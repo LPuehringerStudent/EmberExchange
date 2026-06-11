@@ -1,6 +1,8 @@
 <div class="min-h-screen flex flex-col items-center relative overflow-hidden bg-gradient-to-br from-[#1a0f0a] via-[#2d1b14] to-[#1a0f0a]">
-  <!-- Animated Fire Background -->
+  <!-- Background Effects -->
   <div class="absolute inset-0 pointer-events-none overflow-hidden">
+    <div class="bg-grid"></div>
+    <div class="heat-haze"></div>
     <div class="flame flame-1"></div>
     <div class="flame flame-2"></div>
     <div class="flame flame-3"></div>
@@ -8,24 +10,28 @@
     <div class="ember ember-2"></div>
     <div class="ember ember-3"></div>
     <div class="ember ember-4"></div>
+    <div class="ember ember-5"></div>
+    <div class="ember ember-6"></div>
+    <div class="ember ember-7"></div>
   </div>
 
   <!-- Hero Section -->
-  <div class="relative z-10 w-full max-w-[560px] mx-auto px-6 pt-20 pb-12 md:pt-28 md:pb-16 text-center">
+  <div class="relative z-10 w-full max-w-[600px] mx-auto px-6 pt-20 pb-10 md:pt-28 md:pb-14 text-center">
     <div class="mb-8">
-      <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-accent to-[#f48c06] rounded-[20px] flex items-center justify-center shadow-[0_8px_30px_rgba(232,93,4,0.4)]">
-        <span>
+      <div class="w-20 h-20 mx-auto mb-6 relative hero-icon-wrap">
+        <div class="hero-glow"></div>
+        <div class="w-full h-full bg-gradient-to-br from-accent to-[#f48c06] rounded-[20px] flex items-center justify-center shadow-[0_8px_30px_rgba(232,93,4,0.4)] relative z-10">
           <img
             class="pixel-icon"
             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAAACLz2ctAAAABHNCSVQICAgIfAhkiAAAAL56VFh0UmF3IHByb2ZpbGUgdHlwZSBBUFAxAAAYlX1P0Q7CIAx85yv2CdcWCnwOMZtZYtTs/x8sAeZm1CNQetBez13n+7ytl+m5PZb1NrupggHns89cACQ0CEAMqtHOhh6F7GZFiD3nFjWnCH/4V3BCsB8qStF2K6hHbn38kBW2ZT0KvmmjDnnQ2CXkBx8++P7AKL564M6n4Xu0C5LU2ySkQVVZpTJClpPds+D/6iJNl9/+Altt6tzZN+11BvcCMLVWXKwegSQAAAMTSURBVHic7d3RThNRGIXRQRpLo4VClHhBfP/nMlyQaKTaxrYEg2+g2+SYXWGt65N2Br6ci/lzptMEAAAAAAAAAAAAAADA/+akfQGj3Nx8fGpfw+/c3n56Nn/rkV61L4CXTYBUCZAqAVIlQKoESJUAqRIgVQKkata+gD9JJxxXV6vo82azsbf8+PiYLo3u46VNTOyAVAmQKgFSJUCqBEiVAKkSIFUCpEqAVNWeuqcTjsViHn3e5eVltO70LJuYHLZfonWbzSZal9rtDtG65zIxsQNSJUCqBEiVAKkSIFUCpEqAVAmQKgFSdfRnQtIJx/39fbRuuczOcKRnPZbL5dDPS6WTpGOfmNgBqRIgVQKkSoBUCZAqAVIlQKoESJUAqTr6Scj67mu0Ln3cv5myMxyjz5jM9uts3eC3dx37xMQOSJUAqRIgVQKkSoBUCZAqAVIlQKoESNXwScjot16dLRbRut1uF607OWQ/rJ6eMQkHJrHRZ0eur99F67bbXfSHWa8/D52Y2AGpEiBVAqRKgFQJkCoBUiVAqgRIlQCpqp0JWYQTjjerD9G62Sz8XY/wTEh6ffv9PlqXGj3RSe+3xQ5IlQCpEiBVAqRKgFQJkCoBUiVAqgRIVW0Skj7xn6a7od+bTjjy6xsrnsAcfkTr0onJ9flFtG6apqFnR+yAVAmQKgFSJUCqBEiVAKkSIFUCpEqAVB3974SMnkikk4Fpnr0EKp5crLPJxW7K7vfh8DNa9/o8+xc/fB/7Vq6UHZAqAVIlQKoESJUAqRIgVQKkSoBUCZCq2iQkffI+n59G657CyUUqnZikZzNGf2/r80azA1IlQKoESJUAqRIgVQKkSoBUCZAqAVI1dnzwF1ar99Ej+ov526HfO3qyMnqikzqEZ0JS3w7baJ1fTOdZESBVAqRKgFQJkCoBUiVAqgRIlQCpqk1CUq2JyWjppKFl9IQjZQekSoBUCZAqAVIlQKoESJUAqRIgVQKk6ugnIal0YtLSmjQcOzsgVQKkSoBUCZAqAVIlQKoESJUAqRIgAAAAAAAA/BO/AFEamNLH6FzGAAAAAElFTkSuQmCC"
             alt="Coal Icon"
           />
-        </span>
+        </div>
       </div>
-      <h1 class="text-[1.75rem] md:text-[2.25rem] font-bold m-0 mb-4 bg-gradient-to-br from-accent to-[#d35400] bg-clip-text text-transparent leading-tight">
+      <h1 class="text-[1.85rem] md:text-[2.5rem] font-extrabold m-0 mb-4 bg-gradient-to-br from-accent to-[#ffba08] bg-clip-text text-transparent leading-tight tracking-tight">
         Collect, trade, and invest in rare digital stoves.
       </h1>
-      <p class="m-0 text-text-secondary text-[0.95rem] md:text-[1.05rem] leading-relaxed max-w-[480px] mx-auto">
+      <p class="m-0 text-text-secondary text-[0.95rem] md:text-[1.1rem] leading-relaxed max-w-[480px] mx-auto">
         Open lootboxes, build your collection, and battle friends in Poker, Blackjack, and Roulette — all powered by player-driven trading.
       </p>
     </div>
@@ -34,19 +40,46 @@
       <a routerLink="/register" class="flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-br from-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(232,93,4,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(232,93,4,0.5)] active:translate-y-0 w-full sm:w-auto">
         Get Started — It's Free
       </a>
-      <a routerLink="/how-it-works" class="flex items-center justify-center gap-2.5 px-8 py-4 bg-surface-secondary text-text-primary border border-border rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-lg active:translate-y-0 w-full sm:w-auto">
+      <a routerLink="/how-it-works" class="flex items-center justify-center gap-2.5 px-8 py-4 bg-surface-secondary/60 backdrop-blur-sm text-text-primary border border-border rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-lg active:translate-y-0 w-full sm:w-auto">
         See How It Works
       </a>
     </div>
   </div>
 
+  <!-- Stats Bar -->
+  <div class="relative z-10 w-full max-w-[900px] mx-auto px-6 pb-16">
+    <div class="stats-bar reveal">
+      <div class="stat-item">
+        <div class="stat-value">50+</div>
+        <div class="stat-label">Unique Stoves</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">5</div>
+        <div class="stat-label">Rarity Tiers</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Casino Games</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">24/7</div>
+        <div class="stat-label">Live Market</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Feature Preview Section -->
-  <div class="relative z-10 w-full max-w-[1200px] mx-auto px-6 pb-24">
+  <div class="relative z-10 w-full max-w-[1200px] mx-auto px-6 pb-20">
+    <div class="text-center mb-10 reveal">
+      <h2 class="text-[1.5rem] md:text-[1.75rem] font-bold text-text-primary mb-3">Everything you need to build your empire</h2>
+      <div class="section-divider"></div>
+    </div>
+
     <div class="feature-grid">
       <!-- Collect Rare Stoves -->
-      <div class="feature-card reveal">
-        <div class="feature-image-wrap">
-          <img src="/assets/stove_sprites/legendary/dragon.png" alt="Rare Dragon Stove" class="feature-image" />
+      <div class="feature-card collect reveal reveal-delay-1">
+        <div class="feature-icon-wrap collect-bg">
+          <img src="/assets/stove_sprites/legendary/dragon.png" alt="Rare Dragon Stove" class="feature-icon" />
         </div>
         <div class="feature-content">
           <h3 class="feature-title">Collect Rare Stoves</h3>
@@ -55,9 +88,9 @@
       </div>
 
       <!-- Trade on the Marketplace -->
-      <div class="feature-card reveal">
-        <div class="feature-icon-wrap bg-purple-500/10 border-purple-500/10">
-          <img src="icon/marketplace.png" class="w-full h-full rounded-[20px]" alt="Marketplace" />
+      <div class="feature-card trade reveal reveal-delay-2">
+        <div class="feature-icon-wrap trade-bg">
+          <img src="icon/marketplace.png" class="feature-icon" alt="Marketplace" />
         </div>
         <div class="feature-content">
           <h3 class="feature-title">Trade on the Marketplace</h3>
@@ -66,13 +99,154 @@
       </div>
 
       <!-- Play Mini-Games -->
-      <div class="feature-card reveal">
-        <div class="feature-icon-wrap bg-yellow-500/10 border-yellow-500/10">
-          <img src="icon/games.png" class="w-full h-full rounded-[20px]" alt="Games" />
+      <div class="feature-card play reveal reveal-delay-3">
+        <div class="feature-icon-wrap play-bg">
+          <img src="icon/games.png" class="feature-icon" alt="Games" />
         </div>
         <div class="feature-content">
           <h3 class="feature-title">Play Mini-Games</h3>
           <p class="feature-desc">Bet your coal in Poker, Blackjack, and Roulette. Win big or go home.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rarity Showcase -->
+  <div class="relative z-10 w-full pb-20">
+    <div class="text-center mb-10 px-6 reveal">
+      <h2 class="text-[1.5rem] md:text-[1.75rem] font-bold text-text-primary mb-3">Discover stoves of every rarity</h2>
+      <p class="text-text-secondary max-w-[500px] mx-auto">From Common workhorses to Legendary masterpieces — every stove is a unique pixel art collectible.</p>
+      <div class="section-divider mt-4"></div>
+    </div>
+
+    <div class="rarity-section reveal">
+      <div class="marquee-track">
+        <!-- First set -->
+        <div class="rarity-card common">
+          <img src="/assets/stove_sprites/common/standard.png" alt="Standard Stove" class="stove-img" />
+          <span class="rarity-badge common">Common</span>
+        </div>
+        <div class="rarity-card rare">
+          <img src="/assets/stove_sprites/rare/forest.png" alt="Forest Stove" class="stove-img" />
+          <span class="rarity-badge rare">Rare</span>
+        </div>
+        <div class="rarity-card epic">
+          <img src="/assets/stove_sprites/epic/golden.png" alt="Golden Stove" class="stove-img" />
+          <span class="rarity-badge epic">Epic</span>
+        </div>
+        <div class="rarity-card legendary">
+          <img src="/assets/stove_sprites/legendary/dragon.png" alt="Dragon Stove" class="stove-img" />
+          <span class="rarity-badge legendary">Legendary</span>
+        </div>
+        <div class="rarity-card secret">
+          <img src="/assets/stove_sprites/secret/galactic-dragon-stove.png" alt="Galactic Dragon" class="stove-img" />
+          <span class="rarity-badge secret">Secret</span>
+        </div>
+        <div class="rarity-card common">
+          <img src="/assets/stove_sprites/common/rusty.png" alt="Rusty Stove" class="stove-img" />
+          <span class="rarity-badge common">Common</span>
+        </div>
+        <div class="rarity-card epic">
+          <img src="/assets/stove_sprites/epic/steampunk.png" alt="Steampunk Stove" class="stove-img" />
+          <span class="rarity-badge epic">Epic</span>
+        </div>
+        <div class="rarity-card legendary">
+          <img src="/assets/stove_sprites/legendary/crystal.png" alt="Crystal Stove" class="stove-img" />
+          <span class="rarity-badge legendary">Legendary</span>
+        </div>
+        <div class="rarity-card rare">
+          <img src="/assets/stove_sprites/rare/bronze.png" alt="Bronze Stove" class="stove-img" />
+          <span class="rarity-badge rare">Rare</span>
+        </div>
+        <div class="rarity-card legendary">
+          <img src="/assets/stove_sprites/legendary/magic-stove.png" alt="Magic Stove" class="stove-img" />
+          <span class="rarity-badge legendary">Legendary</span>
+        </div>
+        <!-- Duplicate set for seamless loop -->
+        <div class="rarity-card common">
+          <img src="/assets/stove_sprites/common/standard.png" alt="Standard Stove" class="stove-img" />
+          <span class="rarity-badge common">Common</span>
+        </div>
+        <div class="rarity-card rare">
+          <img src="/assets/stove_sprites/rare/forest.png" alt="Forest Stove" class="stove-img" />
+          <span class="rarity-badge rare">Rare</span>
+        </div>
+        <div class="rarity-card epic">
+          <img src="/assets/stove_sprites/epic/golden.png" alt="Golden Stove" class="stove-img" />
+          <span class="rarity-badge epic">Epic</span>
+        </div>
+        <div class="rarity-card legendary">
+          <img src="/assets/stove_sprites/legendary/dragon.png" alt="Dragon Stove" class="stove-img" />
+          <span class="rarity-badge legendary">Legendary</span>
+        </div>
+        <div class="rarity-card secret">
+          <img src="/assets/stove_sprites/secret/galactic-dragon-stove.png" alt="Galactic Dragon" class="stove-img" />
+          <span class="rarity-badge secret">Secret</span>
+        </div>
+        <div class="rarity-card common">
+          <img src="/assets/stove_sprites/common/rusty.png" alt="Rusty Stove" class="stove-img" />
+          <span class="rarity-badge common">Common</span>
+        </div>
+        <div class="rarity-card epic">
+          <img src="/assets/stove_sprites/epic/steampunk.png" alt="Steampunk Stove" class="stove-img" />
+          <span class="rarity-badge epic">Epic</span>
+        </div>
+        <div class="rarity-card legendary">
+          <img src="/assets/stove_sprites/legendary/crystal.png" alt="Crystal Stove" class="stove-img" />
+          <span class="rarity-badge legendary">Legendary</span>
+        </div>
+        <div class="rarity-card rare">
+          <img src="/assets/stove_sprites/rare/bronze.png" alt="Bronze Stove" class="stove-img" />
+          <span class="rarity-badge rare">Rare</span>
+        </div>
+        <div class="rarity-card legendary">
+          <img src="/assets/stove_sprites/legendary/magic-stove.png" alt="Magic Stove" class="stove-img" />
+          <span class="rarity-badge legendary">Legendary</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How It Works -->
+  <div class="relative z-10 w-full max-w-[900px] mx-auto px-6 pb-20">
+    <div class="text-center mb-10 reveal">
+      <h2 class="text-[1.5rem] md:text-[1.75rem] font-bold text-text-primary mb-3">How it works</h2>
+      <p class="text-text-secondary max-w-[420px] mx-auto">Get started in minutes. No downloads, no pay-to-win — just skill, luck, and strategy.</p>
+      <div class="section-divider mt-4"></div>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-item reveal reveal-delay-1">
+        <div class="step-number">1</div>
+        <h3 class="step-title">Open Lootboxes</h3>
+        <p class="step-desc">Spend your coal on lootboxes and unveil stoves from Common to Legendary. Every pull is a chance at greatness.</p>
+      </div>
+      <div class="step-item reveal reveal-delay-2">
+        <div class="step-number">2</div>
+        <h3 class="step-title">Trade Smart</h3>
+        <p class="step-desc">List duplicates on the player-driven marketplace. Set prices, negotiate trades, and build your dream collection.</p>
+      </div>
+      <div class="step-item reveal reveal-delay-3">
+        <div class="step-number">3</div>
+        <h3 class="step-title">Play & Profit</h3>
+        <p class="step-desc">Join Poker, Blackjack, or Roulette tables. Bet your coal, outplay opponents, and fund your next legendary pull.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer CTA -->
+  <div class="relative z-10 w-full max-w-[700px] mx-auto px-6 pb-24">
+    <div class="footer-cta reveal reveal-scale">
+      <div class="relative z-10">
+        <h2 class="text-[1.5rem] md:text-[2rem] font-extrabold text-text-primary mb-3">Ready to stoke the fire?</h2>
+        <p class="text-text-secondary mb-8 max-w-[420px] mx-auto">Join thousands of players collecting, trading, and competing. Your first legendary stove is just a lootbox away.</p>
+        <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
+          <a routerLink="/register" class="flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-br from-accent to-[#f48c06] text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(232,93,4,0.4)] hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(232,93,4,0.5)] active:translate-y-0 w-full sm:w-auto">
+            Create Free Account
+          </a>
+          <a routerLink="/how-it-works" class="flex items-center justify-center gap-2.5 px-8 py-4 bg-surface-secondary/60 backdrop-blur-sm text-text-primary border border-border rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-lg active:translate-y-0 w-full sm:w-auto">
+            Learn More
+          </a>
         </div>
       </div>
     </div>
