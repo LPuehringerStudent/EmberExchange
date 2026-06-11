@@ -186,10 +186,17 @@
     <!-- ─── Stove Grid ─── -->
     <section class="stove-grid-section">
       @if (loading()) {
-        <div class="flex items-center justify-center py-16">
-          <svg class="w-8 h-8 animate-spin text-[var(--orange)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 12a9 9 0 1 1-6.219-8.56" stroke-linecap="round"/>
-          </svg>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          @for (_ of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]; track $index) {
+            <div class="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-3 space-y-3">
+              <div class="aspect-square rounded-xl skeleton-shimmer"></div>
+              <div class="space-y-2">
+                <div class="h-3 w-4/5 rounded skeleton-shimmer"></div>
+                <div class="h-2.5 w-1/2 rounded skeleton-shimmer"></div>
+                <div class="h-2.5 w-2/3 rounded skeleton-shimmer"></div>
+              </div>
+            </div>
+          }
         </div>
       } @else if (filteredStoves().length === 0) {
         <div class="text-center py-16">
