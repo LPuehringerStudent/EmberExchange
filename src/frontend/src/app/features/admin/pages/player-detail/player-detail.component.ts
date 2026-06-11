@@ -11,7 +11,37 @@ import { AdminService, type AdminPlayerDetail } from '@core/services/admin.servi
   template: `
     <div class="max-w-4xl mx-auto">
       @if (loading()) {
-        <div class="text-text-secondary">Loading player...</div>
+        <div class="space-y-4">
+          <div class="h-4 w-32 rounded skeleton-shimmer"></div>
+          <div class="bg-surface rounded-xl p-6 border border-[rgba(232,93,4,0.15)] space-y-5">
+            <div class="flex items-start justify-between gap-4">
+              <div class="space-y-3 flex-1">
+                <div class="h-6 w-44 rounded skeleton-shimmer"></div>
+                <div class="h-4 w-56 rounded skeleton-shimmer"></div>
+              </div>
+              <div class="h-8 w-24 rounded-full skeleton-shimmer"></div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              @for (_ of [0, 1, 2, 3]; track $index) {
+                <div class="space-y-2">
+                  <div class="h-3 w-20 rounded skeleton-shimmer"></div>
+                  <div class="h-4 w-full rounded skeleton-shimmer"></div>
+                </div>
+              }
+            </div>
+          </div>
+          <div class="bg-surface rounded-xl p-6 border border-[rgba(232,93,4,0.15)] space-y-3">
+            <div class="h-5 w-28 rounded skeleton-shimmer"></div>
+            <div class="grid grid-cols-3 gap-4">
+              @for (_ of [0, 1, 2]; track $index) {
+                <div class="space-y-2">
+                  <div class="h-3 w-20 rounded skeleton-shimmer"></div>
+                  <div class="h-5 w-24 rounded skeleton-shimmer"></div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
       } @else if (error()) {
         <div class="text-red-400">{{ error() }}</div>
       } @else if (detail()) {
