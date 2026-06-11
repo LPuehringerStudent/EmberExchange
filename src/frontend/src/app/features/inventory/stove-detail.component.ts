@@ -72,7 +72,7 @@ const REROLL_BASE_COST: Record<string, number> = {
             </div>
             <div class="bg-body rounded-xl p-3 border border-border">
               <p class="text-[0.6875rem] uppercase tracking-wider text-text-muted m-0 mb-1">Re-rolls</p>
-              <p class="text-sm font-semibold text-text-primary m-0">{{ stove().reRollCount ?? 0 }}</p>
+              <p class="text-sm font-semibold text-text-primary m-0">{{ stove().reRollCount }}</p>
             </div>
           </div>
 
@@ -139,8 +139,8 @@ const REROLL_BASE_COST: Record<string, number> = {
                     <span class="text-[#3b82f6] font-bold text-lg">-{{ reRollCost() }} Sparks</span>
                   </div>
                   <p class="text-[0.6875rem] text-text-muted text-center m-0 mb-3">
-                    Base {{ baseCost() }} × 1.5<sup>{{ stove().reRollCount ?? 0 }}</sup> = {{ reRollCost() }}
-                    ({{ (stove().reRollCount ?? 0) + 1 }}{{ ordinalSuffix((stove().reRollCount ?? 0) + 1) }} re-roll)
+                    Base {{ baseCost() }} × 1.5<sup>{{ stove().reRollCount }}</sup> = {{ reRollCost() }}
+                    ({{ stove().reRollCount + 1 }}{{ ordinalSuffix(stove().reRollCount + 1) }} re-roll)
                   </p>
                   @if (sparksBalance() < reRollCost()) {
                     <p class="text-xs text-red-400 text-center m-0 mb-3">You need {{ reRollCost() }} Sparks. Current balance: {{ sparksBalance() }}</p>
@@ -182,8 +182,7 @@ export class StoveDetailComponent {
   }
 
   reRollCost(): number {
-    const count = this.stove().reRollCount ?? 0;
-    return Math.ceil(this.baseCost() * Math.pow(1.5, count));
+    return Math.ceil(this.baseCost() * Math.pow(1.5, this.stove().reRollCount));
   }
 
   sparksReward(): number {

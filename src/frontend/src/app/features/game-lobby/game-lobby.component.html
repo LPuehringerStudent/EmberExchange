@@ -115,7 +115,7 @@
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
-                    {{ room.playerCount ?? 0 }} / {{ room.maxPlayers }} players
+                    {{ room.playerCount }} / {{ room.maxPlayers }} players
                   </span>
                   @if (room.settings && room.settings['turnTime']) {
                     <span class="flex items-center gap-1">
@@ -128,7 +128,7 @@
                 </div>
                 <div class="h-1.5 rounded-full bg-surface-secondary overflow-hidden">
                   <div class="h-full rounded-full bg-gradient-to-r from-accent to-[#f48c06] transition-all duration-500"
-                       [style.width.%]="((room.playerCount ?? 0) / room.maxPlayers) * 100"></div>
+                       [style.width.%]="(room.playerCount / room.maxPlayers) * 100"></div>
                 </div>
               </div>
             </div>
