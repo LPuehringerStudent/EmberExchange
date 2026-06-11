@@ -123,7 +123,22 @@ import type { PlayerRow } from '@shared/model';
       </div>
 
       @if (loading()) {
-        <div class="text-text-secondary">Loading players...</div>
+        <div class="bg-surface rounded-xl border border-[rgba(232,93,4,0.15)] p-4 space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            @for (_ of [0, 1, 2, 3]; track $index) {
+              <div class="h-10 rounded-lg skeleton-shimmer"></div>
+            }
+          </div>
+          <div class="overflow-hidden rounded-xl border border-border">
+            @for (_ of [0, 1, 2, 3, 4, 5]; track $index) {
+              <div class="grid grid-cols-9 gap-3 px-4 py-3 border-t border-border">
+                @for (__ of [0, 1, 2, 3, 4, 5, 6, 7, 8]; track $index) {
+                  <div class="h-3 rounded skeleton-shimmer"></div>
+                }
+              </div>
+            }
+          </div>
+        </div>
       } @else if (error()) {
         <div class="text-red-400">{{ error() }}</div>
       } @else if (data()) {
