@@ -106,7 +106,20 @@
           <p class="section-sub text-sm text-text-muted m-0">Customize your Hall of Glory</p>
         </div>
         @if (editLoading()) {
-          <div class="edit-loading py-5 text-center text-text-muted text-sm">Loading options...</div>
+          <div class="edit-loading py-5">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              @for (_ of [0, 1, 2]; track $index) {
+                <div class="space-y-3">
+                  <div class="h-3 w-20 rounded skeleton-shimmer"></div>
+                  <div class="flex flex-wrap gap-2">
+                    @for (_ of [0, 1, 2, 3]; track $index) {
+                      <div class="h-9 w-24 rounded-lg skeleton-shimmer"></div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
         } @else {
           @if (editError()) {
             <div class="edit-error">{{ editError() }}</div>
