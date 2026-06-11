@@ -419,9 +419,10 @@
 
           <!-- Loading -->
           @if (loading()) {
-            <div class="list-loading">
-              <div class="spinner"></div>
-              <p>Loading market data...</p>
+            <div class="space-y-3">
+              @for (_ of [0, 1, 2, 3, 4, 5]; track $index) {
+                <div class="h-18 rounded-2xl skeleton-shimmer"></div>
+              }
             </div>
           }
 
@@ -624,7 +625,7 @@
                       <span class="axis-label">{{ formatDateShort(chart.endDate) }}</span>
                     </div>
                   } @else {
-                    <div class="chart-loading">Loading chart data...</div>
+                    <div class="h-[420px] rounded-2xl skeleton-shimmer"></div>
                   }
                 </div>
               </div>
