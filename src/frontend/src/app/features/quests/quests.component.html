@@ -1,5 +1,4 @@
 <div class="quests-page">
-  <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">
       <div class="spinner"></div>
@@ -7,250 +6,276 @@
     </div>
   }
 
-  <!-- Error -->
   @if (error()) {
     <div class="error-banner">
-      <span>⚠️ {{ error() }}</span>
-      <button (click)="loadQuests()">Retry</button>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+      </svg>
+      <span>{{ error() }}</span>
+      <button type="button" (click)="loadQuests()">Retry</button>
     </div>
   }
 
   @if (!loading() && !error()) {
-    <!-- Hero Dashboard -->
-    <div class="hero-section">
-      <div class="hero-header">
-        <h1>⚔️ Quests</h1>
-        <p>Complete quests to earn coins, XP, and lootboxes</p>
+    <section class="overview-panel">
+      <div class="overview-copy">
+        <div class="section-kicker">Quest Board</div>
+        <h1>Quests</h1>
+        <p>Track daily and weekly objectives, claim rewards, and keep the next best task visible.</p>
       </div>
 
-      <div class="hero-dashboard">
-        <!-- Daily Ring -->
-        <div class="ring-card">
-          <div class="ring-wrap">
-            <svg class="progress-ring" viewBox="0 0 120 120">
-              <circle class="ring-bg" cx="60" cy="60" r="50" />
-              <circle
-                class="ring-fill daily"
-                cx="60"
-                cy="60"
-                r="50"
-                [attr.stroke-dasharray]="getRingCircumference(50)"
-                [attr.stroke-dashoffset]="getRingOffset(getDailyPercent(), 50)"
-              />
-            </svg>
-            <div class="ring-center">
-              <span class="ring-value">{{ stats()?.dailyCompleted ?? 0 }}/{{ stats()?.dailyTotal ?? 0 }}</span>
-              <span class="ring-label">Daily</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Weekly Ring -->
-        <div class="ring-card">
-          <div class="ring-wrap">
-            <svg class="progress-ring" viewBox="0 0 120 120">
-              <circle class="ring-bg" cx="60" cy="60" r="50" />
-              <circle
-                class="ring-fill weekly"
-                cx="60"
-                cy="60"
-                r="50"
-                [attr.stroke-dasharray]="getRingCircumference(50)"
-                [attr.stroke-dashoffset]="getRingOffset(getWeeklyPercent(), 50)"
-              />
-            </svg>
-            <div class="ring-center">
-              <span class="ring-value">{{ stats()?.weeklyCompleted ?? 0 }}/{{ stats()?.weeklyTotal ?? 0 }}</span>
-              <span class="ring-label">Weekly</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Stats & Claim All -->
-        <div class="hero-info">
-          <div class="stat-badges">
-            @if (stats()?.readyToClaim) {
-              <div class="stat-badge claimable">
-                <span class="dot"></span>
-                <span>{{ stats()?.readyToClaim }} ready to claim</span>
-              </div>
-            }
-            <div class="stat-badge">
-              <span class="dot coins"></span>
-              <span>{{ formatNumber(stats()?.totalCoinsEarned ?? 0) }} earned</span>
-            </div>
-            <div class="stat-badge">
-              <span class="dot xp"></span>
-              <span>{{ formatNumber(stats()?.totalXPEarned ?? 0) }} XP earned</span>
-            </div>
-          </div>
-          <button
-            class="claim-all-btn"
-            [disabled]="!hasClaimable() || claimingAll()"
-            (click)="claimAll()"
-          >
-            @if (claimingAll()) {
-              <span class="btn-spinner"></span>
-              Claiming...
-            } @else {
-              🎁 Claim All Rewards ({{ claimableCount() }})
-            }
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-      @for (chip of getFilterChips(); track chip.id) {
+      <div class="overview-actions">
         <button
-          class="filter-chip"
-          [class.active]="activeFilter() === chip.id"
-          (click)="setFilter(chip.id)"
+          type="button"
+          class="claim-all-btn"
+          [disabled]="!hasClaimable() || claimingAll()"
+          (click)="claimAll()"
         >
-          <span class="chip-icon">{{ chip.icon }}</span>
-          {{ chip.label }}
+          @if (claimingAll()) {
+            <span class="btn-spinner"></span>
+            Claiming
+          } @else {
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7m16 0H4m16 0v-2a2 2 0 0 0-2-2h-3.5M4 12v-2a2 2 0 0 1 2-2h3.5m0 0H12m-2.5 0C7 8 7 4 9.5 4S12 8 12 8m0 0h2.5M12 8s0-4 2.5-4S17 8 14.5 8M12 12v9"/>
+            </svg>
+            Claim All ({{ claimableCount() }})
+          }
         </button>
-      }
-    </div>
+      </div>
 
-    <!-- Empty State -->
+      <div class="overview-grid">
+        <div class="metric-card">
+          <span class="metric-label">Active</span>
+          <strong>{{ activeCount() }}</strong>
+          <span class="metric-note">Open quests</span>
+        </div>
+        <div class="metric-card ready">
+          <span class="metric-label">Ready</span>
+          <strong>{{ claimableCount() }}</strong>
+          <span class="metric-note">Rewards waiting</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Daily</span>
+          <strong>{{ stats()?.dailyCompleted ?? 0 }}/{{ stats()?.dailyTotal ?? 0 }}</strong>
+          <div class="mini-track"><span [style.width.%]="getDailyPercent()"></span></div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Weekly</span>
+          <strong>{{ stats()?.weeklyCompleted ?? 0 }}/{{ stats()?.weeklyTotal ?? 0 }}</strong>
+          <div class="mini-track"><span [style.width.%]="getWeeklyPercent()"></span></div>
+        </div>
+        <div class="metric-card wide">
+          <span class="metric-label">Earned</span>
+          <strong>{{ formatNumber(stats()?.totalCoinsEarned ?? 0) }} Coal</strong>
+          <span class="metric-note">{{ formatNumber(stats()?.totalXPEarned ?? 0) }} XP earned</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="filters-panel" aria-label="Quest filters">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          placeholder="Search quests"
+          [value]="searchTerm()"
+          (input)="setSearchTerm($event)"
+        />
+      </div>
+
+      <div class="filter-row category-row">
+        @for (chip of getFilterChips(); track chip.id) {
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="activeFilter() === chip.id"
+            (click)="setFilter(chip.id)"
+          >
+            <img [src]="chip.icon" [alt]="chip.label" />
+            <span>{{ chip.label }}</span>
+          </button>
+        }
+      </div>
+
+      <div class="filter-row compact-row">
+        <div class="segmented-control">
+          @for (option of getTypeFilters(); track option.id) {
+            <button
+              type="button"
+              [class.active]="typeFilter() === option.id"
+              (click)="setTypeFilter(option.id)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+
+        <div class="segmented-control">
+          @for (option of getStatusFilters(); track option.id) {
+            <button
+              type="button"
+              [class.active]="statusFilter() === option.id"
+              (click)="setStatusFilter(option.id)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+
+        <select [value]="sortMode()" (change)="setSortMode($any($event.target).value)">
+          @for (option of getSortOptions(); track option.id) {
+            <option [value]="option.id">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+    </section>
+
     @if (filteredQuests().length === 0) {
       <div class="empty-state">
-        <div class="empty-icon">🎉</div>
-        <h3>All caught up!</h3>
-        <p>No quests match your current filter.</p>
+        <img src="icon/quests.png" alt="" />
+        <h3>No quests found</h3>
+        <p>Adjust the filters or search term to see more objectives.</p>
       </div>
     }
 
-    <!-- Quest Grid -->
     @if (filteredQuests().length > 0) {
-      <div class="quest-grid">
+      <section class="quest-grid" aria-label="Quest list">
         @for (quest of filteredQuests(); track quest.questId) {
-          <div
+          <article
             class="quest-card"
             [class.completed]="quest.isCompleted && !quest.isClaimed"
             [class.claimed]="quest.isClaimed"
             [style.--accent]="getTemplateColor(quest.templateId)"
           >
-            <div class="card-glow"></div>
-
-            <div class="card-header">
-              <span
-                class="quest-type-badge"
-                [class.weekly]="quest.questType === 'weekly'"
-              >
-                {{ quest.questType === 'weekly' ? '★ Weekly' : '● Daily' }}
-              </span>
-              <span
-                class="quest-timer"
-                [class.urgent]="getTimeLeftUrgent(quest.expiresAt)"
-              >
-                ⏱ {{ getTimeLeft(quest.expiresAt) }}
-              </span>
-            </div>
-
-            <div class="card-body">
-              <div class="quest-icon">{{ getTemplateIcon(quest.templateId) }}</div>
-              <h3 class="quest-title">{{ quest.label }}</h3>
-              <p class="quest-desc">{{ getTemplateDescription(quest.templateId) }}</p>
-            </div>
-
-            <div class="card-progress">
-              <div class="progress-track">
-                <div
-                  class="progress-bar"
-                  [style.width.%]="getProgressPercent(quest)"
-                ></div>
+            <header class="card-header">
+              <div class="quest-identity">
+                <img [src]="getTemplateIcon(quest.templateId)" [alt]="getQuestMeta(quest.templateId).label" />
+                <div>
+                  <span class="category-label">{{ getQuestMeta(quest.templateId).label }}</span>
+                  <h2>{{ quest.label }}</h2>
+                </div>
               </div>
+              <span class="quest-type" [class.weekly]="quest.questType === 'weekly'">
+                {{ quest.questType }}
+              </span>
+            </header>
+
+            <p class="quest-desc">{{ getTemplateDescription(quest.templateId) }}</p>
+
+            <div class="time-row" [class.urgent]="getTimeLeftUrgent(quest.expiresAt)">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 7v5l3 2"/>
+              </svg>
+              <span>{{ getTimeLeft(quest.expiresAt) }}</span>
+            </div>
+
+            <div class="progress-block">
               <div class="progress-meta">
-                <span class="progress-text">{{ quest.currentValue }} / {{ quest.targetValue }}</span>
-                <span class="progress-percent">{{ getProgressPercent(quest) }}%</span>
+                <span>{{ quest.currentValue }} / {{ quest.targetValue }}</span>
+                <strong>{{ getProgressPercent(quest) }}%</strong>
+              </div>
+              <div class="progress-track">
+                <span [style.width.%]="getProgressPercent(quest)"></span>
               </div>
             </div>
 
-            <div class="card-footer">
+            <footer class="card-footer">
               <div class="rewards">
                 @if (quest.rewardCoins > 0) {
-                  <span class="reward">🪙 {{ quest.rewardCoins }}</span>
+                  <span class="reward">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9"/>
+                      <path d="M9 12h6M12 9v6"/>
+                    </svg>
+                    {{ quest.rewardCoins }}
+                  </span>
                 }
                 @if (quest.rewardXP > 0) {
-                  <span class="reward">⭐ {{ quest.rewardXP }}</span>
+                  <span class="reward">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="m12 3 2.3 4.66 5.14.75-3.72 3.63.88 5.12L12 14.74 7.4 17.16l.88-5.12-3.72-3.63 5.14-.75L12 3Z"/>
+                    </svg>
+                    {{ quest.rewardXP }} XP
+                  </span>
                 }
                 @if (quest.rewardLootboxTypeId) {
-                  <span class="reward lootbox">📦 Lootbox</span>
+                  <span class="reward">
+                    <img src="icon/lootboxes.png" alt="" />
+                    Lootbox
+                  </span>
                 }
               </div>
-              <div class="action">
-                @if (quest.isClaimed) {
-                  <button class="btn-claimed" disabled>
-                    <span>✓ Claimed</span>
-                  </button>
-                } @else if (quest.isCompleted) {
-                  <button
-                    class="btn-claim"
-                    [disabled]="claimingId() === quest.questId"
-                    (click)="claimReward(quest)"
-                  >
-                    @if (claimingId() === quest.questId) {
-                      <span class="btn-spinner"></span>
-                    } @else {
-                      <span>Claim Reward</span>
-                    }
-                  </button>
-                } @else {
-                  <span class="status-inprogress">{{ getProgressPercent(quest) }}%</span>
-                }
-              </div>
-            </div>
-          </div>
+
+              @if (quest.isClaimed) {
+                <button type="button" class="btn-claimed" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+                  Claimed
+                </button>
+              } @else if (quest.isCompleted) {
+                <button
+                  type="button"
+                  class="btn-claim"
+                  [disabled]="claimingId() === quest.questId"
+                  (click)="claimReward(quest)"
+                >
+                  @if (claimingId() === quest.questId) {
+                    <span class="btn-spinner"></span>
+                  } @else {
+                    Claim
+                  }
+                </button>
+              } @else {
+                <span class="status-inprogress">In Progress</span>
+              }
+            </footer>
+          </article>
         }
-      </div>
+      </section>
     }
 
-    <!-- History Toggle -->
-    <div class="history-section">
-      <button class="history-toggle" (click)="toggleHistory()">
-        @if (showHistory()) {
-          <span>▲ Hide Quest History</span>
-        } @else {
-          <span>▼ Show Quest History</span>
-        }
+    <section class="history-section">
+      <button type="button" class="history-toggle" (click)="toggleHistory()">
+        <span>{{ showHistory() ? 'Hide Quest History' : 'Show Quest History' }}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" [class.open]="showHistory()">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
       </button>
 
       @if (showHistory()) {
         <div class="history-panel">
           @if (history().length === 0) {
-            <p class="history-empty">No completed quests yet. Get to work!</p>
+            <p class="history-empty">No completed quests yet.</p>
           } @else {
             <div class="history-list">
               @for (h of history(); track h.questId) {
                 <div class="history-row">
-                  <div class="history-icon">{{ getTemplateIcon(h.templateId) }}</div>
+                  <img [src]="getTemplateIcon(h.templateId)" [alt]="getQuestMeta(h.templateId).label" />
                   <div class="history-info">
                     <span class="history-name">{{ h.label }}</span>
-                    <span class="history-type" [class.weekly]="h.questType === 'weekly'">
-                      {{ h.questType }}
-                    </span>
+                    <span class="history-type" [class.weekly]="h.questType === 'weekly'">{{ h.questType }}</span>
                   </div>
                   <div class="history-rewards">
                     @if (h.rewardCoins > 0) {
-                      <span>🪙 {{ h.rewardCoins }}</span>
+                      <span>{{ h.rewardCoins }} Coal</span>
                     }
                     @if (h.rewardXP > 0) {
-                      <span>⭐ {{ h.rewardXP }}</span>
+                      <span>{{ h.rewardXP }} XP</span>
                     }
                     @if (h.rewardLootboxTypeId) {
-                      <span>📦</span>
+                      <span>Lootbox</span>
                     }
                   </div>
-                  <div class="history-status">✓</div>
+                  <svg class="history-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
                 </div>
               }
             </div>
           }
         </div>
       }
-    </div>
+    </section>
   }
 </div>

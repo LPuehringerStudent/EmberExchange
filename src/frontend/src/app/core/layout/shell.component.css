@@ -52,6 +52,25 @@
   background: var(--surface-bg-secondary);
   color: var(--accent);
 }
+.brand-lockup {
+  color: white;
+}
+.brand-logo {
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.brand-text {
+  color: #ffba08;
+  background: linear-gradient(180deg, #fff2a8 0%, #ffba08 32%, #ff6b00 68%, #b91c1c 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow:
+    0 0 0.35rem rgba(255, 186, 8, 0.45),
+    0 0.08rem 0.18rem rgba(185, 28, 28, 0.5);
+}
 
 /* Account dropdown */
 .account-dropdown {

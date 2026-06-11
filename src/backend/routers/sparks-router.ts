@@ -76,7 +76,8 @@ sparksRouter.post("/sparks/salvage", requireAuth, async (req, res) => {
         return;
     }
 
-    const unit = await Unit.create(true);
+    const unit = await Unit.create(false);
+    let ok = false;
     try {
         if (await checkPlayerBanned(unit, req.playerId!, res)) {
             return;
@@ -90,11 +91,12 @@ sparksRouter.post("/sparks/salvage", requireAuth, async (req, res) => {
         } else {
             res.status(StatusCodes.BAD_REQUEST).json(result);
         }
+        ok = true;
     } catch (err) {
         console.error("Route error:", err);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
-        await unit.complete();
+        await unit.complete(ok);
     }
 });
 
@@ -132,7 +134,8 @@ sparksRouter.post("/sparks/reroll-heat", requireAuth, async (req, res) => {
         return;
     }
 
-    const unit = await Unit.create(true);
+    const unit = await Unit.create(false);
+    let ok = false;
     try {
         if (await checkPlayerBanned(unit, req.playerId!, res)) {
             return;
@@ -146,10 +149,11 @@ sparksRouter.post("/sparks/reroll-heat", requireAuth, async (req, res) => {
         } else {
             res.status(StatusCodes.BAD_REQUEST).json(result);
         }
+        ok = true;
     } catch (err) {
         console.error("Route error:", err);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
-        await unit.complete();
+        await unit.complete(ok);
     }
 });

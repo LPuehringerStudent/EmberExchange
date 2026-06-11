@@ -88,17 +88,31 @@ export class SparksService {
         }
         const newBalance = (player.sparks ?? 0) + sparksAwarded;
 
-        // Clean up dependent records before deleting stove
-        // PinnedStove has a hard FK reference — must delete first
+        // Clean up dependent records before deleting stove.
+        // PinnedStove is legacy and may not exist on all databases.
+        const pinnedStoveTable = await this.unit.prepare<{ tableName: string | null }>(
+            `SELECT to_regclass('public.pinnedstove') AS tableName`
+        ).get();
+        if (pinnedStoveTable?.tableName) {
+            await this.unit.prepare(
+                `DELETE FROM PinnedStove WHERE stoveId = @stoveId`,
+                { stoveId }
+            ).run();
+        }
+
         await this.unit.prepare(
-            `DELETE FROM PinnedStove WHERE stoveId = @stoveId`,
+            `DELETE FROM Trade WHERE listingId IN (SELECT listingId FROM Listing WHERE stoveId = @stoveId)`,
             { stoveId }
         ).run();
 
-        // Cancelled listings still reference the stove; remove them so the stove can be deleted.
-        // (Active listings are already blocked above; sold listings stay for trade history.)
         await this.unit.prepare(
-            `DELETE FROM Listing WHERE stoveId = @stoveId AND status = 'cancelled'`,
+            `DELETE FROM GloryShowcase WHERE stoveId = @stoveId`,
+            { stoveId }
+        ).run();
+
+        // Historical listings still reference the stove, so remove them before deleting it.
+        await this.unit.prepare(
+            `DELETE FROM Listing WHERE stoveId = @stoveId`,
             { stoveId }
         ).run();
 
