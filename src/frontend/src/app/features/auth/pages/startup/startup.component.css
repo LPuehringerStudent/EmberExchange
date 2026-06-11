@@ -275,6 +275,7 @@
 .rarity-section {
   overflow: hidden;
   position: relative;
+  padding: 12px 0;
 }
 
 .rarity-section::before,
