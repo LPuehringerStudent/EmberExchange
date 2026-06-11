@@ -95,6 +95,7 @@ export class RouletteComponent {
 
   readonly wheelOrder = WHEEL_ORDER;
   readonly displayPlayers = signal<RoulettePlayerView[]>([]);
+  readonly preSpinPlayers = signal<RoulettePlayerView[]>([]);
   private revealTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly gridNumbers = [
@@ -124,11 +125,15 @@ export class RouletteComponent {
         this.displayPlayers.set(this.players());
       }
 
+      if (phase === 'betting') {
+        this.preSpinPlayers.set(this.players());
+      }
+
       // Animate wheel when a new winning number arrives
       if (num !== null && num !== lastWinningNumber && phase === 'settled') {
         lastWinningNumber = num;
         this.resultRevealed.set(false);
-        this.displayPlayers.set(this.playersBeforePayout());
+        this.displayPlayers.set(this.preSpinPlayers().length > 0 ? this.preSpinPlayers() : this.players());
         this.patchHeaderCoinsFromDisplay();
         this.animateToNumber(num);
         this.clearRevealTimer();
@@ -146,21 +151,6 @@ export class RouletteComponent {
       clearTimeout(this.revealTimer);
       this.revealTimer = null;
     }
-  }
-
-  private playersBeforePayout(): RoulettePlayerView[] {
-    const settledPlayers = this.players();
-
-    return settledPlayers.map((player) => {
-      const winner = this.getWinnerForPlayer(player.playerId);
-      const displayedStack = Math.max(0, player.stack - (winner?.amount ?? 0));
-
-      return {
-        ...player,
-        stack: displayedStack,
-        result: 'playing',
-      };
-    });
   }
 
   private revealRound(): void {
@@ -249,7 +239,7 @@ export class RouletteComponent {
   placeBet(betType: string, number?: number): void {
     if (!this.canBet()) return;
     const amount = this.selectedChip();
-    const remaining = this.myStack() - this.myTotalBet();
+    const remaining = this.myStack();
     if (amount > remaining) return;
 
     const actionData: Record<string, unknown> = { betType, amount };
