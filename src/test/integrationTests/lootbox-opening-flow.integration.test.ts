@@ -59,9 +59,9 @@ describe("Lootbox opening integration flow", () => {
   test("opening an owned unlisted lootbox creates a stove, marks the box opened, creates a drop, and decrements count", async () => {
     jest.spyOn(Math, "random").mockReturnValue(0);
 
-    const insertStoveStmt = mockStmt(null, [], { changes: 1 });
+    const insertStoveStmt = mockStmt({ stoveId: 501 }, [], { changes: 1 });
     const openLootboxStmt = mockStmt(null, [], { changes: 1 });
-    const insertDropStmt = mockStmt(null, [], { changes: 1 });
+    const insertDropStmt = mockStmt({ dropId: 900 }, [], { changes: 1 });
     const decrementCountStmt = mockStmt(null, [], { changes: 1 });
     const unit = mockUnitSequence([
       mockStmt({ lootboxId: 10, lootboxTypeId: 1, playerId: 1, openedAt: null, acquiredHow: "free" }),
@@ -81,9 +81,6 @@ describe("Lootbox opening integration flow", () => {
       insertDropStmt,
       decrementCountStmt,
     ]);
-    (unit.getLastRowId as jest.Mock)
-      .mockResolvedValueOnce(501)
-      .mockResolvedValueOnce(900);
 
     const [success, result] = await new LootboxService(unit).openLootbox(10, 1);
 
@@ -95,14 +92,14 @@ describe("Lootbox opening integration flow", () => {
       imageUrl: "/assets/ember.png",
       lootboxId: 10,
     });
-    expect(insertStoveStmt.run).toHaveBeenCalledTimes(1);
+    expect(insertStoveStmt.get).toHaveBeenCalledTimes(1);
     expect(openLootboxStmt.run).toHaveBeenCalledTimes(1);
-    expect(insertDropStmt.run).toHaveBeenCalledTimes(1);
+    expect(insertDropStmt.get).toHaveBeenCalledTimes(1);
     expect(decrementCountStmt.run).toHaveBeenCalledTimes(1);
   });
 
   test("a listed lootbox cannot be opened and no drop is created", async () => {
-    const insertStoveStmt = mockStmt(null, [], { changes: 1 });
+    const insertStoveStmt = mockStmt({ stoveId: 501 }, [], { changes: 1 });
     const unit = mockUnitSequence([
       mockStmt({ lootboxId: 10, lootboxTypeId: 1, playerId: 1, openedAt: null, acquiredHow: "free" }),
       mockStmt({ count: 1 }),
@@ -113,6 +110,7 @@ describe("Lootbox opening integration flow", () => {
 
     expect(success).toBe(false);
     expect(result).toBeNull();
+    expect(insertStoveStmt.get).not.toHaveBeenCalled();
     expect(insertStoveStmt.run).not.toHaveBeenCalled();
   });
 });

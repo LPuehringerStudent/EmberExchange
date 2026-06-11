@@ -1,6 +1,34 @@
 import { LootboxService } from '../../backend/services/lootbox-service';
 import { Unit } from '../../backend/utils/unit';
 
+jest.mock('../../backend/services/player-prestige-service', () => ({
+  PlayerPrestigeService: jest.fn(() => ({
+    addXP: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
+jest.mock('../../backend/services/achievement-engine', () => ({
+  AchievementEngine: jest.fn(() => ({
+    checkLootboxAchievements: jest.fn().mockResolvedValue(undefined),
+    checkWealthAchievements: jest.fn().mockResolvedValue(undefined),
+    checkLevelAchievements: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
+jest.mock('../../backend/services/quest-service', () => ({
+  QuestService: jest.fn(() => ({
+    trackProgress: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
+jest.mock('../../backend/services/pity-service', () => ({
+  PityService: jest.fn(() => ({
+    checkPity: jest.fn().mockResolvedValue(null),
+    resetCounter: jest.fn().mockResolvedValue(undefined),
+    incrementCounter: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -26,6 +54,8 @@ function mockUnitSequence(stmts: ReturnType<typeof mockStmt>[]) {
       return stmt;
     }),
     getLastRowId: jest.fn().mockResolvedValue(1),
+    savepoint: jest.fn().mockResolvedValue(undefined),
+    rollbackToSavepoint: jest.fn().mockResolvedValue(undefined),
   } as unknown as Unit;
 }
 
@@ -33,6 +63,8 @@ function mockUnit(stmt = mockStmt()) {
   return {
     prepare: jest.fn().mockReturnValue(stmt),
     getLastRowId: jest.fn().mockResolvedValue(1),
+    savepoint: jest.fn().mockResolvedValue(undefined),
+    rollbackToSavepoint: jest.fn().mockResolvedValue(undefined),
   } as unknown as Unit;
 }
 
@@ -61,6 +93,8 @@ const sampleStoveType = {
   name: 'Ember Stove',
   rarity: 'common',
   imageUrl: '/assets/stove_sprites/ember.png',
+  minHeat: 0.2,
+  maxHeat: 0.8,
 };
 
 // ---------------------------------------------------------------------------
@@ -325,33 +359,28 @@ describe('LootboxService', () => {
       // Call sequence:
       // (1) verify lootbox → sampleLootbox
       // (2) isLootboxListed count → { count: 0 }
-      // (3) PityService.getCounters
-      // (4) pickStoveTypeByRarity all → [sampleStoveType]
-      // (5) INSERT Stove run
-      // (6) markOpened run
-      // (7) INSERT LootboxDrop run
-      // (8) decrement lootboxCount run
-      // (9) PityService.resetCounter
+      // (3) pickStoveTypeByRarity all → [sampleStoveType]
+      // (4) INSERT Stove RETURNING stoveId
+      // (5) UPDATE Lootbox openedAt
+      // (6) INSERT LootboxDrop RETURNING dropId
+      // (7) UPDATE Player lootboxCount
       const verifyStmt = mockStmt(sampleLootbox);
       const notListedStmt = mockStmt({ count: 0 });
-      const pityStmt = mockStmt(null, []);
       const stoveTypesStmt = mockStmt(null, [sampleStoveType]);
-      const insertStmt = mockStmt(null, [], { changes: 1 });
+      const insertStoveStmt = mockStmt({ stoveId: 55 }, [], { changes: 1 });
+      const markOpenedStmt = mockStmt(null, [], { changes: 1 });
+      const insertDropStmt = mockStmt({ dropId: 7 }, [], { changes: 1 });
+      const updateCountStmt = mockStmt(null, [], { changes: 1 });
 
       const unit = mockUnitSequence([
         verifyStmt,      // verify ownership
         notListedStmt,   // isLootboxListed
-        pityStmt,        // PityService.getCounters
         stoveTypesStmt,  // pickStoveTypeByRarity
-        insertStmt,      // INSERT Stove
-        insertStmt,      // UPDATE Lootbox openedAt
-        insertStmt,      // INSERT LootboxDrop
-        insertStmt,      // UPDATE Player lootboxCount
-        insertStmt,      // PityService.resetCounter
+        insertStoveStmt, // INSERT Stove RETURNING stoveId
+        markOpenedStmt,  // UPDATE Lootbox openedAt
+        insertDropStmt,  // INSERT LootboxDrop RETURNING dropId
+        updateCountStmt, // UPDATE Player lootboxCount
       ]);
-      (unit as any).getLastRowId = jest.fn()
-          .mockResolvedValueOnce(55)   // stoveId
-          .mockResolvedValueOnce(7);   // dropId
 
       const service = new LootboxService(unit);
       const [success, result] = await service.openLootbox(1, 10);
@@ -376,6 +405,7 @@ describe('LootboxService', () => {
 
       expect(success).toBe(false);
       expect(result).toBeNull();
+      expect(unit.prepare).toHaveBeenCalledTimes(3);
     });
 
     it('opens Dragon Crate with rarity-weighted dragon stove drop', async () => {
@@ -390,24 +420,21 @@ describe('LootboxService', () => {
       };
       const verifyStmt = mockStmt(dragonLootbox);
       const notListedStmt = mockStmt({ count: 0 });
-      const pityStmt = mockStmt(null, []); // no existing pity row
       const stoveTypesStmt = mockStmt(null, [dragonStoveType]);
-      const insertStmt = mockStmt(null, [], { changes: 1 });
+      const insertStoveStmt = mockStmt({ stoveId: 55 }, [], { changes: 1 });
+      const markOpenedStmt = mockStmt(null, [], { changes: 1 });
+      const insertDropStmt = mockStmt({ dropId: 7 }, [], { changes: 1 });
+      const updateCountStmt = mockStmt(null, [], { changes: 1 });
 
       const unit = mockUnitSequence([
         verifyStmt,
         notListedStmt,
-        pityStmt,        // PityService.getCounters
         stoveTypesStmt,  // pickDragonStoveTypeByRarity
-        insertStmt,      // INSERT Stove
-        insertStmt,      // UPDATE Lootbox openedAt
-        insertStmt,      // INSERT LootboxDrop
-        insertStmt,      // UPDATE Player lootboxCount
-        insertStmt,      // PityService.resetCounter
+        insertStoveStmt, // INSERT Stove RETURNING stoveId
+        markOpenedStmt,  // UPDATE Lootbox openedAt
+        insertDropStmt,  // INSERT LootboxDrop RETURNING dropId
+        updateCountStmt, // UPDATE Player lootboxCount
       ]);
-      (unit as any).getLastRowId = jest.fn()
-        .mockResolvedValueOnce(55)
-        .mockResolvedValueOnce(7);
 
       const service = new LootboxService(unit);
       const [success, result] = await service.openLootbox(1, 10);
@@ -429,24 +456,21 @@ describe('LootboxService', () => {
       };
       const verifyStmt = mockStmt(winterLootbox);
       const notListedStmt = mockStmt({ count: 0 });
-      const pityStmt = mockStmt(null, []); // no existing pity row
       const stoveTypesStmt = mockStmt(null, [winterStoveType]);
-      const insertStmt = mockStmt(null, [], { changes: 1 });
+      const insertStoveStmt = mockStmt({ stoveId: 55 }, [], { changes: 1 });
+      const markOpenedStmt = mockStmt(null, [], { changes: 1 });
+      const insertDropStmt = mockStmt({ dropId: 7 }, [], { changes: 1 });
+      const updateCountStmt = mockStmt(null, [], { changes: 1 });
 
       const unit = mockUnitSequence([
         verifyStmt,
         notListedStmt,
-        pityStmt,        // PityService.getCounters
         stoveTypesStmt,  // pickWinterStoveTypeByRarity
-        insertStmt,      // INSERT Stove
-        insertStmt,      // UPDATE Lootbox openedAt
-        insertStmt,      // INSERT LootboxDrop
-        insertStmt,      // UPDATE Player lootboxCount
-        insertStmt,      // PityService.resetCounter
+        insertStoveStmt, // INSERT Stove RETURNING stoveId
+        markOpenedStmt,  // UPDATE Lootbox openedAt
+        insertDropStmt,  // INSERT LootboxDrop RETURNING dropId
+        updateCountStmt, // UPDATE Player lootboxCount
       ]);
-      (unit as any).getLastRowId = jest.fn()
-        .mockResolvedValueOnce(55)
-        .mockResolvedValueOnce(7);
 
       const service = new LootboxService(unit);
       const [success, result] = await service.openLootbox(1, 10);
@@ -460,16 +484,16 @@ describe('LootboxService', () => {
       const dragonLootbox = { ...sampleLootbox, lootboxTypeId: 4 };
       const verifyStmt = mockStmt(dragonLootbox);
       const notListedStmt = mockStmt({ count: 0 });
-      const pityStmt = mockStmt(null, []);
       const emptyStoveTypes = mockStmt(null, []);
 
-      const unit = mockUnitSequence([verifyStmt, notListedStmt, pityStmt, emptyStoveTypes]);
+      const unit = mockUnitSequence([verifyStmt, notListedStmt, emptyStoveTypes]);
       const service = new LootboxService(unit);
 
       const [success, result] = await service.openLootbox(1, 10);
 
       expect(success).toBe(false);
       expect(result).toBeNull();
+      expect(unit.prepare).toHaveBeenCalledTimes(3);
     });
   });
 

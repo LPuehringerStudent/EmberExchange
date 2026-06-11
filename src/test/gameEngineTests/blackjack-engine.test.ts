@@ -1,6 +1,15 @@
 import { BlackJackEngine } from "../../backend/game-engines/blackjack-engine";
 import { RoomPlayerRow } from "../../shared/model";
-import { handValue, isBlackjack, isBust, canSplit, canDouble, dealerShouldHit } from "../../backend/game-logic/blackjack-utils";
+import {
+  handValue,
+  isBlackjack,
+  isBust,
+  canSplit,
+  canDouble,
+  dealerShouldHit,
+  createDeck,
+} from "../../backend/game-logic/blackjack-utils";
+import { Card } from "../../backend/game-logic/blackjack-types";
 
 describe("BlackJack Utils", () => {
   test("handValue calculates hard totals correctly", () => {
@@ -63,6 +72,41 @@ describe("BlackJack Engine", () => {
     { roomPlayerId: "rp2", roomId: "r1", playerId: 2, username: "Bob", connectionState: "connected", seatIndex: 1 },
   ];
 
+  /**
+   * Returns a deck whose last 6 cards produce a deterministic, non-special deal:
+   * Player 1: 2h, 3d
+   * Player 2: 4c, 5s
+   * Dealer upcard: 6h, hole: 7d
+   * This avoids dealer blackjack / insurance and keeps Player 1 as the active player.
+   */
+  function fixedDeck(): Card[] {
+    const deck = createDeck();
+    // Cards are popped from the end of the deck during the initial deal.
+    const lastSix: Card[] = ["2h", "3d", "4c", "5s", "6h", "7d"];
+    for (let i = 0; i < lastSix.length; i++) {
+      const card = lastSix[i];
+      const targetIdx = deck.length - 1 - i;
+      const currentIdx = deck.indexOf(card);
+      if (currentIdx !== targetIdx) {
+        const displaced = deck[targetIdx];
+        deck[targetIdx] = card;
+        deck[currentIdx] = displaced;
+      }
+    }
+    return deck;
+  }
+
+  /**
+   * Creates an initial state, fixes the deck, places both bets, and returns the post-deal state.
+   */
+  function createDealtState(players: RoomPlayerRow[]): Record<string, unknown> {
+    const state = engine.createInitialState(players) as Record<string, unknown>;
+    state.deck = fixedDeck();
+    let result = engine.processAction(state, { type: "bet", amount: 20 }, 1);
+    result = engine.processAction(result.newFullState, { type: "bet", amount: 20 }, 2);
+    return result.newFullState as Record<string, unknown>;
+  }
+
   test("gameType is blackjack", () => {
     expect(engine.gameType).toBe("blackjack");
     expect(engine.minPlayers).toBe(1);
@@ -88,18 +132,8 @@ describe("BlackJack Engine", () => {
   });
 
   test("bet action places bet and deals when all players bet", () => {
-    const state = engine.createInitialState(mockPlayers) as Record<string, unknown>;
+    const newState = createDealtState(mockPlayers);
 
-    // Player 1 bets
-    let result = engine.processAction(state, { type: "bet", amount: 20 }, 1);
-    expect(result.valid).toBe(true);
-    let newState = result.newFullState as Record<string, unknown>;
-    expect(newState.phase).toBe("betting"); // still betting, waiting for player 2
-
-    // Player 2 bets → deal happens
-    result = engine.processAction(newState, { type: "bet", amount: 20 }, 2);
-    expect(result.valid).toBe(true);
-    newState = result.newFullState as Record<string, unknown>;
     expect(newState.phase).toBe("player_turn");
 
     const players = newState.players as Array<Record<string, unknown>>;
@@ -110,141 +144,104 @@ describe("BlackJack Engine", () => {
   });
 
   test("getPlayerView masks dealer hole card", () => {
-    const state = engine.createInitialState(mockPlayers) as Record<string, unknown>;
-    let result = engine.processAction(state, { type: "bet", amount: 20 }, 1);
-    result = engine.processAction(result.newFullState, { type: "bet", amount: 20 }, 2);
+    const afterDeal = createDealtState(mockPlayers);
 
-    const view = engine.getPlayerView(result.newFullState, 1) as Record<string, unknown>;
+    const view = engine.getPlayerView(afterDeal, 1) as Record<string, unknown>;
     const dealerHand = view.dealerHand as string[];
     expect(dealerHand.length).toBe(2);
     expect(dealerHand[1]).toBe("back"); // hole card masked
   });
 
   test("getPlayerView reveals dealer hand after settlement", () => {
-    const state = engine.createInitialState(mockPlayers) as Record<string, unknown>;
-    let result = engine.processAction(state, { type: "bet", amount: 20 }, 1);
-    result = engine.processAction(result.newFullState, { type: "bet", amount: 20 }, 2);
-    const afterDeal = result.newFullState as Record<string, unknown>;
+    let afterDeal = createDealtState(mockPlayers);
 
     // Force stand for both players to skip to dealer
-    const players = afterDeal.players as Array<Record<string, unknown>>;
-    if (afterDeal.activePlayer === 1) {
-      result = engine.processAction(afterDeal, { type: "stand" }, 1);
-      result = engine.processAction(result.newFullState, { type: "stand" }, 2);
-    } else {
-      result = engine.processAction(afterDeal, { type: "stand" }, 2);
-    }
+    let result = engine.processAction(afterDeal, { type: "stand" }, 1);
+    result = engine.processAction(result.newFullState, { type: "stand" }, 2);
 
     const settled = result.newFullState as Record<string, unknown>;
-    if (settled.phase !== "settled") {
-      // If one player is blackjack, the other needs to stand too
-      if ((settled.players as Array<Record<string, unknown>>)[0].result === "blackjack") {
-        result = engine.processAction(settled, { type: "stand" }, 2);
-      }
-    }
+    expect(settled.phase).toBe("settled");
 
-    const finalState = result.newFullState as Record<string, unknown>;
-    if (finalState.phase === "settled") {
-      const view = engine.getPlayerView(finalState, 1) as Record<string, unknown>;
-      const dealerHand = view.dealerHand as string[];
-      expect(dealerHand[1]).not.toBe("back"); // hole card revealed
-    }
+    const view = engine.getPlayerView(settled, 1) as Record<string, unknown>;
+    const dealerHand = view.dealerHand as string[];
+    expect(dealerHand[1]).not.toBe("back"); // hole card revealed
   });
 
   test("hit adds a card", () => {
-    const state = engine.createInitialState(mockPlayers) as Record<string, unknown>;
-    let result = engine.processAction(state, { type: "bet", amount: 20 }, 1);
-    result = engine.processAction(result.newFullState, { type: "bet", amount: 20 }, 2);
-    const afterDeal = result.newFullState as Record<string, unknown>;
+    const afterDeal = createDealtState(mockPlayers);
 
     const activePlayer = afterDeal.activePlayer as number;
-    if (activePlayer !== -1) {
-      result = engine.processAction(afterDeal, { type: "hit" }, activePlayer);
-      expect(result.valid).toBe(true);
-      const newState = result.newFullState as Record<string, unknown>;
-      const players = newState.players as Array<Record<string, unknown>>;
-      const player = players.find(p => p.playerId === activePlayer);
-      expect((player!.hands as string[][])[0].length).toBe(3);
-    }
+    expect(activePlayer).toBe(1);
+
+    const result = engine.processAction(afterDeal, { type: "hit" }, activePlayer);
+    expect(result.valid).toBe(true);
+
+    const newState = result.newFullState as Record<string, unknown>;
+    const players = newState.players as Array<Record<string, unknown>>;
+    const player = players.find(p => p.playerId === activePlayer);
+    expect((player!.hands as string[][])[0].length).toBe(3);
   });
 
   test("stand advances turn", () => {
-    const state = engine.createInitialState(mockPlayers) as Record<string, unknown>;
-    let result = engine.processAction(state, { type: "bet", amount: 20 }, 1);
-    result = engine.processAction(result.newFullState, { type: "bet", amount: 20 }, 2);
-    const afterDeal = result.newFullState as Record<string, unknown>;
+    const afterDeal = createDealtState(mockPlayers);
 
     const firstActive = afterDeal.activePlayer as number;
-    if (firstActive === 1) {
-      result = engine.processAction(afterDeal, { type: "stand" }, 1);
-      const newState = result.newFullState as Record<string, unknown>;
-      // Either player 2's turn or dealer
-      expect(newState.activePlayer === 2 || newState.phase === "dealer_turn" || newState.phase === "settled").toBe(true);
-    }
+    expect(firstActive).toBe(1);
+
+    const result = engine.processAction(afterDeal, { type: "stand" }, 1);
+    const newState = result.newFullState as Record<string, unknown>;
+    // Either player 2's turn or dealer
+    expect(newState.activePlayer === 2 || newState.phase === "dealer_turn" || newState.phase === "settled").toBe(true);
   });
 
   test("double doubles bet and gives one card", () => {
-    const state = engine.createInitialState(mockPlayers) as Record<string, unknown>;
-    let result = engine.processAction(state, { type: "bet", amount: 20 }, 1);
-    result = engine.processAction(result.newFullState, { type: "bet", amount: 20 }, 2);
-    const afterDeal = result.newFullState as Record<string, unknown>;
+    const afterDeal = createDealtState(mockPlayers);
 
     const activePlayer = afterDeal.activePlayer as number;
-    if (activePlayer !== -1) {
-      const beforePlayer = (afterDeal.players as Array<Record<string, unknown>>).find(p => p.playerId === activePlayer);
-      const beforeStack = beforePlayer!.stack as number;
+    expect(activePlayer).toBe(1);
 
-      result = engine.processAction(afterDeal, { type: "double" }, activePlayer);
-      expect(result.valid).toBe(true);
+    const beforePlayer = (afterDeal.players as Array<Record<string, unknown>>).find(p => p.playerId === activePlayer);
+    const beforeStack = beforePlayer!.stack as number;
 
-      const newState = result.newFullState as Record<string, unknown>;
-      const afterPlayer = (newState.players as Array<Record<string, unknown>>).find(p => p.playerId === activePlayer);
-      expect((afterPlayer!.bets as number[])[0]).toBe(40);
-      expect((afterPlayer!.hands as string[][])[0].length).toBe(3);
-      // If hand hasn't settled yet, stack was reduced by the additional bet;
-      // otherwise settlement (win/push/loss) further adjusted it.
-      if (newState.phase === 'player_turn') {
-        expect(afterPlayer!.stack).toBe(beforeStack - 20);
-      }
-    }
+    const result = engine.processAction(afterDeal, { type: "double" }, activePlayer);
+    expect(result.valid).toBe(true);
+
+    const newState = result.newFullState as Record<string, unknown>;
+    const afterPlayer = (newState.players as Array<Record<string, unknown>>).find(p => p.playerId === activePlayer);
+    expect((afterPlayer!.bets as number[])[0]).toBe(40);
+    expect((afterPlayer!.hands as string[][])[0].length).toBe(3);
+    // After doubling, play advances to the next player, so the phase stays player_turn.
+    expect(afterPlayer!.stack).toBe(beforeStack - 20);
   });
 
   test("split creates two hands", () => {
-    // Create a state where player has a pair
-    const state = engine.createInitialState(mockPlayers) as Record<string, unknown>;
-    let result = engine.processAction(state, { type: "bet", amount: 20 }, 1);
-    result = engine.processAction(result.newFullState, { type: "bet", amount: 20 }, 2);
-    const afterDeal = result.newFullState as Record<string, unknown>;
+    const afterDeal = createDealtState(mockPlayers);
 
     const activePlayer = afterDeal.activePlayer as number;
-    if (activePlayer !== -1) {
-      // Force a pair by manipulating state (not ideal but necessary for testing)
-      const mutableState = JSON.parse(JSON.stringify(afterDeal)) as Record<string, unknown>;
-      const players = mutableState.players as Array<Record<string, unknown>>;
-      const player = players.find(p => p.playerId === activePlayer);
-      if (player) {
-        player.hands = [["8h", "8d"]];
-        player.bets = [20];
-        player.stack = 1000;
+    expect(activePlayer).toBe(1);
 
-        result = engine.processAction(mutableState, { type: "split" }, activePlayer);
-        if (result.valid) {
-          const newState = result.newFullState as Record<string, unknown>;
-          const afterPlayer = (newState.players as Array<Record<string, unknown>>).find(p => p.playerId === activePlayer);
-          expect((afterPlayer!.hands as string[][]).length).toBe(2);
-          expect(afterPlayer!.bets).toEqual([20, 20]);
-        }
-      }
-    }
+    // Force a pair by manipulating state
+    const mutableState = JSON.parse(JSON.stringify(afterDeal)) as Record<string, unknown>;
+    const players = mutableState.players as Array<Record<string, unknown>>;
+    const player = players.find(p => p.playerId === activePlayer);
+    expect(player).toBeDefined();
+    player!.hands = [["8h", "8d"]];
+    player!.bets = [20];
+    player!.stack = 1000;
+
+    const result = engine.processAction(mutableState, { type: "split" }, activePlayer);
+    expect(result.valid).toBe(true);
+
+    const newState = result.newFullState as Record<string, unknown>;
+    const afterPlayer = (newState.players as Array<Record<string, unknown>>).find(p => p.playerId === activePlayer);
+    expect((afterPlayer!.hands as string[][]).length).toBe(2);
+    expect(afterPlayer!.bets).toEqual([20, 20]);
   });
 
   test("resetForNextHand preserves stacks and resets hands", () => {
-    const state = engine.createInitialState(mockPlayers) as Record<string, unknown>;
-    let result = engine.processAction(state, { type: "bet", amount: 20 }, 1);
-    result = engine.processAction(result.newFullState, { type: "bet", amount: 20 }, 2);
+    const afterGame = createDealtState(mockPlayers);
 
     // Simulate some losses/wins
-    const afterGame = result.newFullState as Record<string, unknown>;
     const players = afterGame.players as Array<Record<string, unknown>>;
     players[0].stack = 900; // lost 100
 
