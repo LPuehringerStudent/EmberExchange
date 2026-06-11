@@ -40,8 +40,8 @@ describe('GloryCustomizationService', () => {
     it('sets a showcase slot', async () => {
       const unit = mockUnitSequence([
         mockStmt({ currentOwnerId: playerId }), // ownership check
-        mockStmt({ count: 0 }),                 // duplicate check
-        mockStmt(),                             // upsert
+        mockStmt({ count: 0 }), // duplicate check
+        mockStmt(), // upsert
       ]);
       const service = new GloryCustomizationService(unit);
 
@@ -52,7 +52,7 @@ describe('GloryCustomizationService', () => {
     it('rejects duplicate stove in showcase', async () => {
       const unit = mockUnitSequence([
         mockStmt({ currentOwnerId: playerId }), // ownership check
-        mockStmt({ count: 1 }),                 // duplicate found
+        mockStmt({ count: 1 }), // duplicate found
       ]);
       const service = new GloryCustomizationService(unit);
 
