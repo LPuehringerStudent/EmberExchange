@@ -46,6 +46,7 @@ const WHEEL_OUTER_R = 100;
 const WHEEL_INNER_R = 32;
 const WHEEL_TEXT_R = 68;
 const TOTAL_SEGMENTS = 37;
+const WHEEL_SPIN_MS = 3600;
 
 @Component({
   selector: 'app-roulette',
@@ -89,13 +90,10 @@ export class RouletteComponent {
   readonly canNextHand = computed(() => this.validActions().some((a) => a.type === 'next_hand'));
 
   readonly wheelRotation = signal<number>(0);
-  readonly showBall = signal<boolean>(false);
-  readonly ballBounce = signal<boolean>(false);
   readonly resultRevealed = signal<boolean>(false);
   readonly wheelSpinning = signal<boolean>(false);
 
   readonly wheelOrder = WHEEL_ORDER;
-
   readonly displayPlayers = signal<RoulettePlayerView[]>([]);
   readonly preSpinPlayers = signal<RoulettePlayerView[]>([]);
   private revealTimer: ReturnType<typeof setTimeout> | null = null;
@@ -117,15 +115,11 @@ export class RouletteComponent {
       // Reset wheel when entering betting phase
       if (phase === 'betting' && lastPhase !== 'betting') {
         this.wheelRotation.set(0);
-        this.showBall.set(false);
-        this.ballBounce.set(false);
         this.resultRevealed.set(false);
-
         this.wheelSpinning.set(false);
         this.clearRevealTimer();
       }
       lastPhase = phase;
-
 
       if (phase === 'betting' || this.resultRevealed()) {
         this.displayPlayers.set(this.players());
@@ -139,11 +133,9 @@ export class RouletteComponent {
       if (num !== null && num !== lastWinningNumber && phase === 'settled') {
         lastWinningNumber = num;
         this.resultRevealed.set(false);
-
         this.displayPlayers.set(this.preSpinPlayers().length > 0 ? this.preSpinPlayers() : this.players());
         this.patchHeaderCoinsFromDisplay();
         this.animateToNumber(num);
-
         this.clearRevealTimer();
         this.revealTimer = setTimeout(() => this.revealRound(), WHEEL_SPIN_MS + 250);
       }
@@ -153,7 +145,6 @@ export class RouletteComponent {
       }
     });
   }
-
 
   private clearRevealTimer(): void {
     if (this.revealTimer) {
@@ -197,8 +188,6 @@ export class RouletteComponent {
     const nextRotation = current - (360 * 5 + visualDelta);
     this.wheelSpinning.set(true);
 
-    this.showBall.set(true);
-
     // Force a layout frame so the browser sees the starting rotation
     // before we apply the target (triggers CSS transition)
     requestAnimationFrame(() => {
@@ -206,12 +195,6 @@ export class RouletteComponent {
         this.wheelRotation.set(nextRotation);
       });
     });
-
-    // Trigger ball bounce after wheel stops
-    setTimeout(() => {
-      this.ballBounce.set(true);
-      setTimeout(() => this.ballBounce.set(false), 800);
-    }, 3600);
   }
 
   onWheelTransitionEnd(event: TransitionEvent): void {

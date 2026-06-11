@@ -3,8 +3,8 @@
   <header class="rl-header">
     <h1 class="rl-title">Roulette</h1>
     <span class="rl-phase-badge" [class.rl-phase-badge--betting]="phase() === 'betting'"
-      [class.rl-phase-badge--settled]="phase() === 'settled'">
-      {{ phase() === 'betting' ? 'Place Your Bets' : 'Round Complete' }}
+      [class.rl-phase-badge--settled]="phase() === 'settled' && resultRevealed()">
+      {{ phase() === 'betting' ? 'Place Your Bets' : resultRevealed() ? 'Round Complete' : 'Spinning...' }}
     </span>
   </header>
 
@@ -15,7 +15,7 @@
 
   <!-- Players Bar -->
   <div class="rl-players-bar">
-    @for (player of players(); track player.playerId) {
+    @for (player of displayPlayers(); track player.playerId) {
       <div class="rl-player-chip" [class.rl-player-chip--me]="player.playerId === myPlayerId()">
         <span class="rl-player-name">{{ player.username }}</span>
         <span class="rl-player-stack">{{ player.stack }} coins</span>
@@ -87,13 +87,9 @@
           </svg>
         </div>
 
-        <!-- Ball (positioned at top of track, fixed while wheel spins underneath) -->
-        @if (showBall()) {
-          <div class="rl-ball" [class.rl-ball--bounce]="ballBounce()"></div>
-        }
-
         <!-- Ball track ring (visual) -->
         <div class="rl-track-ring"></div>
+        <div class="rl-wheel-stop-marker" aria-hidden="true"></div>
       </div>
 
       <!-- Result Display -->
@@ -237,10 +233,10 @@
           Spin the Wheel
         </button>
       }
-      @if (canNextHand() && isHost()) {
+      @if (canNextHand() && resultRevealed() && isHost()) {
         <button class="rl-btn rl-btn--next" (click)="nextHand()">Next Round</button>
       }
-      @if (!canBet() && !canSpin() && !canNextHand()) {
+      @if (!canBet() && !canSpin() && (!canNextHand() || !resultRevealed() || !isHost())) {
         <span class="rl-waiting">Waiting...</span>
       }
     </div>
