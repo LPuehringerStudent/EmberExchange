@@ -13,31 +13,24 @@ export interface OnboardingStep {
 
 export const TUTORIAL_STEPS: OnboardingStep[] = [
   {
-    id: 'inventory',
-    targetSelector: '[data-tour="inventory"]',
-    title: 'Your Inventory',
-    body: 'Everything you own lives here. Stoves, lootboxes, and sparks. Click the backpack icon anytime to see your collection.',
-    position: 'bottom'
-  },
-  {
     id: 'collect',
     targetSelector: '[data-tour="lootboxes"]',
     title: 'Collect',
-    body: 'Start in the Collect section. Open lootboxes, claim daily rewards, and complete quests to grow your collection.',
+    body: 'Start by opening lootboxes. Each stove has a rarity — the rarer, the more valuable.',
     position: 'bottom'
   },
   {
     id: 'trade',
     targetSelector: '[data-tour="marketplace"]',
-    title: 'Trade & Upgrade',
-    body: 'Sell stoves on the Marketplace, forge them into higher rarities, or trade directly with friends.',
+    title: 'Trade',
+    body: 'Sell stoves on the Marketplace or trade directly with friends. Prices are set by players.',
     position: 'bottom'
   },
   {
     id: 'play',
     targetSelector: '[data-tour="games"]',
     title: 'Play',
-    body: 'Take your coins to the Games Hub and play Poker, Blackjack, or Roulette against other players.',
+    body: 'Take your coins to the Games Hub and play Poker, Blackjack, or Roulette.',
     position: 'bottom'
   }
 ];

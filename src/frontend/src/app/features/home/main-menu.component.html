@@ -21,354 +21,196 @@
   <!-- Grain texture overlay -->
   <div class="grain-overlay fixed inset-0 pointer-events-none z-0 opacity-[0.03]"></div>
 
-  <!-- ========== HEADER ========== -->
-  <header class="dashboard-header relative z-[1] px-6 lg:px-10 pt-10 pb-8">
-    <div class="max-w-[1400px] mx-auto">
-      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-        <!-- User greeting -->
-        <div class="flex items-center gap-5">
-          <div class="avatar-ring relative shrink-0">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-[#ff7b00] flex items-center justify-center shadow-xl shadow-accent/20">
-              <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-            <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-rarity-uncommon border-[3px] border-surface flex items-center justify-center">
-              <div class="w-2 h-2 rounded-full bg-white/80"></div>
-            </div>
-          </div>
-          <div>
-            <p class="text-text-muted text-xs font-bold uppercase tracking-[0.2em] mb-1">Welcome back, blacksmith</p>
-            <h1 class="text-[1.75rem] sm:text-[2.5rem] font-extrabold text-text-primary leading-none tracking-tight break-words">{{ username() }}</h1>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stat cards -->
-      <div class="stats-row grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-        @if (loading()) {
-          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5">
-            <div class="flex items-center gap-4">
-              <div class="skeleton-shimmer w-12 h-12 rounded-xl shrink-0"></div>
-              <div class="flex-1">
-                <div class="skeleton-shimmer h-3 rounded-md w-20 mb-2"></div>
-                <div class="skeleton-shimmer h-7 rounded-md w-16"></div>
-              </div>
-            </div>
-          </div>
-          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5">
-            <div class="flex items-center gap-4">
-              <div class="skeleton-shimmer w-12 h-12 rounded-xl shrink-0"></div>
-              <div class="flex-1">
-                <div class="skeleton-shimmer h-3 rounded-md w-20 mb-2"></div>
-                <div class="skeleton-shimmer h-7 rounded-md w-16"></div>
-              </div>
-            </div>
-          </div>
-          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5">
-            <div class="flex items-center gap-4">
-              <div class="skeleton-shimmer w-12 h-12 rounded-xl shrink-0"></div>
-              <div class="flex-1">
-                <div class="skeleton-shimmer h-3 rounded-md w-20 mb-2"></div>
-                <div class="skeleton-shimmer h-7 rounded-md w-16"></div>
-              </div>
-            </div>
-          </div>
-        } @else {
-          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 transition-all duration-300">
-            <div class="flex items-center gap-4">
-              <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="8" r="6"/>
-                  <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
-                </svg>
-              </div>
-              <div>
-                <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Total Coal</p>
-                <p class="text-2xl font-extrabold text-text-primary">{{ coins() }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-rarity-epic/30 hover:shadow-lg hover:shadow-rarity-epic/5 transition-all duration-300">
-            <div class="flex items-center gap-4">
-              <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-rarity-epic/20 to-rarity-secret/10 flex items-center justify-center shrink-0">
-                <img src="icon/lootboxes.png" class="w-full h-full rounded-xl" alt="Lootboxes" />
-              </div>
-              <div>
-                <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Lootboxes</p>
-                <p class="text-2xl font-extrabold text-text-primary">{{ lootboxCount() }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="stat-pill group relative bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-rarity-legendary/30 hover:shadow-lg hover:shadow-rarity-legendary/5 transition-all duration-300">
-            <div class="flex items-center gap-4">
-              <div class="stat-icon-wrap w-12 h-12 rounded-xl bg-gradient-to-br from-rarity-legendary/20 to-accent/10 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6 text-rarity-legendary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/>
-                </svg>
-              </div>
-              <div>
-                <p class="text-text-muted text-[11px] font-bold uppercase tracking-[0.15em] mb-0.5">Stoves Owned</p>
-                <p class="text-2xl font-extrabold text-text-primary">{{ stoveCount() }}</p>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="quick-actions flex items-center gap-3 mt-6 overflow-x-auto pb-2">
-        <span class="text-[11px] font-bold text-text-muted uppercase tracking-[0.15em] shrink-0">Quick actions</span>
-        <a routerLink="/lootboxes" class="quick-action group inline-flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-semibold text-text-primary hover:border-red-500/30 hover:bg-red-500/5 transition-all duration-200 shrink-0">
-          <img src="icon/lootboxes.png" class="w-5 h-5 rounded" alt="" />
-          <span>Open Lootbox</span>
-        </a>
-        <a routerLink="/spin" class="quick-action group inline-flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-semibold text-text-primary hover:border-amber-500/30 hover:bg-amber-500/5 transition-all duration-200 shrink-0">
-          <img src="icon/lucky_wheel.png" class="w-5 h-5 rounded" alt="" />
-          <span>Spin Wheel</span>
-        </a>
-        <a routerLink="/marketplace" class="quick-action group inline-flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-semibold text-text-primary hover:border-purple-500/30 hover:bg-purple-500/5 transition-all duration-200 shrink-0">
-          <img src="icon/marketplace.png" class="w-5 h-5 rounded" alt="" />
-          <span>Browse Market</span>
-        </a>
-        <a routerLink="/games" class="quick-action group inline-flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-semibold text-text-primary hover:border-yellow-500/30 hover:bg-yellow-500/5 transition-all duration-200 shrink-0">
-          <img src="icon/games.png" class="w-5 h-5 rounded" alt="" />
-          <span>Play Now</span>
-        </a>
-      </div>
-    </div>
-  </header>
-
   <!-- ========== MAIN CONTENT ========== -->
-  <main class="relative z-[1] px-6 lg:px-10 pb-12 max-w-[1400px] mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
+  <main class="relative z-[1] px-4 sm:px-6 lg:px-10 py-8 max-w-[1400px] mx-auto">
+    <div class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-8 items-start">
 
-      <!-- Grouped dashboard sections -->
-      <div class="dashboard-groups space-y-10">
+      <!-- Left column -->
+      <div class="space-y-8">
 
-        <!-- Collect -->
-        <section>
-          <div class="section-header flex items-center gap-4 mb-5">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500/15 to-red-400/5 border border-red-500/10 flex items-center justify-center">
-              <svg class="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 12 20 22 4 22 4 12"/>
-                <rect x="2" y="7" width="20" height="5" rx="2"/>
-                <path d="M12 22V7"/>
-                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
-                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-lg font-extrabold text-text-primary leading-none">Collect</h2>
-              <p class="text-sm text-text-secondary mt-1">Open boxes, claim rewards, and finish quests</p>
-            </div>
-          </div>
+        <!-- Hero Banner -->
+        <section class="hero-banner relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-accent/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+          <div class="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-accent/5 to-transparent rounded-full blur-2xl pointer-events-none"></div>
 
-          @if (loading()) {
-            <div class="feature-card feature-hero bg-surface border border-border rounded-2xl p-6">
-              <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-4"></div>
-              <div class="skeleton-shimmer h-6 rounded-md w-40 mb-2"></div>
-              <div class="skeleton-shimmer h-4 rounded-md w-3/4 mb-1"></div>
-              <div class="skeleton-shimmer h-4 rounded-md w-1/2"></div>
+          <div class="relative z-[1] flex flex-col sm:flex-row sm:items-center gap-6">
+            <div class="avatar-ring relative shrink-0">
+              <div class="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-accent to-[#ff7b00] flex items-center justify-center shadow-lg shadow-accent/20">
+                <svg class="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-rarity-uncommon border-[3px] border-surface flex items-center justify-center">
+                <div class="w-2 h-2 rounded-full bg-white/80"></div>
+              </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-              @for (i of [1,2,3]; track i) {
-                <div class="feature-card bg-surface border border-border rounded-2xl p-5">
-                  <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-3"></div>
-                  <div class="skeleton-shimmer h-4 rounded-md w-24 mb-2"></div>
-                  <div class="skeleton-shimmer h-3 rounded-md w-full"></div>
+
+            <div class="flex-1 min-w-0">
+              <p class="text-text-muted text-xs font-bold uppercase tracking-[0.2em] mb-1">Welcome back, blacksmith</p>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-text-primary leading-none tracking-tight break-words mb-4">{{ username() }}</h1>
+
+              @if (loading()) {
+                <div class="flex flex-wrap gap-4">
+                  <div class="skeleton-shimmer h-8 w-28 rounded-lg"></div>
+                  <div class="skeleton-shimmer h-8 w-28 rounded-lg"></div>
+                  <div class="skeleton-shimmer h-8 w-28 rounded-lg"></div>
+                </div>
+              } @else {
+                <div class="flex flex-wrap gap-3">
+                  <div class="stat-chip inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-secondary border border-border">
+                    <svg class="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                    <span class="text-sm font-bold text-text-primary">{{ coins() }} Coal</span>
+                  </div>
+                  <div class="stat-chip inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-secondary border border-border">
+                    <img src="icon/lootboxes.png" class="w-4 h-4 rounded" alt="" />
+                    <span class="text-sm font-bold text-text-primary">{{ lootboxCount() }} Lootboxes</span>
+                  </div>
+                  <div class="stat-chip inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-secondary border border-border">
+                    <svg class="w-4 h-4 text-rarity-legendary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/></svg>
+                    <span class="text-sm font-bold text-text-primary">{{ stoveCount() }} Stoves</span>
+                  </div>
                 </div>
               }
             </div>
-          } @else {
-            <a routerLink="/lootboxes" data-tour="lootboxes" class="feature-card feature-hero group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/5 hover:border-red-500/20">
-              <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-red-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-              <div class="absolute -right-6 -top-6 w-24 h-24 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/10 transition-colors"></div>
-              <div class="relative z-[1] flex flex-col sm:flex-row sm:items-center gap-5">
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500/15 to-red-400/5 border border-red-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/lootboxes.png" class="w-full h-full rounded-xl" alt="Lootboxes" />
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-xl font-extrabold text-text-primary m-0 mb-1.5">Lootboxes</h3>
-                  <p class="text-sm text-text-secondary leading-relaxed m-0">Open mystery boxes to discover rare stoves from Common to Legendary.</p>
-                </div>
-                <div class="flex items-center gap-1.5 text-sm font-bold text-red-500 group-hover:gap-2.5 transition-all duration-200 shrink-0">
-                  Open Now
-                  <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-              <a routerLink="/shop" data-tour="shop" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-accent/5 hover:border-accent/20">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent to-[#ff7b00] opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/shop.png" class="w-full h-full rounded-xl" alt="Shop" />
-                </div>
-                <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Shop</h3>
-                <p class="text-xs text-text-secondary leading-relaxed m-0">Buy items and claim daily rewards</p>
-              </a>
-
-              <a routerLink="/spin" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/5 hover:border-amber-500/20">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-yellow-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/15 to-yellow-400/5 border border-amber-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/lucky_wheel.png" class="w-full h-full rounded-xl" alt="Lucky Wheel" />
-                </div>
-                <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Lucky Wheel</h3>
-                <p class="text-xs text-text-secondary leading-relaxed m-0">Free daily spins for coins and loot</p>
-              </a>
-
-              <a routerLink="/quests" data-tour="quests" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-teal-500/5 hover:border-teal-500/20">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-emerald-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500/15 to-emerald-400/5 border border-teal-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/quests.png" class="w-full h-full rounded-xl" alt="Quests" />
-                </div>
-                <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Quests</h3>
-                <p class="text-xs text-text-secondary leading-relaxed m-0">Daily and weekly challenges</p>
-              </a>
-            </div>
-          }
+          </div>
         </section>
 
-        <!-- Trade & Upgrade -->
+        <!-- Primary Actions -->
         <section>
-          <div class="section-header flex items-center gap-4 mb-5">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/15 to-violet-400/5 border border-purple-500/10 flex items-center justify-center">
-              <svg class="w-5 h-5 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 1l4 4-4 4"/>
-                <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-                <path d="M7 23l-4-4 4-4"/>
-                <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-lg font-extrabold text-text-primary leading-none">Trade & Upgrade</h2>
-              <p class="text-sm text-text-secondary mt-1">Sell, forge, and show off your collection</p>
-            </div>
-          </div>
-
-          @if (loading()) {
-            <div class="feature-card feature-hero bg-surface border border-border rounded-2xl p-6">
-              <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-4"></div>
-              <div class="skeleton-shimmer h-6 rounded-md w-40 mb-2"></div>
-              <div class="skeleton-shimmer h-4 rounded-md w-3/4 mb-1"></div>
-              <div class="skeleton-shimmer h-4 rounded-md w-1/2"></div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+          <h2 class="text-sm font-bold text-text-muted uppercase tracking-[0.15em] mb-4">What do you want to do?</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            @if (loading()) {
               @for (i of [1,2,3]; track i) {
-                <div class="feature-card bg-surface border border-border rounded-2xl p-5">
-                  <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-3"></div>
-                  <div class="skeleton-shimmer h-4 rounded-md w-24 mb-2"></div>
-                  <div class="skeleton-shimmer h-3 rounded-md w-full"></div>
+                <div class="primary-tile bg-surface border border-border rounded-2xl p-6">
+                  <div class="skeleton-shimmer w-14 h-14 rounded-2xl mb-4"></div>
+                  <div class="skeleton-shimmer h-6 w-32 rounded-md mb-2"></div>
+                  <div class="skeleton-shimmer h-4 w-full rounded-md mb-1"></div>
+                  <div class="skeleton-shimmer h-4 w-2/3 rounded-md"></div>
                 </div>
               }
-            </div>
-          } @else {
-            <a routerLink="/marketplace" data-tour="marketplace" class="feature-card feature-hero group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/5 hover:border-purple-500/20">
-              <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-violet-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-              <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors"></div>
-              <div class="relative z-[1] flex flex-col sm:flex-row sm:items-center gap-5">
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/15 to-violet-400/5 border border-purple-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/marketplace.png" class="w-full h-full rounded-xl" alt="Marketplace" />
+            } @else {
+              <a routerLink="/lootboxes" data-tour="lootboxes" class="primary-tile group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/5 hover:border-red-500/20">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-red-400"></div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-surface-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/lootboxes.png" class="w-10 h-10 object-contain" alt="Lootboxes" />
                 </div>
-                <div class="flex-1">
-                  <h3 class="text-xl font-extrabold text-text-primary m-0 mb-1.5">Marketplace</h3>
-                  <p class="text-sm text-text-secondary leading-relaxed m-0">Trade and sell stoves in the player-driven economy.</p>
+                <h3 class="text-lg font-extrabold text-text-primary mb-1">Collect</h3>
+                <p class="text-sm text-text-secondary leading-relaxed">Open lootboxes to discover rare stoves.</p>
+                <div class="mt-4 flex items-center gap-1.5 text-sm font-bold text-red-500 group-hover:gap-2.5 transition-all duration-200">
+                  Open Lootbox
+                  <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
-                <div class="flex items-center gap-1.5 text-sm font-bold text-purple-500 group-hover:gap-2.5 transition-all duration-200 shrink-0">
-                  Browse
-                  <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-              <a routerLink="/forgery" data-tour="forge" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-500/5 hover:border-orange-500/20">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-amber-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500/15 to-amber-400/5 border border-orange-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/the_forge.png" class="w-full h-full rounded-xl" alt="Forge" />
-                </div>
-                <h3 class="text-sm font-bold text-text-primary m-0 mb-1">The Forge</h3>
-                <p class="text-xs text-text-secondary leading-relaxed m-0">Combine 6 stoves to upgrade rarity</p>
               </a>
 
-              <a routerLink="/collections" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-500/20">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-violet-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500/15 to-violet-400/5 border border-indigo-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/collections.png" class="w-full h-full rounded-xl" alt="Collections" />
+              <a routerLink="/marketplace" data-tour="marketplace" class="primary-tile group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/5 hover:border-purple-500/20">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-violet-400"></div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-surface-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/marketplace.png" class="w-10 h-10 object-contain" alt="Marketplace" />
                 </div>
-                <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Collections</h3>
-                <p class="text-xs text-text-secondary leading-relaxed m-0">Track completion and unlock bonuses</p>
+                <h3 class="text-lg font-extrabold text-text-primary mb-1">Trade</h3>
+                <p class="text-sm text-text-secondary leading-relaxed">Buy and sell stoves with other players.</p>
+                <div class="mt-4 flex items-center gap-1.5 text-sm font-bold text-purple-500 group-hover:gap-2.5 transition-all duration-200">
+                  Browse Market
+                  <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
               </a>
 
-              <a routerLink="/social" data-tour="social" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/5 hover:border-pink-500/20">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-rose-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-pink-500/15 to-rose-400/5 border border-pink-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/socials.png" class="w-full h-full rounded-xl" alt="Social" />
+              <a routerLink="/games" data-tour="games" class="primary-tile group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-yellow-500/5 hover:border-yellow-500/20">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-400"></div>
+                <div class="icon-wrap w-14 h-14 rounded-2xl bg-surface-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/games.png" class="w-10 h-10 object-contain" alt="Games" />
                 </div>
-                <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Social</h3>
-                <p class="text-xs text-text-secondary leading-relaxed m-0">Chat with friends and trade directly</p>
-              </a>
-            </div>
-          }
-        </section>
-
-        <!-- Play -->
-        <section>
-          <div class="section-header flex items-center gap-4 mb-5">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500/15 to-amber-400/5 border border-yellow-500/10 flex items-center justify-center">
-              <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="6" y="11" width="12" height="11" rx="2"/>
-                <path d="M12 5h.01"/>
-                <path d="M9 11V7a3 3 0 0 1 6 0v4"/>
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-lg font-extrabold text-text-primary leading-none">Play</h2>
-              <p class="text-sm text-text-secondary mt-1">Join Poker, Blackjack, or Roulette tables</p>
-            </div>
-          </div>
-
-          @if (loading()) {
-            <div class="feature-card feature-hero bg-surface border border-border rounded-2xl p-6">
-              <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-4"></div>
-              <div class="skeleton-shimmer h-6 rounded-md w-40 mb-2"></div>
-              <div class="skeleton-shimmer h-4 rounded-md w-3/4 mb-1"></div>
-              <div class="skeleton-shimmer h-4 rounded-md w-1/2"></div>
-            </div>
-          } @else {
-            <a routerLink="/games" data-tour="games" class="feature-card feature-hero group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-yellow-500/5 hover:border-yellow-500/20">
-              <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-              <div class="absolute -right-6 -top-6 w-24 h-24 bg-yellow-500/5 rounded-full blur-2xl group-hover:bg-yellow-500/10 transition-colors"></div>
-              <div class="relative z-[1] flex flex-col sm:flex-row sm:items-center gap-5">
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-yellow-500/15 to-amber-400/5 border border-yellow-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/games.png" class="w-full h-full rounded-xl" alt="Games" />
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-xl font-extrabold text-text-primary m-0 mb-1.5">Games Hub</h3>
-                  <p class="text-sm text-text-secondary leading-relaxed m-0">Compete in Poker, Blackjack, and Roulette to win coal.</p>
-                </div>
-                <div class="flex items-center gap-1.5 text-sm font-bold text-yellow-600 group-hover:gap-2.5 transition-all duration-200 shrink-0">
+                <h3 class="text-lg font-extrabold text-text-primary mb-1">Play</h3>
+                <p class="text-sm text-text-secondary leading-relaxed">Join Poker, Blackjack, or Roulette.</p>
+                <div class="mt-4 flex items-center gap-1.5 text-sm font-bold text-yellow-600 group-hover:gap-2.5 transition-all duration-200">
                   Play Now
-                  <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
+                  <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
-              </div>
-            </a>
-          }
+              </a>
+            }
+          </div>
+        </section>
+
+        <!-- Secondary Actions -->
+        <section>
+          <h2 class="text-sm font-bold text-text-muted uppercase tracking-[0.15em] mb-4">More to explore</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @if (loading()) {
+              @for (i of [1,2,3,4,5,6]; track i) {
+                <div class="secondary-tile bg-surface border border-border rounded-2xl p-4">
+                  <div class="skeleton-shimmer w-10 h-10 rounded-xl mb-3"></div>
+                  <div class="skeleton-shimmer h-4 w-24 rounded-md mb-2"></div>
+                  <div class="skeleton-shimmer h-3 w-full rounded-md"></div>
+                </div>
+              }
+            } @else {
+              <a routerLink="/shop" class="secondary-tile group flex items-center gap-4 bg-surface border border-border rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-accent/30">
+                <div class="icon-wrap w-11 h-11 rounded-xl bg-surface-secondary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/shop.png" class="w-7 h-7 object-contain" alt="Shop" />
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-sm font-bold text-text-primary mb-0.5">Shop</h3>
+                  <p class="text-xs text-text-secondary truncate">Buy items & claim dailies</p>
+                </div>
+              </a>
+
+              <a routerLink="/spin" class="secondary-tile group flex items-center gap-4 bg-surface border border-border rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-amber-500/30">
+                <div class="icon-wrap w-11 h-11 rounded-xl bg-surface-secondary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/lucky_wheel.png" class="w-7 h-7 object-contain" alt="Lucky Wheel" />
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-sm font-bold text-text-primary mb-0.5">Lucky Wheel</h3>
+                  <p class="text-xs text-text-secondary truncate">Free spins every day</p>
+                </div>
+              </a>
+
+              <a routerLink="/forgery" class="secondary-tile group flex items-center gap-4 bg-surface border border-border rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-orange-500/30">
+                <div class="icon-wrap w-11 h-11 rounded-xl bg-surface-secondary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/the_forge.png" class="w-7 h-7 object-contain" alt="Forge" />
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-sm font-bold text-text-primary mb-0.5">The Forge</h3>
+                  <p class="text-xs text-text-secondary truncate">Upgrade stove rarity</p>
+                </div>
+              </a>
+
+              <a routerLink="/collections" class="secondary-tile group flex items-center gap-4 bg-surface border border-border rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-indigo-500/30">
+                <div class="icon-wrap w-11 h-11 rounded-xl bg-surface-secondary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/collections.png" class="w-7 h-7 object-contain" alt="Collections" />
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-sm font-bold text-text-primary mb-0.5">Collections</h3>
+                  <p class="text-xs text-text-secondary truncate">Track sets & bonuses</p>
+                </div>
+              </a>
+
+              <a routerLink="/social" class="secondary-tile group flex items-center gap-4 bg-surface border border-border rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-pink-500/30">
+                <div class="icon-wrap w-11 h-11 rounded-xl bg-surface-secondary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/socials.png" class="w-7 h-7 object-contain" alt="Social" />
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-sm font-bold text-text-primary mb-0.5">Social</h3>
+                  <p class="text-xs text-text-secondary truncate">Chat and trade with friends</p>
+                </div>
+              </a>
+
+              <a routerLink="/quests" class="secondary-tile group flex items-center gap-4 bg-surface border border-border rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-teal-500/30">
+                <div class="icon-wrap w-11 h-11 rounded-xl bg-surface-secondary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/quests.png" class="w-7 h-7 object-contain" alt="Quests" />
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-sm font-bold text-text-primary mb-0.5">Quests</h3>
+                  <p class="text-xs text-text-secondary truncate">Daily & weekly challenges</p>
+                </div>
+              </a>
+            }
+          </div>
         </section>
       </div>
 
-      <!-- Recent Pulls -->
-      <aside class="activity-panel bg-surface border border-border rounded-2xl shadow-sm overflow-hidden lg:sticky lg:top-4">
+      <!-- Right column widgets -->
+      <aside class="activity-panel bg-surface border border-border rounded-2xl shadow-sm overflow-hidden xl:sticky xl:top-24">
         <div class="px-5 py-4 border-b border-border flex items-center gap-3">
           <div class="flex items-center gap-1.5 bg-rarity-uncommon/10 px-2.5 py-1 rounded-full border border-rarity-uncommon/20">
             <span class="w-1.5 h-1.5 bg-rarity-uncommon rounded-full animate-pulse"></span>

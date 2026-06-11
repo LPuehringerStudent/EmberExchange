@@ -1,37 +1,158 @@
 <!-- Sidebar -->
-<nav class="fixed top-0 left-0 w-[260px] h-full pt-[90px] z-[1100] sidebar" [class.open]="sidebarOpen()">
-  <a routerLink="/" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Home</a>
-  <a routerLink="/marketplace" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Marketplace</a>
-  <a routerLink="/lootboxes" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Lootboxes</a>
-  <a routerLink="/spin" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Lucky Wheel</a>
-  <a routerLink="/statistics" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Statistics</a>
-  <a routerLink="/update-log" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Update Log</a>
-  <a routerLink="/glory" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Hall of Glory</a>
-  <a routerLink="/social" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Social</a>
-  <a routerLink="/support" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Support</a>
-  <a routerLink="/investing" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Investing</a>
-  @if (isAdmin()) {
-    <a routerLink="/admin" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-accent font-medium no-underline">Admin Panel</a>
-  }
-  @if (!isLoggedIn()) {
-    <a routerLink="/" (click)="sidebarOpen.set(false)" class="block py-3.5 px-7 text-white font-medium no-underline">Login</a>
-  } @else {
-    <a (click)="logout(); sidebarOpen.set(false)" class="logoutFR block py-3.5 px-7 text-white font-medium no-underline cursor-pointer">Logout</a>
-  }
+<nav class="sidebar fixed top-16 left-0 w-[240px] h-[calc(100vh-64px)] z-[1100] hidden lg:flex flex-col justify-between py-4 border-r border-border"
+     [class.open]="sidebarOpen()">
+  <div>
+    <!-- Core -->
+    <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted">Core</div>
+    <a routerLink="/home" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </a>
+    <a routerLink="/marketplace" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3zM3 9h18M9 21V9"/></svg>
+      Marketplace
+    </a>
+    <a routerLink="/lootboxes" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5" rx="2"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+      Lootboxes
+    </a>
+    <a routerLink="/shop" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      Shop
+    </a>
+    <a routerLink="/spin" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
+      Lucky Wheel
+    </a>
+
+    <!-- Social -->
+    <div class="px-5 py-2 mt-4 text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted">Social</div>
+    <a routerLink="/social" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Social
+    </a>
+    <a routerLink="/glory" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+      Hall of Glory
+    </a>
+    <a routerLink="/quests" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      Quests
+    </a>
+  </div>
+
+  <div>
+    <!-- Account -->
+    <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted">Account</div>
+    <a routerLink="/inventory" data-tour="inventory" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      Inventory
+    </a>
+    <a routerLink="/profile" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </a>
+    <a routerLink="/settings" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </a>
+    @if (isAdmin()) {
+      <a routerLink="/admin" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-accent">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Admin Panel
+      </a>
+    }
+    <button (click)="logout()" class="nav-link w-full flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-danger hover:text-danger mt-1">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
+  </div>
 </nav>
 
-<!-- Overlay -->
-<div
-  class="fixed inset-0 z-[1050] overlay"
-  [class.show]="sidebarOpen()"
-  (click)="toggleSidebar()">
+<!-- Mobile sidebar overlay -->
+<div class="fixed inset-0 z-[1050] overlay lg:hidden"
+     [class.show]="sidebarOpen()"
+     (click)="toggleSidebar()">
 </div>
 
+<!-- Mobile slide-out sidebar -->
+<nav class="mobile-sidebar fixed top-0 left-0 w-[260px] h-full z-[1100] flex flex-col justify-between py-4 lg:hidden"
+     [class.open]="sidebarOpen()">
+  <div>
+    <div class="flex items-center justify-between px-5 py-3 mb-2">
+      <span class="text-lg font-bold text-text-primary">Menu</span>
+      <button (click)="sidebarOpen.set(false)" class="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-secondary transition-colors">✕</button>
+    </div>
+
+    <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted">Core</div>
+    <a routerLink="/home" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </a>
+    <a routerLink="/marketplace" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3zM3 9h18M9 21V9"/></svg>
+      Marketplace
+    </a>
+    <a routerLink="/lootboxes" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5" rx="2"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+      Lootboxes
+    </a>
+    <a routerLink="/shop" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      Shop
+    </a>
+    <a routerLink="/spin" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
+      Lucky Wheel
+    </a>
+
+    <div class="px-5 py-2 mt-3 text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted">Social</div>
+    <a routerLink="/social" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Social
+    </a>
+    <a routerLink="/glory" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+      Hall of Glory
+    </a>
+    <a routerLink="/quests" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      Quests
+    </a>
+  </div>
+
+  <div>
+    <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted">Account</div>
+    <a routerLink="/inventory" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      Inventory
+    </a>
+    <a routerLink="/profile" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </a>
+    <a routerLink="/settings" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </a>
+    @if (isAdmin()) {
+      <a routerLink="/admin" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-accent">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Admin Panel
+      </a>
+    }
+    <button (click)="logout()" class="nav-link w-full flex items-center gap-3 px-5 py-3 text-sm font-medium text-danger hover:text-danger mt-1">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
+  </div>
+</nav>
+
 <!-- Top bar -->
-<header class="fixed top-0 left-0 z-[1000] flex items-center justify-between h-16 w-full px-4 sm:px-6 topbar">
+<header class="topbar fixed top-0 left-0 z-[1000] flex items-center justify-between h-16 w-full px-4 sm:px-6 lg:ml-[240px] lg:w-[calc(100%-240px)]">
   <div class="flex items-center gap-4 relative z-[1001]">
-    <div class="flex items-center justify-center w-11 h-11 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 menu-btn" (click)="toggleSidebar()">☰</div>
-    <div class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg text-[22px] font-bold text-white tracking-wide cursor-pointer relative z-[1002]" routerLink="/">
+    <div class="menu-btn flex lg:hidden items-center justify-center w-10 h-10 rounded-lg text-xl text-text-primary cursor-pointer transition-all duration-200" (click)="toggleSidebar()">☰</div>
+    <div class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg text-lg font-bold text-text-primary tracking-wide cursor-pointer" routerLink="/home">
       Ember Exchange
     </div>
   </div>
@@ -40,27 +161,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     @if (isLoggedIn()) {
-      <!-- Show inventory and user dropdown when logged in -->
-      <span title="Inventory" routerLink="/inventory" data-tour="inventory" class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 topbar-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-backpack" viewBox="0 0 16 16">
-    <path d="M4.04 7.43a4 4 0 0 1 7.92 0 .5.5 0 1 1-.99.14 3 3 0 0 0-5.94 0 .5.5 0 1 1-.99-.14M4 9.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm1 .5v3h6v-3h-1v.5a.5.5 0 0 1-1 0V10z"/>
-    <path d="M6 2.341V2a2 2 0 1 1 4 0v.341c2.33.824 4 3.047 4 5.659v5.5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 13.5V8a6 6 0 0 1 4-5.659M7 2v.083a6 6 0 0 1 2 0V2a1 1 0 0 0-2 0m1 1a5 5 0 0 0-5 5v5.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V8a5 5 0 0 0-5-5"/></svg></span>
-
-      <span title="Lucky Wheel" routerLink="/spin" class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg text-xl text-white cursor-pointer transition-all duration-200 topbar-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-amber-400">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-        </svg>
-      </span>
-
-      <div class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-full text-white text-[13px] font-semibold bg-[rgba(232,93,4,0.15)]">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#ffba08]">
+      <div class="hidden sm:flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-full text-text-primary text-[13px] font-semibold bg-surface-secondary border border-border">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-amber-500">
           <circle cx="12" cy="12" r="10"/>
           <path d="M9 12h6M12 9v6"/>
         </svg>
         <span [class.coin-pulse]="coinAnimating()">{{ coins().toLocaleString() }}<span class="hidden sm:inline ml-1">Coal</span></span>
       </div>
 
-      <div class="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-full text-white text-[13px] font-semibold bg-[rgba(255,87,34,0.15)]">
+      <div class="hidden sm:flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-full text-text-primary text-[13px] font-semibold bg-surface-secondary border border-border">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#ff5722]">
           <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
         </svg>
@@ -71,9 +180,9 @@
 
       <!-- Account Popup -->
       <div class="relative inline-block outline-none account-popup" tabindex="0">
-        <button class="flex items-center gap-2 pl-1 pr-2 sm:pr-3 py-1 bg-transparent border-none rounded-full cursor-pointer text-white transition-all duration-300 account-button">
+        <button class="flex items-center gap-2 pl-1 pr-2 sm:pr-3 py-1 bg-transparent border-none rounded-full cursor-pointer text-text-primary transition-all duration-300 account-button">
           <span class="hidden sm:inline text-sm font-semibold tracking-wide pl-1 truncate max-w-[80px]">{{ currentUser()?.username || 'Player' }}</span>
-          <div class="w-8 h-8 rounded-full shrink-0">
+          <div class="w-8 h-8 rounded-full shrink-0 overflow-hidden border border-border">
             <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" class="w-full h-full block">
               <path fill="#FFCE8B" d="M1021.103385 510.551692A510.551692 510.551692 0 1 1 510.551692 0a510.551692 510.551692 0 0 1 510.551693 510.551692"></path>
               <path fill="#644646" d="M809.99026 493.192935v315.26567H494.979866a317.052601 317.052601 0 0 1-66.626996-7.147724V493.192935z"></path>
@@ -89,7 +198,7 @@
           </div>
         </button>
 
-        <div class="absolute top-full right-0 mt-2 min-w-[180px] bg-surface rounded-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.3)] border border-[rgba(232,93,4,0.3)] z-[2000] account-dropdown">
+        <div class="absolute top-full right-0 mt-2 min-w-[180px] bg-surface rounded-xl p-2 shadow-[0_8px_24px_rgba(0,0,0,0.3)] border border-border z-[2000] account-dropdown">
           <ul class="list-none flex flex-col gap-1">
             <li class="block py-2.5 px-4 rounded-lg text-sm text-text-primary cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/profile">Profile</li>
             <li class="block py-2.5 px-4 rounded-lg text-sm text-text-primary cursor-pointer text-left w-full bg-transparent border-none transition-all duration-200 account-menu-item" routerLink="/inventory">Inventory</li>
@@ -103,7 +212,6 @@
         </div>
       </div>
     } @else {
-      <!-- Show login/register buttons when not logged in -->
       <button routerLink="/" class="border-none px-4 py-2 rounded-md text-white font-semibold cursor-pointer text-sm btn-login">Login</button>
     }
   </div>
@@ -111,7 +219,7 @@
 
 <!-- Email Verification Banner -->
 @if (showVerifyBanner()) {
-  <div class="fixed top-16 left-0 right-0 z-[999] bg-accent/15 border-b-2 border-accent px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
+  <div class="fixed top-16 left-0 lg:left-[240px] right-0 z-[999] bg-accent/15 border-b-2 border-accent px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
     <div class="flex items-center gap-3 min-w-0">
       <svg class="w-5 h-5 text-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -135,7 +243,7 @@
 }
 
 <!-- Main content -->
-<main class="mt-16 min-h-[calc(100vh-64px)] w-full content"
+<main class="content mt-16 min-h-[calc(100vh-64px)] w-full lg:ml-[240px] lg:w-[calc(100%-240px)]"
       [class.mt-24]="showVerifyBanner()">
   <router-outlet></router-outlet>
 </main>

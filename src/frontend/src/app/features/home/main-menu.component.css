@@ -1,6 +1,6 @@
-/* ============================================
-   DASHBOARD — Rich, animated, production-ready
-   ============================================ */
+:host {
+  display: block;
+}
 
 /* ---- Animated mesh background ---- */
 .bg-mesh {
@@ -71,24 +71,11 @@
 .ember-8 { left: 60%; bottom: -0.625rem; animation-delay: 5s; width: 0.125rem; height: 0.125rem; }
 
 @keyframes ember-rise {
-  0% {
-    transform: translateY(0) translateX(0) scale(1);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.8;
-  }
-  50% {
-    transform: translateY(-50vh) translateX(20px) scale(1.2);
-    opacity: 0.5;
-  }
-  90% {
-    opacity: 0.2;
-  }
-  100% {
-    transform: translateY(-100vh) translateX(-10px) scale(0.5);
-    opacity: 0;
-  }
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  10% { opacity: 0.8; }
+  50% { transform: translateY(-50vh) translateX(20px) scale(1.2); opacity: 0.5; }
+  90% { opacity: 0.2; }
+  100% { transform: translateY(-100vh) translateX(-10px) scale(0.5); opacity: 0; }
 }
 
 /* ---- Grain texture ---- */
@@ -114,103 +101,33 @@
   50% { opacity: 1; transform: scale(1.02); }
 }
 
-/* ---- Stat pills ---- */
-.stat-pill {
-  position: relative;
-  overflow: hidden;
+/* ---- Hero banner ---- */
+.hero-banner {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
 }
 
-.stat-pill::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 0.125rem;
-  background: linear-gradient(90deg, var(--accent, #e85d04), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.stat-chip {
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.stat-pill:hover::before {
-  opacity: 1;
+.stat-chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
 }
 
-.stat-icon-wrap {
-  transition: transform 0.3s ease;
-}
-
-.stat-pill:hover .stat-icon-wrap {
-  transform: scale(1.08);
-}
-
-/* ---- Game tiles ---- */
-.game-tile {
-  position: relative;
-}
-
-.tile-shine {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
-  transition: left 0.6s ease;
-  pointer-events: none;
-}
-
-.game-tile:hover .tile-shine {
-  left: 100%;
-}
-
-:host {
-  display: block;
-}
-
-/* ---- Quick actions ---- */
-.quick-actions {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.quick-actions::-webkit-scrollbar {
-  display: none;
-}
-
-.quick-action {
-  min-height: 44px;
-}
-
-.quick-action img {
-  object-fit: contain;
-}
-
-/* ---- Section headers ---- */
-.section-header h2 {
-  letter-spacing: -0.02em;
-}
-
-/* ---- Feature cards ---- */
-.feature-card {
+/* ---- Primary tiles ---- */
+.primary-tile {
   position: relative;
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.feature-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(37.5rem circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(232, 93, 4, 0.04), transparent 40%);
-  opacity: 0;
-  transition: opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-  z-index: 0;
+.icon-wrap {
+  transition: transform 0.3s ease;
 }
 
-.feature-card:hover::after {
-  opacity: 1;
+/* ---- Secondary tiles ---- */
+.secondary-tile {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 /* ---- Activity panel ---- */
@@ -245,7 +162,6 @@
   transform: translateX(2px);
 }
 
-/* Rarity-specific feed row styling */
 .feed-row.rarity-legendary {
   background: rgba(245, 158, 11, 0.06);
   border-color: rgba(245, 158, 11, 0.15);
@@ -269,112 +185,53 @@
 }
 .feed-row.rarity-common::before { background: #94a3b8; }
 
-/* Rarity glow behind icon */
-.rarity-glow.legendary {
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.35) 0%, transparent 70%);
-}
-.rarity-glow.epic {
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, transparent 70%);
-}
-.rarity-glow.rare {
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, transparent 70%);
-}
-.rarity-glow.common {
-  background: radial-gradient(circle, rgba(148, 163, 184, 0.25) 0%, transparent 70%);
-}
+.rarity-glow.legendary { background: radial-gradient(circle, rgba(245, 158, 11, 0.35) 0%, transparent 70%); }
+.rarity-glow.epic { background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, transparent 70%); }
+.rarity-glow.rare { background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, transparent 70%); }
+.rarity-glow.common { background: radial-gradient(circle, rgba(148, 163, 184, 0.25) 0%, transparent 70%); }
 
 .feed-row:hover .rarity-glow {
   opacity: 1;
 }
 
-/* Rarity badges */
 .rarity-badge.common   { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
 .rarity-badge.rare     { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
 .rarity-badge.epic     { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
 .rarity-badge.legendary{ background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
 
-/* ---- Fade overlay ---- */
 .fade-overlay {
   background: linear-gradient(to bottom, transparent, var(--surface-bg, #ffffff));
 }
 
-/* ---- Scrollbar ---- */
 .feed-content {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-color, #e0e3ff) transparent;
+  scrollbar-color: var(--border-color) transparent;
 }
 
 .feed-content::-webkit-scrollbar { width: 0.3125rem; }
 .feed-content::-webkit-scrollbar-track { background: transparent; }
 .feed-content::-webkit-scrollbar-thumb {
-  background-color: var(--border-color, #e0e3ff);
+  background-color: var(--border-color);
   border-radius: 0.625rem;
 }
 
 /* ---- Entrance animations ---- */
-.dashboard-header {
-  animation: fade-in-up 0.6s ease-out both;
+.hero-banner,
+.primary-tile,
+.secondary-tile {
+  animation: fade-in-up 0.5s ease-out both;
 }
 
-.stat-pill:nth-child(1) { animation: fade-in-up 0.5s ease-out 0.1s both; }
-.stat-pill:nth-child(2) { animation: fade-in-up 0.5s ease-out 0.2s both; }
-.stat-pill:nth-child(3) { animation: fade-in-up 0.5s ease-out 0.3s both; }
+.primary-tile:nth-child(1) { animation-delay: 0.05s; }
+.primary-tile:nth-child(2) { animation-delay: 0.1s; }
+.primary-tile:nth-child(3) { animation-delay: 0.15s; }
 
 @keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ---- Responsive ---- */
 @media (max-width: 1024px) {
   .activity-panel { position: relative !important; top: 0 !important; }
-}
-
-@media (max-width: 640px) {
-  .dashboard-header { padding-top: 1.5rem; }
-  .stats-row { grid-template-columns: 1fr; }
-}
-
-/* ============================================
-   ICON CLEANUP — No background boxes, bigger
-   ============================================ */
-
-/* Feature cards: remove background/border from icon wrapper, keep layout */
-.feature-card .w-11.h-11.rounded-xl {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-/* Enlarge feature card icons, keep aspect ratio */
-.feature-card .w-11.h-11.rounded-xl img,
-.feature-card .w-11.h-11.rounded-xl svg {
-  width: 4.5rem;
-  height: 4.5rem;
-  object-fit: contain;
-  display: block;
-}
-
-/* Stat pills: remove background/border from icon wrapper, keep layout */
-.stat-pill .stat-icon-wrap {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-/* Enlarge stat pill icons, keep aspect ratio */
-.stat-pill .stat-icon-wrap img,
-.stat-pill .stat-icon-wrap svg {
-  width: 3.5rem;
-  height: 3.5rem;
-  object-fit: contain;
-  display: block;
 }

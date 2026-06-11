@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ThemeService } from '../services/theme.service';
 import { OnboardingService } from '../services/onboarding.service';
@@ -10,7 +10,7 @@ import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, NotificationBellComponent, OnboardingOverlayComponent, InfoTooltipComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, OnboardingOverlayComponent, InfoTooltipComponent],
   templateUrl: './shell.component.html',
   styleUrls: ['./shell.component.css']
 })
