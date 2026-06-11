@@ -16,26 +16,26 @@
 }
 
 .mesh-1 {
-  width: 600px;
-  height: 600px;
+  width: 37.5rem;
+  height: 37.5rem;
   background: radial-gradient(circle, rgba(232, 93, 4, 0.15) 0%, transparent 70%);
-  top: -200px;
-  right: -150px;
+  top: -12.5rem;
+  right: -9.375rem;
   animation-delay: 0s;
 }
 
 .mesh-2 {
-  width: 500px;
-  height: 500px;
+  width: 31.25rem;
+  height: 31.25rem;
   background: radial-gradient(circle, rgba(255, 140, 0, 0.1) 0%, transparent 70%);
-  bottom: -100px;
-  left: -100px;
+  bottom: -6.25rem;
+  left: -6.25rem;
   animation-delay: -7s;
 }
 
 .mesh-3 {
-  width: 400px;
-  height: 400px;
+  width: 25rem;
+  height: 25rem;
   background: radial-gradient(circle, rgba(211, 84, 0, 0.08) 0%, transparent 70%);
   top: 40%;
   right: 20%;
@@ -52,8 +52,8 @@
 /* ---- Floating ember particles ---- */
 .ember-particle {
   position: absolute;
-  width: 3px;
-  height: 3px;
+  width: 0.1875rem;
+  height: 0.1875rem;
   border-radius: 50%;
   background: #ff8c42;
   box-shadow: 0 0 6px 1px rgba(255, 140, 0, 0.4);
@@ -61,14 +61,14 @@
   animation: ember-rise 8s ease-out infinite;
 }
 
-.ember-1 { left: 10%; bottom: -10px; animation-delay: 0s; }
-.ember-2 { left: 25%; bottom: -10px; animation-delay: 1.2s; width: 2px; height: 2px; }
-.ember-3 { left: 40%; bottom: -10px; animation-delay: 2.5s; }
-.ember-4 { left: 55%; bottom: -10px; animation-delay: 0.8s; width: 2px; height: 2px; }
-.ember-5 { left: 70%; bottom: -10px; animation-delay: 3.5s; }
-.ember-6 { left: 85%; bottom: -10px; animation-delay: 1.8s; width: 2px; height: 2px; }
-.ember-7 { left: 15%; bottom: -10px; animation-delay: 4.2s; }
-.ember-8 { left: 60%; bottom: -10px; animation-delay: 5s; width: 2px; height: 2px; }
+.ember-1 { left: 10%; bottom: -0.625rem; animation-delay: 0s; }
+.ember-2 { left: 25%; bottom: -0.625rem; animation-delay: 1.2s; width: 0.125rem; height: 0.125rem; }
+.ember-3 { left: 40%; bottom: -0.625rem; animation-delay: 2.5s; }
+.ember-4 { left: 55%; bottom: -0.625rem; animation-delay: 0.8s; width: 0.125rem; height: 0.125rem; }
+.ember-5 { left: 70%; bottom: -0.625rem; animation-delay: 3.5s; }
+.ember-6 { left: 85%; bottom: -0.625rem; animation-delay: 1.8s; width: 0.125rem; height: 0.125rem; }
+.ember-7 { left: 15%; bottom: -0.625rem; animation-delay: 4.2s; }
+.ember-8 { left: 60%; bottom: -0.625rem; animation-delay: 5s; width: 0.125rem; height: 0.125rem; }
 
 @keyframes ember-rise {
   0% {
@@ -102,8 +102,8 @@
 .avatar-ring::before {
   content: '';
   position: absolute;
-  inset: -3px;
-  border-radius: 18px;
+  inset: -0.1875rem;
+  border-radius: 1.125rem;
   background: linear-gradient(135deg, rgba(232, 93, 4, 0.4), rgba(255, 140, 0, 0.1));
   z-index: -1;
   animation: avatar-glow 3s ease-in-out infinite;
@@ -126,7 +126,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 0.125rem;
   background: linear-gradient(90deg, var(--accent, #e85d04), transparent);
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -175,7 +175,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(232, 93, 4, 0.04), transparent 40%);
+  background: radial-gradient(37.5rem circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(232, 93, 4, 0.04), transparent 40%);
   opacity: 0;
   transition: opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
@@ -202,9 +202,9 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
+  width: 0.1875rem;
   background: var(--accent, #e85d04);
-  border-radius: 0 2px 2px 0;
+  border-radius: 0 0.125rem 0.125rem 0;
   transform: scaleY(0);
   transition: transform 0.3s ease;
 }
@@ -277,11 +277,11 @@
   scrollbar-color: var(--border-color, #e0e3ff) transparent;
 }
 
-.feed-content::-webkit-scrollbar { width: 5px; }
+.feed-content::-webkit-scrollbar { width: 0.3125rem; }
 .feed-content::-webkit-scrollbar-track { background: transparent; }
 .feed-content::-webkit-scrollbar-thumb {
   background-color: var(--border-color, #e0e3ff);
-  border-radius: 10px;
+  border-radius: 0.625rem;
 }
 
 /* ---- Entrance animations ---- */
@@ -312,4 +312,42 @@
 @media (max-width: 640px) {
   .dashboard-header { padding-top: 1.5rem; }
   .stats-row { grid-template-columns: 1fr; }
+}
+
+/* ============================================
+   ICON CLEANUP — No background boxes, bigger
+   ============================================ */
+
+/* Feature cards: remove background/border from icon wrapper, keep layout */
+.feature-card .w-11.h-11.rounded-xl {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Enlarge feature card icons, keep aspect ratio */
+.feature-card .w-11.h-11.rounded-xl img,
+.feature-card .w-11.h-11.rounded-xl svg {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+  display: block;
+}
+
+/* Stat pills: remove background/border from icon wrapper, keep layout */
+.stat-pill .stat-icon-wrap {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Enlarge stat pill icons, keep aspect ratio */
+.stat-pill .stat-icon-wrap img,
+.stat-pill .stat-icon-wrap svg {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+  display: block;
 }
