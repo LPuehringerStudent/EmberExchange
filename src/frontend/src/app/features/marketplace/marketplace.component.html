@@ -111,9 +111,34 @@
 
       <!-- Loading -->
       @if (loading()) {
-        <div class="page-loading">
-          <div class="spinner"></div>
-          <p>Loading marketplace...</p>
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            @for (_ of [0, 1, 2]; track $index) {
+              <div class="bg-surface/80 border border-border rounded-2xl p-4 space-y-3">
+                <div class="h-3 w-24 rounded skeleton-shimmer"></div>
+                <div class="h-7 w-20 rounded skeleton-shimmer"></div>
+              </div>
+            }
+          </div>
+
+          <div class="bg-surface/80 border border-border rounded-2xl p-4 space-y-4">
+            <div class="h-4 w-32 rounded skeleton-shimmer"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-4">
+              <div class="space-y-3">
+                @for (_ of [0, 1, 2, 3, 4]; track $index) {
+                  <div class="h-20 rounded-xl skeleton-shimmer"></div>
+                }
+              </div>
+              <div class="space-y-3">
+                <div class="h-80 rounded-2xl skeleton-shimmer"></div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  @for (_ of [0, 1, 2, 3]; track $index) {
+                    <div class="h-16 rounded-xl skeleton-shimmer"></div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       }
 
@@ -457,13 +482,11 @@
                     <span>{{ chart.points[chart.points.length - 1].date }}</span>
                   </div>
                 } @else {
-                  <div class="chart-loading">
-                    @if (priceHistory().length === 1) {
-                      Not enough data for chart
-                    } @else {
-                      Loading chart...
-                    }
-                  </div>
+                  @if (priceHistory().length === 1) {
+                    <div class="chart-loading">Not enough data for chart</div>
+                  } @else {
+                    <div class="h-[420px] rounded-2xl skeleton-shimmer"></div>
+                  }
                 }
               </div>
             </div>
