@@ -100,7 +100,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
     const refreshSub = this._stove.refresh$.subscribe(() => {
       const currentUser = this._authService.getCurrentUser();
       if (currentUser) {
-        this.loadItems(currentUser.playerId);
+        this.loadItems(currentUser.playerId, false);
         this.loadMyListings(currentUser.playerId);
       }
     });
@@ -126,8 +126,10 @@ export class InventoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadItems(playerId: number): void {
-    this.loading = true;
+  loadItems(playerId: number, showLoading = true): void {
+    if (showLoading) {
+      this.loading = true;
+    }
     const sub = this._stove.getStovesByPlayerId(playerId).pipe(
       switchMap((stoves: StoveRow[]) => {
         if (stoves.length === 0) return of([]);
@@ -277,7 +279,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
       this.coins = this._authService.getCurrentUser()?.coins ?? 0;
       this.closeDetailModal();
       if (this.playerId !== null) {
-        this.loadItems(this.playerId);
+        this.loadItems(this.playerId, false);
         this.loadMyListings(this.playerId);
       }
     } catch (err: any) {
@@ -299,7 +301,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
         this.sparks = this._authService.getCurrentUser()?.sparks ?? 0;
         this.closeDetailModal();
         if (this.playerId !== null) {
-          this.loadItems(this.playerId);
+          this.loadItems(this.playerId, false);
           this.loadMyListings(this.playerId);
         }
       } else {
@@ -338,7 +340,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
         }
         // Refresh inventory to get updated data
         if (this.playerId !== null) {
-          this.loadItems(this.playerId);
+          this.loadItems(this.playerId, false);
         }
       } else {
         this.detailError = result.error || 'Failed to re-roll heat';
