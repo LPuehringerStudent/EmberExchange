@@ -164,6 +164,33 @@
   left: 100%;
 }
 
+:host {
+  display: block;
+}
+
+/* ---- Quick actions ---- */
+.quick-actions {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.quick-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-action {
+  min-height: 44px;
+}
+
+.quick-action img {
+  object-fit: contain;
+}
+
+/* ---- Section headers ---- */
+.section-header h2 {
+  letter-spacing: -0.02em;
+}
+
 /* ---- Feature cards ---- */
 .feature-card {
   position: relative;
@@ -184,6 +211,21 @@
 
 .feature-card:hover::after {
   opacity: 1;
+}
+
+/* Hero card icon */
+.feature-hero .w-16.h-16.rounded-2xl {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.feature-hero .w-16.h-16.rounded-2xl img {
+  width: 5.5rem;
+  height: 5.5rem;
+  object-fit: contain;
+  display: block;
 }
 
 /* ---- Activity panel ---- */

@@ -23,49 +23,21 @@ export const TUTORIAL_STEPS: OnboardingStep[] = [
     id: 'collect',
     targetSelector: '[data-tour="lootboxes"]',
     title: 'Collect',
-    body: 'Open lootboxes to discover rare stoves. Each stove has a rarity — from Common to Legendary. The rarer, the more valuable!',
+    body: 'Start in the Collect section. Open lootboxes, claim daily rewards, and complete quests to grow your collection.',
     position: 'bottom'
   },
   {
-    id: 'forge',
-    targetSelector: '[data-tour="forge"]',
-    title: 'Upgrade',
-    body: 'Sacrifice 6 stoves of the same rarity in The Forge to create one even rarer. Risky but rewarding!',
-    position: 'bottom'
-  },
-  {
-    id: 'shop',
-    targetSelector: '[data-tour="shop"]',
-    title: 'Buy & Earn',
-    body: 'Buy stoves directly in the Shop or claim your daily reward streak. Don\'t miss day 7 — it\'s the best one!',
-    position: 'bottom'
-  },
-  {
-    id: 'marketplace',
+    id: 'trade',
     targetSelector: '[data-tour="marketplace"]',
-    title: 'Trade',
-    body: 'Sell your stoves on the Marketplace or trade directly with friends. Prices are set by players, so find the best deals!',
+    title: 'Trade & Upgrade',
+    body: 'Sell stoves on the Marketplace, forge them into higher rarities, or trade directly with friends.',
     position: 'bottom'
   },
   {
-    id: 'games',
+    id: 'play',
     targetSelector: '[data-tour="games"]',
     title: 'Play',
-    body: 'Join Poker, Blackjack, or Roulette tables. Bet your coins, beat the odds, and win big!',
-    position: 'bottom'
-  },
-  {
-    id: 'social',
-    targetSelector: '[data-tour="social"]',
-    title: 'Connect',
-    body: 'Add friends, chat in real time, and send trade offers without leaving the conversation.',
-    position: 'bottom'
-  },
-  {
-    id: 'quests',
-    targetSelector: '[data-tour="quests"]',
-    title: 'Complete Challenges',
-    body: 'Finish daily and weekly quests for bonus coins and rewards. A great way to boost your progress!',
+    body: 'Take your coins to the Games Hub and play Poker, Blackjack, or Roulette against other players.',
     position: 'bottom'
   }
 ];
