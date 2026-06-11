@@ -7,9 +7,12 @@ import { AuthService } from '@core/services/auth.service';
   template: `
     <div class="oauth-callback-container">
       <div class="loading-card">
-        <div class="spinner"></div>
-        <h2>Completing Login...</h2>
-        <p>{{ statusMessage() }}</p>
+        <div class="space-y-4">
+          <div class="mx-auto h-14 w-14 rounded-full skeleton-shimmer"></div>
+          <div class="h-7 w-44 mx-auto rounded skeleton-shimmer"></div>
+          <div class="h-4 w-60 mx-auto rounded skeleton-shimmer"></div>
+        </div>
+        <p class="status-copy">{{ statusMessage() }}</p>
       </div>
     </div>
   `,
@@ -31,22 +34,13 @@ import { AuthService } from '@core/services/auth.service';
       text-align: center;
       color: white;
     }
-    
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #ff6b35;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1.5rem;
+
+    .status-copy {
+      margin: 1rem 0 0;
+      opacity: 0.8;
+      font-size: 0.9rem;
     }
-    
-    h2 {
-      margin: 0 0 0.5rem;
-      font-size: 1.5rem;
-    }
-    
+
     p {
       margin: 0;
       opacity: 0.8;
