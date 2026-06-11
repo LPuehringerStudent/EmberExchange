@@ -47,9 +47,23 @@
 
     <!-- ═══ ROOMS ═══ -->
     @if (loading() && rooms().length === 0) {
-      <div class="text-center py-16 bg-surface/80 backdrop-blur-md border border-border rounded-2xl">
-        <div class="w-8 h-8 border-2 border-accent/20 border-t-accent rounded-full animate-spin mx-auto mb-4"></div>
-        <p class="text-text-muted text-sm font-medium">Loading rooms...</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @for (_ of [0, 1, 2, 3]; track $index) {
+          <div class="bg-surface/80 backdrop-blur-md border border-border rounded-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div class="w-10 h-10 rounded-xl skeleton-shimmer shrink-0"></div>
+                <div class="flex-1 space-y-2">
+                  <div class="h-4 w-32 rounded skeleton-shimmer"></div>
+                  <div class="h-3 w-24 rounded skeleton-shimmer"></div>
+                </div>
+              </div>
+              <div class="h-9 w-20 rounded-xl skeleton-shimmer"></div>
+            </div>
+            <div class="h-3 w-full rounded skeleton-shimmer"></div>
+            <div class="h-3 w-5/6 rounded skeleton-shimmer"></div>
+          </div>
+        }
       </div>
     } @else {
       <section>
