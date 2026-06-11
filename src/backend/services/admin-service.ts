@@ -5,6 +5,7 @@ import { PlayerService } from "./player-service";
 import { StoveTypeService } from "./stove-type-service";
 import { CoinTransactionService } from "./coin-transaction-service";
 import { PlayerStatisticsService } from "./player-statistics-service";
+import { NotificationService } from "./notification-service";
 
 export interface PlayerListItem {
     playerId: number;
@@ -163,6 +164,7 @@ export class AdminService extends ServiceBase {
     async adjustPlayerCoins(playerId: number, amount: number, reason: string): Promise<boolean> {
         const playerService = new PlayerService(this.unit);
         const coinService = new CoinTransactionService(this.unit);
+        const notificationService = new NotificationService(this.unit);
 
         const player = await playerService.getInfoByID(playerId);
         if (!player) return false;
@@ -170,6 +172,17 @@ export class AdminService extends ServiceBase {
         const newCoins = Math.max(0, player.coins + amount);
         await playerService.updatePlayerCoins(playerId, newCoins);
         await coinService.create(playerId, amount, "admin_adjust", reason || "Admin adjustment");
+
+        const sign = amount >= 0 ? "+" : "";
+        await notificationService.create(
+            playerId,
+            "system",
+            "Coal Adjusted",
+            `Your coal was adjusted by ${sign}${amount}. Reason: ${reason || "Admin adjustment"}`,
+            { amount, reason: reason || "Admin adjustment", oldCoins: player.coins, newCoins },
+            { priority: "high" }
+        );
+
         return true;
     }
 
