@@ -21,9 +21,48 @@
 
   <!-- Loading State -->
   @if (loading) {
-    <div class="flex flex-col items-center justify-center py-20 px-5 text-center">
-      <div class="w-12 h-12 border-4 border-gray-200 border-t-accent rounded-full animate-spin"></div>
-      <p class="mt-4 text-text-muted text-base">Loading statistics...</p>
+    <div class="flex flex-col gap-8">
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
+        @for (_ of [1, 2, 3, 4]; track $index) {
+          <div class="skeleton-card p-6 flex items-center gap-4">
+            <div class="skeleton-shimmer w-14 h-14 rounded-[14px] shrink-0"></div>
+            <div class="flex-1 space-y-2">
+              <div class="skeleton-shimmer h-3 rounded-md w-28"></div>
+              <div class="skeleton-shimmer h-8 rounded-lg w-20"></div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-6 max-tablet:grid-cols-1">
+        <section class="flex flex-col gap-5">
+          <div class="skeleton-shimmer h-6 rounded-md w-56"></div>
+          <div class="skeleton-card p-5 space-y-4">
+            <div class="skeleton-shimmer h-5 rounded-md w-40"></div>
+            @for (_ of [1, 2, 3, 4, 5]; track $index) {
+              <div class="skeleton-shimmer h-12 rounded-xl"></div>
+            }
+          </div>
+          <div class="skeleton-card p-5 space-y-4">
+            <div class="skeleton-shimmer h-5 rounded-md w-40"></div>
+            @for (_ of [1, 2, 3, 4, 5]; track $index) {
+              <div class="skeleton-shimmer h-12 rounded-xl"></div>
+            }
+          </div>
+        </section>
+
+        <section class="flex flex-col gap-5">
+          <div class="skeleton-shimmer h-6 rounded-md w-56"></div>
+          <div class="skeleton-card p-5 space-y-4">
+            <div class="skeleton-shimmer h-5 rounded-md w-40"></div>
+            <div class="grid grid-cols-2 gap-3">
+              @for (_ of [1, 2, 3, 4, 5, 6]; track $index) {
+                <div class="skeleton-shimmer h-20 rounded-xl"></div>
+              }
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   }
 
