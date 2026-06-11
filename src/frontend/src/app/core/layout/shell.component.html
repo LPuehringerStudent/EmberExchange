@@ -48,6 +48,17 @@
       <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
       Quests
     </a>
+
+    <!-- Other -->
+    <div class="px-5 py-2 mt-2 text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted">Other</div>
+    <a routerLink="/update-log" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+      Update Log
+    </a>
+    <a routerLink="/support" routerLinkActive="active-link" (click)="sidebarOpen.set(false)" class="nav-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-text-secondary">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Support
+    </a>
   </div>
 
   <div>
@@ -88,8 +99,9 @@
 <header class="topbar fixed top-0 left-0 z-[1000] flex items-center justify-between h-16 w-full px-4 sm:px-6">
   <div class="flex items-center gap-4 relative z-[1001]">
     <div class="menu-btn flex items-center justify-center w-10 h-10 rounded-lg text-xl text-text-primary cursor-pointer transition-all duration-200" (click)="toggleSidebar()">☰</div>
-    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-lg font-bold text-text-primary tracking-wide cursor-pointer" routerLink="/home">
-      Ember Exchange
+    <div class="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-lg cursor-pointer" routerLink="/home">
+      <img src="Ember_Exchange_Logo.png" alt="Ember Exchange" class="h-8 w-auto rounded-lg object-contain" />
+      <span class="text-lg font-bold text-text-primary tracking-wide">Ember Exchange</span>
     </div>
   </div>
 
