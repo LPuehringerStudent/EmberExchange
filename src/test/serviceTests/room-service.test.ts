@@ -107,7 +107,7 @@ describe('RoomService', () => {
       await service.listRoomsByGameType('poker', 'waiting');
 
       expect(unit.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('AND status = @status'),
+        expect.stringContaining('r.status = @status'),
         { gameType: 'poker', status: 'waiting' }
       );
     });

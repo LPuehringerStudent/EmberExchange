@@ -136,6 +136,11 @@ describe('AdminService', () => {
       mockStmt({ total: 1000 }),
       mockStmt({ cnt: 5 }),
       mockStmt({ cnt: 1 }),
+      mockStmt({ cnt: 1 }),
+      mockStmt({ cnt: 1 }),
+      mockStmt({ cnt: 1 }),
+      mockStmt({ cnt: 1 }),
+      mockStmt({ cnt: 1 }),
     ]);
     const service = new AdminService(unit);
 
@@ -146,6 +151,11 @@ describe('AdminService', () => {
       totalCoinsInCirculation: 1000,
       totalLootboxesOpened: 5,
       recentSignups7d: 1,
+      activePlayers24h: 1,
+      bannedPlayers: 1,
+      totalListings: 1,
+      totalCoinTransactions: 1,
+      totalEligiblePlayers: 1,
     });
   });
 
