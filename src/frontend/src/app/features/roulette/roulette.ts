@@ -91,6 +91,7 @@ export class RouletteComponent {
 
   readonly wheelRotation = signal<number>(0);
   readonly resultRevealed = signal<boolean>(false);
+  readonly wheelSpinning = signal<boolean>(false);
 
   readonly wheelOrder = WHEEL_ORDER;
   readonly displayPlayers = signal<RoulettePlayerView[]>([]);
@@ -114,6 +115,7 @@ export class RouletteComponent {
       if (phase === 'betting' && lastPhase !== 'betting') {
         this.wheelRotation.set(0);
         this.resultRevealed.set(false);
+        this.wheelSpinning.set(false);
         this.clearRevealTimer();
       }
       lastPhase = phase;
@@ -130,11 +132,7 @@ export class RouletteComponent {
         this.patchHeaderCoinsFromDisplay();
         this.animateToNumber(num);
         this.clearRevealTimer();
-        this.revealTimer = setTimeout(() => {
-          this.resultRevealed.set(true);
-          this.displayPlayers.set(this.players());
-          this.patchHeaderCoinsFromDisplay();
-        }, WHEEL_SPIN_MS);
+        this.revealTimer = setTimeout(() => this.revealRound(), WHEEL_SPIN_MS + 250);
       }
 
       if (phase === 'betting') {
@@ -165,6 +163,15 @@ export class RouletteComponent {
     });
   }
 
+  private revealRound(): void {
+    if (this.resultRevealed()) return;
+    this.wheelSpinning.set(false);
+    this.resultRevealed.set(true);
+    this.displayPlayers.set(this.players());
+    this.patchHeaderCoinsFromDisplay();
+    this.clearRevealTimer();
+  }
+
   private patchHeaderCoinsFromDisplay(): void {
     const me = this.displayPlayers().find((player) => player.playerId === this.myPlayerId());
     if (me) {
@@ -189,6 +196,7 @@ export class RouletteComponent {
 
     // Always spin at least 5 full rotations + the delta
     const nextRotation = current - (360 * 5 + visualDelta);
+    this.wheelSpinning.set(true);
 
     // Force a layout frame so the browser sees the starting rotation
     // before we apply the target (triggers CSS transition)
@@ -197,6 +205,11 @@ export class RouletteComponent {
         this.wheelRotation.set(nextRotation);
       });
     });
+  }
+
+  onWheelTransitionEnd(event: TransitionEvent): void {
+    if (event.propertyName !== 'transform' || !this.wheelSpinning()) return;
+    this.revealRound();
   }
 
   getSegmentPath(index: number): string {
