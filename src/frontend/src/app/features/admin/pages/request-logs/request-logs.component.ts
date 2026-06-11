@@ -44,7 +44,19 @@ import { AdminService, AdminRequestLog } from '@core/services/admin.service';
 
       <!-- Loading / Error / Data -->
       @if (loading()) {
-        <div class="text-text-secondary text-center py-12">Loading request logs...</div>
+        <div class="bg-surface rounded-xl border border-[rgba(232,93,4,0.15)] overflow-hidden">
+          <div class="overflow-x-auto">
+            <div class="min-w-[1000px] p-4 space-y-3">
+              @for (_ of [0, 1, 2, 3, 4, 5, 6]; track $index) {
+                <div class="grid grid-cols-7 gap-3">
+                  @for (__ of [0, 1, 2, 3, 4, 5, 6]; track $index) {
+                    <div class="h-4 rounded skeleton-shimmer"></div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
       } @else if (error()) {
         <div class="text-red-400 text-center py-12">{{ error() }}</div>
       } @else if (logs() && logs()!.length === 0) {
