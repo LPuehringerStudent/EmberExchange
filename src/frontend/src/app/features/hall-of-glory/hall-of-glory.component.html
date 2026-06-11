@@ -1,4 +1,5 @@
-<div class="glory-container max-w-[900px] mx-auto p-8 px-5 pb-[60px] text-text-primary min-h-screen" [class]="'glory-container ' + (profile()?.activeTheme?.cssClass ?? '')">
+<app-page-background theme="gold">
+<div class="glory-container max-w-[900px] mx-auto p-8 px-5 pb-[60px] text-text-primary min-h-screen relative z-[1]" [class]="'glory-container ' + (profile()?.activeTheme?.cssClass ?? '')">
   <!-- XP Toast -->
   @if (xpToast(); as toast) {
     <div class="xp-toast">
@@ -469,3 +470,4 @@
     </section>
   }
 </div>
+</app-page-background>

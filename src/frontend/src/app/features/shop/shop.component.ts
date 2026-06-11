@@ -7,6 +7,7 @@ import { ToastService } from '@core/services/toast.service';
 import { HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 interface ShopItem {
   listingId: number;
@@ -92,7 +93,9 @@ const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'secret
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [CommonModule, HeatTierPipe, RouterLink],
+  imports: [
+    CommonModule, HeatTierPipe, RouterLink, PageBackgroundComponent,
+  ],
   templateUrl: './shop.component.html',
   styleUrls: ['./shop.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

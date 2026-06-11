@@ -8,6 +8,7 @@ import { AuthService } from '@core/services/auth.service';
 import { PityService, PityProgress } from '@core/services/pity.service';
 import { firstValueFrom } from 'rxjs';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 export interface DropRateEntry {
   rarity: string;
@@ -101,7 +102,9 @@ const WINTER_DROPS: DragonDrop[] = [
   selector: 'app-lootbox',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './lootbox.component.html',
-  imports: [NgOptimizedImage, InfoTooltipComponent],
+  imports: [
+    NgOptimizedImage, InfoTooltipComponent, PageBackgroundComponent,
+  ],
   styleUrls: ['./lootbox.component.css']
 })
 export class LootboxComponent implements AfterViewInit, OnInit {

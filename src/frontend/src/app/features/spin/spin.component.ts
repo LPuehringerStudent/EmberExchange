@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { SpinService } from '../../core/services/spin.service';
 import { ToastService } from '../../core/services/toast.service';
 import type { SpinStatus, SpinResult, SpinPrize } from '@shared/model';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 /* ─── SVG Path data for wheel segment icons ─── */
 const ICON_PATHS: Record<string, string> = {
@@ -33,7 +34,9 @@ const LOOTBOX_GIF = 'assets/animation/chest-idle.gif';
 @Component({
   selector: 'app-spin',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule, PageBackgroundComponent,
+  ],
   templateUrl: './spin.component.html',
   styleUrls: ['./spin.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

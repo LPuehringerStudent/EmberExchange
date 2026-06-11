@@ -16,6 +16,7 @@ import { ChatThreadComponent } from './chat-thread.component';
 import { AddFriendModalComponent } from './add-friend-modal.component';
 import { TradeOfferModalComponent, type TradeableItem } from './trade-offer-modal.component';
 import type { FriendWithUser, ChatMessageRow } from '@shared/model';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 @Component({
   selector: 'app-social',
@@ -25,7 +26,7 @@ import type { FriendWithUser, ChatMessageRow } from '@shared/model';
     FriendListComponent,
     ChatThreadComponent,
     AddFriendModalComponent,
-    TradeOfferModalComponent
+    TradeOfferModalComponent, PageBackgroundComponent,
   ],
   templateUrl: './social.component.html',
   styleUrl: './social.component.css',

@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CollectionService, CollectionProgress } from '@core/services/collection.service';
 import { firstValueFrom } from 'rxjs';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 @Component({
   selector: 'app-collections',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule, RouterModule, PageBackgroundComponent,
+  ],
   templateUrl: './collections.component.html',
   styleUrls: ['./collections.component.css']
 })

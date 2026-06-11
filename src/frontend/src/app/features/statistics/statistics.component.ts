@@ -5,6 +5,7 @@ import { DailyStatisticsService, type DailyStatistics, type DailySummary } from 
 import { StoveTypeStatisticsService, type StoveTypeStatistics, type MarketSummary } from '@core/services/stove-type-statistics.service';
 import { AuthService } from '@core/services/auth.service';
 import { firstValueFrom } from 'rxjs';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 interface StatCard {
   label: string;
@@ -15,7 +16,9 @@ interface StatCard {
 @Component({
   selector: 'app-statistics',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule],
+  imports: [
+    RouterModule, PageBackgroundComponent,
+  ],
   templateUrl: './statistics.component.html',
   styleUrls: ['./statistics.component.css']
 })

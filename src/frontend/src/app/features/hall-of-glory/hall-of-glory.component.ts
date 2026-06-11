@@ -15,6 +15,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { StoveService, type Stove } from '../../core/services/stove.service';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
 import type { PlayerStatisticsRow as PlayerStatistics } from '@shared/model';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 interface Badge {
   id: string;
@@ -35,7 +36,9 @@ interface StatCategory {
 @Component({
   selector: 'app-hall-of-glory',
   standalone: true,
-  imports: [CommonModule, HeatTierPipe],
+  imports: [
+    CommonModule, HeatTierPipe, PageBackgroundComponent,
+  ],
   templateUrl: './hall-of-glory.component.html',
   styleUrls: ['./hall-of-glory.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

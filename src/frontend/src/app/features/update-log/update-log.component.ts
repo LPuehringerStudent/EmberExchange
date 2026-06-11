@@ -20,13 +20,16 @@ import type {
   GitHubCodeFrequencyWeek,
 } from '@shared/model';
 import type { ChartConfiguration } from 'chart.js';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 type Tab = 'changelog' | 'contributors' | 'releases' | 'insights';
 
 @Component({
   selector: 'app-update-log',
   standalone: true,
-  imports: [CommonModule, ChartComponent],
+  imports: [
+    CommonModule, ChartComponent, PageBackgroundComponent,
+  ],
   templateUrl: './update-log.component.html',
   styleUrls: ['./update-log.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

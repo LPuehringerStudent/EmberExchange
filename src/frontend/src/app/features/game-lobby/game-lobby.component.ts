@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { GameService, Game } from '../../core/services/game.service';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 interface RoomListItem {
   roomId: string;
@@ -25,7 +26,9 @@ interface RoomListItem {
 @Component({
   selector: 'app-game-lobby',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule, PageBackgroundComponent,
+  ],
   templateUrl: './game-lobby.component.html',
   styleUrl: './game-lobby.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -13,6 +13,7 @@ import { LootboxService } from '@core/services/lootbox.service';
 import { firstValueFrom } from 'rxjs';
 import { StoveDetailComponent } from './stove-detail.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 interface InventoryLootbox {
   id: number;
@@ -32,7 +33,7 @@ interface InventoryLootbox {
     RouterModule,
     HeatTierPipe,
     StoveDetailComponent,
-    InfoTooltipComponent
+    InfoTooltipComponent, PageBackgroundComponent,
   ],
   styleUrls: ['./inventory.component.css']
 })

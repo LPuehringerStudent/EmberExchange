@@ -3,11 +3,14 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService, Player } from '@core/services/auth.service';
 import { PlayerStatisticsService, PlayerStatistics } from '@core/services/player-statistics.service';
 import { firstValueFrom } from 'rxjs';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 @Component({
   selector: 'app-profile',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule],
+  imports: [
+    RouterModule, PageBackgroundComponent,
+  ],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css']
 })

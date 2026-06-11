@@ -9,6 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { GameService } from '../../core/services/game.service';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 export type FilterMode = 'all' | 'most-played' | 'recently-released' | 'favorites';
 
@@ -41,7 +42,9 @@ const GAME_ENRICHMENTS: Record<string, { accentColor: string; icon: string; play
 
 @Component({
   selector: 'app-games',
-  imports: [CommonModule],
+  imports: [
+    CommonModule, PageBackgroundComponent,
+  ],
   templateUrl: './games.component.html',
   styleUrl: './games.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

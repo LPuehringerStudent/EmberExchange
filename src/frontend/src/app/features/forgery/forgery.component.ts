@@ -9,6 +9,7 @@ import { StoveService } from '@core/services/stove.service';
 import { ForgeryService } from '@core/services/forgery.service';
 import { ShowedStove, Rarity, ForgeryResult } from '@shared/model';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 const RARITY_ORDER: Rarity[] = [
   Rarity.COMMON,
@@ -36,7 +37,9 @@ type MergePhase = 'charging' | 'igniting' | 'converging' | 'flash' | null;
   selector: 'app-forgery',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, InfoTooltipComponent],
+  imports: [
+    CommonModule, RouterModule, InfoTooltipComponent, PageBackgroundComponent,
+  ],
   templateUrl: './forgery.component.html',
   styleUrls: ['./forgery.component.css']
 })

@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '@core/services/auth.service';
 import { InvestmentService, PortfolioPosition, LeaderboardEntry } from '@core/services/investment.service';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 /* ─── Models ─── */
 
@@ -80,7 +81,9 @@ type View = 'overview' | 'market';
 @Component({
   selector: 'app-investing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule, RouterModule, PageBackgroundComponent,
+  ],
   templateUrl: './investing.html',
   styleUrl: './investing.css',
 })

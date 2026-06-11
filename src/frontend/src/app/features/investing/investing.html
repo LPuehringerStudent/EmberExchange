@@ -1,5 +1,6 @@
+<app-page-background theme="market">
 <div class="exchange-page">
-  <div class="content-wrapper relative z-10">
+  <div class="content-wrapper relative z-[1]">
     @if (error()) {
       <div class="error-banner" (click)="error.set('')">
         <span>{{ error() }}</span>
@@ -848,3 +849,4 @@
     }
   </div>
 </div>
+</app-page-background>

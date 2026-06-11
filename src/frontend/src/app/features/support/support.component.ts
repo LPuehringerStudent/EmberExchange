@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { ApiService } from '@core/services/api.service';
 import { firstValueFrom } from 'rxjs';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 interface SupportForm {
   title: string;
@@ -17,7 +18,9 @@ interface SupportForm {
 @Component({
   selector: 'app-support',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule, FormsModule, PageBackgroundComponent,
+  ],
   templateUrl: './support.component.html',
   styleUrls: ['./support.component.css']
 })

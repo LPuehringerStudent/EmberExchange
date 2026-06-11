@@ -1,4 +1,5 @@
-<div class="h-[calc(100vh-4rem)] flex flex-col lg:flex-row overflow-hidden">
+<app-page-background theme="social">
+<div class="h-[calc(100vh-4rem)] flex flex-col lg:flex-row overflow-hidden relative z-[1]">
   <!-- Left sidebar: Friend list -->
   <div class="w-full lg:w-[20rem] shrink-0 h-[45%] lg:h-full border-b lg:border-b-0 lg:border-r border-border">
     <app-friend-list
@@ -57,3 +58,4 @@
     (onSubmit)="makeTradeOffer($event)"
   />
 }
+</app-page-background>

@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { Poker } from '../poker/poker';
 import { BlackjackComponent } from '../blackjack/blackjack';
 import { RouletteComponent } from '../roulette/roulette';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
 interface RoomResponse {
   roomId: string;
@@ -29,7 +30,9 @@ const AVATAR_COLORS = [
 @Component({
   selector: 'app-game-room',
   standalone: true,
-  imports: [CommonModule, Poker, BlackjackComponent, RouletteComponent],
+  imports: [
+    CommonModule, Poker, BlackjackComponent, RouletteComponent, PageBackgroundComponent,
+  ],
   templateUrl: './game-room.component.html',
   styleUrls: ['./game-room.component.css']
 })
