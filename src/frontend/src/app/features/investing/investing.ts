@@ -107,7 +107,9 @@ export class Investing implements OnInit {
 
   stoveAssets = signal<InvestableAsset[]>([]);
   ownedStocks = signal<OwnedStock[]>([]);
+  portfolioAssetHistories = signal<Record<number, PricePoint[]>>({});
   leaderboard = signal<LeaderboardEntry[]>([]);
+  private portfolioHistoryRequestId = 0;
 
   allAssets = computed<InvestableAsset[]>(() => this.stoveAssets());
 
@@ -123,9 +125,9 @@ export class Investing implements OnInit {
   });
 
   chartModel = computed<ChartModel | null>(() => {
-    const data = this.priceHistory().filter(
+    const data = this.compactFlatTail(this.priceHistory().filter(
       (d) => Number.isFinite(d.price) && d.price >= 0
-    );
+    ));
     if (data.length < 2) return null;
 
     const prices = data.map((d) => d.price);
@@ -316,62 +318,30 @@ export class Investing implements OnInit {
 
   portfolioPriceHistory = computed<PricePoint[]>(() => {
     const stocks = this.ownedStocks();
-    const assets = this.allAssets();
+    const histories = this.portfolioAssetHistories();
     const range = this.timeRange();
     if (stocks.length === 0) return [];
 
     const now = new Date();
-    let count: number;
-    let intervalMs: number;
-
-    switch (range) {
-      case '1d':
-        count = 48;
-        intervalMs = 30 * 60 * 1000;
-        break;
-      case '1w':
-        count = 56;
-        intervalMs = 3 * 60 * 60 * 1000;
-        break;
-      case '1m':
-        count = 30;
-        intervalMs = 24 * 60 * 60 * 1000;
-        break;
-    }
-
-    /* Build smooth cumulative random walks per stock so the chart
-       looks natural instead of a harsh independent zig-zag. */
-    const stockWalks = new Map<number, number[]>();
-    for (const stock of stocks) {
-      const asset = assets.find((a) => a.id === stock.assetId);
-      let basePrice = asset?.currentPrice;
-      if (!Number.isFinite(basePrice) || basePrice === undefined || basePrice <= 0) {
-        basePrice = stock.avgBuyPrice;
-      }
-      if (!Number.isFinite(basePrice) || basePrice === undefined || basePrice <= 0) {
-        basePrice = 1;
-      }
-
-      const volatility = range === '1d' ? 0.003 : range === '1w' ? 0.006 : 0.012;
-      const walk: number[] = new Array(count);
-      let price = basePrice;
-      for (let step = 0; step < count; step++) {
-        walk[count - 1 - step] = price; // newest → oldest
-        const seed = ((stock.assetId || 0) * 9301 + step * 233280) % 2147483647;
-        const pseudoRandom = ((seed * 16807) % 2147483647) / 2147483647;
-        const delta = (pseudoRandom - 0.5) * basePrice * volatility;
-        price = Math.max(basePrice * 0.85, Math.min(basePrice * 1.15, price - delta));
-      }
-      stockWalks.set(stock.assetId, walk);
-    }
+    const historyTimelines = stocks
+      .map((stock) => histories[stock.assetId] ?? [])
+      .filter((history) => history.length > 0);
+    const longestHistory = historyTimelines.reduce<PricePoint[]>(
+      (longest, history) => history.length > longest.length ? history : longest,
+      []
+    );
+    const timestamps = longestHistory.length > 0
+      ? longestHistory.map((point) => point.timestamp)
+      : this.createFallbackTimeline(now, range);
+    const count = timestamps.length;
 
     const points: PricePoint[] = [];
     for (let i = 0; i < count; i++) {
-      const timestamp = new Date(now.getTime() - (count - 1 - i) * intervalMs);
+      const timestamp = timestamps[i];
       let totalValue = 0;
       for (const stock of stocks) {
-        const walk = stockWalks.get(stock.assetId);
-        const price = walk ? walk[i] : stock.avgBuyPrice;
+        const history = histories[stock.assetId] ?? [];
+        const price = this.getHistoricalPriceAt(history, timestamp, this.getStockCurrentPrice(stock));
         totalValue += Math.round(price * 100) / 100 * stock.quantity;
       }
       points.push({ timestamp, price: Math.round(totalValue * 100) / 100 });
@@ -386,9 +356,9 @@ export class Investing implements OnInit {
   });
 
   portfolioChartModel = computed<ChartModel | null>(() => {
-    const data = this.portfolioPriceHistory().filter(
+    const data = this.compactFlatTail(this.portfolioPriceHistory().filter(
       (d) => Number.isFinite(d.price) && d.price >= 0
-    );
+    ));
     if (data.length < 2) return null;
 
     const prices = data.map((d) => d.price);
@@ -480,6 +450,7 @@ export class Investing implements OnInit {
 
   setTimeRange(range: TimeRange): void {
     this.timeRange.set(range);
+    this.loadPortfolioPriceHistories(this.ownedStocks(), range);
     const asset = this.selectedAsset();
     if (asset) {
       this.loadPriceHistory(asset.id, range);
@@ -616,6 +587,56 @@ export class Investing implements OnInit {
     return asset?.currentPrice ?? stock.avgBuyPrice;
   }
 
+  getHistoricalPriceAt(history: PricePoint[], timestamp: Date, fallbackPrice: number): number {
+    if (history.length === 0) return fallbackPrice;
+
+    const time = timestamp.getTime();
+    let closest = history[0];
+    let closestDistance = Math.abs(closest.timestamp.getTime() - time);
+
+    for (const point of history) {
+      const distance = Math.abs(point.timestamp.getTime() - time);
+      if (distance < closestDistance) {
+        closest = point;
+        closestDistance = distance;
+      }
+    }
+
+    return Number.isFinite(closest.price) && closest.price > 0 ? closest.price : fallbackPrice;
+  }
+
+  compactFlatTail(points: PricePoint[]): PricePoint[] {
+    if (points.length <= 2) return points;
+
+    let lastMeaningfulIndex = points.length - 1;
+    while (
+      lastMeaningfulIndex > 0 &&
+      points[lastMeaningfulIndex].price === points[lastMeaningfulIndex - 1].price
+    ) {
+      lastMeaningfulIndex--;
+    }
+
+    if (lastMeaningfulIndex === 0) {
+      return [points[0], points[points.length - 1]];
+    }
+
+    return points.slice(0, lastMeaningfulIndex + 1);
+  }
+
+  createFallbackTimeline(now: Date, range: TimeRange): Date[] {
+    const count = range === '1d' ? 48 : range === '1w' ? 56 : 30;
+    const intervalMs = range === '1d'
+      ? 30 * 60 * 1000
+      : range === '1w'
+        ? 3 * 60 * 60 * 1000
+        : 24 * 60 * 60 * 1000;
+
+    return Array.from(
+      { length: count },
+      (_, i) => new Date(now.getTime() - (count - 1 - i) * intervalMs)
+    );
+  }
+
   formatCoal(value: number): string {
     return new Intl.NumberFormat('en-US', {
       maximumFractionDigits: 0,
@@ -672,10 +693,42 @@ export class Investing implements OnInit {
         } satisfies OwnedStock;
       });
       this.ownedStocks.set(positions);
+      await this.loadPortfolioPriceHistories(positions, this.timeRange());
     } catch (err) {
       console.error('Failed to load portfolio:', err);
       this.ownedStocks.set([]);
+      this.portfolioAssetHistories.set({});
     }
+  }
+
+  async loadPortfolioPriceHistories(stocks: OwnedStock[], range: TimeRange): Promise<void> {
+    const requestId = ++this.portfolioHistoryRequestId;
+    if (stocks.length === 0) {
+      this.portfolioAssetHistories.set({});
+      return;
+    }
+
+    const uniqueAssetIds = Array.from(new Set(stocks.map((stock) => stock.assetId)));
+    const entries = await Promise.all(
+      uniqueAssetIds.map(async (assetId) => {
+        try {
+          const result = await firstValueFrom(this.investmentService.getPriceHistory(assetId, range));
+          return [
+            assetId,
+            result.prices.map((point) => ({
+              timestamp: new Date(point.timestamp),
+              price: point.price,
+            })),
+          ] as const;
+        } catch (err) {
+          console.error('Failed to load portfolio price history:', err);
+          return [assetId, []] as const;
+        }
+      })
+    );
+
+    if (requestId !== this.portfolioHistoryRequestId) return;
+    this.portfolioAssetHistories.set(Object.fromEntries(entries));
   }
 
   async loadLeaderboard(): Promise<void> {

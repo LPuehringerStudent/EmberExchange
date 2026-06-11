@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EmberExchange — Project Presentation</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+  <style>
+    :root {
+      --ember-orange: #ff6b35;
+      --ember-amber: #ffb347;
+      --ember-dark: #1a0f0a;
+      --ember-card: #2d1b14;
+      --ember-text: #fff5e6;
+    }
+    .reveal {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--ember-dark) 0%, #2a1812 50%, var(--ember-dark) 100%);
+    }
+    .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+      color: var(--ember-text);
+      text-transform: none;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0.3em 0;
+    }
+    .reveal h1 { font-size: 1.8em; }
+    .reveal h2 { font-size: 1.35em; color: var(--ember-orange); }
+    .reveal h3 { font-size: 1.05em; color: var(--ember-amber); }
+    .reveal p, .reveal li {
+      color: var(--ember-text);
+      font-size: 0.68em;
+      line-height: 1.35;
+    }
+    .reveal ul { display: block; }
+    .reveal li { margin-bottom: 0.3em; }
+    .reveal a { color: var(--ember-orange); }
+    .reveal code {
+      font-family: 'Fira Code', 'Consolas', monospace;
+      background: rgba(255, 107, 53, 0.15);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      color: var(--ember-amber);
+    }
+    .reveal pre {
+      background: rgba(0,0,0,0.5);
+      border-radius: 8px;
+      padding: 0.5em;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      margin: 0.5em 0;
+    }
+    .reveal pre code {
+      background: transparent;
+      color: #f8f8f2;
+      font-size: 0.55em;
+      line-height: 1.3;
+    }
+    .subtitle { color: var(--ember-amber); font-size: 0.9em; margin-top: -0.3em; }
+    .team { color: #aaa; font-size: 0.65em; margin-top: 1.5em; }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.45em;
+      margin-top: 0.4em;
+    }
+    .feature-card {
+      background: rgba(45, 27, 20, 0.8);
+      border: 1px solid rgba(255, 107, 53, 0.3);
+      border-radius: 8px;
+      padding: 0.35em 0.3em;
+      text-align: center;
+    }
+    .feature-card .icon { height: 1.6em; margin-bottom: 0.15em; display: flex; align-items: center; justify-content: center; }
+    .feature-card .icon img { max-height: 100%; width: auto; }
+    .feature-card h4 { font-size: 0.6em; margin: 0.1em 0; color: var(--ember-orange); }
+    .feature-card p { font-size: 0.45em; color: #ccc; margin: 0; line-height: 1.15; }
+    .tech-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.6em;
+      margin-top: 0.6em;
+    }
+    .tech-table th {
+      background: rgba(255, 107, 53, 0.2);
+      color: var(--ember-orange);
+      padding: 0.4em;
+      text-align: left;
+      border-bottom: 2px solid var(--ember-orange);
+    }
+    .tech-table td {
+      padding: 0.4em;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .tech-table tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+    .stack-row {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      gap: 0.7em;
+      margin-top: 0.7em;
+    }
+    .stack-box {
+      flex: 1;
+      background: rgba(45, 27, 20, 0.8);
+      border: 1px solid rgba(255, 107, 53, 0.3);
+      border-radius: 10px;
+      padding: 0.6em;
+      min-width: 130px;
+    }
+    .stack-box h4 { color: var(--ember-orange); font-size: 0.7em; margin-bottom: 0.3em; }
+    .stack-box ul { list-style: none; padding: 0; margin: 0; font-size: 0.58em; }
+    .stack-box li { margin: 0.25em 0; padding-left: 0; }
+    .architecture-svg {
+      background: rgba(0,0,0,0.4);
+      border-radius: 10px;
+      padding: 0.35em;
+      margin-top: 0.2em;
+    }
+    .architecture-svg svg { max-height: 36vh; width: 100%; }
+    .security-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.4em 1em;
+      font-size: 0.58em;
+      text-align: left;
+      margin-top: 0.6em;
+    }
+    .security-list li { margin: 0; }
+    .small { font-size: 0.55em; color: #aaa; }
+    .highlight { color: var(--ember-orange); font-weight: bold; }
+
+    .site-icon {
+      height: 1.1em;
+      width: auto;
+      vertical-align: middle;
+      display: inline-block;
+      margin-right: 0.12em;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    }
+    .site-icon-lg {
+      height: 1.6em;
+    }
+    h3 .site-icon, h4 .site-icon { height: 1em; }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1em;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- Slide 1: Title -->
+      <section>
+        <h1><img src="src/frontend/public/Ember_Exchange_Logo.png" class="site-icon site-icon-lg" alt=""> EmberExchange</h1>
+        <p class="subtitle">A Virtual Marketplace & Collection Game</p>
+        <p style="margin-top: 1em;">Collect stoves, trade on the marketplace, play real-time multiplayer card games</p>
+        <p class="team">SYP 2026 — HTL Leonding</p>
+        <p class="small"><a href="https://emberexchange.xyz" target="_blank">emberexchange.xyz</a></p>
+      </section>
+
+      <!-- Slide 2: What is it? -->
+      <section>
+        <h2>What is EmberExchange?</h2>
+        <div class="two-col">
+          <div>
+            <p>EmberExchange is a <span class="highlight">full-stack web application</span> built as a virtual economy and collection game.</p>
+            <ul>
+              <li>Players collect <strong>unique stoves</strong> with different rarities</li>
+              <li>Open <strong>lootboxes</strong> with weighted drop rates</li>
+              <li>Trade stoves on a <strong>marketplace</strong> with real coin economy</li>
+              <li>Track <strong>price history</strong>, ownership chains & stats</li>
+              <li>Play <strong>real-time Poker, Blackjack & Roulette</strong></li>
+            </ul>
+          </div>
+          <div>
+            <div class="feature-grid" style="grid-template-columns: 1fr 1fr;">
+              <div class="feature-card"><div class="icon"><img src="src/frontend/public/assets/animation/blue-fire.gif" class="site-icon" alt=""></div><h4>Coal Economy</h4><p>In-game currency</p></div>
+              <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/lootboxes.png" class="site-icon" alt=""></div><h4>Lootboxes</h4><p>Rarity-based drops</p></div>
+              <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/marketplace.png" class="site-icon" alt=""></div><h4>Marketplace</h4><p>Buy & sell stoves</p></div>
+              <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/games.png" class="site-icon" alt=""></div><h4>Casino Games</h4><p>Poker, Blackjack, Roulette</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 3: Feature Overview -->
+      <section>
+        <h2>Features at a Glance</h2>
+        <div class="feature-grid">
+          <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/lootboxes.png" class="site-icon" alt=""></div><h4>Lootboxes</h4><p>Open chests to collect stoves by rarity</p></div>
+          <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/marketplace.png" class="site-icon" alt=""></div><h4>Marketplace</h4><p>List stoves, track prices, trade with players</p></div>
+          <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/the_forge.png" class="site-icon" alt=""></div><h4>The Forge</h4><p>Merge stoves to create rarer ones</p></div>
+          <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/games.png" class="site-icon" alt=""></div><h4>Card Games</h4><p>Texas Hold'em Poker & Blackjack rooms</p></div>
+          <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/lucky_wheel.png" class="site-icon" alt=""></div><h4>Lucky Wheel</h4><p>Daily spin rewards</p></div>
+          <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/quests.png" class="site-icon" alt=""></div><h4>Quests</h4><p>Daily & weekly missions with rewards</p></div>
+          <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/collections.png" class="site-icon" alt=""></div><h4>Collections</h4><p>Complete sets for bonuses</p></div>
+          <div class="feature-card"><div class="icon"><img src="src/frontend/public/icon/socials.png" class="site-icon" alt=""></div><h4>Social</h4><p>Friends, chat & trade offers</p></div>
+          <div class="feature-card"><div class="icon"><img src="src/frontend/public/assets/stove_sprites/legendary/dragon.png" class="site-icon" alt=""></div><h4>Admin Panel</h4><p>Moderation & analytics</p></div>
+        </div>
+      </section>
+
+      <!-- Slide 4: Feature Deep Dive — Lootbox & Marketplace -->
+      <section>
+        <h2>Core Features</h2>
+        <div class="two-col">
+          <div>
+            <h3><img src="src/frontend/public/icon/lootboxes.png" class="site-icon" alt=""> Lootbox System</h3>
+            <ul>
+              <li>Multiple lootbox types (Standard, Dragon, Legendary, Winter...)</li>
+              <li>Weighted drop rates per rarity</li>
+              <li>Pity system guarantees rare drops</li>
+              <li>Animated chest opening experience</li>
+            </ul>
+          </div>
+          <div>
+            <h3><img src="src/frontend/public/icon/marketplace.png" class="site-icon" alt=""> Marketplace</h3>
+            <ul>
+              <li>Create listings with custom prices</li>
+              <li>Price history charts</li>
+              <li>Trade offers between players</li>
+              <li>Coin transaction ledger</li>
+            </ul>
+          </div>
+        </div>
+        <div class="two-col" style="margin-top: 1.5em;">
+          <div>
+            <h3><img src="src/frontend/public/icon/the_forge.png" class="site-icon" alt=""> Forgery (The Forge)</h3>
+            <ul>
+              <li>Merge lower-tier stoves</li>
+              <li>Rarity upgrade mechanics</li>
+              <li>Forgeable rarity recipes</li>
+            </ul>
+          </div>
+          <div>
+            <h3><img src="src/frontend/public/icon/quests.png" class="site-icon" alt=""> Quests & Progression</h3>
+            <ul>
+              <li>Daily & weekly quests</li>
+              <li>XP & coin rewards</li>
+              <li>Achievement engine</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 5: Multiplayer Games -->
+      <section>
+        <h2>Real-Time Multiplayer Games</h2>
+        <div class="stack-row">
+          <div class="stack-box">
+            <h4><img src="src/frontend/public/assets/poker_cards/spades_ace.png" class="site-icon" alt=""> Poker</h4>
+            <ul>
+              <li>Texas Hold'em</li>
+              <li>Blinds & betting rounds</li>
+              <li>Side pots & all-in logic</li>
+              <li>Hand evaluation</li>
+            </ul>
+          </div>
+          <div class="stack-box">
+            <h4><img src="src/frontend/public/assets/poker_cards/hearts_king.png" class="site-icon" alt=""> Blackjack</h4>
+            <ul>
+              <li>Bet, Hit, Stand, Double, Split</li>
+              <li>Dealer AI (hits soft 17)</li>
+              <li>3:2 blackjack payout</li>
+            </ul>
+          </div>
+          <div class="stack-box">
+            <h4><img src="src/frontend/public/icon/lucky_wheel.png" class="site-icon" alt=""> Roulette</h4>
+            <ul>
+              <li>SVG-rendered wheel</li>
+              <li>37 slots (0-36)</li>
+              <li>Inside/outside bets</li>
+            </ul>
+          </div>
+        </div>
+        <p style="margin-top: 1.5em;">Powered by <span class="highlight">WebSocket</span> rooms with server-side turn timers, optimistic locking, and disconnect handling.</p>
+      </section>
+
+      <!-- Slide 6: Tech Stack Overview -->
+      <section>
+        <h2>Tech Stack Overview</h2>
+        <table class="tech-table">
+          <tr><th>Layer</th><th>Technology</th></tr>
+          <tr><td>Frontend Framework</td><td>Angular 21 (standalone components, signals)</td></tr>
+          <tr><td>Styling</td><td>Tailwind CSS v4 + PostCSS</td></tr>
+          <tr><td>Backend Runtime</td><td>Node.js + Express.js 5.2</td></tr>
+          <tr><td>Backend Language</td><td>TypeScript 5.9 (ES2020, CommonJS)</td></tr>
+          <tr><td>Database</td><td>PostgreSQL via <code>pg</code> connection pooling</td></tr>
+          <tr><td>Real-Time</td><td>WebSocket (<code>ws</code> library) with session auth</td></tr>
+          <tr><td>API Docs</td><td>Swagger / OpenAPI 3.0</td></tr>
+          <tr><td>Testing</td><td>Jest 30 + ts-jest</td></tr>
+          <tr><td>Deployment</td><td>Render Web Service</td></tr>
+        </table>
+      </section>
+
+      <!-- Slide 7: Frontend Tech -->
+      <section>
+        <h2>Frontend Technologies</h2>
+        <div class="two-col">
+          <div>
+            <h3>Angular 21</h3>
+            <ul>
+              <li>Standalone components</li>
+              <li>Signals-based reactivity</li>
+              <li>Lazy-loaded routes</li>
+              <li>Auth guards (<code>authGuard</code>, <code>reverseAuthGuard</code>)</li>
+            </ul>
+            <h3>Tailwind CSS v4</h3>
+            <ul>
+              <li>Utility-first styling</li>
+              <li>Custom design tokens</li>
+              <li>Dark ember theme</li>
+            </ul>
+          </div>
+          <div>
+            <pre><code>// Lazy-loaded route example
+{
+  path: 'marketplace',
+  loadComponent: () => import(
+    './features/marketplace/marketplace.component'
+  ).then(m => m.MarketplaceComponent),
+  canActivate: [authGuard]
+}</code></pre>
+            <p class="small" style="margin-top: 1em;">Frontend served from <code>src/frontend</code>, proxied to backend during dev.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 8: Backend Tech -->
+      <section>
+        <h2>Backend Technologies</h2>
+        <div class="two-col">
+          <div>
+            <h3>Express.js 5.2</h3>
+            <ul>
+              <li>REST API routers under <code>/api</code></li>
+              <li>37 routers covering all domains</li>
+              <li>Middleware pipeline (auth, rate limits, CORS, Helmet)</li>
+            </ul>
+            <h3>Database Layer</h3>
+            <ul>
+              <li>PostgreSQL with <code>pg</code> pool</li>
+              <li>Programmatic schema management</li>
+              <li><code>Unit</code> transaction pattern</li>
+            </ul>
+          </div>
+          <div>
+            <pre><code>// Unit transaction pattern
+const unit = await Unit.create(false);
+try {
+  const service = new ListingService(unit);
+  const result = await service.createListing(data);
+  await unit.complete(true);
+  return result;
+} catch (err) {
+  await unit.complete(false);
+  throw err;
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 9: Database Architecture -->
+      <section>
+        <h2>Database Architecture</h2>
+        <ul>
+          <li><span class="highlight">PostgreSQL</span> hosted on Neon (serverless Postgres)</li>
+          <li>Schema managed programmatically via <code>DB.ensureTablesCreated()</code></li>
+          <li>Snake-case columns in DB → camelCase in TypeScript via <code>COLUMN_MAP</code></li>
+          <li>50+ services, one per domain (Listing, Trade, Player, Quest, etc.)</li>
+          <li>Connection pooling via <code>pg</code> Pool</li>
+        </ul>
+        <div class="architecture-svg">
+          <svg viewBox="0 0 800 180" style="width:100%; height:auto;">
+            <rect x="50" y="40" width="180" height="100" rx="12" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="140" y="75" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">Express Routers</text>
+            <text x="140" y="100" text-anchor="middle" fill="#ffb347" font-size="12">37 API routers</text>
+            <text x="140" y="120" text-anchor="middle" fill="#ccc" font-size="11">/api/* endpoints</text>
+            
+            <rect x="310" y="40" width="180" height="100" rx="12" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="400" y="75" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">Service Layer</text>
+            <text x="400" y="100" text-anchor="middle" fill="#ffb347" font-size="12">50+ services</text>
+            <text x="400" y="120" text-anchor="middle" fill="#ccc" font-size="11">Unit transactions</text>
+            
+            <rect x="570" y="40" width="180" height="100" rx="12" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="660" y="75" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">PostgreSQL</text>
+            <text x="660" y="100" text-anchor="middle" fill="#ffb347" font-size="12">Neon</text>
+            <text x="660" y="120" text-anchor="middle" fill="#ccc" font-size="11">pg connection pool</text>
+            
+            <line x1="230" y1="90" x2="310" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="490" y1="90" x2="570" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#ff6b35"/>
+              </marker>
+            </defs>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Slide 10: Hosting & Deployment -->
+      <section>
+        <h2>Hosting & Deployment</h2>
+        <div class="two-col">
+          <div>
+            <h3>Render Web Service</h3>
+            <ul>
+              <li>Auto-deploy from <code>main</code> branch</li>
+              <li>Production URL: <a href="https://emberexchange.xyz">emberexchange.xyz</a></li>
+              <li>Build: backend + Angular build</li>
+              <li>Start: <code>node dist/backend/app.js</code></li>
+              <li>Health check: <code>GET /api/health</code></li>
+            </ul>
+            <h3>External Services</h3>
+            <ul>
+              <li>Neon — PostgreSQL database</li>
+              <li>Resend — transactional emails</li>
+              <li>Cloudflare Turnstile — bot protection</li>
+              <li>Google & GitHub OAuth</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Environment Secrets</h3>
+            <p>All sensitive values are stored in the Render dashboard environment variables:</p>
+            <ul>
+              <li><code>DATABASE_URL</code></li>
+              <li><code>SESSION_SECRET</code></li>
+              <li>OAuth credentials</li>
+              <li>Resend API key</li>
+              <li>Turnstile keys</li>
+              <li>Anti-bot configuration</li>
+            </ul>
+            <p class="small">Secrets are never committed; <code>.envRender</code> is gitignored.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 11: Architecture -->
+      <section>
+        <h2>System Architecture</h2>
+        <div class="architecture-svg">
+          <svg viewBox="0 0 900 360" style="width:100%; height:auto;">
+            <!-- Client -->
+            <rect x="350" y="10" width="200" height="55" rx="10" fill="rgba(255,107,53,0.25)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="450" y="35" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">Browser Client</text>
+            <text x="450" y="53" text-anchor="middle" fill="#ccc" font-size="11">Angular 21 + Tailwind</text>
+
+            <!-- Render Box -->
+            <rect x="50" y="80" width="800" height="210" rx="14" fill="rgba(255,107,53,0.08)" stroke="#ff6b35" stroke-width="2" stroke-dasharray="6,4"/>
+            <text x="70" y="105" fill="#ff6b35" font-size="13" font-weight="bold">Render Web Service</text>
+
+            <!-- Static Assets -->
+            <rect x="80" y="120" width="180" height="55" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="170" y="145" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Static Frontend</text>
+            <text x="170" y="163" text-anchor="middle" fill="#ccc" font-size="10">dist/ember-frontend</text>
+
+            <!-- Express -->
+            <rect x="320" y="120" width="220" height="55" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="430" y="145" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Express.js Backend</text>
+            <text x="430" y="163" text-anchor="middle" fill="#ccc" font-size="10">REST API + middleware</text>
+
+            <!-- WebSocket -->
+            <rect x="590" y="120" width="200" height="55" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="690" y="145" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">WebSocket Server</text>
+            <text x="690" y="163" text-anchor="middle" fill="#ccc" font-size="10">/ws — game rooms & chat</text>
+
+            <!-- Services -->
+            <rect x="200" y="200" width="220" height="55" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="310" y="225" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Service Layer</text>
+            <text x="310" y="243" text-anchor="middle" fill="#ccc" font-size="10">50+ domain services</text>
+
+            <!-- Game Engines -->
+            <rect x="480" y="200" width="220" height="55" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="590" y="225" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Game Engines</text>
+            <text x="590" y="243" text-anchor="middle" fill="#ccc" font-size="10">Poker / Blackjack / Roulette</text>
+
+            <!-- Neon -->
+            <rect x="320" y="285" width="220" height="50" rx="8" fill="rgba(30,144,255,0.2)" stroke="#1e90ff" stroke-width="2"/>
+            <text x="430" y="310" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">PostgreSQL (Neon)</text>
+            <text x="430" y="326" text-anchor="middle" fill="#ccc" font-size="10">pg connection pool</text>
+
+            <!-- Lines -->
+            <line x1="450" y1="65" x2="170" y2="120" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="450" y1="65" x2="430" y2="120" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="450" y1="65" x2="690" y2="120" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="430" y1="175" x2="310" y2="200" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="430" y1="175" x2="590" y2="200" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="310" y1="255" x2="430" y2="285" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="590" y1="255" x2="430" y2="285" stroke="#ff6b35" stroke-width="2"/>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Slide 12: Project Structure -->
+      <section>
+        <h2>Project Structure</h2>
+        <pre><code>src/
+├── backend/
+│   ├── app.ts              # Express entry point
+│   ├── routers/            # 37 REST API routers
+│   ├── services/           # 50+ database services
+│   ├── middleware/         # Auth, rate limiting, anti-bot
+│   ├── game-engines/       # Poker, Blackjack, Roulette
+│   ├── websocket/          # WS server & handlers
+│   └── utils/              # Unit (DB), auth, config
+├── frontend/
+│   └── src/app/
+│       ├── core/           # Guards, services, shell
+│       ├── features/       # 25+ page-level components
+│       └── shared/         # Reusable UI components
+├── shared/                 # Models & pipes
+└── test/                   # Jest test suites</code></pre>
+      </section>
+
+      <!-- Slide 13: Security Stack -->
+      <section>
+        <h2>Security Highlights</h2>
+        <ul class="security-list">
+          <li>Rate limiting (login, register, 2FA, OAuth)</li>
+          <li>Cloudflare Turnstile bot challenge</li>
+          <li>Behavior guard (mouse/keyboard/focus tracking)</li>
+          <li>Honeypot fields & decoy endpoints</li>
+          <li>IP banning via <code>BannedIP</code> table</li>
+          <li>Prototype pollution protection</li>
+          <li>CORS whitelist + Helmet headers</li>
+          <li>Request & security event logging</li>
+          <li>Admin route gating</li>
+          <li>WebSocket hardening (IP limits, payload caps)</li>
+        </ul>
+        <p class="small" style="margin-top: 1.5em;">Security audits documented in <code>Security_Audits/</code>.</p>
+      </section>
+
+      <!-- Slide 14: Development Workflow -->
+      <section>
+        <h2>Development Workflow</h2>
+        <div class="two-col">
+          <div>
+            <h3>Local Dev</h3>
+            <pre><code># Backend + frontend watch
+npm run dev:full
+
+# Tests
+npm test
+
+# Frontend only
+npm run frontend:serve</code></pre>
+          </div>
+          <div>
+            <h3>Build & Deploy</h3>
+            <pre><code># Production build
+npm run build
+cd src/frontend && npx ng build
+
+# Start
+node dist/backend/app.js</code></pre>
+          </div>
+        </div>
+        <p style="margin-top: 1em;">CI: GitHub → Render auto-deploy + Discord notifications</p>
+      </section>
+
+      <!-- Slide 15: Code Stats / Graphify Insights -->
+      <section>
+        <h2>Project Scale</h2>
+        <div class="stack-row">
+          <div class="stack-box">
+            <h4><img src="src/frontend/public/icon/collections.png" class="site-icon" alt=""> Files</h4>
+            <ul>
+              <li>492 total files</li>
+              <li>~1.5M words</li>
+              <li>308 code files</li>
+              <li>72 docs</li>
+            </ul>
+          </div>
+          <div class="stack-box">
+            <h4><img src="src/frontend/public/assets/stove_sprites/legendary/magic-stove.png" class="site-icon" alt=""> Knowledge Graph</h4>
+            <ul>
+              <li>2,946 nodes</li>
+              <li>5,193 edges</li>
+              <li>236 communities</li>
+              <li>Graphify-generated</li>
+            </ul>
+          </div>
+          <div class="stack-box">
+            <h4> Core Abstractions</h4>
+            <ul>
+              <li><code>Unit</code> — 182 edges</li>
+              <li><code>AuthService</code> — 92 edges</li>
+              <li><code>ServiceBase</code> — 69 edges</li>
+              <li><code>ApiService</code> — 41 edges</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 16: Thank You -->
+      <section>
+        <h1>Thank You!</h1>
+        <p class="subtitle">Questions?</p>
+        <p style="margin-top: 1.5em; font-size: 1em;"><a href="https://emberexchange.xyz" target="_blank">emberexchange.xyz</a></p>
+        <p class="small">SYP 2026 — HTL Leonding</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      slideNumber: 'c/t',
+      transition: 'slide',
+      backgroundTransition: 'fade',
+      center: true,
+      width: 1200,
+      height: 700,
+      margin: 0.04
+    });
+  </script>
+</body>
+</html>

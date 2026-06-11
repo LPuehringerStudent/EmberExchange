@@ -23,7 +23,7 @@ import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
 /* ─── Local Types ─── */
 
 interface PricePoint {
-  date: string;
+  timestamp: Date;
   price: number;
 }
 
@@ -39,7 +39,7 @@ interface ChartPoint {
   x: number;
   y: number;
   price: number;
-  date: string;
+  timestamp: Date;
 }
 
 interface ChartModel {
@@ -105,27 +105,27 @@ export class MarketplaceComponent implements OnInit {
   });
 
   readonly chartModel = computed<ChartModel | null>(() => {
-    const history = this.priceHistory();
+    const history = this.compactFlatTail(this.priceHistory().filter(
+      (point) => Number.isFinite(point.price) && point.price >= 0
+    ));
     if (history.length < 2) return null;
 
     const prices = history.map((h) => h.price);
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const padding = (max - min) * 0.05 || max * 0.05;
-    const minPrice = Math.max(0, min - padding);
+    const minPrice = min - padding;
     const maxPrice = max + padding;
     const range = maxPrice - minPrice || 1;
 
-    const width = 420;
-    const height = 100;
-    const px = 10;
-    const py = 8;
+    const width = 100;
+    const height = 40;
 
     const points = history.map((h, i) => ({
-      x: px + (i / (history.length - 1)) * (width - px * 2),
-      y: py + (1 - (h.price - minPrice) / range) * (height - py * 2),
+      x: (i / (history.length - 1)) * width,
+      y: height - ((h.price - minPrice) / range) * height,
       price: h.price,
-      date: h.date,
+      timestamp: h.timestamp,
     }));
 
     const segments: ChartSegment[] = [];
@@ -269,20 +269,14 @@ export class MarketplaceComponent implements OnInit {
           );
 
           const points: PricePoint[] = sorted.map((h) => ({
-            date: new Date(h.saleDate).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-            }),
+            timestamp: new Date(h.saleDate),
             price: h.avgPrice,
           }));
 
           /* If we have fewer than 2 data points, append current listing price */
           if (points.length < 2) {
             points.push({
-              date: new Date().toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              }),
+              timestamp: new Date(),
               price: listing.price,
             });
           }
@@ -291,10 +285,7 @@ export class MarketplaceComponent implements OnInit {
           console.error('Failed to load price history:', err);
           this.priceHistory.set([
             {
-              date: new Date().toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              }),
+              timestamp: new Date(),
               price: listing.price,
             },
           ]);
@@ -303,10 +294,7 @@ export class MarketplaceComponent implements OnInit {
     } else if (listing.lootboxId) {
       this.priceHistory.set([
         {
-          date: new Date().toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-          }),
+          timestamp: new Date(),
           price: listing.price,
         },
       ]);
@@ -551,6 +539,28 @@ export class MarketplaceComponent implements OnInit {
 
   formatPrice(price: number): string {
     return price.toLocaleString();
+  }
+
+  formatDateShort(date: Date): string {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  compactFlatTail(points: PricePoint[]): PricePoint[] {
+    if (points.length <= 2) return points;
+
+    let lastMeaningfulIndex = points.length - 1;
+    while (
+      lastMeaningfulIndex > 0 &&
+      points[lastMeaningfulIndex].price === points[lastMeaningfulIndex - 1].price
+    ) {
+      lastMeaningfulIndex--;
+    }
+
+    if (lastMeaningfulIndex === 0) {
+      return [points[0], points[points.length - 1]];
+    }
+
+    return points.slice(0, lastMeaningfulIndex + 1);
   }
 
   /**

@@ -408,7 +408,7 @@
                   @if (hoveredPoint(); as point) {
                     <div class="chart-tooltip">
                       <span class="tooltip-price">{{ formatPrice(point.price) }} Coal</span>
-                      <span class="tooltip-date">{{ point.date }}</span>
+                      <span class="tooltip-date">{{ formatDateShort(point.timestamp) }}</span>
                     </div>
                   }
                 </div>
@@ -432,8 +432,8 @@
                       </linearGradient>
                     </defs>
 
-                    @for (y of [0, 25, 50, 75, 100]; track y) {
-                      <line class="chart-grid-line" x1="0" [attr.y1]="y" x2="420" [attr.y2]="y" />
+                    @for (y of [0, 10, 20, 30, 40]; track y) {
+                      <line class="chart-grid-line" x1="0" [attr.y1]="y" x2="100" [attr.y2]="y" />
                     }
 
                     <path class="chart-area" [attr.d]="chart.areaPath" />
@@ -456,13 +456,13 @@
                           [attr.x1]="point.x"
                           y1="0"
                           [attr.x2]="point.x"
-                          y2="100"
+                          y2="40"
                         />
                         <circle
                           class="chart-hover-circle"
                           [attr.cx]="point.x"
                           [attr.cy]="point.y"
-                          r="3.5"
+                          r="0.8"
                         />
                       }
                     }
@@ -476,11 +476,6 @@
                     <span>{{ formatCompact(chart.minPrice) }}</span>
                   </div>
 
-                  <div class="chart-axis-labels x-axis">
-                    <span>{{ chart.points[0].date }}</span>
-                    <span>{{ chart.points[Math.floor(chart.points.length / 2)].date }}</span>
-                    <span>{{ chart.points[chart.points.length - 1].date }}</span>
-                  </div>
                 } @else {
                   @if (priceHistory().length === 1) {
                     <div class="chart-loading">Not enough data for chart</div>
