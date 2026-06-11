@@ -12,7 +12,17 @@ import { AdminService, type RedeemCode } from '@core/services/admin.service';
       <h1 class="text-2xl font-bold text-text-primary mb-4">Redeem Codes</h1>
 
       @if (loading()) {
-        <div class="text-text-secondary">Loading codes...</div>
+        <div class="bg-surface rounded-xl border border-[rgba(232,93,4,0.15)] overflow-hidden mb-6">
+          <div class="p-4 space-y-3">
+            @for (_ of [0, 1, 2, 3, 4]; track $index) {
+              <div class="grid grid-cols-10 gap-3">
+                @for (__ of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; track $index) {
+                  <div class="h-4 rounded skeleton-shimmer"></div>
+                }
+              </div>
+            }
+          </div>
+        </div>
       } @else if (error()) {
         <div class="text-red-400">{{ error() }}</div>
       } @else {
