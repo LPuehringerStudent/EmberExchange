@@ -190,9 +190,12 @@
           </button>
         </div>
       } @else {
-        <div class="empty-state flex flex-col items-center justify-center py-15 px-5 text-center">
-          <div class="spinner w-10 h-10 rounded-full mb-4"></div>
-          <p>Loading daily rewards...</p>
+        <div class="empty-state flex flex-col items-center justify-center py-15 px-5 text-center gap-4">
+          <div class="h-12 w-12 rounded-full skeleton-shimmer"></div>
+          <div class="space-y-2">
+            <div class="h-4 w-40 mx-auto rounded skeleton-shimmer"></div>
+            <div class="h-3 w-56 mx-auto rounded skeleton-shimmer"></div>
+          </div>
         </div>
       }
     </div>
@@ -414,9 +417,12 @@
   @if (activeTab() === 'sell') {
     <div>
       @if (sellLoadingStoves()) {
-        <div class="empty-state flex flex-col items-center justify-center py-15 px-5 text-center">
-          <div class="spinner w-10 h-10 rounded-full mb-4"></div>
-          <p>Loading your stoves...</p>
+        <div class="empty-state flex flex-col items-center justify-center py-15 px-5 text-center gap-4">
+          <div class="h-12 w-12 rounded-full skeleton-shimmer"></div>
+          <div class="space-y-2">
+            <div class="h-4 w-44 mx-auto rounded skeleton-shimmer"></div>
+            <div class="h-3 w-60 mx-auto rounded skeleton-shimmer"></div>
+          </div>
         </div>
       } @else if (playerStoves().length === 0) {
         <div class="empty-state flex flex-col items-center justify-center py-15 px-5 text-center">
