@@ -240,6 +240,12 @@
 /* Team cards */
 .team-card {
   text-align: center;
+  display: block;
+  text-decoration: none;
+}
+
+.team-card:hover {
+  text-decoration: none;
 }
 
 .team-avatar {
