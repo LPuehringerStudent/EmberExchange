@@ -213,36 +213,6 @@
   opacity: 1;
 }
 
-/* Hero card icon */
-.feature-hero .w-16.h-16.rounded-2xl {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-.feature-hero .w-16.h-16.rounded-2xl img {
-  width: 5.5rem;
-  height: 5.5rem;
-  object-fit: contain;
-  display: block;
-}
-
-/* Sub-card icon cleanup */
-.feature-card .w-10.h-10.rounded-xl {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-.feature-card .w-10.h-10.rounded-xl img {
-  width: 3.75rem;
-  height: 3.75rem;
-  object-fit: contain;
-  display: block;
-}
-
 /* ---- Activity panel ---- */
 .activity-panel {
   position: relative;

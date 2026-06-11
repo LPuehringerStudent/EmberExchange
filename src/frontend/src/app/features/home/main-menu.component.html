@@ -169,7 +169,7 @@
 
           @if (loading()) {
             <div class="feature-card feature-hero bg-surface border border-border rounded-2xl p-6">
-              <div class="skeleton-shimmer w-16 h-16 rounded-2xl mb-4"></div>
+              <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-4"></div>
               <div class="skeleton-shimmer h-6 rounded-md w-40 mb-2"></div>
               <div class="skeleton-shimmer h-4 rounded-md w-3/4 mb-1"></div>
               <div class="skeleton-shimmer h-4 rounded-md w-1/2"></div>
@@ -177,7 +177,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
               @for (i of [1,2,3]; track i) {
                 <div class="feature-card bg-surface border border-border rounded-2xl p-5">
-                  <div class="skeleton-shimmer w-10 h-10 rounded-xl mb-3"></div>
+                  <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-3"></div>
                   <div class="skeleton-shimmer h-4 rounded-md w-24 mb-2"></div>
                   <div class="skeleton-shimmer h-3 rounded-md w-full"></div>
                 </div>
@@ -185,11 +185,11 @@
             </div>
           } @else {
             <a routerLink="/lootboxes" data-tour="lootboxes" class="feature-card feature-hero group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/5 hover:border-red-500/20">
-              <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-red-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-              <div class="absolute -right-8 -top-8 w-36 h-36 bg-red-500/5 rounded-full blur-3xl group-hover:bg-red-500/10 transition-colors"></div>
+              <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-red-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
+              <div class="absolute -right-6 -top-6 w-24 h-24 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/10 transition-colors"></div>
               <div class="relative z-[1] flex flex-col sm:flex-row sm:items-center gap-5">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500/15 to-red-400/5 border border-red-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/lootboxes.png" class="w-full h-full rounded-2xl" alt="Lootboxes" />
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500/15 to-red-400/5 border border-red-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/lootboxes.png" class="w-full h-full rounded-xl" alt="Lootboxes" />
                 </div>
                 <div class="flex-1">
                   <h3 class="text-xl font-extrabold text-text-primary m-0 mb-1.5">Lootboxes</h3>
@@ -207,7 +207,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
               <a routerLink="/shop" data-tour="shop" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-accent/5 hover:border-accent/20">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent to-[#ff7b00] opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
                   <img src="icon/shop.png" class="w-full h-full rounded-xl" alt="Shop" />
                 </div>
                 <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Shop</h3>
@@ -216,7 +216,7 @@
 
               <a routerLink="/spin" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/5 hover:border-amber-500/20">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-yellow-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-yellow-400/5 border border-amber-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/15 to-yellow-400/5 border border-amber-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
                   <img src="icon/lucky_wheel.png" class="w-full h-full rounded-xl" alt="Lucky Wheel" />
                 </div>
                 <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Lucky Wheel</h3>
@@ -225,7 +225,7 @@
 
               <a routerLink="/quests" data-tour="quests" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-teal-500/5 hover:border-teal-500/20">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-emerald-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500/15 to-emerald-400/5 border border-teal-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500/15 to-emerald-400/5 border border-teal-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
                   <img src="icon/quests.png" class="w-full h-full rounded-xl" alt="Quests" />
                 </div>
                 <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Quests</h3>
@@ -254,7 +254,7 @@
 
           @if (loading()) {
             <div class="feature-card feature-hero bg-surface border border-border rounded-2xl p-6">
-              <div class="skeleton-shimmer w-16 h-16 rounded-2xl mb-4"></div>
+              <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-4"></div>
               <div class="skeleton-shimmer h-6 rounded-md w-40 mb-2"></div>
               <div class="skeleton-shimmer h-4 rounded-md w-3/4 mb-1"></div>
               <div class="skeleton-shimmer h-4 rounded-md w-1/2"></div>
@@ -262,7 +262,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
               @for (i of [1,2,3]; track i) {
                 <div class="feature-card bg-surface border border-border rounded-2xl p-5">
-                  <div class="skeleton-shimmer w-10 h-10 rounded-xl mb-3"></div>
+                  <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-3"></div>
                   <div class="skeleton-shimmer h-4 rounded-md w-24 mb-2"></div>
                   <div class="skeleton-shimmer h-3 rounded-md w-full"></div>
                 </div>
@@ -270,11 +270,11 @@
             </div>
           } @else {
             <a routerLink="/marketplace" data-tour="marketplace" class="feature-card feature-hero group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/5 hover:border-purple-500/20">
-              <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-purple-500 to-violet-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-              <div class="absolute -right-8 -top-8 w-36 h-36 bg-purple-500/5 rounded-full blur-3xl group-hover:bg-purple-500/10 transition-colors"></div>
+              <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-violet-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
+              <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors"></div>
               <div class="relative z-[1] flex flex-col sm:flex-row sm:items-center gap-5">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/15 to-violet-400/5 border border-purple-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/marketplace.png" class="w-full h-full rounded-2xl" alt="Marketplace" />
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/15 to-violet-400/5 border border-purple-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/marketplace.png" class="w-full h-full rounded-xl" alt="Marketplace" />
                 </div>
                 <div class="flex-1">
                   <h3 class="text-xl font-extrabold text-text-primary m-0 mb-1.5">Marketplace</h3>
@@ -292,7 +292,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
               <a routerLink="/forgery" data-tour="forge" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-500/5 hover:border-orange-500/20">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-amber-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/15 to-amber-400/5 border border-orange-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500/15 to-amber-400/5 border border-orange-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
                   <img src="icon/the_forge.png" class="w-full h-full rounded-xl" alt="Forge" />
                 </div>
                 <h3 class="text-sm font-bold text-text-primary m-0 mb-1">The Forge</h3>
@@ -301,7 +301,7 @@
 
               <a routerLink="/collections" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-500/20">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-violet-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/15 to-violet-400/5 border border-indigo-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500/15 to-violet-400/5 border border-indigo-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
                   <img src="icon/collections.png" class="w-full h-full rounded-xl" alt="Collections" />
                 </div>
                 <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Collections</h3>
@@ -310,7 +310,7 @@
 
               <a routerLink="/social" data-tour="social" class="feature-card group relative bg-surface border border-border rounded-2xl p-5 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/5 hover:border-pink-500/20">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-rose-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/15 to-rose-400/5 border border-pink-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-pink-500/15 to-rose-400/5 border border-pink-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
                   <img src="icon/socials.png" class="w-full h-full rounded-xl" alt="Social" />
                 </div>
                 <h3 class="text-sm font-bold text-text-primary m-0 mb-1">Social</h3>
@@ -338,18 +338,18 @@
 
           @if (loading()) {
             <div class="feature-card feature-hero bg-surface border border-border rounded-2xl p-6">
-              <div class="skeleton-shimmer w-16 h-16 rounded-2xl mb-4"></div>
+              <div class="skeleton-shimmer w-11 h-11 rounded-xl mb-4"></div>
               <div class="skeleton-shimmer h-6 rounded-md w-40 mb-2"></div>
               <div class="skeleton-shimmer h-4 rounded-md w-3/4 mb-1"></div>
               <div class="skeleton-shimmer h-4 rounded-md w-1/2"></div>
             </div>
           } @else {
             <a routerLink="/games" data-tour="games" class="feature-card feature-hero group relative bg-surface border border-border rounded-2xl p-6 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-yellow-500/5 hover:border-yellow-500/20">
-              <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-yellow-500 to-amber-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
-              <div class="absolute -right-8 -top-8 w-36 h-36 bg-yellow-500/5 rounded-full blur-3xl group-hover:bg-yellow-500/10 transition-colors"></div>
+              <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-400 opacity-60 group-hover:opacity-100 transition-opacity"></div>
+              <div class="absolute -right-6 -top-6 w-24 h-24 bg-yellow-500/5 rounded-full blur-2xl group-hover:bg-yellow-500/10 transition-colors"></div>
               <div class="relative z-[1] flex flex-col sm:flex-row sm:items-center gap-5">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500/15 to-amber-400/5 border border-yellow-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <img src="icon/games.png" class="w-full h-full rounded-2xl" alt="Games" />
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-yellow-500/15 to-amber-400/5 border border-yellow-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <img src="icon/games.png" class="w-full h-full rounded-xl" alt="Games" />
                 </div>
                 <div class="flex-1">
                   <h3 class="text-xl font-extrabold text-text-primary m-0 mb-1.5">Games Hub</h3>
