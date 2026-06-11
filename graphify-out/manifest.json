@@ -315,9 +315,9 @@
     "semantic_hash": "c415d92b1fd61d80132effc55676746b"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/routers/glory-router.ts": {
-    "mtime": 1780998290.0898364,
-    "ast_hash": "7fa982620d8e3a765f52a7cc4fef0fce",
-    "semantic_hash": "7fa982620d8e3a765f52a7cc4fef0fce"
+    "mtime": 1781076888.9307225,
+    "ast_hash": "780565b0507c88f54a709bf23c0dc50a",
+    "semantic_hash": "780565b0507c88f54a709bf23c0dc50a"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/routers/honeypot-router.ts": {
     "mtime": 1780481436.88225,
@@ -330,9 +330,9 @@
     "semantic_hash": "8786ec71f4a503e2ceffe7c89a82652d"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/routers/listing-router.ts": {
-    "mtime": 1781005031.9487567,
-    "ast_hash": "f19780222e2c0d29cec4dd1f91eb8c6d",
-    "semantic_hash": "f19780222e2c0d29cec4dd1f91eb8c6d"
+    "mtime": 1781076888.9297225,
+    "ast_hash": "b097759a74c49683674e56450dda7510",
+    "semantic_hash": "b097759a74c49683674e56450dda7510"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/routers/login-history-router.ts": {
     "mtime": 1780916384.1587982,
@@ -395,9 +395,9 @@
     "semantic_hash": "06083109e5d404f63c9ea5254fed842c"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/routers/quest-router.ts": {
-    "mtime": 1780916384.1587982,
-    "ast_hash": "a8d9e89233253ea0f86e25766ef49879",
-    "semantic_hash": "a8d9e89233253ea0f86e25766ef49879"
+    "mtime": 1781090743.5333836,
+    "ast_hash": "409d09d5625579fdd1a378282a359142",
+    "semantic_hash": "409d09d5625579fdd1a378282a359142"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/routers/room-router.ts": {
     "mtime": 1780995384.0619574,
@@ -445,19 +445,19 @@
     "semantic_hash": "0fce3b6beead28ba3d9cd457ffb819db"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/routers/trade-router.ts": {
-    "mtime": 1780916384.1718035,
-    "ast_hash": "d7d6aedf68f4ad87617936502cd5f6af",
-    "semantic_hash": "d7d6aedf68f4ad87617936502cd5f6af"
+    "mtime": 1781076888.9287226,
+    "ast_hash": "8f98c0532126fe5392bdfef6498c2737",
+    "semantic_hash": "8f98c0532126fe5392bdfef6498c2737"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/achievement-engine.ts": {
-    "mtime": 1780744524.9488587,
-    "ast_hash": "93585878199a8ed865ee7299c223404e",
-    "semantic_hash": "93585878199a8ed865ee7299c223404e"
+    "mtime": 1781076841.5432281,
+    "ast_hash": "b5b98e04cf4f357d4a3f60a6947658fc",
+    "semantic_hash": "b5b98e04cf4f357d4a3f60a6947658fc"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/admin-service.ts": {
-    "mtime": 1780481436.8842502,
-    "ast_hash": "8e1a6bc946760b17d1229bc1852d2538",
-    "semantic_hash": "8e1a6bc946760b17d1229bc1852d2538"
+    "mtime": 1781087112.6116135,
+    "ast_hash": "fc97198018cfb7f093cef67326fb60a7",
+    "semantic_hash": "fc97198018cfb7f093cef67326fb60a7"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/chat-message-service.ts": {
     "mtime": 1780481436.8842502,
@@ -530,9 +530,9 @@
     "semantic_hash": "94e5b841a6e8a1af4ba70797964dbb74"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/listing-service.ts": {
-    "mtime": 1780481436.8842502,
-    "ast_hash": "7491b9feebb773e209d71028bfe68b9f",
-    "semantic_hash": "7491b9feebb773e209d71028bfe68b9f"
+    "mtime": 1781085145.4033346,
+    "ast_hash": "bd7ee6b5fcd38e46ff093ad05ca8ec1c",
+    "semantic_hash": "bd7ee6b5fcd38e46ff093ad05ca8ec1c"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/login-history-service.ts": {
     "mtime": 1780481436.8842502,
@@ -545,9 +545,9 @@
     "semantic_hash": "ddae487f3964dd6692136222507b408c"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/lootbox-service.ts": {
-    "mtime": 1781005748.1923697,
-    "ast_hash": "121e459ee2c9728b865806495a13b744",
-    "semantic_hash": "121e459ee2c9728b865806495a13b744"
+    "mtime": 1781076888.9287226,
+    "ast_hash": "637ddb9aa3744eeb711c28cb12aea8da",
+    "semantic_hash": "637ddb9aa3744eeb711c28cb12aea8da"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/lootbox-type-service.ts": {
     "mtime": 1777962711.1070871,
@@ -555,9 +555,9 @@
     "semantic_hash": "e6e7b72b3bbf65f1feca668a227a0a38"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/mini-game-session-service.ts": {
-    "mtime": 1780481436.8842502,
-    "ast_hash": "b16c4f72e381b4d6a653db9670be335c",
-    "semantic_hash": "b16c4f72e381b4d6a653db9670be335c"
+    "mtime": 1781076888.9287226,
+    "ast_hash": "d895ed2fb479916dccb43fac3fb5b9cb",
+    "semantic_hash": "d895ed2fb479916dccb43fac3fb5b9cb"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/notification-service.ts": {
     "mtime": 1780745126.8124824,
@@ -580,9 +580,9 @@
     "semantic_hash": "6e13a8b0a8a0f5b6795a1eb8b71e20bf"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/player-prestige-service.ts": {
-    "mtime": 1779659655.4541042,
-    "ast_hash": "ba9336508b226c01e6606131afd6bcdf",
-    "semantic_hash": "ba9336508b226c01e6606131afd6bcdf"
+    "mtime": 1781076781.179081,
+    "ast_hash": "6ae68b2f5fefdce2f58aec63fb961223",
+    "semantic_hash": "6ae68b2f5fefdce2f58aec63fb961223"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/player-service.ts": {
     "mtime": 1780996809.1851234,
@@ -610,9 +610,9 @@
     "semantic_hash": "98ce01e55cc23a7d173954bb18084523"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/quest-service.ts": {
-    "mtime": 1780745590.5962183,
-    "ast_hash": "e9daf03396b003fc5beb0ff737f43aa7",
-    "semantic_hash": "e9daf03396b003fc5beb0ff737f43aa7"
+    "mtime": 1781090697.3738413,
+    "ast_hash": "4814ce2b73e2f7d5328bd34264f22326",
+    "semantic_hash": "4814ce2b73e2f7d5328bd34264f22326"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/services/redeem-code-service.ts": {
     "mtime": 1780856804.5054076,
@@ -735,9 +735,9 @@
     "semantic_hash": "192876f2543af923cf2887344e93955c"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/utils/unit.ts": {
-    "mtime": 1781032941.3196964,
-    "ast_hash": "dc95fb07fced10ef7c9c6d010c7d1547",
-    "semantic_hash": "dc95fb07fced10ef7c9c6d010c7d1547"
+    "mtime": 1781084406.851452,
+    "ast_hash": "72a34ddf64eb6cfa953f410e438d994b",
+    "semantic_hash": "72a34ddf64eb6cfa953f410e438d994b"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/backend/utils/util.ts": {
     "mtime": 1780296469.2248478,
@@ -870,14 +870,14 @@
     "semantic_hash": "ff75d1d5e58ffcef0992f3d4e9fa9c54"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/core/services/admin.service.ts": {
-    "mtime": 1780854652.1821117,
-    "ast_hash": "6101c9b7e9327e105e705c9ee6e7ee5e",
-    "semantic_hash": "6101c9b7e9327e105e705c9ee6e7ee5e"
+    "mtime": 1781086691.6437476,
+    "ast_hash": "0311f1e52e37ef67251983905c1d051c",
+    "semantic_hash": "0311f1e52e37ef67251983905c1d051c"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/core/services/api.service.ts": {
-    "mtime": 1780481436.88625,
-    "ast_hash": "61c4a35afec2c2d242787f4cb252334e",
-    "semantic_hash": "61c4a35afec2c2d242787f4cb252334e"
+    "mtime": 1781081107.4521666,
+    "ast_hash": "8460e04d5a28447d7a028e9c806b20d6",
+    "semantic_hash": "8460e04d5a28447d7a028e9c806b20d6"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/core/services/auth.service.ts": {
     "mtime": 1780744417.9300697,
@@ -935,9 +935,9 @@
     "semantic_hash": "7791c0378a959843bec3c859ebbb1335"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/core/services/listing.service.ts": {
-    "mtime": 1780916384.1718035,
-    "ast_hash": "04a950dd3e25aa8d027b8576d651c635",
-    "semantic_hash": "04a950dd3e25aa8d027b8576d651c635"
+    "mtime": 1781085277.513191,
+    "ast_hash": "4c1c66e53b4ad68d8b862edcfa02fdb6",
+    "semantic_hash": "4c1c66e53b4ad68d8b862edcfa02fdb6"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/core/services/lootbox.service.ts": {
     "mtime": 1780735407.2494268,
@@ -985,9 +985,9 @@
     "semantic_hash": "4e16f37daa219c2107eef8e1f962179c"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/core/services/quest.service.ts": {
-    "mtime": 1780055865.0914166,
-    "ast_hash": "f04b4ae46dfd59e6bb5f5a84f4ddbd8f",
-    "semantic_hash": "f04b4ae46dfd59e6bb5f5a84f4ddbd8f"
+    "mtime": 1781090769.5781252,
+    "ast_hash": "fb8f330f203aadbc20d6f0975669990b",
+    "semantic_hash": "fb8f330f203aadbc20d6f0975669990b"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/core/services/sparks.service.ts": {
     "mtime": 1780055865.0924165,
@@ -1065,9 +1065,9 @@
     "semantic_hash": "c4bffb5c0c1b70e03cc870174cb0de6d"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/admin/pages/overview/overview.component.ts": {
-    "mtime": 1779659655.4850442,
-    "ast_hash": "cce94c98fdc206c508a39bba2a10a4cc",
-    "semantic_hash": "cce94c98fdc206c508a39bba2a10a4cc"
+    "mtime": 1781086706.2086048,
+    "ast_hash": "0c6962f5557e338edaa84d0510c3df24",
+    "semantic_hash": "0c6962f5557e338edaa84d0510c3df24"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/admin/pages/player-detail/player-detail.component.ts": {
     "mtime": 1780474043.3240054,
@@ -1125,9 +1125,9 @@
     "semantic_hash": "8c12c3b29edf15a64bbf10ab8987235d"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/blackjack/blackjack.ts": {
-    "mtime": 1780859517.153218,
-    "ast_hash": "eda6bc29523d7e396013390e6ac2ae2d",
-    "semantic_hash": "eda6bc29523d7e396013390e6ac2ae2d"
+    "mtime": 1781082207.2374647,
+    "ast_hash": "a256ee3d21260fcf718992c2244603a2",
+    "semantic_hash": "a256ee3d21260fcf718992c2244603a2"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/collections/collections.component.ts": {
     "mtime": 1780055865.0931237,
@@ -1200,14 +1200,14 @@
     "semantic_hash": "a2d632a71a24b34238d293e5208dc38e"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/marketplace/marketplace.component.ts": {
-    "mtime": 1780998969.1513917,
-    "ast_hash": "afdcd5155da29f4d87da9be65135045d",
-    "semantic_hash": "afdcd5155da29f4d87da9be65135045d"
+    "mtime": 1781085260.56834,
+    "ast_hash": "aa632d7d63d06bea5848d1082e51d894",
+    "semantic_hash": "aa632d7d63d06bea5848d1082e51d894"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/poker/poker.ts": {
-    "mtime": 1780899035.5878348,
-    "ast_hash": "e8bc6e264789448f2dc10f19c719f57c",
-    "semantic_hash": "e8bc6e264789448f2dc10f19c719f57c"
+    "mtime": 1781082223.7483542,
+    "ast_hash": "2cfdadfa1e583e6146d651969733900b",
+    "semantic_hash": "2cfdadfa1e583e6146d651969733900b"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/profile/profile.component.ts": {
     "mtime": 1776370445.8974245,
@@ -1215,14 +1215,14 @@
     "semantic_hash": "7b7296ad5a35160376460ca6105016bc"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/quests/quests.component.ts": {
-    "mtime": 1780055865.0955188,
-    "ast_hash": "2c78ba82a0369ef9a4c61ddfe4d518d9",
-    "semantic_hash": "2c78ba82a0369ef9a4c61ddfe4d518d9"
+    "mtime": 1781091090.1369455,
+    "ast_hash": "e70beb6e13876e37c29f527a81d93af4",
+    "semantic_hash": "e70beb6e13876e37c29f527a81d93af4"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/roulette/roulette.ts": {
-    "mtime": 1780055865.0959048,
-    "ast_hash": "70009337c709f238a10744c65e8404e6",
-    "semantic_hash": "70009337c709f238a10744c65e8404e6"
+    "mtime": 1781082240.3322408,
+    "ast_hash": "d64fbd9bca686566efda96ee8670d1a6",
+    "semantic_hash": "d64fbd9bca686566efda96ee8670d1a6"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/settings/pages/account/account.component.spec.ts": {
     "mtime": 1779659655.487104,
@@ -1275,9 +1275,9 @@
     "semantic_hash": "82b1766511e79f9caa6d95657e42e80a"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/shop/shop.component.ts": {
-    "mtime": 1780854781.7176628,
-    "ast_hash": "5d393134ace1797f90996e7290b3b5d2",
-    "semantic_hash": "5d393134ace1797f90996e7290b3b5d2"
+    "mtime": 1781082255.1321378,
+    "ast_hash": "f77e798ad724e8ab7442556f89093dbc",
+    "semantic_hash": "f77e798ad724e8ab7442556f89093dbc"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/social/add-friend-modal.component.ts": {
     "mtime": 1780998815.258137,
@@ -1715,14 +1715,14 @@
     "semantic_hash": "e280b3e94ba5221014b24ad3d51ca97c"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/auth/pages/startup/startup.component.html": {
-    "mtime": 1780730691.0297332,
-    "ast_hash": "0fa3826aaa56dcda190af8230118386f",
-    "semantic_hash": "0fa3826aaa56dcda190af8230118386f"
+    "mtime": 1781091039.573447,
+    "ast_hash": "134bac31e3f75214a67caa13b0af314b",
+    "semantic_hash": "134bac31e3f75214a67caa13b0af314b"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/blackjack/blackjack.html": {
-    "mtime": 1780859543.0402234,
-    "ast_hash": "9c112f9f814520213243dd50a51be957",
-    "semantic_hash": "9c112f9f814520213243dd50a51be957"
+    "mtime": 1781077657.0068436,
+    "ast_hash": "398609c7e629c6afbbe49b75360898d2",
+    "semantic_hash": "398609c7e629c6afbbe49b75360898d2"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/collections/collections.component.html": {
     "mtime": 1780055865.0931237,
@@ -1755,9 +1755,9 @@
     "semantic_hash": "57a957ff5f7332d9c0fa779a3de25604"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/home/main-menu.component.html": {
-    "mtime": 1780745076.930333,
-    "ast_hash": "d466ef75d5ed6eaa4540a0252fe5c242",
-    "semantic_hash": "d466ef75d5ed6eaa4540a0252fe5c242"
+    "mtime": 1781091039.6814458,
+    "ast_hash": "1670f07a44175741e1a15fe5693ec092",
+    "semantic_hash": "1670f07a44175741e1a15fe5693ec092"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/inventory/inventory.component.html": {
     "mtime": 1781005115.4988813,
@@ -1780,9 +1780,9 @@
     "semantic_hash": "b2a83b819d05db658826b8a367c95fde"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/poker/poker.html": {
-    "mtime": 1780059944.466556,
-    "ast_hash": "3601d10a11a264c894720699e06f7f16",
-    "semantic_hash": "3601d10a11a264c894720699e06f7f16"
+    "mtime": 1781077619.6134753,
+    "ast_hash": "de158c7db6483af0692017d37eac75f5",
+    "semantic_hash": "de158c7db6483af0692017d37eac75f5"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/profile/profile.component.html": {
     "mtime": 1780900477.846917,
@@ -1790,14 +1790,14 @@
     "semantic_hash": "984ea6f75459bfb92fa1196741e48de1"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/quests/quests.component.html": {
-    "mtime": 1780735427.3840933,
-    "ast_hash": "0140077a0ae0295d1cf76d55fb4b9a1e",
-    "semantic_hash": "0140077a0ae0295d1cf76d55fb4b9a1e"
+    "mtime": 1781091022.9826117,
+    "ast_hash": "ce53a0b2e823962f0c0b26720380106c",
+    "semantic_hash": "ce53a0b2e823962f0c0b26720380106c"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/roulette/roulette.html": {
-    "mtime": 1780904473.0155923,
-    "ast_hash": "923818af222883bcb25337516125e9c8",
-    "semantic_hash": "923818af222883bcb25337516125e9c8"
+    "mtime": 1781077693.077202,
+    "ast_hash": "0c43e29b239091f8a931345a8960bd9e",
+    "semantic_hash": "0c43e29b239091f8a931345a8960bd9e"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/settings/pages/account/account.component.html": {
     "mtime": 1779659655.487104,
@@ -1830,9 +1830,9 @@
     "semantic_hash": "97d857538c9427fea351c7b25d2ce132"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/shop/shop.component.html": {
-    "mtime": 1780853608.5031903,
-    "ast_hash": "9647b4e637c478d825da7c050212f2b2",
-    "semantic_hash": "9647b4e637c478d825da7c050212f2b2"
+    "mtime": 1781082263.7620769,
+    "ast_hash": "db310a91baf8bdee801190c35db58d67",
+    "semantic_hash": "db310a91baf8bdee801190c35db58d67"
   },
   "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/src/app/features/social/social.component.html": {
     "mtime": 1780998815.258137,
@@ -2403,5 +2403,60 @@
     "mtime": 1779659655.4830105,
     "ast_hash": "ca72303068e3e62c50709f53473b3d1f",
     "semantic_hash": "ca72303068e3e62c50709f53473b3d1f"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/scripts/trim-bot-coins.js": {
+    "mtime": 1781086158.762942,
+    "ast_hash": "0711a1af149db0392c2faf328b5c09d5",
+    "semantic_hash": "0711a1af149db0392c2faf328b5c09d5"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/backend/websocket/handlers/room-chat.ts": {
+    "mtime": 1781074395.766279,
+    "ast_hash": "fdf6f67b579ea0373bcdc7f115940d14",
+    "semantic_hash": "fdf6f67b579ea0373bcdc7f115940d14"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/public/icon/collections.png": {
+    "mtime": 1781090326.342522,
+    "ast_hash": "04731c1884baa5ae987ec8e0d77d960d",
+    "semantic_hash": "04731c1884baa5ae987ec8e0d77d960d"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/public/icon/games.png": {
+    "mtime": 1781090326.3515217,
+    "ast_hash": "b7229e92702bdbf3e08bb9a6069ae3b2",
+    "semantic_hash": "b7229e92702bdbf3e08bb9a6069ae3b2"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/public/icon/lootboxes.png": {
+    "mtime": 1781090326.3595216,
+    "ast_hash": "b6b155bd86e3e11075d4437c9ba6ce4c",
+    "semantic_hash": "b6b155bd86e3e11075d4437c9ba6ce4c"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/public/icon/lucky_wheel.png": {
+    "mtime": 1781090326.3695216,
+    "ast_hash": "5dc17ec5fc6a1e8c8d443a1b28e3a3cd",
+    "semantic_hash": "5dc17ec5fc6a1e8c8d443a1b28e3a3cd"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/public/icon/marketplace.png": {
+    "mtime": 1781090326.3775215,
+    "ast_hash": "84bf1ac95f823f5ff5958ac40b155b6f",
+    "semantic_hash": "84bf1ac95f823f5ff5958ac40b155b6f"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/public/icon/quests.png": {
+    "mtime": 1781090326.3845215,
+    "ast_hash": "fe16ecbd5ec7a2d6b7b4d304be7d72d1",
+    "semantic_hash": "fe16ecbd5ec7a2d6b7b4d304be7d72d1"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/public/icon/shop.png": {
+    "mtime": 1781090326.3935213,
+    "ast_hash": "a632e34e1cf6da748777ded152190b89",
+    "semantic_hash": "a632e34e1cf6da748777ded152190b89"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/public/icon/socials.png": {
+    "mtime": 1781090326.4025214,
+    "ast_hash": "b183300957bded26aa35c77b44f2875f",
+    "semantic_hash": "b183300957bded26aa35c77b44f2875f"
+  },
+  "/home/laurenz/Documents/SYP/EmberExchange/src/frontend/public/icon/the_forge.png": {
+    "mtime": 1781090326.4105213,
+    "ast_hash": "88b0f56566a4d877d31159d29fcce756",
+    "semantic_hash": "88b0f56566a4d877d31159d29fcce756"
   }
 }
