@@ -622,6 +622,77 @@ const options: swaggerJsdoc.Options = {
                     },
                     required: ["messageId", "senderId", "receiverId", "itemType", "itemId", "price", "status"]
                 },
+                Game: {
+                    type: "object",
+                    properties: {
+                        gameId: { type: "integer", description: "Game ID" },
+                        gameType: { type: "string", description: "Unique game type identifier" },
+                        minPlayers: { type: "integer", description: "Minimum players required" },
+                        maxPlayers: { type: "integer", description: "Maximum players allowed" },
+                        ruleset: { type: "string", description: "Game ruleset JSON or description" },
+                        description: { type: "string", nullable: true, description: "Game description" },
+                        genre: { type: "string", description: "Game genre" },
+                        tags: { type: "array", items: { type: "string" }, description: "Game tags" },
+                        isActive: { type: "integer", description: "Active flag (0 = false, 1 = true)" }
+                    },
+                    required: ["gameId", "gameType", "minPlayers", "maxPlayers", "ruleset", "genre", "tags", "isActive"]
+                },
+                Room: {
+                    type: "object",
+                    properties: {
+                        roomId: { type: "string", description: "Unique room ID (UUID)" },
+                        status: { type: "string", enum: ["waiting", "active", "finished"], description: "Room status" },
+                        maxPlayers: { type: "integer", description: "Maximum players" },
+                        gameType: { type: "string", description: "Game type" },
+                        settings: { type: "object", description: "Room settings" },
+                        createdAt: { type: "string", format: "date-time", description: "Creation timestamp" },
+                        updatedAt: { type: "string", format: "date-time", description: "Last update timestamp" }
+                    },
+                    required: ["roomId", "status", "maxPlayers", "gameType", "settings", "createdAt", "updatedAt"]
+                },
+                RoomPlayer: {
+                    type: "object",
+                    properties: {
+                        roomPlayerId: { type: "string", description: "Room player record ID" },
+                        roomId: { type: "string", description: "Room ID" },
+                        playerId: { type: "integer", description: "Player ID" },
+                        username: { type: "string", description: "Player username" },
+                        connectionState: { type: "string", enum: ["connected", "disconnected", "away"], description: "Connection state" },
+                        seatIndex: { type: "integer", description: "Seat index" },
+                        disconnectedAt: { type: "string", format: "date-time", nullable: true, description: "When disconnected" },
+                        coins: { type: "integer", description: "Player coin balance" },
+                        activeTitle: { type: "object", nullable: true, description: "Active title" },
+                        activeBanner: { type: "object", nullable: true, description: "Active banner" }
+                    },
+                    required: ["roomPlayerId", "roomId", "playerId", "connectionState", "seatIndex"]
+                },
+                GameState: {
+                    type: "object",
+                    properties: {
+                        roomId: { type: "string", description: "Room ID" },
+                        stateBlob: { type: "object", description: "Game state payload" },
+                        version: { type: "integer", description: "State version for optimistic locking" },
+                        updatedAt: { type: "string", format: "date-time", description: "Last update timestamp" }
+                    },
+                    required: ["roomId", "stateBlob", "version", "updatedAt"]
+                },
+                RedeemCode: {
+                    type: "object",
+                    properties: {
+                        codeId: { type: "integer", description: "Redeem code ID" },
+                        code: { type: "string", description: "The redeem code string" },
+                        rewardCoins: { type: "integer", description: "Coin reward" },
+                        rewardLootboxes: { type: "integer", description: "Lootbox reward count" },
+                        rewardSparks: { type: "integer", description: "Spark reward count" },
+                        rewardSpins: { type: "integer", description: "Spin reward count" },
+                        maxUses: { type: "integer", nullable: true, description: "Max uses (null = unlimited)" },
+                        usesCount: { type: "integer", description: "Current use count" },
+                        expiresAt: { type: "string", format: "date-time", nullable: true, description: "Expiration date" },
+                        isActive: { type: "boolean", description: "Whether the code is active" },
+                        createdAt: { type: "string", format: "date-time", description: "Creation timestamp" }
+                    },
+                    required: ["codeId", "code", "rewardCoins", "rewardLootboxes", "rewardSparks", "rewardSpins", "usesCount", "isActive", "createdAt"]
+                },
             },
         },
     },

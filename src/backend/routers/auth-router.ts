@@ -839,9 +839,24 @@ authRouter.delete("/auth/sessions", async (req, res) => {
 });
 
 /**
- * GET /auth/challenge — Returns a proof-of-work challenge for registration.
- * The client must find a nonce such that SHA256(challenge + nonce) starts
- * with `difficulty` hex zeros.
+ * @openapi
+ * /auth/challenge:
+ *   get:
+ *     summary: Get proof-of-work challenge
+ *     description: Returns a proof-of-work challenge for registration. The client must find a nonce such that SHA256(challenge + nonce) starts with `difficulty` hex zeros.
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Challenge data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 challenge: { type: string, description: "Challenge string" }
+ *                 difficulty: { type: integer, description: "Number of leading zero hex digits required" }
+ *       429:
+ *         description: Rate limited
  */
 authRouter.get("/auth/challenge", challengeRateLimiter.middleware(), (req, res) => {
     const ch = createPowChallenge(getClientIp(req));
@@ -1050,8 +1065,42 @@ authRouter.post("/auth/register", datacenterGuard, registerRateLimiter.middlewar
 });
 
 /**
- * GET /auth/verify-email/:token
- * Verifies an email address using a token from the verification email.
+ * @openapi
+ * /auth/verify-email/{token}:
+ *   get:
+ *     summary: Verify email address
+ *     description: Verifies an email address using a token from the verification email.
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Verification token from email
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sessionId: { type: string }
+ *                 playerId: { type: integer }
+ *                 message: { type: string }
+ *       400:
+ *         description: Invalid or expired token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 authRouter.get("/auth/verify-email/:token", authRateLimiter.middleware(), async (req, res) => {
     const { token } = req.params;
@@ -1128,8 +1177,44 @@ authRouter.get("/auth/verify-email/:token", authRateLimiter.middleware(), async 
 });
 
 /**
- * POST /auth/resend-verification
- * Resends the verification email. Rate-limited to prevent abuse.
+ * @openapi
+ * /auth/resend-verification:
+ *   post:
+ *     summary: Resend verification email
+ *     description: Resends the verification email. Rate-limited to prevent abuse.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Verification email sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Invalid email or security check failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Rate limited
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 authRouter.post("/auth/resend-verification", authRateLimiter.middleware(), turnstileMiddleware, async (req, res) => {
     if (res.locals.turnstileFailed) {

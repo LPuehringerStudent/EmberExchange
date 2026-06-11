@@ -382,6 +382,47 @@ listingRouter.get("/stoves/:stoveId/listing", readRateLimiter.middleware(), asyn
     }
 });
 
+/**
+ * @openapi
+ * /lootboxes/{lootboxId}/listing:
+ *   get:
+ *     summary: Get active listing for lootbox
+ *     description: Retrieves the active listing for a specific lootbox if one exists
+ *     tags:
+ *       - Listings
+ *     parameters:
+ *       - name: lootboxId
+ *         in: path
+ *         required: true
+ *         description: Lootbox ID
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Active listing found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Listing'
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: No active listing found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 listingRouter.get("/lootboxes/:lootboxId/listing", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new ListingService(unit);

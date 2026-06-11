@@ -6,6 +6,35 @@ import { readRateLimiter } from "../middleware/rate-limiter";
 
 export const gameRouter = express.Router();
 
+/**
+ * @openapi
+ * /games:
+ *   get:
+ *     summary: Get all games
+ *     tags: [Games]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 100 }
+ *       - in: query
+ *         name: offset
+ *         schema: { type: integer, default: 0 }
+ *     responses:
+ *       200:
+ *         description: List of games
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Game'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 gameRouter.get("/games", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     try {
@@ -22,6 +51,39 @@ gameRouter.get("/games", readRateLimiter.middleware(), async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /games/{gameType}:
+ *   get:
+ *     summary: Get game by type
+ *     tags: [Games]
+ *     parameters:
+ *       - in: path
+ *         name: gameType
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Game type identifier
+ *     responses:
+ *       200:
+ *         description: Game details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Game'
+ *       404:
+ *         description: Game not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 gameRouter.get("/games/:gameType", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     try {

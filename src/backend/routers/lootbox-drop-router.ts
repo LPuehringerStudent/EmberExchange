@@ -57,6 +57,43 @@ lootboxDropRouter.get("/lootbox-drops", requireAuth, async (req, res) => {
 
 /**
  * @openapi
+ * /lootbox-drops/count:
+ *   get:
+ *     summary: Count lootbox drops
+ *     description: Returns the total number of lootbox drops
+ *     tags:
+ *       - LootboxDrops
+ *     responses:
+ *       200:
+ *         description: Drop count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CountResponse'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+lootboxDropRouter.get("/lootbox-drops/count", async (_req, res) => {
+    const unit = await Unit.create(true);
+    const service = new LootboxDropService(unit);
+
+    try {
+        const count = await service.count();
+        res.status(StatusCodes.OK).json({ count });
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    } finally {
+        await unit.complete();
+    }
+});
+
+/**
+ * @openapi
  * /lootbox-drops/{id}:
  *   get:
  *     summary: Get lootbox drop by ID
@@ -96,21 +133,6 @@ lootboxDropRouter.get("/lootbox-drops", requireAuth, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-lootboxDropRouter.get("/lootbox-drops/count", async (_req, res) => {
-    const unit = await Unit.create(true);
-    const service = new LootboxDropService(unit);
-
-    try {
-        const count = await service.count();
-        res.status(StatusCodes.OK).json({ count });
-    } catch (err) {
-        console.error("Route error:", err);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
-    } finally {
-        await unit.complete();
-    }
-});
-
 lootboxDropRouter.get("/lootbox-drops/:id", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new LootboxDropService(unit);

@@ -211,6 +211,43 @@ adminRouter.post("/admin/players/:id/coins", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /admin/request-logs:
+ *   get:
+ *     summary: Query request logs
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     parameters:
+ *       - in: query
+ *         name: playerId
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: ip
+ *         schema: { type: string }
+ *       - in: query
+ *         name: path
+ *         schema: { type: string }
+ *       - in: query
+ *         name: since
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: until
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 500 }
+ *     responses:
+ *       200:
+ *         description: Request logs
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.get("/admin/request-logs", async (req, res) => {
     const unit = await Unit.create(true);
     try {
@@ -240,6 +277,24 @@ adminRouter.get("/admin/request-logs", async (req, res) => {
 
 // ─── Punishment / Security Admin Endpoints ───
 
+/**
+ * @openapi
+ * /admin/banned-ips:
+ *   get:
+ *     summary: List banned IPs
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     responses:
+ *       200:
+ *         description: List of banned IPs
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.get("/admin/banned-ips", async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new PunishmentService(unit);
@@ -254,6 +309,28 @@ adminRouter.get("/admin/banned-ips", async (_req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /admin/violations:
+ *   get:
+ *     summary: List security violations
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 100 }
+ *     responses:
+ *       200:
+ *         description: Violation log
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.get("/admin/violations", async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PunishmentService(unit);
@@ -269,6 +346,45 @@ adminRouter.get("/admin/violations", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /admin/banned-ips:
+ *   post:
+ *     summary: Ban an IP address
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ip, reason]
+ *             properties:
+ *               ip: { type: string, description: "IP address to ban" }
+ *               reason: { type: string, description: "Ban reason" }
+ *               durationHours: { type: integer, description: "Duration in hours (optional)" }
+ *     responses:
+ *       200:
+ *         description: IP banned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.post("/admin/banned-ips", async (req, res) => {
     const { ip, reason, durationHours } = req.body;
     if (!ip || typeof ip !== "string") {
@@ -301,6 +417,49 @@ adminRouter.post("/admin/banned-ips", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /admin/banned-ips/unban:
+ *   post:
+ *     summary: Unban an IP address
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ip]
+ *             properties:
+ *               ip: { type: string, description: "IP address to unban" }
+ *     responses:
+ *       200:
+ *         description: IP unbanned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: IP not found in ban list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.post("/admin/banned-ips/unban", async (req, res) => {
     const { ip } = req.body;
     if (!ip || typeof ip !== "string") {
@@ -326,6 +485,45 @@ adminRouter.post("/admin/banned-ips/unban", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /admin/players/{id}/unban:
+ *   post:
+ *     summary: Unban a player
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Player unbanned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Invalid player ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Player not found or not banned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.post("/admin/players/:id/unban", async (req, res) => {
     const unit = await Unit.create(false);
     const service = new PunishmentService(unit);
@@ -409,9 +607,9 @@ adminRouter.delete("/admin/bot-traps", (_req, res) => {
 
 /**
  * @openapi
- * /admin/players/:id/ban:
- *   post:
- *     summary: Ban or unban a player
+ * /admin/players/{id}:
+ *   delete:
+ *     summary: Delete a player
  *     tags: [Admin]
  *     security:
  *       - SessionId: []
@@ -420,19 +618,37 @@ adminRouter.delete("/admin/bot-traps", (_req, res) => {
  *         name: id
  *         required: true
  *         schema: { type: integer }
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [banned]
- *             properties:
- *               banned: { type: boolean }
- *               reason: { type: string }
  *     responses:
  *       200:
- *         description: Ban status updated
+ *         description: Player deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Invalid player ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Cannot delete own account or shop account
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Player not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 adminRouter.delete("/admin/players/:id", async (req, res) => {
     const unit = await Unit.create(false);
@@ -474,6 +690,55 @@ adminRouter.delete("/admin/players/:id", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /admin/players/{id}/ban:
+ *   post:
+ *     summary: Ban or unban a player
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [banned]
+ *             properties:
+ *               banned: { type: boolean, description: "true to ban, false to unban" }
+ *               reason: { type: string, description: "Ban reason" }
+ *     responses:
+ *       200:
+ *         description: Ban status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Player not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.post("/admin/players/:id/ban", async (req, res) => {
     const unit = await Unit.create(false);
     const service = new AdminService(unit);
@@ -654,6 +919,30 @@ adminRouter.post("/admin/stove-types", async (req, res) => {
 
 // ─── Redeem Code Management ─────────────────────────────────
 
+/**
+ * @openapi
+ * /admin/redeem-codes:
+ *   get:
+ *     summary: List redeem codes
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     responses:
+ *       200:
+ *         description: List of redeem codes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/RedeemCode'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.get("/admin/redeem-codes", async (_req, res) => {
     const unit = await Unit.create(true);
     const service = new RedeemCodeService(unit);
@@ -668,6 +957,53 @@ adminRouter.get("/admin/redeem-codes", async (_req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /admin/redeem-codes:
+ *   post:
+ *     summary: Create a redeem code
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [code]
+ *             properties:
+ *               code: { type: string, description: "Redeem code string" }
+ *               rewardCoins: { type: integer, default: 0 }
+ *               rewardLootboxes: { type: integer, default: 0 }
+ *               rewardSparks: { type: integer, default: 0 }
+ *               rewardSpins: { type: integer, default: 0 }
+ *               maxUses: { type: integer, nullable: true }
+ *               expiresAt: { type: string, format: date-time, nullable: true }
+ *               isActive: { type: boolean, default: true }
+ *     responses:
+ *       201:
+ *         description: Code created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 codeId: { type: integer }
+ *                 code: { type: string }
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.post("/admin/redeem-codes", async (req, res) => {
     const unit = await Unit.create(false);
     const service = new RedeemCodeService(unit);
@@ -698,6 +1034,60 @@ adminRouter.post("/admin/redeem-codes", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /admin/redeem-codes/{id}:
+ *   patch:
+ *     summary: Update a redeem code
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code: { type: string }
+ *               rewardCoins: { type: integer }
+ *               rewardLootboxes: { type: integer }
+ *               rewardSparks: { type: integer }
+ *               rewardSpins: { type: integer }
+ *               maxUses: { type: integer, nullable: true }
+ *               expiresAt: { type: string, format: date-time, nullable: true }
+ *               isActive: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Code updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Code not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.patch("/admin/redeem-codes/:id", async (req, res) => {
     const unit = await Unit.create(false);
     const service = new RedeemCodeService(unit);
@@ -733,6 +1123,45 @@ adminRouter.patch("/admin/redeem-codes/:id", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /admin/redeem-codes/{id}:
+ *   delete:
+ *     summary: Delete a redeem code
+ *     tags: [Admin]
+ *     security:
+ *       - SessionId: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Code deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Code not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 adminRouter.delete("/admin/redeem-codes/:id", async (req, res) => {
     const unit = await Unit.create(false);
     const service = new RedeemCodeService(unit);

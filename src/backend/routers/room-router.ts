@@ -9,6 +9,51 @@ import { engineRegistry } from "../game-engines";
 
 export const roomRouter = express.Router();
 
+/**
+ * @openapi
+ * /rooms:
+ *   post:
+ *     summary: Create a new game room
+ *     tags: [Rooms]
+ *     security:
+ *       - SessionId: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [gameType]
+ *             properties:
+ *               maxPlayers:
+ *                 type: integer
+ *                 description: Maximum number of players (default 4)
+ *               gameType:
+ *                 type: string
+ *                 description: Game type identifier (e.g. poker, blackjack, roulette)
+ *               settings:
+ *                 type: object
+ *                 description: Optional game-specific settings
+ *     responses:
+ *       201:
+ *         description: Room created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Room'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 roomRouter.post("/rooms", requireAuth, async (req, res) => {
     const unit = await Unit.create(false);
     let ok = false;
@@ -49,6 +94,47 @@ roomRouter.post("/rooms", requireAuth, async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /rooms:
+ *   get:
+ *     summary: List rooms by game type
+ *     tags: [Rooms]
+ *     parameters:
+ *       - in: query
+ *         name: gameType
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Game type filter
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [waiting, active, finished]
+ *         description: Room status filter
+ *     responses:
+ *       200:
+ *         description: List of rooms
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Room'
+ *       400:
+ *         description: Missing gameType
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 roomRouter.get("/rooms", async (req, res) => {
     const unit = await Unit.create(true);
     try {
@@ -72,6 +158,53 @@ roomRouter.get("/rooms", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /rooms/{roomId}:
+ *   get:
+ *     summary: Get room details
+ *     tags: [Rooms]
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Room ID
+ *     responses:
+ *       200:
+ *         description: Room details including players and game state
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 roomId: { type: string }
+ *                 status: { type: string }
+ *                 maxPlayers: { type: integer }
+ *                 gameType: { type: string }
+ *                 settings: { type: object }
+ *                 createdAt: { type: string, format: date-time }
+ *                 updatedAt: { type: string, format: date-time }
+ *                 players:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/RoomPlayer'
+ *                 gameState:
+ *                   $ref: '#/components/schemas/GameState'
+ *       404:
+ *         description: Room not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 roomRouter.get("/rooms/:roomId", async (req, res) => {
     const unit = await Unit.create(true);
     try {

@@ -260,8 +260,33 @@ oauthRouter.get("/oauth/github/callback", oauthCallbackRateLimiter.middleware(),
  *                   type: boolean
  */
 /**
- * GET /oauth/session — Exchange the short-lived oauth_session cookie
- * for session data. Called by the frontend callback page.
+ * @openapi
+ * /oauth/session:
+ *   get:
+ *     summary: Exchange OAuth session cookie
+ *     description: Exchanges the short-lived oauth_session cookie for session data. Called by the frontend callback page.
+ *     tags: [OAuth]
+ *     responses:
+ *       200:
+ *         description: Session data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Invalid cookie
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No OAuth session cookie
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Rate limited
  */
 oauthRouter.get("/oauth/session", authRateLimiter.middleware(), (req, res) => {
     const raw = req.cookies?.oauth_session;

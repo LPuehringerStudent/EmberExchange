@@ -158,6 +158,34 @@ githubRouter.get("/github/repo", async (_req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /github/commit-activity:
+ *   get:
+ *     summary: Get commit activity
+ *     description: Retrieves weekly commit activity for the EmberExchange repository
+ *     tags:
+ *       - GitHub
+ *     responses:
+ *       200:
+ *         description: Commit activity data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   days: { type: array, items: { type: integer } }
+ *                   total: { type: integer }
+ *                   week: { type: integer }
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 githubRouter.get("/github/commit-activity", async (_req, res) => {
     try {
         const activity = await service.getCommitActivity();
@@ -169,6 +197,30 @@ githubRouter.get("/github/commit-activity", async (_req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /github/languages:
+ *   get:
+ *     summary: Get repository languages
+ *     description: Retrieves language breakdown for the EmberExchange repository
+ *     tags:
+ *       - GitHub
+ *     responses:
+ *       200:
+ *         description: Language statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties:
+ *                 type: integer
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 githubRouter.get("/github/languages", async (_req, res) => {
     try {
         const languages = await service.getLanguages();
@@ -180,6 +232,34 @@ githubRouter.get("/github/languages", async (_req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /github/code-frequency:
+ *   get:
+ *     summary: Get code frequency
+ *     description: Retrieves weekly additions and deletions for the EmberExchange repository
+ *     tags:
+ *       - GitHub
+ *     responses:
+ *       200:
+ *         description: Code frequency data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   week: { type: integer }
+ *                   additions: { type: integer }
+ *                   deletions: { type: integer }
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 githubRouter.get("/github/code-frequency", async (_req, res) => {
     try {
         const frequency = await service.getCodeFrequency();
