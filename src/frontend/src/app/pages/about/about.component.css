@@ -1,0 +1,343 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.about-page {
+  position: relative;
+}
+
+/* Animated background mesh */
+.bg-mesh {
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(232, 93, 4, 0.08), transparent 45%),
+    radial-gradient(ellipse at 80% 30%, rgba(244, 140, 6, 0.06), transparent 45%),
+    radial-gradient(ellipse at 40% 80%, rgba(232, 93, 4, 0.06), transparent 45%),
+    radial-gradient(ellipse at 90% 90%, rgba(244, 140, 6, 0.04), transparent 40%);
+}
+
+.mesh-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
+  animation: blobFloat 18s ease-in-out infinite;
+}
+
+.mesh-1 {
+  width: 260px;
+  height: 260px;
+  background: rgba(232, 93, 4, 0.35);
+  top: 5%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.mesh-2 {
+  width: 340px;
+  height: 340px;
+  background: rgba(244, 140, 6, 0.28);
+  top: 40%;
+  right: -5%;
+  animation-delay: -6s;
+}
+
+.mesh-3 {
+  width: 220px;
+  height: 220px;
+  background: rgba(255, 100, 0, 0.22);
+  bottom: 10%;
+  left: 20%;
+  animation-delay: -12s;
+}
+
+@keyframes blobFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(30px, -40px) scale(1.05);
+  }
+  50% {
+    transform: translate(-20px, 25px) scale(0.95);
+  }
+  75% {
+    transform: translate(25px, 35px) scale(1.02);
+  }
+}
+
+/* Grain overlay */
+.grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.04;
+}
+
+/* Floating embers */
+.ember-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffae42 0%, #e85d04 60%, transparent 100%);
+  box-shadow: 0 0 8px 2px rgba(232, 93, 4, 0.35);
+  opacity: 0;
+  animation: emberRise linear infinite;
+}
+
+.ember-1 { left: 10%; animation-duration: 10s; animation-delay: 0s; }
+.ember-2 { left: 22%; width: 3px; height: 3px; animation-duration: 13s; animation-delay: 2s; }
+.ember-3 { left: 35%; animation-duration: 11s; animation-delay: 4s; }
+.ember-4 { left: 48%; width: 5px; height: 5px; animation-duration: 15s; animation-delay: 1s; }
+.ember-5 { left: 62%; animation-duration: 12s; animation-delay: 3s; }
+.ember-6 { left: 75%; width: 3px; height: 3px; animation-duration: 14s; animation-delay: 5s; }
+.ember-7 { left: 85%; animation-duration: 10s; animation-delay: 6s; }
+.ember-8 { left: 95%; width: 4px; height: 4px; animation-duration: 16s; animation-delay: 2.5s; }
+
+@keyframes emberRise {
+  0% {
+    transform: translateY(100vh) scale(0.6);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(-10vh) scale(1.1);
+    opacity: 0;
+  }
+}
+
+/* Hero */
+.hero-section {
+  position: relative;
+}
+
+.hero-logo {
+  width: 140px;
+  height: 140px;
+  animation: gentleFloat 6s ease-in-out infinite;
+  filter: drop-shadow(0 20px 40px rgba(232, 93, 4, 0.25));
+}
+
+@keyframes gentleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* Buttons reuse global styles */
+
+/* Feature cards */
+.feature-card,
+.tech-card,
+.team-card,
+.arch-card,
+.footer-card {
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px var(--shadow-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.feature-card:hover,
+.tech-card:hover,
+.team-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(232, 93, 4, 0.12), 0 4px 12px var(--shadow-color);
+  border-color: rgba(232, 93, 4, 0.35);
+}
+
+.feature-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.875rem;
+  border: 1px solid;
+  margin-bottom: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+  transform: scale(1.08) rotate(-3deg);
+  box-shadow: 0 0 18px rgba(232, 93, 4, 0.2);
+}
+
+.feature-title,
+.tech-title,
+.team-name {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.feature-desc,
+.tech-desc,
+.team-role {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.tech-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.tech-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: rgba(232, 93, 4, 0.08);
+}
+
+/* Architecture card */
+.arch-card {
+  padding: 1.5rem;
+}
+
+.arch-card svg text {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Security list */
+.security-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.875rem;
+  padding: 1rem 1.1rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.security-item:hover {
+  transform: translateX(4px);
+  border-color: rgba(232, 93, 4, 0.35);
+}
+
+.security-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* Team cards */
+.team-card {
+  text-align: center;
+}
+
+.team-avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-bg-secondary);
+  border: 1px solid var(--border-color);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.team-card:hover .team-avatar {
+  transform: scale(1.08);
+  border-color: rgba(232, 93, 4, 0.35);
+}
+
+.team-role {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Footer card */
+.footer-card {
+  background: linear-gradient(135deg, rgba(232, 93, 4, 0.08), rgba(244, 140, 6, 0.05));
+}
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children inside revealed sections */
+.reveal .feature-card,
+.reveal .tech-card,
+.reveal .security-item,
+.reveal .team-card {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.reveal.in-view .feature-card,
+.reveal.in-view .tech-card,
+.reveal.in-view .security-item,
+.reveal.in-view .team-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal.in-view .feature-card:nth-child(1) { transition-delay: 0.05s; }
+.reveal.in-view .feature-card:nth-child(2) { transition-delay: 0.1s; }
+.reveal.in-view .feature-card:nth-child(3) { transition-delay: 0.15s; }
+.reveal.in-view .feature-card:nth-child(4) { transition-delay: 0.2s; }
+.reveal.in-view .tech-card:nth-child(1) { transition-delay: 0.05s; }
+.reveal.in-view .tech-card:nth-child(2) { transition-delay: 0.08s; }
+.reveal.in-view .tech-card:nth-child(3) { transition-delay: 0.11s; }
+.reveal.in-view .tech-card:nth-child(4) { transition-delay: 0.14s; }
+.reveal.in-view .tech-card:nth-child(5) { transition-delay: 0.17s; }
+.reveal.in-view .tech-card:nth-child(6) { transition-delay: 0.2s; }
+.reveal.in-view .tech-card:nth-child(7) { transition-delay: 0.23s; }
+.reveal.in-view .tech-card:nth-child(8) { transition-delay: 0.26s; }
+.reveal.in-view .security-item:nth-child(1) { transition-delay: 0.05s; }
+.reveal.in-view .security-item:nth-child(2) { transition-delay: 0.1s; }
+.reveal.in-view .security-item:nth-child(3) { transition-delay: 0.15s; }
+.reveal.in-view .security-item:nth-child(4) { transition-delay: 0.2s; }
+.reveal.in-view .security-item:nth-child(5) { transition-delay: 0.25s; }
+.reveal.in-view .security-item:nth-child(6) { transition-delay: 0.3s; }
+.reveal.in-view .security-item:nth-child(7) { transition-delay: 0.35s; }
+.reveal.in-view .security-item:nth-child(8) { transition-delay: 0.4s; }
+.reveal.in-view .team-card:nth-child(1) { transition-delay: 0.05s; }
+.reveal.in-view .team-card:nth-child(2) { transition-delay: 0.1s; }
+.reveal.in-view .team-card:nth-child(3) { transition-delay: 0.15s; }
+.reveal.in-view .team-card:nth-child(4) { transition-delay: 0.2s; }
+
+/* Code styling */
+code {
+  background: rgba(232, 93, 4, 0.1);
+  color: var(--accent);
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.375rem;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .hero-logo {
+    width: 110px;
+    height: 110px;
+  }
+}

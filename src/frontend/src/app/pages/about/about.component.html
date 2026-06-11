@@ -1,0 +1,290 @@
+<div class="about-page min-h-screen bg-body text-text-primary overflow-x-hidden relative">
+  <!-- Animated background -->
+  <div class="bg-mesh fixed inset-0 pointer-events-none z-0">
+    <div class="mesh-blob mesh-1"></div>
+    <div class="mesh-blob mesh-2"></div>
+    <div class="mesh-blob mesh-3"></div>
+  </div>
+
+  <div class="embers-layer fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+    <div class="ember-particle ember-1"></div>
+    <div class="ember-particle ember-2"></div>
+    <div class="ember-particle ember-3"></div>
+    <div class="ember-particle ember-4"></div>
+    <div class="ember-particle ember-5"></div>
+    <div class="ember-particle ember-6"></div>
+    <div class="ember-particle ember-7"></div>
+    <div class="ember-particle ember-8"></div>
+  </div>
+
+  <div class="grain-overlay fixed inset-0 pointer-events-none z-0 opacity-[0.03]"></div>
+
+  <main class="relative z-[1]">
+    <!-- Hero -->
+    <section class="hero-section min-h-[60vh] flex items-center justify-center px-6 py-20">
+      <div class="max-w-[900px] mx-auto text-center">
+        <div class="hero-logo mx-auto mb-6">
+          <img src="Ember_Exchange_Logo.png" alt="Ember Exchange" class="w-full h-full object-contain drop-shadow-2xl" />
+        </div>
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-5 bg-gradient-to-br from-accent to-[#f48c06] bg-clip-text text-transparent">
+          Ember Exchange
+        </h1>
+        <p class="text-lg md:text-xl text-text-secondary max-w-[650px] mx-auto mb-8 leading-relaxed">
+          A virtual marketplace and collection game where players collect stoves, trade on the marketplace, and play real-time multiplayer card games.
+        </p>
+        <div class="flex flex-wrap items-center justify-center gap-4">
+          <a routerLink="/register" class="btn-primary">Create Free Account</a>
+          <a routerLink="/how-it-works" class="btn-secondary">How It Works</a>
+        </div>
+        <p class="mt-6 text-sm text-text-muted">SYP 2026 — HTL Leonding · <a href="https://emberexchange.xyz" target="_blank" rel="noopener" class="text-accent hover:underline">emberexchange.xyz</a></p>
+      </div>
+    </section>
+
+    <!-- What is it -->
+    <section class="reveal px-6 py-16 md:py-24">
+      <div class="max-w-[1200px] mx-auto">
+        <div class="text-center mb-14">
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">What is EmberExchange?</h2>
+          <p class="text-text-secondary max-w-[650px] mx-auto">A full-stack web application built as a virtual economy and collection game.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="feature-card group">
+            <div class="feature-icon bg-red-500/10 border-red-500/20">
+              <img src="icon/lootboxes.png" alt="" class="w-7 h-7 object-contain" />
+            </div>
+            <h3 class="feature-title">Collect</h3>
+            <p class="feature-desc">Open lootboxes to discover unique stoves across multiple rarities.</p>
+          </div>
+          <div class="feature-card group">
+            <div class="feature-icon bg-purple-500/10 border-purple-500/20">
+              <img src="icon/marketplace.png" alt="" class="w-7 h-7 object-contain" />
+            </div>
+            <h3 class="feature-title">Trade</h3>
+            <p class="feature-desc">Buy, sell, and trade stoves in a player-driven coin economy.</p>
+          </div>
+          <div class="feature-card group">
+            <div class="feature-icon bg-orange-500/10 border-orange-500/20">
+              <img src="icon/the_forge.png" alt="" class="w-7 h-7 object-contain" />
+            </div>
+            <h3 class="feature-title">Upgrade</h3>
+            <p class="feature-desc">Merge six stoves of the same rarity in the Forge to forge rarer ones.</p>
+          </div>
+          <div class="feature-card group">
+            <div class="feature-icon bg-yellow-500/10 border-yellow-500/20">
+              <img src="icon/games.png" alt="" class="w-7 h-7 object-contain" />
+            </div>
+            <h3 class="feature-title">Play</h3>
+            <p class="feature-desc">Join real-time Poker, Blackjack, and Roulette rooms.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="reveal px-6 py-16 md:py-24 bg-surface/50 border-y border-border">
+      <div class="max-w-[1200px] mx-auto">
+        <div class="text-center mb-14">
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">Tech Stack</h2>
+          <p class="text-text-secondary max-w-[650px] mx-auto">Built with modern, battle-tested technologies.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="tech-card">
+            <div class="tech-icon text-red-500">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <h3 class="tech-title">Angular 21</h3>
+            <p class="tech-desc">Standalone components, signals-based reactivity, lazy-loaded routes.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon text-cyan-400">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M12 13v8"/><path d="M8 21h8"/></svg>
+            </div>
+            <h3 class="tech-title">Tailwind CSS v4</h3>
+            <p class="tech-desc">Utility-first styling with custom design tokens and dark ember theme.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon text-green-500">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M6 12h.01M6 16h.01"/></svg>
+            </div>
+            <h3 class="tech-title">Express.js 5.2</h3>
+            <p class="tech-desc">TypeScript 5.9 backend with 37 REST API routers.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon text-blue-400">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+            </div>
+            <h3 class="tech-title">PostgreSQL</h3>
+            <p class="tech-desc">Neon serverless Postgres with <code>pg</code> connection pooling.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon text-yellow-400">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            </div>
+            <h3 class="tech-title">WebSocket</h3>
+            <p class="tech-desc">Real-time game rooms and chat via the <code>ws</code> library.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon text-emerald-400">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <h3 class="tech-title">Swagger / OpenAPI</h3>
+            <p class="tech-desc">Interactive API docs auto-generated from JSDoc comments.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon text-pink-400">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <h3 class="tech-title">Jest</h3>
+            <p class="tech-desc">Sequential backend test suites with <code>ts-jest</code>.</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon text-indigo-400">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            </div>
+            <h3 class="tech-title">Render</h3>
+            <p class="tech-desc">Auto-deploy from <code>main</code> branch to a Render Web Service.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture -->
+    <section class="reveal px-6 py-16 md:py-24">
+      <div class="max-w-[1100px] mx-auto">
+        <div class="text-center mb-12">
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">System Architecture</h2>
+          <p class="text-text-secondary max-w-[650px] mx-auto">From the browser to the database.</p>
+        </div>
+
+        <div class="arch-card p-6 md:p-10">
+          <svg viewBox="0 0 900 340" class="w-full h-auto" aria-label="Architecture diagram">
+            <rect x="350" y="10" width="200" height="55" rx="10" fill="rgba(232,93,4,0.2)" stroke="#e85d04" stroke-width="2"/>
+            <text x="450" y="35" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">Browser Client</text>
+            <text x="450" y="53" text-anchor="middle" fill="#ccc" font-size="11">Angular 21 + Tailwind</text>
+
+            <rect x="50" y="85" width="800" height="210" rx="14" fill="rgba(232,93,4,0.06)" stroke="#e85d04" stroke-width="2" stroke-dasharray="6,4"/>
+            <text x="70" y="110" fill="#e85d04" font-size="13" font-weight="bold">Render Web Service</text>
+
+            <rect x="80" y="125" width="180" height="55" rx="8" fill="rgba(232,93,4,0.15)" stroke="#e85d04"/>
+            <text x="170" y="150" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Static Frontend</text>
+            <text x="170" y="168" text-anchor="middle" fill="#ccc" font-size="10">dist/ember-frontend</text>
+
+            <rect x="320" y="125" width="220" height="55" rx="8" fill="rgba(232,93,4,0.15)" stroke="#e85d04"/>
+            <text x="430" y="150" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Express.js Backend</text>
+            <text x="430" y="168" text-anchor="middle" fill="#ccc" font-size="10">REST API + middleware</text>
+
+            <rect x="590" y="125" width="200" height="55" rx="8" fill="rgba(232,93,4,0.15)" stroke="#e85d04"/>
+            <text x="690" y="150" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">WebSocket Server</text>
+            <text x="690" y="168" text-anchor="middle" fill="#ccc" font-size="10">/ws — game rooms & chat</text>
+
+            <rect x="200" y="205" width="220" height="55" rx="8" fill="rgba(232,93,4,0.15)" stroke="#e85d04"/>
+            <text x="310" y="230" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Service Layer</text>
+            <text x="310" y="248" text-anchor="middle" fill="#ccc" font-size="10">50+ domain services</text>
+
+            <rect x="480" y="205" width="220" height="55" rx="8" fill="rgba(232,93,4,0.15)" stroke="#e85d04"/>
+            <text x="590" y="230" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Game Engines</text>
+            <text x="590" y="248" text-anchor="middle" fill="#ccc" font-size="10">Poker / Blackjack / Roulette</text>
+
+            <rect x="320" y="290" width="220" height="45" rx="8" fill="rgba(30,144,255,0.15)" stroke="#1e90ff" stroke-width="2"/>
+            <text x="430" y="315" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">PostgreSQL (Neon)</text>
+
+            <line x1="450" y1="65" x2="170" y2="125" stroke="#e85d04" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="450" y1="65" x2="430" y2="125" stroke="#e85d04" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="450" y1="65" x2="690" y2="125" stroke="#e85d04" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="430" y1="180" x2="310" y2="205" stroke="#e85d04" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="430" y1="180" x2="590" y2="205" stroke="#e85d04" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="310" y1="260" x2="430" y2="290" stroke="#e85d04" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="590" y1="260" x2="430" y2="290" stroke="#e85d04" stroke-width="2" marker-end="url(#arrow)"/>
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#e85d04"/>
+              </marker>
+            </defs>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Security -->
+    <section class="reveal px-6 py-16 md:py-24 bg-surface/50 border-y border-border">
+      <div class="max-w-[1000px] mx-auto">
+        <div class="text-center mb-12">
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">Security Highlights</h2>
+          <p class="text-text-secondary max-w-[650px] mx-auto">Multiple layers of protection for players and data.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="security-item"><span class="security-dot bg-red-500"></span>Rate limiting on auth, registration, and 2FA</div>
+          <div class="security-item"><span class="security-dot bg-orange-500"></span>Cloudflare Turnstile bot challenge</div>
+          <div class="security-item"><span class="security-dot bg-yellow-500"></span>Behavior guard & honeypot decoys</div>
+          <div class="security-item"><span class="security-dot bg-green-500"></span>IP banning via <code>BannedIP</code> table</div>
+          <div class="security-item"><span class="security-dot bg-teal-500"></span>Prototype pollution protection</div>
+          <div class="security-item"><span class="security-dot bg-blue-500"></span>CORS whitelist + Helmet headers</div>
+          <div class="security-item"><span class="security-dot bg-indigo-500"></span>Request & security event logging</div>
+          <div class="security-item"><span class="security-dot bg-purple-500"></span>WebSocket hardening (IP limits, payload caps)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team -->
+    <section class="reveal px-6 py-16 md:py-24">
+      <div class="max-w-[1000px] mx-auto">
+        <div class="text-center mb-14">
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">Meet the Team</h2>
+          <p class="text-text-secondary max-w-[650px] mx-auto">SYP 2026 — HTL Leonding</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="team-card">
+            <div class="team-avatar">
+              <svg class="w-10 h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3 class="team-name">David Frühwirt</h3>
+            <p class="team-role">Full-Stack Developer</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">
+              <svg class="w-10 h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3 class="team-name">Muhammad Ayan</h3>
+            <p class="team-role">Full-Stack Developer</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">
+              <svg class="w-10 h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3 class="team-name">Timon Brindl</h3>
+            <p class="team-role">Full-Stack Developer</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">
+              <svg class="w-10 h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3 class="team-name">Laurenz Pühringer</h3>
+            <p class="team-role">Full-Stack Developer</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Links / footer -->
+    <section class="reveal px-6 py-16 md:py-20">
+      <div class="max-w-[900px] mx-auto">
+        <div class="footer-card text-center p-8 md:p-12">
+          <h2 class="text-2xl md:text-3xl font-extrabold mb-4">Explore More</h2>
+          <p class="text-text-secondary mb-8 max-w-[500px] mx-auto">Check out the API documentation, follow the update log, or get in touch.</p>
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <a href="/api-docs" target="_blank" rel="noopener" class="btn-primary">API Docs</a>
+            <a routerLink="/update-log" class="btn-secondary">Update Log</a>
+            <a routerLink="/support" class="btn-secondary">Support</a>
+            <a routerLink="/terms" class="btn-secondary">Terms</a>
+            <a routerLink="/privacy" class="btn-secondary">Privacy</a>
+          </div>
+          <p class="mt-8 text-xs text-text-muted">Built with Angular, Express, PostgreSQL, and a lot of embers.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
