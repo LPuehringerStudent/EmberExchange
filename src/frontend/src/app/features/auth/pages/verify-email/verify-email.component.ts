@@ -11,11 +11,11 @@ import { AuthService } from '@core/services/auth.service';
     <div class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#1a0f0a] via-[#2d1b14] to-[#1a0f0a]">
       <div class="relative z-10 w-full max-w-[480px] bg-surface/95 backdrop-blur-lg rounded-3xl p-10 border-2 border-accent/25 shadow-[0_25px_80px_rgba(0,0,0,0.5)] text-center">
         @if (isLoading()) {
-          <div class="text-5xl mb-5 animate-pulse">🔥</div>
-          <h1 class="text-[1.85rem] font-bold mb-3 bg-gradient-to-br from-accent via-[#f48c06] to-[#ffba08] bg-clip-text text-transparent">
-            Verifying...
-          </h1>
-          <p class="text-text-secondary">Please wait while we verify your email.</p>
+          <div class="space-y-4">
+            <div class="mx-auto h-16 w-16 rounded-full skeleton-shimmer"></div>
+            <div class="h-8 w-56 mx-auto rounded skeleton-shimmer"></div>
+            <div class="h-4 w-72 max-w-full mx-auto rounded skeleton-shimmer"></div>
+          </div>
         } @else if (isSuccess()) {
           <div class="text-5xl mb-5">✅</div>
           <h1 class="text-[1.85rem] font-bold mb-3 bg-gradient-to-br from-accent via-[#f48c06] to-[#ffba08] bg-clip-text text-transparent">
