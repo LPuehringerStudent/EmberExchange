@@ -92,6 +92,7 @@ export class RouletteComponent {
   readonly showBall = signal<boolean>(false);
   readonly ballBounce = signal<boolean>(false);
   readonly resultRevealed = signal<boolean>(false);
+  readonly wheelSpinning = signal<boolean>(false);
 
   readonly wheelOrder = WHEEL_ORDER;
 
@@ -115,6 +116,9 @@ export class RouletteComponent {
         this.showBall.set(false);
         this.ballBounce.set(false);
         this.resultRevealed.set(false);
+
+        this.wheelSpinning.set(false);
+        this.clearRevealTimer();
       }
       lastPhase = phase;
 
@@ -123,14 +127,54 @@ export class RouletteComponent {
         lastWinningNumber = num;
         this.resultRevealed.set(false);
         this.animateToNumber(num);
-        // Reveal result after wheel animation finishes
-        setTimeout(() => this.resultRevealed.set(true), 3600);
+
+        this.clearRevealTimer();
+        this.revealTimer = setTimeout(() => this.revealRound(), WHEEL_SPIN_MS + 250);
       }
 
       if (phase === 'betting') {
         lastWinningNumber = null;
       }
     });
+  }
+
+
+  private clearRevealTimer(): void {
+    if (this.revealTimer) {
+      clearTimeout(this.revealTimer);
+      this.revealTimer = null;
+    }
+  }
+
+  private playersBeforePayout(): RoulettePlayerView[] {
+    const settledPlayers = this.players();
+
+    return settledPlayers.map((player) => {
+      const winner = this.getWinnerForPlayer(player.playerId);
+      const displayedStack = Math.max(0, player.stack - (winner?.amount ?? 0));
+
+      return {
+        ...player,
+        stack: displayedStack,
+        result: 'playing',
+      };
+    });
+  }
+
+  private revealRound(): void {
+    if (this.resultRevealed()) return;
+    this.wheelSpinning.set(false);
+    this.resultRevealed.set(true);
+    this.displayPlayers.set(this.players());
+    this.patchHeaderCoinsFromDisplay();
+    this.clearRevealTimer();
+  }
+
+  private patchHeaderCoinsFromDisplay(): void {
+    const me = this.displayPlayers().find((player) => player.playerId === this.myPlayerId());
+    if (me) {
+      this.auth.patchCurrentUserCoins(me.stack);
+    }
   }
 
   private animateToNumber(num: number): void {
@@ -150,6 +194,7 @@ export class RouletteComponent {
 
     // Always spin at least 5 full rotations + the delta
     const nextRotation = current - (360 * 5 + visualDelta);
+    this.wheelSpinning.set(true);
 
     this.showBall.set(true);
 
@@ -166,6 +211,11 @@ export class RouletteComponent {
       this.ballBounce.set(true);
       setTimeout(() => this.ballBounce.set(false), 800);
     }, 3600);
+  }
+
+  onWheelTransitionEnd(event: TransitionEvent): void {
+    if (event.propertyName !== 'transform' || !this.wheelSpinning()) return;
+    this.revealRound();
   }
 
   getSegmentPath(index: number): string {

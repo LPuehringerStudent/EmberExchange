@@ -24,7 +24,7 @@
             {{ formatBets(player.bets) }}
           </span>
         }
-        @if (player.result !== 'playing') {
+        @if (resultRevealed() && player.result !== 'playing') {
           <span class="rl-player-result" [class.rl-player-result--won]="player.result === 'won'"
             [class.rl-player-result--lost]="player.result === 'lost'">
             {{ player.result === 'won' ? 'Won!' : 'Lost' }}
@@ -39,7 +39,8 @@
     <!-- Wheel Section -->
     <div class="rl-wheel-section">
       <div class="rl-wheel-wrapper">
-        <div class="rl-wheel-rotator" [style.transform]="'rotate(' + wheelRotation() + 'deg)'">
+        <div class="rl-wheel-rotator" [style.transform]="'rotate(' + wheelRotation() + 'deg)'"
+          (transitionend)="onWheelTransitionEnd($event)">
           <svg viewBox="0 0 220 220" class="rl-wheel-svg">
             <!-- Defs for gradients -->
             <defs>
