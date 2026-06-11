@@ -89,9 +89,9 @@ export class SparksService {
         const newBalance = (player.sparks ?? 0) + sparksAwarded;
 
         // Clean up dependent records before deleting stove
-        // PinnedStove has a hard FK reference — must delete first
+        // GloryShowcase has a hard FK reference to Stove — must delete first
         await this.unit.prepare(
-            `DELETE FROM PinnedStove WHERE stoveId = @stoveId`,
+            `DELETE FROM GloryShowcase WHERE stoveId = @stoveId`,
             { stoveId }
         ).run();
 
