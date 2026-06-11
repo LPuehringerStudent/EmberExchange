@@ -1,9 +1,38 @@
 <div class="quests-page">
   <!-- Loading -->
   @if (loading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading quests...</p>
+    <div class="hero-section space-y-6">
+      <div class="hero-header space-y-3">
+        <div class="h-8 w-48 rounded skeleton-shimmer"></div>
+        <div class="h-4 w-80 max-w-full rounded skeleton-shimmer"></div>
+      </div>
+      <div class="hero-dashboard">
+        @for (_ of [0, 1]; track $index) {
+          <div class="ring-card">
+            <div class="ring-wrap">
+              <div class="w-[120px] h-[120px] rounded-full skeleton-shimmer"></div>
+            </div>
+          </div>
+        }
+        <div class="hero-info space-y-4">
+          <div class="flex flex-wrap gap-2">
+            @for (_ of [0, 1, 2]; track $index) {
+              <div class="h-7 w-28 rounded-full skeleton-shimmer"></div>
+            }
+          </div>
+          <div class="h-12 w-56 rounded-xl skeleton-shimmer"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        @for (_ of [0, 1, 2, 3]; track $index) {
+          <div class="h-10 rounded-xl skeleton-shimmer"></div>
+        }
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @for (_ of [0, 1, 2, 3]; track $index) {
+          <div class="h-52 rounded-2xl skeleton-shimmer"></div>
+        }
+      </div>
     </div>
   }
 
