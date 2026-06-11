@@ -235,3 +235,46 @@
 @media (max-width: 1024px) {
   .activity-panel { position: relative !important; top: 0 !important; }
 }
+
+@media (max-width: 640px) {
+  .dashboard-header { padding-top: 1.5rem; }
+  .stats-row { grid-template-columns: 1fr; }
+}
+
+/* ============================================
+   ICON CLEANUP — No background boxes, bigger
+   ============================================ */
+
+/* Feature cards: remove background/border from icon wrapper, keep layout */
+.feature-card .w-11.h-11.rounded-xl {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Enlarge feature card icons, keep aspect ratio */
+.feature-card .w-11.h-11.rounded-xl img,
+.feature-card .w-11.h-11.rounded-xl svg {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+  display: block;
+}
+
+/* Stat pills: remove background/border from icon wrapper, keep layout */
+.stat-pill .stat-icon-wrap {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Enlarge stat pill icons, keep aspect ratio */
+.stat-pill .stat-icon-wrap img,
+.stat-pill .stat-icon-wrap svg {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+  display: block;
+}
