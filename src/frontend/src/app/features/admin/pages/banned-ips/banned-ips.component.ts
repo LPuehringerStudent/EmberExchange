@@ -69,7 +69,17 @@ import { AdminService, type BannedIPRecord } from '@core/services/admin.service'
 
       <!-- Ban List -->
       @if (loading()) {
-        <div class="text-text-secondary">Loading bans...</div>
+        <div class="bg-surface rounded-xl border border-[rgba(232,93,4,0.15)] overflow-hidden">
+          <div class="p-4 space-y-3">
+            @for (_ of [0, 1, 2, 3, 4]; track $index) {
+              <div class="grid grid-cols-5 gap-3">
+                @for (__ of [0, 1, 2, 3, 4]; track $index) {
+                  <div class="h-4 rounded skeleton-shimmer"></div>
+                }
+              </div>
+            }
+          </div>
+        </div>
       } @else if (error()) {
         <div class="text-red-400">{{ error() }}</div>
       } @else if (bans().length === 0) {
