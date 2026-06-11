@@ -18,9 +18,18 @@
   }
 
   @if (loading()) {
-    <div class="flex flex-col items-center justify-center py-20 px-5 text-text-secondary text-center">
-      <div class="w-10 h-10 border-[3px] border-accent/20 border-t-accent rounded-full animate-spin mb-4"></div>
-      <p class="text-lg font-semibold text-text-primary m-0 mb-2">Loading collections...</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (_ of [1, 2, 3, 4, 5, 6]; track $index) {
+        <div class="skeleton-card p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="skeleton-shimmer h-6 rounded-md w-32"></div>
+            <div class="skeleton-shimmer h-6 rounded-full w-16"></div>
+          </div>
+          <div class="skeleton-shimmer h-3 rounded-full w-full"></div>
+          <div class="skeleton-shimmer h-3 rounded-md w-44"></div>
+          <div class="skeleton-shimmer h-4 rounded-md w-56"></div>
+        </div>
+      }
     </div>
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
