@@ -428,7 +428,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
     setTimeout(() => {
       this.playingGif.set(false);
-      this.lootBoxHelper.buildStripFor(result.rarity);
+      this.lootBoxHelper.buildStripFor(result.rarity, result.imageUrl);
       this.items = this.lootBoxHelper.items;
       this.finalItem = this.lootBoxHelper.finalItem;
       this.showOverlay.set(true);

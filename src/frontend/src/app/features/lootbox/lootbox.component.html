@@ -253,18 +253,35 @@
     aria-modal="true"
     aria-label="Rolling for your reward">
 
-    <div class="flex flex-col items-center gap-3">
-      <p class="text-[13px] font-semibold tracking-[2px] uppercase text-white/55 m-0" aria-live="polite">Rolling your reward…</p>
+    <div class="roller-stage">
+      <p class="roller-title" aria-live="polite">
+        Rolling your reward
+        <span class="roller-dots"><span>.</span><span>.</span><span>.</span></span>
+      </p>
 
-      <div id="roller">
-        <div id="marker" aria-hidden="true"></div>
-        <div id="items" #itemsContainer>
-          @for (item of items; track item.name) {
-            <div class="item" [style.background]="item.color">{{ item.name }}</div>
-          }
+      <div class="roller-frame">
+        <div class="roller-lights" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="roller-window">
+          <div id="marker" aria-hidden="true"></div>
+          <div id="items" #itemsContainer>
+            @for (item of items; track $index) {
+              <div class="item" [class]="'item--' + item.rarity">
+                <div class="item-glow" aria-hidden="true"></div>
+                <div class="item-image">
+                  <img [src]="item.image" [alt]="item.label" loading="eager" />
+                </div>
+                <span class="item-label">{{ item.label }}</span>
+              </div>
+            }
+          </div>
         </div>
       </div>
 
+      <p class="roller-hint">Good luck!</p>
     </div>
 
   </div>
