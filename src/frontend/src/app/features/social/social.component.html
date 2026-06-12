@@ -37,6 +37,7 @@
         (onMakeOffer)="showTradeOfferModal.set(true)"
         (onAcceptOffer)="acceptTradeOffer($event)"
         (onDeclineOffer)="declineTradeOffer($event)"
+        (onInspectStove)="inspectStoveFromOffer($event)"
       />
     }
   </div>
@@ -56,6 +57,17 @@
     [items]="tradeItems()"
     (onClose)="showTradeOfferModal.set(false)"
     (onSubmit)="makeTradeOffer($event)"
+  />
+}
+
+<!-- Stove Inspect Modal -->
+@if (showInspectModal() && inspectStove()) {
+  <app-stove-detail
+    [stove]="inspectStove()!"
+    [sparksBalance]="0"
+    [isListed]="false"
+    [readOnly]="true"
+    (onClose)="closeInspectModal()"
   />
 }
 </app-page-background>

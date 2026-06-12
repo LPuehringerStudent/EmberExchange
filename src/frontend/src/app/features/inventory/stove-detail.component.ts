@@ -77,10 +77,11 @@ const REROLL_BASE_COST: Record<string, number> = {
           </div>
 
           <!-- Actions -->
-          @if (!isListed()) {
-            <div class="flex flex-col gap-2">
-              <!-- Action buttons row -->
-              <div class="grid grid-cols-3 gap-2">
+          @if (!readOnly()) {
+            @if (!isListed()) {
+              <div class="flex flex-col gap-2">
+                <!-- Action buttons row -->
+                <div class="grid grid-cols-3 gap-2">
                 <button (click)="toggleAction('sell')" [class.ring-2]="activeAction() === 'sell'"
                   class="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-gradient-to-br from-[#e85d04] to-[#f48c06] text-white text-xs font-semibold border-none cursor-pointer transition-all hover:-translate-y-0.5">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
@@ -158,6 +159,7 @@ const REROLL_BASE_COST: Record<string, number> = {
               <p class="text-xs text-text-secondary m-0 mt-1">Cancel the listing to perform actions.</p>
             </div>
           }
+          }
         </div>
       </div>
     </div>
@@ -168,6 +170,7 @@ export class StoveDetailComponent {
   stove = input.required<ShowedStove>();
   sparksBalance = input.required<number>();
   isListed = input.required<boolean>();
+  readOnly = input<boolean>(false);
 
   onClose = output<void>();
   onSell = output<number>();

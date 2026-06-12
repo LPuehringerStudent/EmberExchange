@@ -15,8 +15,9 @@ import { FriendListComponent, type FriendWithPreview, type MarketplaceThread } f
 import { ChatThreadComponent } from './chat-thread.component';
 import { AddFriendModalComponent } from './add-friend-modal.component';
 import { TradeOfferModalComponent, type TradeableItem } from './trade-offer-modal.component';
-import type { FriendWithUser, ChatMessageRow } from '@shared/model';
+import type { FriendWithUser, ChatMessageRow, ShowedStove } from '@shared/model';
 import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
+import { StoveDetailComponent } from '../inventory/stove-detail.component';
 
 @Component({
   selector: 'app-social',
@@ -26,7 +27,9 @@ import { PageBackgroundComponent } from "../../shared/components/page-background
     FriendListComponent,
     ChatThreadComponent,
     AddFriendModalComponent,
-    TradeOfferModalComponent, PageBackgroundComponent,
+    TradeOfferModalComponent,
+    PageBackgroundComponent,
+    StoveDetailComponent,
   ],
   templateUrl: './social.component.html',
   styleUrl: './social.component.css',
@@ -53,6 +56,12 @@ export class SocialComponent implements OnInit, OnDestroy {
   showTradeOfferModal = signal(false);
   tradeItems = signal<TradeableItem[]>([]);
   currentPlayerId = signal(0);
+
+  // Stove inspection from trade offers
+  showInspectModal = signal(false);
+  inspectStove = signal<ShowedStove | null>(null);
+  inspectLoading = signal(false);
+  inspectError = signal<string | null>(null);
 
   /* ── Marketplace messages ── */
   marketplaceThreads = signal<MarketplaceThread[]>([]);
@@ -321,6 +330,38 @@ export class SocialComponent implements OnInit, OnDestroy {
       console.error('Failed to decline trade offer:', err);
       this.toast.error('Failed to decline trade offer');
     }
+  }
+
+  async inspectStoveFromOffer(stoveId: number): Promise<void> {
+    this.inspectLoading.set(true);
+    this.inspectError.set(null);
+    try {
+      const stove = await firstValueFrom(this.stoveService.getStoveById(stoveId));
+      const type = await firstValueFrom(this.stoveService.getStoveTypeById(stove.typeId));
+
+      const showedStove: ShowedStove = {
+        ...stove,
+        stoveId: stove.stoveId,
+        stoveName: type.name,
+        rarity: type.rarity,
+        imageUrl: type.imageUrl ?? '',
+        collection: type.collection ?? 'Unknown'
+      };
+
+      this.inspectStove.set(showedStove);
+      this.showInspectModal.set(true);
+    } catch (err) {
+      console.error('Failed to inspect stove:', err);
+      this.toast.error('Failed to load stove details');
+    } finally {
+      this.inspectLoading.set(false);
+    }
+  }
+
+  closeInspectModal(): void {
+    this.showInspectModal.set(false);
+    this.inspectStove.set(null);
+    this.inspectError.set(null);
   }
 
   viewGlory(friendPlayerId: number): void {

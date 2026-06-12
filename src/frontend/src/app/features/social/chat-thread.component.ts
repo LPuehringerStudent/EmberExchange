@@ -46,7 +46,23 @@ import type { ChatMessageRow } from '@shared/model';
                 <p class="text-xs font-semibold text-accent mb-2">TRADE OFFER</p>
                 <p class="text-sm text-text-primary mb-2">{{ msg.content }}</p>
                 <div class="text-sm text-text-secondary mb-3">
-                  <p>Item: {{ $any(msg.data)['itemType'] | titlecase }} #{{ $any(msg.data)['itemId'] }}</p>
+                  <p class="flex items-center gap-2">
+                    Item: {{ $any(msg.data)['itemType'] | titlecase }} #{{ $any(msg.data)['itemId'] }}
+                    @if ($any(msg.data)['itemType'] === 'stove') {
+                      <button
+                        (click)="onInspectStove.emit($any(msg.data)['itemId']); $event.stopPropagation()"
+                        class="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
+                      >
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="11" cy="11" r="8"/>
+                          <path d="m21 21-4.35-4.35"/>
+                          <path d="M11 8v6"/>
+                          <path d="M8 11h6"/>
+                        </svg>
+                        Inspect
+                      </button>
+                    }
+                  </p>
                   <p>Price: {{ $any(msg.data)['price'] }} Coal</p>
                 </div>
                 @if (msg.senderId !== currentPlayerId() && $any(msg.data)['status'] === 'pending') {
@@ -136,6 +152,7 @@ export class ChatThreadComponent implements AfterViewChecked {
   onMakeOffer = output<void>();
   onAcceptOffer = output<number>();
   onDeclineOffer = output<number>();
+  onInspectStove = output<number>();
 
   private messagesContainer = viewChild<HTMLDivElement>('messagesContainer');
   private shouldScroll = false;
