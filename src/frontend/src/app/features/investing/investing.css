@@ -4,21 +4,21 @@
 
 :host {
   --color-body: transparent;
-  --color-surface: rgba(255, 255, 255, 0.03);
-  --color-surface-raised: rgba(255, 255, 255, 0.06);
-  --color-surface-hover: rgba(255, 255, 255, 0.08);
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-strong: rgba(255, 255, 255, 0.12);
-  --color-text-primary: #f0f0f5;
-  --color-text-secondary: #a0a0b8;
-  --color-text-muted: #6c6c85;
-  --color-accent: #e85d04;
-  --color-accent-light: #ff7b00;
-  --color-accent-glow: rgba(232, 93, 4, 0.15);
-  --color-green: #22c55e;
-  --color-green-dim: rgba(34, 197, 94, 0.15);
-  --color-red: #ef4444;
-  --color-red-dim: rgba(239, 68, 68, 0.15);
+  --color-surface: var(--surface-bg);
+  --color-surface-raised: var(--surface-bg-secondary);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border-color);
+  --color-border-strong: color-mix(in srgb, var(--border-color) 80%, var(--text-muted));
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent);
+  --color-accent-glow: var(--accent-glow);
+  --color-green: var(--success-text);
+  --color-green-dim: var(--success-bg);
+  --color-red: var(--danger-text);
+  --color-red-dim: var(--danger-bg);
 
   display: block;
   min-height: 100vh;

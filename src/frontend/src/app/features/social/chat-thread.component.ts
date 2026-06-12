@@ -41,30 +41,54 @@ import type { ChatMessageRow } from '@shared/model';
                 [class.border-accent]="msg.senderId === currentPlayerId()"
                 [class.bg-surface]="msg.senderId !== currentPlayerId()"
                 [class.border-border]="msg.senderId !== currentPlayerId()"
-                class="max-w-[75%] rounded-2xl p-4 border"
+                class="max-w-[80%] rounded-2xl p-4 border"
               >
                 <p class="text-xs font-semibold text-accent mb-2">TRADE OFFER</p>
-                <p class="text-sm text-text-primary mb-2">{{ msg.content }}</p>
-                <div class="text-sm text-text-secondary mb-3">
-                  <p class="flex items-center gap-2">
-                    Item: {{ $any(msg.data)['itemType'] | titlecase }} #{{ $any(msg.data)['itemId'] }}
-                    @if ($any(msg.data)['itemType'] === 'stove') {
-                      <button
-                        (click)="onInspectStove.emit($any(msg.data)['itemId']); $event.stopPropagation()"
-                        class="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
-                      >
-                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <circle cx="11" cy="11" r="8"/>
-                          <path d="m21 21-4.35-4.35"/>
-                          <path d="M11 8v6"/>
-                          <path d="M8 11h6"/>
-                        </svg>
-                        Inspect
-                      </button>
+
+                <!-- Compact item card -->
+                <div class="flex items-center gap-3 mb-3 p-2 rounded-xl bg-body/50 border border-border/50">
+                  @if ($any(msg.data)['itemImageUrl']) {
+                    <img
+                      [src]="$any(msg.data)['itemImageUrl']"
+                      [alt]="$any(msg.data)['itemName'] || 'Item'"
+                      class="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0"
+                    />
+                  } @else {
+                    <div class="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center text-accent font-bold text-sm shrink-0">
+                      {{ $any(msg.data)['itemType'] === 'stove' ? 'S' : 'L' }}
+                    </div>
+                  }
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-text-primary truncate">
+                      {{ $any(msg.data)['itemName'] || (($any(msg.data)['itemType'] | titlecase) + ' #' + $any(msg.data)['itemId']) }}
+                    </p>
+                    @if ($any(msg.data)['itemRarity']) {
+                      <span class="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent font-medium">
+                        {{ $any(msg.data)['itemRarity'] | titlecase }}
+                      </span>
+                    } @else {
+                      <p class="text-xs text-text-secondary">{{ $any(msg.data)['itemType'] | titlecase }}</p>
                     }
-                  </p>
-                  <p>Price: {{ $any(msg.data)['price'] }} Coal</p>
+                  </div>
+                  @if ($any(msg.data)['itemType'] === 'stove') {
+                    <button
+                      (click)="onInspectStove.emit($any(msg.data)['itemId']); $event.stopPropagation()"
+                      class="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/80 transition-colors shrink-0"
+                      title="Inspect stove"
+                    >
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                        <path d="M11 8v6"/>
+                        <path d="M8 11h6"/>
+                      </svg>
+                      Inspect
+                    </button>
+                  }
                 </div>
+
+                <p class="text-sm font-medium text-text-primary mb-3">{{ $any(msg.data)['price'] }} Coal</p>
+
                 @if (msg.senderId !== currentPlayerId() && $any(msg.data)['status'] === 'pending') {
                   <div class="flex gap-2">
                     <button
@@ -82,8 +106,8 @@ import type { ChatMessageRow } from '@shared/model';
                   </div>
                 } @else if ($any(msg.data)['status']) {
                   <p class="text-xs font-medium"
-                    [class.text-success]="$any(msg.data)['status'] === 'accepted'"
-                    [class.text-danger]="$any(msg.data)['status'] === 'declined'"
+                    [class.text-green-500]="$any(msg.data)['status'] === 'accepted'"
+                    [class.text-red-500]="$any(msg.data)['status'] === 'declined'"
                   >
                     {{ $any(msg.data)['status'] | titlecase }}
                   </p>

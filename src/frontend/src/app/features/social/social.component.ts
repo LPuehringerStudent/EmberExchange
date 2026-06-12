@@ -291,6 +291,9 @@ export class SocialComponent implements OnInit, OnDestroy {
           {
             itemType: offer.item.type,
             itemId: offer.item.id,
+            itemName: offer.item.name,
+            itemImageUrl: offer.item.imageUrl,
+            itemRarity: offer.item.rarity,
             price: offer.price,
             status: 'pending'
           }

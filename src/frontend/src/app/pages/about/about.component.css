@@ -143,6 +143,47 @@
 
 /* Buttons reuse global styles */
 
+/* Quick highlights bridge */
+.highlights-bridge {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.highlight-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  box-shadow: 0 4px 16px var(--shadow-color);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.highlight-pill:hover {
+  transform: translateY(-3px);
+  border-color: rgba(232, 93, 4, 0.35);
+  box-shadow: 0 8px 22px rgba(232, 93, 4, 0.1), 0 4px 12px var(--shadow-color);
+  color: var(--text-primary);
+}
+
+.highlight-icon {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid;
+  flex-shrink: 0;
+}
+
 /* Feature cards */
 .feature-card,
 .tech-card,

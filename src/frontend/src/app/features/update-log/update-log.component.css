@@ -1,1 +1,14 @@
-/* Migrated to Tailwind CSS — styles now live in global styles.css */
+:host {
+  display: block;
+}
+
+/* Let the ember page background show through the card surfaces */
+.update-page .bg-surface {
+  background-color: color-mix(in srgb, var(--surface-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+/* Keep secondary surfaces slightly more solid so nested content stays readable */
+.update-page .bg-surface-secondary {
+  background-color: color-mix(in srgb, var(--surface-bg-secondary) 92%, transparent);
+}
