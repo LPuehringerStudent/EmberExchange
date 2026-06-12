@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
+import { execSync } from "child_process";
 import {
     GitHubCommit,
     GitHubContributor,
@@ -11,6 +12,17 @@ import {
 
 const OWNER = "LPuehringerStudent";
 const REPO = "EmberExchange";
+
+// Map git author names to GitHub logins so the update log shows the
+// real local commit counts even when code was pulled in manually.
+const GIT_AUTHOR_TO_LOGIN: Record<string, string> = {
+    "Muhammad Ayan": "ayan2310",
+    "LPuehringerStudent": "LPuehringerStudent",
+    "ayan2310": "ayan2310",
+    "David-Fruehwirt": "David-Fruehwirt",
+    "Timon-Brindl": "Timon-Brindl",
+    "dependabot[bot]": "dependabot[bot]",
+};
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function handleAxiosError(err: unknown): never {
@@ -118,31 +130,66 @@ export class GitHubService {
         if (cached) return cached;
 
         try {
-            const response = await this.client.get(
-                `/repos/${OWNER}/${REPO}/contributors`
-            );
+            // Count commits from the local git history so the numbers stay
+            // accurate even when code is merged manually instead of via GitHub.
+            const shortlog = execSync("git shortlog -sn HEAD", {
+                cwd: process.cwd(),
+                encoding: "utf-8",
+                timeout: 10000,
+            });
 
-        const contributors: GitHubContributor[] = response.data.map(
-            (c: unknown) => {
-                const contributor = c as {
-                    login: string;
-                    avatar_url: string;
-                    html_url: string;
-                    contributions: number;
-                };
-                return {
-                    login: contributor.login,
-                    avatarUrl: contributor.avatar_url,
-                    htmlUrl: contributor.html_url,
-                    contributions: contributor.contributions,
-                };
+            const counts = new Map<string, number>();
+            for (const line of shortlog.split("\n")) {
+                const match = line.trim().match(/^(\d+)\s+(.+)$/);
+                if (!match) continue;
+                const count = parseInt(match[1], 10);
+                const author = match[2].trim();
+                const login = GIT_AUTHOR_TO_LOGIN[author] || author;
+                counts.set(login, (counts.get(login) || 0) + count);
             }
-        );
+
+            const contributors: GitHubContributor[] = Array.from(counts.entries())
+                .map(([login, contributions]) => ({
+                    login,
+                    contributions,
+                    avatarUrl: `https://github.com/${login}.png`,
+                    htmlUrl: `https://github.com/${login}`,
+                }))
+                .sort((a, b) => b.contributions - a.contributions);
 
             this.cache.set(cacheKey, contributors);
             return contributors;
         } catch (err) {
-            handleAxiosError(err);
+            // Fall back to GitHub API if git is unavailable (e.g. deployed
+            // without the .git directory).
+            console.error("[GitHub] local git shortlog failed, falling back to API:", err);
+            try {
+                const response = await this.client.get(
+                    `/repos/${OWNER}/${REPO}/contributors`
+                );
+
+                const contributors: GitHubContributor[] = response.data.map(
+                    (c: unknown) => {
+                        const contributor = c as {
+                            login: string;
+                            avatar_url: string;
+                            html_url: string;
+                            contributions: number;
+                        };
+                        return {
+                            login: contributor.login,
+                            avatarUrl: contributor.avatar_url,
+                            htmlUrl: contributor.html_url,
+                            contributions: contributor.contributions,
+                        };
+                    }
+                );
+
+                this.cache.set(cacheKey, contributors);
+                return contributors;
+            } catch (apiErr) {
+                handleAxiosError(apiErr);
+            }
         }
     }
 
