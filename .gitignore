@@ -96,5 +96,8 @@ ehthumbs.db
 Desktop.ini
 kimi-export-*.md
 
+# graphify generated artifacts
+graphify-out/
+
 #Agent
 agent/
