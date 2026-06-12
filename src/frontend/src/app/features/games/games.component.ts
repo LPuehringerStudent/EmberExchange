@@ -9,7 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { GameService } from '../../core/services/game.service';
-import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
+import { PageBackgroundComponent } from '../../shared/components/page-background/page-background.component';
 
 export type FilterMode = 'all' | 'most-played' | 'recently-released' | 'favorites';
 
@@ -29,22 +29,28 @@ export interface DisplayGame {
   trending: boolean;
   friendsPlayed: Friend[];
   accentColor: string;
-  icon: string;
+  iconPath: string;
+  iconAlt: string;
   description: string;
   route: string;
 }
 
-const GAME_ENRICHMENTS: Record<string, { accentColor: string; icon: string; playCount: number }> = {
-  poker:    { accentColor: '#e85d04', icon: '♠️', playCount: 1240 },
-  blackjack:{ accentColor: '#6eabb6', icon: '♣️', playCount: 890 },
-  roulette: { accentColor: '#c62828', icon: '🔴', playCount: 2100 },
+const GAME_ENRICHMENTS: Record<string, { accentColor: string; iconPath: string; iconAlt: string; playCount: number }> = {
+  poker: { accentColor: '#e85d04', iconPath: 'icon/poker.png', iconAlt: 'Poker', playCount: 1240 },
+  blackjack: { accentColor: '#6eabb6', iconPath: 'icon/blackjack.png', iconAlt: 'Blackjack', playCount: 890 },
+  roulette: { accentColor: '#c62828', iconPath: 'icon/roulette.png', iconAlt: 'Roulette', playCount: 2100 },
+};
+
+const DEFAULT_GAME_ENRICHMENT = {
+  accentColor: '#e85d04',
+  iconPath: 'icon/games.png',
+  iconAlt: 'Game',
+  playCount: 0,
 };
 
 @Component({
   selector: 'app-games',
-  imports: [
-    CommonModule, PageBackgroundComponent,
-  ],
+  imports: [CommonModule, PageBackgroundComponent],
   templateUrl: './games.component.html',
   styleUrl: './games.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,7 +65,7 @@ export class GamesComponent implements OnInit {
   readonly allGames = computed<DisplayGame[]>(() => {
     const apiGames = this.gameService.games();
     return apiGames.map((g, idx) => {
-      const enrich = GAME_ENRICHMENTS[g.gameType] ?? { accentColor: '#e85d04', icon: '🎮', playCount: 0 };
+      const enrich = GAME_ENRICHMENTS[g.gameType] ?? DEFAULT_GAME_ENRICHMENT;
       return {
         id: idx + 1,
         title: g.name,
@@ -71,8 +77,9 @@ export class GamesComponent implements OnInit {
         trending: enrich.playCount > 1000,
         friendsPlayed: [],
         accentColor: enrich.accentColor,
-        icon: enrich.icon,
-        description: g.description || `${g.name} — ${g.minPlayers}-${g.maxPlayers} players`,
+        iconPath: enrich.iconPath,
+        iconAlt: enrich.iconAlt,
+        description: g.description || `${g.name} - ${g.minPlayers}-${g.maxPlayers} players`,
         route: g.gameType,
       };
     });
@@ -126,7 +133,7 @@ export class GamesComponent implements OnInit {
 
   toggleFavorite(game: DisplayGame, event: MouseEvent): void {
     event.stopPropagation();
-    // Favorites are in-memory only for now
+    // Favorites are in-memory only for now.
   }
 
   openGame(game: DisplayGame): void {
