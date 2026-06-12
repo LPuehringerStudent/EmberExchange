@@ -395,6 +395,7 @@
 .popup--secret    { --reward-glow: rgba(217,70,239,.75); }
 
 /* Confetti */
+/* Confetti */
 .confetti {
   position: absolute; inset: 0;
   pointer-events: none; z-index: 5;
@@ -402,22 +403,41 @@
 }
 .confetti span {
   position: absolute;
-  top: -10px;
-  left: calc(var(--i) * 2.8%);
-  width: .45rem; height: .45rem;
-  border-radius: 2px;
-  background: hsl(calc(var(--i) * 25), 90%, 60%);
-  opacity: .9;
-  animation: confettiFall 2.6s linear forwards;
-  animation-delay: calc(var(--i) * 0.04s);
+  left: 50%; top: 50%;
+  width: var(--size, .45rem); height: var(--size, .45rem);
+  background: var(--color, hsl(0, 90%, 60%));
+  opacity: 0;
+  animation: confettiFly var(--duration, 1.6s) cubic-bezier(.25, .46, .45, .94) var(--delay, 0s) forwards;
 }
-.confetti span:nth-child(odd) {
-  width: .35rem; height: .7rem; border-radius: 999rem;
-}
+.confetti-circle { border-radius: 50%; }
+.confetti-pill   { border-radius: 999rem; width: calc(var(--size, .45rem) * 0.45) !important; }
 
-@keyframes confettiFall {
-  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+@keyframes confettiFly {
+  0% {
+    transform: translate(0, 0) scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  35% {
+    transform: translate(var(--tx), var(--ty)) scale(1) rotate(calc(var(--rot) * 0.4));
+    opacity: 1;
+  }
+  70% {
+    transform:
+      translate(calc(var(--tx) * 1.15), calc(var(--ty) * 0.7 + 18vh))
+      scale(0.75)
+      rotate(calc(var(--rot) * 0.75));
+    opacity: .8;
+  }
+  100% {
+    transform:
+      translate(calc(var(--tx) * 1.25), calc(var(--ty) * 0.55 + 45vh))
+      scale(0.25)
+      rotate(var(--rot));
+    opacity: 0;
+  }
 }
 
 @media (max-width: 640px) {

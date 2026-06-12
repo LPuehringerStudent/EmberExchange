@@ -300,8 +300,17 @@
     <div class="reward-backdrop" aria-hidden="true"></div>
 
     <div class="confetti" aria-hidden="true">
-      @for (_ of confettiPieces; track $index) {
-        <span [style.--i]="$index"></span>
+      @for (piece of confettiConfig; track $index) {
+        <span
+          [style.--tx]="piece.tx"
+          [style.--ty]="piece.ty"
+          [style.--delay]="piece.delay"
+          [style.--duration]="piece.duration"
+          [style.--size]="piece.size"
+          [style.--color]="piece.color"
+          [style.--rot]="piece.rot"
+          [class.confetti-circle]="piece.shape === 'circle'"
+          [class.confetti-pill]="piece.shape === 'pill'"></span>
       }
     </div>
 

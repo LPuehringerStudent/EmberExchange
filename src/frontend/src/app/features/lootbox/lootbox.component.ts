@@ -142,13 +142,32 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   readonly dragonDrops  = DRAGON_DROPS;
   readonly winterDrops  = WINTER_DROPS;
   readonly dropRates    = DROP_RATES;
-  readonly confettiPieces = Array.from({ length: 36 }, (_, i) => i);
+  readonly confettiConfig = LootboxComponent.generateConfetti(42);
 
   readonly acquisitionLabels: Record<string, string> = {
     free: 'Free',
     purchase: 'Purchased',
     reward: 'Reward'
   };
+
+  private static generateConfetti(count: number): { tx: string; ty: string; delay: string; duration: string; size: string; color: string; rot: string; shape: string }[] {
+    const pieces = [];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 35 + Math.random() * 40;
+      pieces.push({
+        tx: `${Math.cos(angle) * distance}vw`,
+        ty: `${Math.sin(angle) * distance}vh`,
+        delay: `${Math.random() * 0.25}s`,
+        duration: `${1.4 + Math.random() * 0.9}s`,
+        size: `${0.35 + Math.random() * 0.45}rem`,
+        color: `hsl(${Math.random() * 360}, 90%, 62%)`,
+        rot: `${360 + Math.random() * 720}deg`,
+        shape: Math.random() > 0.6 ? 'circle' : (Math.random() > 0.3 ? 'rectangle' : 'pill'),
+      });
+    }
+    return pieces;
+  }
 
   private lootBoxHelper = new LootBoxHelper();
   private lootboxApi    = inject(LootboxService);
