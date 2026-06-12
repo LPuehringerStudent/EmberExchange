@@ -2,6 +2,7 @@ import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { ForgeryResult, ForgedStove, Rarity, StoveTypeRow, StoveRow } from "../../shared/model";
 import { QuestService } from "./quest-service";
+import { CollectionService } from "./collection-service";
 
 const RARITY_ORDER = [
     Rarity.COMMON,
@@ -164,6 +165,9 @@ export class ForgeryService extends ServiceBase {
             { stoveId: newStoveId, playerId }
         );
         await ownershipStmt.run();
+
+        const collectionService = new CollectionService(this.unit);
+        await collectionService.recordDiscovery(playerId, outputType.typeId, "craft");
 
         // Update PlayerStatistics
         const statsStmt = this.unit.prepare(

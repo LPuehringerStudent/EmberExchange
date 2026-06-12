@@ -1,6 +1,7 @@
 import { Unit } from "../utils/unit";
 import { PlayerService } from "./player-service";
 import { CoinTransactionService } from "./coin-transaction-service";
+import { CollectionService } from "./collection-service";
 import { ChatMessageService } from "./chat-message-service";
 
 export interface TradeOfferResult {
@@ -118,6 +119,11 @@ export class TradeOfferService {
 
         // 3. Transfer ownership
         if (itemType === 'stove') {
+            const stove = await this.unit.prepare<{ typeId: number }, { itemId: number }>(
+                `SELECT typeId FROM Stove WHERE stoveId = @itemId`,
+                { itemId }
+            ).get();
+
             await this.unit.prepare(
                 `UPDATE Stove SET currentOwnerId = @accepterId WHERE stoveId = @itemId`,
                 { accepterId, itemId }
@@ -128,6 +134,11 @@ export class TradeOfferService {
                  VALUES (@itemId, @accepterId, @acquiredAt, 'trade')`,
                 { itemId, accepterId, acquiredAt: new Date().toISOString() }
             ).run();
+
+            if (stove) {
+                const collectionService = new CollectionService(this.unit);
+                await collectionService.recordDiscovery(accepterId, stove.typeId, "trade");
+            }
         } else if (itemType === 'lootbox') {
             await this.unit.prepare(
                 `UPDATE Lootbox SET playerId = @accepterId WHERE lootboxId = @itemId`,

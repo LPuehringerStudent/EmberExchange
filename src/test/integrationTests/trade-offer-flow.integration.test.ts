@@ -21,6 +21,10 @@ function mockUnitSequence(stmts: ReturnType<typeof mockStmt>[]) {
   } as unknown as Unit;
 }
 
+function collectionSchemaStmts() {
+  return [mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt()];
+}
+
 describe("Trade offer integration flow", () => {
   const message = {
     messageId: 100,
@@ -34,8 +38,11 @@ describe("Trade offer integration flow", () => {
   test("accepting a stove trade transfers coins, transfers ownership, logs both coin transactions, and accepts the message", async () => {
     const deductBuyerStmt = mockStmt(null, [], { changes: 1 });
     const creditSellerStmt = mockStmt(null, [], { changes: 1 });
+    const getStoveTypeStmt = mockStmt({ typeId: 9 });
     const updateStoveOwnerStmt = mockStmt(null, [], { changes: 1 });
     const insertOwnershipStmt = mockStmt(null, [], { changes: 1 });
+    const collectionSchema = collectionSchemaStmts();
+    const insertCollectionStmt = mockStmt(null, [], { changes: 1 });
     const buyerCoinTransactionStmt = mockStmt(null, [], { changes: 1 });
     const sellerCoinTransactionStmt = mockStmt(null, [], { changes: 1 });
     const updateMessageStmt = mockStmt(null, [], { changes: 1 });
@@ -47,8 +54,11 @@ describe("Trade offer integration flow", () => {
       mockStmt({ playerId: 2, username: "seller", coins: 50 }),
       deductBuyerStmt,
       creditSellerStmt,
+      getStoveTypeStmt,
       updateStoveOwnerStmt,
       insertOwnershipStmt,
+      ...collectionSchema,
+      insertCollectionStmt,
       buyerCoinTransactionStmt,
       sellerCoinTransactionStmt,
       updateMessageStmt,
@@ -59,8 +69,13 @@ describe("Trade offer integration flow", () => {
     expect(result).toEqual({ success: true, senderId: 2 });
     expect(deductBuyerStmt.run).toHaveBeenCalledTimes(1);
     expect(creditSellerStmt.run).toHaveBeenCalledTimes(1);
+    expect(getStoveTypeStmt.get).toHaveBeenCalledTimes(1);
     expect(updateStoveOwnerStmt.run).toHaveBeenCalledTimes(1);
     expect(insertOwnershipStmt.run).toHaveBeenCalledTimes(1);
+    for (const stmt of collectionSchema) {
+      expect(stmt.run).toHaveBeenCalledTimes(1);
+    }
+    expect(insertCollectionStmt.run).toHaveBeenCalledTimes(1);
     expect(buyerCoinTransactionStmt.run).toHaveBeenCalledTimes(1);
     expect(sellerCoinTransactionStmt.run).toHaveBeenCalledTimes(1);
     expect(updateMessageStmt.run).toHaveBeenCalledTimes(1);

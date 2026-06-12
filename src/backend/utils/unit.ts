@@ -44,6 +44,7 @@ const COLUMN_MAP: Record<string, string> = {
     "createdat": "createdAt",
     "currenthighestprice": "currentHighestPrice",
     "currentlevel": "currentLevel",
+    "discoveredat": "discoveredAt",
     "currentlowestprice": "currentLowestPrice",
     "currentownerid": "currentOwnerId",
     "currentstovecount": "currentStoveCount",
@@ -164,6 +165,7 @@ const COLUMN_MAP: Record<string, string> = {
     "rewardsparks": "rewardSparks",
     "rewardspins": "rewardSpins",
     "rewardxp": "rewardXP",
+    "rewardclaimedat": "rewardClaimedAt",
     "rewardlootboxtypeid": "rewardLootboxTypeId",
     "iscompleted": "isCompleted",
     "isclaimed": "isClaimed",
@@ -636,6 +638,63 @@ export class DB {
         `);
 
         await connection.query(`
+            CREATE TABLE IF NOT EXISTS PlayerCollectionEntry (
+                playerId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
+                typeId INTEGER NOT NULL REFERENCES StoveType(typeId) ON DELETE CASCADE,
+                discoveredAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                source TEXT NOT NULL DEFAULT 'unknown',
+                rewardClaimedAt TEXT,
+                PRIMARY KEY (playerId, typeId)
+            )
+        `);
+        await connection.query(`
+            ALTER TABLE PlayerCollectionEntry
+                ADD COLUMN IF NOT EXISTS discoveredAt TEXT,
+                ADD COLUMN IF NOT EXISTS source TEXT,
+                ADD COLUMN IF NOT EXISTS rewardClaimedAt TEXT
+        `);
+        await connection.query(`
+            UPDATE PlayerCollectionEntry
+            SET discoveredAt = CURRENT_TIMESTAMP
+            WHERE discoveredAt IS NULL
+        `);
+        await connection.query(`
+            UPDATE PlayerCollectionEntry
+            SET source = 'unknown'
+            WHERE source IS NULL
+        `);
+        await connection.query(`
+            ALTER TABLE PlayerCollectionEntry
+                ALTER COLUMN discoveredAt SET DEFAULT CURRENT_TIMESTAMP,
+                ALTER COLUMN discoveredAt SET NOT NULL,
+                ALTER COLUMN source SET DEFAULT 'unknown',
+                ALTER COLUMN source SET NOT NULL
+        `);
+
+        await connection.query(`
+            INSERT INTO PlayerCollectionEntry (playerId, typeId, discoveredAt, source)
+            SELECT s.currentOwnerId, s.typeId, COALESCE(MIN(s.mintedAt), CURRENT_TIMESTAMP::TEXT), 'current_owner'
+            FROM Stove s
+            JOIN StoveType st ON st.typeId = s.typeId
+            WHERE st.rarity <> 'limited'
+              AND st.name <> 'One of a Kind'
+            GROUP BY s.currentOwnerId, s.typeId
+            ON CONFLICT (playerId, typeId) DO NOTHING
+        `).catch(() => {});
+
+        await connection.query(`
+            INSERT INTO PlayerCollectionEntry (playerId, typeId, discoveredAt, source)
+            SELECT o.playerId, s.typeId, COALESCE(MIN(o.acquiredAt), CURRENT_TIMESTAMP::TEXT), 'ownership'
+            FROM Ownership o
+            JOIN Stove s ON s.stoveId = o.stoveId
+            JOIN StoveType st ON st.typeId = s.typeId
+            WHERE st.rarity <> 'limited'
+              AND st.name <> 'One of a Kind'
+            GROUP BY o.playerId, s.typeId
+            ON CONFLICT (playerId, typeId) DO NOTHING
+        `).catch(() => {});
+
+        await connection.query(`
             CREATE TABLE IF NOT EXISTS LoginHistory (
                 loginHistoryId SERIAL PRIMARY KEY,
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
@@ -649,7 +708,7 @@ export class DB {
                 transactionId SERIAL PRIMARY KEY,
                 playerId INTEGER NOT NULL REFERENCES Player(playerId),
                 amount INTEGER NOT NULL,
-                type TEXT NOT NULL CHECK (type IN ('trade_in', 'trade_out', 'mini_game', 'listing_sale', 'listing_purchase', 'admin_adjust', 'daily_reward', 'shop_purchase', 'shop_sale', 'forgery')),
+                type TEXT NOT NULL CHECK (type IN ('trade_in', 'trade_out', 'mini_game', 'listing_sale', 'listing_purchase', 'admin_adjust', 'daily_reward', 'shop_purchase', 'shop_sale', 'forgery', 'collection_reward')),
                 description TEXT,
                 createdAt TEXT NOT NULL
             )
@@ -676,14 +735,46 @@ export class DB {
         } catch {
             // Constraint may already be correct or table doesn't exist yet
         }
+        let coinTransactionConstraintSavepoint = false;
+        try {
+            await connection.query(`SAVEPOINT coin_transaction_type_constraint`);
+            coinTransactionConstraintSavepoint = true;
+        } catch {
+            // ensureTablesCreated can be called with or without an open transaction.
+        }
         try {
             await connection.query(`
-                ALTER TABLE CoinTransaction
-                DROP CONSTRAINT IF EXISTS cointransaction_type_check,
-                ADD CONSTRAINT cointransaction_type_check
-                CHECK (type IN ('trade_in', 'trade_out', 'mini_game', 'listing_sale', 'listing_purchase', 'admin_adjust', 'daily_reward', 'shop_purchase', 'shop_sale', 'forgery'))
+                DO $$
+                DECLARE
+                    constraint_name text;
+                BEGIN
+                    FOR constraint_name IN
+                        SELECT con.conname
+                        FROM pg_constraint con
+                        JOIN pg_class rel ON rel.oid = con.conrelid
+                        JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+                        WHERE nsp.nspname = 'public'
+                          AND lower(rel.relname) = 'cointransaction'
+                          AND con.contype = 'c'
+                          AND pg_get_constraintdef(con.oid) ILIKE '%type%'
+                    LOOP
+                        EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT %I', 'cointransaction', constraint_name);
+                    END LOOP;
+
+                    ALTER TABLE CoinTransaction
+                    ADD CONSTRAINT cointransaction_type_check
+                    CHECK (type IN ('trade_in', 'trade_out', 'mini_game', 'listing_sale', 'listing_purchase', 'admin_adjust', 'daily_reward', 'shop_purchase', 'shop_sale', 'forgery', 'collection_reward'));
+                END $$;
             `);
-        } catch {
+            if (coinTransactionConstraintSavepoint) {
+                await connection.query(`RELEASE SAVEPOINT coin_transaction_type_constraint`);
+            }
+        } catch (err) {
+            if (coinTransactionConstraintSavepoint) {
+                await connection.query(`ROLLBACK TO SAVEPOINT coin_transaction_type_constraint`).catch(() => undefined);
+                await connection.query(`RELEASE SAVEPOINT coin_transaction_type_constraint`).catch(() => undefined);
+            }
+            console.warn("CoinTransaction constraint migration failed:", err);
             // Constraint may already be correct or table doesn't exist yet
         }
         try {
@@ -1553,6 +1644,7 @@ export async function resetDatabase(connection: PoolClient): Promise<void> {
         DROP TABLE IF EXISTS StoveTypeStatistics CASCADE;
         DROP TABLE IF EXISTS ChatMessage CASCADE;
         DROP TABLE IF EXISTS Ownership CASCADE;
+        DROP TABLE IF EXISTS PlayerCollectionEntry CASCADE;
         DROP TABLE IF EXISTS PriceHistory CASCADE;
         DROP TABLE IF EXISTS CoinTransaction CASCADE;
         DROP TABLE IF EXISTS LoginHistory CASCADE;
@@ -1599,6 +1691,31 @@ export async function resetDatabase(connection: PoolClient): Promise<void> {
 }
 
 export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" | "skipped"> {
+    async function backfillCollectionEntries(): Promise<void> {
+        await unit.prepare(
+            `INSERT INTO PlayerCollectionEntry (playerId, typeId, discoveredAt, source)
+             SELECT s.currentOwnerId, s.typeId, COALESCE(MIN(s.mintedAt), CURRENT_TIMESTAMP::TEXT), 'current_owner'
+             FROM Stove s
+             JOIN StoveType st ON st.typeId = s.typeId
+             WHERE st.rarity <> 'limited'
+               AND st.name <> 'One of a Kind'
+             GROUP BY s.currentOwnerId, s.typeId
+             ON CONFLICT (playerId, typeId) DO NOTHING`
+        ).run().catch(() => {});
+
+        await unit.prepare(
+            `INSERT INTO PlayerCollectionEntry (playerId, typeId, discoveredAt, source)
+             SELECT o.playerId, s.typeId, COALESCE(MIN(o.acquiredAt), CURRENT_TIMESTAMP::TEXT), 'ownership'
+             FROM Ownership o
+             JOIN Stove s ON s.stoveId = o.stoveId
+             JOIN StoveType st ON st.typeId = s.typeId
+             WHERE st.rarity <> 'limited'
+               AND st.name <> 'One of a Kind'
+             GROUP BY o.playerId, s.typeId
+             ON CONFLICT (playerId, typeId) DO NOTHING`
+        ).run().catch(() => {});
+    }
+
     async function alreadyPresent(): Promise<boolean> {
         try {
             const checkStmt = unit.prepare<{ cnt: number }>(
@@ -2267,6 +2384,7 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
         await insertDailyStatistics();
         await insertStoveTypeStatistics();
         await insertShopListings();
+        await backfillCollectionEntries();
         return "inserted";
     }
 
@@ -2313,5 +2431,6 @@ export async function ensureSampleDataInserted(unit: Unit): Promise<"inserted" |
         // Ignore errors if Player table doesn't exist yet
     }
 
+    await backfillCollectionEntries();
     return "skipped";
 }

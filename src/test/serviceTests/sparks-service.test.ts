@@ -21,6 +21,10 @@ function mockUnitSequence(stmts: ReturnType<typeof mockStmt>[]) {
     } as unknown as Unit;
 }
 
+function collectionSchemaStmts() {
+    return [mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt()];
+}
+
 describe('SparksService', () => {
     it('calculates salvage sparks and re-roll costs', () => {
         const service = new SparksService(mockUnitSequence([]));
@@ -70,6 +74,7 @@ describe('SparksService', () => {
 
     it('cleans marketplace history before deleting a salvaged stove', async () => {
         const reusableRunStmt = mockStmt();
+        const collectionSchema = collectionSchemaStmts();
         const unit = mockUnitSequence([
             mockStmt({
                 stoveId: 55,
@@ -80,6 +85,8 @@ describe('SparksService', () => {
                 heatLevel: 0.5,
             }),
             mockStmt({ count: 0 }),
+            ...collectionSchema,
+            mockStmt(null, [], { changes: 1 }),
             mockStmt({ playerId: 1, username: 'Player', sparks: 20 }),
             mockStmt({ tableName: null }),
             reusableRunStmt,

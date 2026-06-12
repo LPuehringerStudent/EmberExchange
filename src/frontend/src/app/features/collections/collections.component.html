@@ -1,11 +1,13 @@
 <app-page-background theme="forge">
-<div class="p-[30px_40px] max-w-[1400px] mx-auto max-mobile:p-5 relative z-[1]">
-  <!-- Header -->
-  <div class="flex items-start justify-between gap-4 mb-6 max-mobile:flex-col max-mobile:gap-3">
+<div class="collections-page p-[30px_40px] max-w-[1400px] mx-auto max-mobile:p-5 relative z-[1]">
+  <div class="flex items-start justify-between gap-4 mb-7 max-mobile:flex-col max-mobile:gap-3">
     <div>
       <h1 class="text-[28px] text-text-primary font-bold m-0 mb-1.5">Collections</h1>
-      <p class="m-0 text-text-secondary text-sm">Complete collections to unlock permanent passive bonuses</p>
+      <p class="m-0 text-text-secondary text-sm">Open a collection book to track discoveries, claim rewards, and inspect each set.</p>
     </div>
+    @if (selectedCollection()) {
+      <button class="plain-action" type="button" (click)="closeBook()">Back to books</button>
+    }
   </div>
 
   @if (error()) {
@@ -15,6 +17,12 @@
       </svg>
       <span>{{ error() }}</span>
       <button class="ml-auto bg-transparent border-none text-red-500 text-xs font-semibold cursor-pointer underline" (click)="loadCollections()">Retry</button>
+    </div>
+  }
+
+  @if (claimMessage()) {
+    <div class="flex items-center gap-2.5 mb-5 px-4 py-3 bg-success-bg border border-emerald-500/25 rounded-xl text-success text-sm">
+      <span>{{ claimMessage() }}</span>
     </div>
   }
 
@@ -32,47 +40,131 @@
         </div>
       }
     </div>
-  } @else {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      @for (collection of collections(); track collection.name) {
-        <div class="relative bg-surface rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border-2 transition-all duration-250"
-             [class.border-emerald-500/40]="collection.completed"
-             [class.border-border]="!collection.completed">
+  } @else if (selectedCollection(); as collection) {
+    <section class="collection-detail">
+      <div class="open-book mb-5">
+        <div class="book-page book-page-summary">
+          <div class="book-kicker">Collection Book</div>
+          <div class="flex items-center gap-4 mb-5">
+            <div class="book-emblem">
+              <img [src]="collectionIcon(collection)" [alt]="collection.name" (error)="onImageError($event)" />
+            </div>
+            <div>
+              <h2 class="text-2xl text-text-primary font-bold m-0 mb-1">{{ collection.name }}</h2>
+              <p class="text-sm text-text-secondary m-0">{{ collection.owned }} of {{ collection.total }} discovered</p>
+            </div>
+          </div>
 
-          <!-- Top gradient bar -->
-          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r rounded-t-2xl opacity-60"
-               [class]="getRarityColorClass(collection.name)"></div>
+          <div class="progress-track mb-4">
+            <div class="progress-fill" [style.width.%]="getProgressPercent(collection)"></div>
+          </div>
 
-          <div class="flex items-center justify-between mb-3 mt-1">
-            <h3 class="text-lg font-bold text-text-primary m-0">{{ collection.name }}</h3>
+          <div class="book-stats">
+            <div>
+              <span class="stat-label">Progress</span>
+              <strong>{{ getProgressPercent(collection) }}%</strong>
+            </div>
+            <div>
+              <span class="stat-label">Claimable</span>
+              <strong>{{ claimableCount(collection) }}</strong>
+            </div>
+            <div>
+              <span class="stat-label">Missing</span>
+              <strong>{{ collection.total - collection.owned }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="book-page book-page-bonus">
+          <div class="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <div class="book-kicker">Set Bonus</div>
+              <p class="bonus-copy">{{ collection.bonusDescription || 'No passive bonus' }}</p>
+            </div>
             @if (collection.completed) {
-              <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Complete</span>
+              <span class="status-pill complete">Complete</span>
             } @else {
-              <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-surface-secondary text-text-muted border border-border">{{ collection.owned }}/{{ collection.total }}</span>
+              <span class="status-pill">{{ collection.total - collection.owned }} missing</span>
             }
           </div>
 
-          <!-- Progress bar -->
-          <div class="w-full h-2.5 bg-surface-secondary rounded-full overflow-hidden mb-4">
-            <div class="h-full rounded-full transition-all duration-500 bg-gradient-to-r"
-                 [class]="getRarityColorClass(collection.name)"
-                 [style.width.%]="getProgressPercent(collection)"></div>
+          <div class="reward-note">
+            <img src="/assets/animation/blue-fire.gif" alt="" aria-hidden="true" />
+            <span>Discovered stoves can claim their coal and XP reward once.</span>
           </div>
-
-          <div class="flex items-center gap-2 text-sm text-text-secondary mb-2">
-            <svg class="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
-            </svg>
-            <span class="font-medium">Bonus:</span>
-            <span>{{ collection.bonusDescription || 'No bonus' }}</span>
-          </div>
-
-          @if (collection.completed) {
-            <p class="text-[11px] text-emerald-500 font-semibold mt-2">This bonus is now active!</p>
-          } @else {
-            <p class="text-[11px] text-text-muted mt-2">Collect {{ collection.total - collection.owned }} more to unlock</p>
-          }
         </div>
+      </div>
+
+      <div class="stove-grid">
+        @for (stove of collection.stoves; track $index) {
+          <article class="stove-entry"
+                   [class.discovered]="stove.discovered"
+                   [class.undiscovered]="!stove.discovered">
+            <div class="stove-art">
+              <img [src]="stoveImage(stove)" [alt]="visibleStoveName(stove)" class="stove-image" (error)="onImageError($event)" />
+              @if (!stove.discovered) {
+                <div class="question-mark" aria-hidden="true">?</div>
+              }
+            </div>
+
+            <div class="pt-4">
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <h3 class="m-0 text-base text-text-primary font-bold">{{ visibleStoveName(stove) }}</h3>
+                <span [class]="'rarity-chip ' + rarityClass(stove.rarity)">
+                  {{ stove.discovered ? stove.rarity : '???' }}
+                </span>
+              </div>
+
+              <p class="text-sm text-text-secondary m-0 mb-4">
+                {{ stove.rewardCoins }} coal + {{ stove.rewardXP }} XP
+              </p>
+
+              @if (!stove.discovered) {
+                <button class="reward-btn" type="button" disabled>Not discovered</button>
+              } @else if (stove.rewardClaimed) {
+                <button class="reward-btn claimed" type="button" disabled>Claimed</button>
+              } @else {
+                <button class="reward-btn" type="button" (click)="claimReward(stove)" [disabled]="claimingTypeId() !== null">
+                  {{ claimingTypeId() === stove.typeId ? 'Claiming...' : 'Claim reward' }}
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  } @else {
+    <div class="book-grid">
+      @for (collection of collections(); track $index) {
+        <button class="collection-book"
+                type="button"
+                (click)="openBook(collection)"
+                [class.complete]="collection.completed">
+
+          <div class="book-spine"></div>
+          <div class="book-cover-content">
+            <div class="book-cover-top">
+              <img [src]="collectionIcon(collection)" [alt]="collection.name" (error)="onImageError($event)" />
+              @if (collection.completed) {
+                <span class="status-pill complete">Complete</span>
+              } @else {
+                <span class="status-pill">{{ collection.owned }}/{{ collection.total }}</span>
+              }
+            </div>
+
+            <h3>{{ collection.name }}</h3>
+            <p>{{ collection.bonusDescription || 'No passive bonus' }}</p>
+
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="getProgressPercent(collection)"></div>
+            </div>
+
+            <div class="book-footer">
+              <span>{{ getProgressPercent(collection) }}%</span>
+              <span>{{ claimableCount(collection) }} rewards ready</span>
+            </div>
+          </div>
+        </button>
       }
     </div>
   }

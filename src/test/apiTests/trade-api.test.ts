@@ -63,6 +63,10 @@ jest.mock('../../backend/services/coin-transaction-service', () => ({
   CoinTransactionService: jest.fn(() => ({ create: jest.fn().mockResolvedValue([true, 1]) })),
 }));
 
+jest.mock('../../backend/services/collection-service', () => ({
+  CollectionService: jest.fn(() => ({ recordDiscovery: jest.fn().mockResolvedValue(undefined) })),
+}));
+
 jest.mock('../../backend/services/player-prestige-service', () => ({
   PlayerPrestigeService: jest.fn(() => ({ addXP: jest.fn().mockResolvedValue(undefined) })),
 }));
