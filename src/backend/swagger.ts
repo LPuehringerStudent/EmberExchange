@@ -464,7 +464,7 @@ const options: swaggerJsdoc.Options = {
                         transactionId: { type: "integer", description: "Unique transaction ID" },
                         playerId: { type: "integer", description: "Player ID" },
                         amount: { type: "integer", description: "Transaction amount (positive or negative)" },
-                        type: { type: "string", description: "Transaction type (trade_in, trade_out, mini_game, listing_sale, listing_purchase, admin_adjust)" },
+                        type: { type: "string", description: "Transaction type (trade_in, trade_out, mini_game, listing_sale, listing_purchase, admin_adjust, daily_reward, shop_purchase, shop_sale, forgery, collection_reward)" },
                         description: { type: "string", description: "Optional transaction description" },
                         createdAt: { type: "string", format: "date-time", description: "Transaction timestamp" }
                     },

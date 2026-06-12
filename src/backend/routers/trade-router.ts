@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { checkPlayerBanned } from "../middleware/ban-check";
 import { TradeService } from "../services/trade-service";
 import { PlayerPrestigeService } from "../services/player-prestige-service";
+import { CollectionService } from "../services/collection-service";
 import { ListingService } from "../services/listing-service";
 import { OwnershipService } from "../services/ownership-service";
 import { StoveService } from "../services/stove-service";
@@ -525,6 +526,8 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
             // Record price history
             const stove = await stoveService.getStoveById(listing.stoveId);
             if (stove !== null) {
+                const collectionService = new CollectionService(unit);
+                await collectionService.recordDiscovery(buyerId, stove.typeId, "trade");
                 await priceHistoryService.recordSale(stove.typeId, listing.price);
             }
 

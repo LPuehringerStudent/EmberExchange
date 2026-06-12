@@ -3,6 +3,7 @@ import { PlayerService } from "./player-service";
 import { ListingService } from "./listing-service";
 import { NotificationService } from "./notification-service";
 import { QuestService } from "./quest-service";
+import { CollectionService } from "./collection-service";
 
 const SPARKS_BASE: Record<string, number> = {
     common: 5,
@@ -80,6 +81,8 @@ export class SparksService {
 
         // Calculate sparks
         const sparksAwarded = this.calculateSparks(stove.rarity, stove.heatLevel);
+        const collectionService = new CollectionService(this.unit);
+        await collectionService.recordDiscovery(playerId, stove.typeId, "salvage");
 
         // Get current player sparks
         const player = await playerService.getInfoByID(playerId);

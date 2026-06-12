@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-type PageBackgroundTheme =
+export type PageBackgroundTheme =
   | 'ember'
   | 'gold'
   | 'forge'

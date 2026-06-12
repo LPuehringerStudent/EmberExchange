@@ -3,6 +3,7 @@ import { PlayerService } from "./player-service";
 import { CoinTransactionService } from "./coin-transaction-service";
 import { PlayerPrestigeService } from "./player-prestige-service";
 import { NotificationService } from "./notification-service";
+import { CollectionService } from "./collection-service";
 
 export interface ShopItemDisplay {
     listingId: number;
@@ -312,6 +313,9 @@ export class ShopService {
                  VALUES (@stoveId, @playerId, @acquiredAt, 'shop')`,
                 { stoveId: createdItemId, playerId, acquiredAt: new Date().toISOString() }
             ).run();
+
+            const collectionService = new CollectionService(this.unit);
+            await collectionService.recordDiscovery(playerId, listing.itemId, "shop");
         } else if (listing.itemType === "lootbox") {
             // Create lootbox instance
             const lbStmt = this.unit.prepare<{ lootboxId: number }, { lootboxTypeId: number; playerId: number; acquiredHow: string }>(

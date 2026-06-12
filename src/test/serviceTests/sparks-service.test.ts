@@ -80,6 +80,7 @@ describe('SparksService', () => {
                 heatLevel: 0.5,
             }),
             mockStmt({ count: 0 }),
+            mockStmt(undefined, [], { changes: 1 }),
             mockStmt({ playerId: 1, username: 'Player', sparks: 20 }),
             mockStmt({ tableName: null }),
             reusableRunStmt,
