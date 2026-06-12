@@ -118,6 +118,9 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   showPopup    = signal<boolean>(false);
   resultText   = signal<string>('');
   resultImageUrl = signal<string>('');
+  resultRarity = signal<string>('');
+  resultStoveId = signal<number | null>(null);
+  resultLootboxTypeName = signal<string>('');
   selectedLootboxId = signal<number | null>(null);
   selectedTypeName  = signal<string>('Standard Lootbox');
   activeLootboxTypeId = signal<number | null>(null);
@@ -139,6 +142,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   readonly dragonDrops  = DRAGON_DROPS;
   readonly winterDrops  = WINTER_DROPS;
   readonly dropRates    = DROP_RATES;
+  readonly confettiPieces = Array.from({ length: 36 }, (_, i) => i);
 
   readonly acquisitionLabels: Record<string, string> = {
     free: 'Free',
@@ -274,6 +278,26 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
   getAcquisitionLabel(how: string): string {
     return this.acquisitionLabels[how] || how;
+  }
+
+  getRarityMeta(rarity: string): { label: string; color: string; stars: number } {
+    switch (rarity.toLowerCase()) {
+      case 'rare': return { label: 'Rare', color: '#3b82f6', stars: 2 };
+      case 'epic': return { label: 'Epic', color: '#a855f7', stars: 3 };
+      case 'legendary': return { label: 'Legendary', color: '#f59e0b', stars: 4 };
+      case 'secret': return { label: 'Secret', color: '#d946ef', stars: 5 };
+      default: return { label: 'Common', color: '#94a3b8', stars: 1 };
+    }
+  }
+
+  getResultDropRate(): string {
+    const typeId = this.getSelectedLootboxTypeId();
+    if (typeId === null) return '-';
+    const rarity = this.resultRarity();
+    const table = this.dropRates[typeId];
+    if (!table || !rarity) return '-';
+    const entry = table.find(r => r.rarity.toLowerCase() === rarity.toLowerCase());
+    return entry?.rate ?? '-';
   }
 
   getSelectorChestImage(typeName: string): string {
@@ -450,7 +474,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
         const offset = -(40 * itemWidth) + rollerWidth / 2 - itemWidth / 2;
 
         itemsEl.style.transform = `translateX(${offset}px)`;
-        setTimeout(() => this.showResult(result.stoveName, result.imageUrl), 4000);
+        setTimeout(() => this.showResult(result), 4000);
       }, 100);
     }, 1400);
   }
@@ -460,16 +484,22 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     const result = await this.doOpen();
     if (!result) return;
 
-    this.resultText.set(`You got: ${result.stoveName}`);
+    this.resultText.set(result.stoveName);
     this.resultImageUrl.set(result.imageUrl);
+    this.resultRarity.set(result.rarity);
+    this.resultStoveId.set(result.stoveId);
+    this.resultLootboxTypeName.set(this.selectedTypeName());
     this.showPopup.set(true);
     this.isOpening.set(false);
     this.cdr.detectChanges();
   }
 
-  private showResult(stoveName: string, imageUrl: string): void {
-    this.resultText.set(`You got: ${stoveName}`);
-    this.resultImageUrl.set(imageUrl);
+  private showResult(result: OpenLootboxResponse): void {
+    this.resultText.set(result.stoveName);
+    this.resultImageUrl.set(result.imageUrl);
+    this.resultRarity.set(result.rarity);
+    this.resultStoveId.set(result.stoveId);
+    this.resultLootboxTypeName.set(this.selectedTypeName());
     this.showOverlay.set(false);
     this.showPopup.set(true);
     this.isOpening.set(false);
@@ -482,6 +512,8 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     this.isOpening.set(false);
     this.playingGif.set(false);
     this.activeLootboxTypeId.set(null);
+    this.resultRarity.set('');
+    this.resultStoveId.set(null);
 
     const itemsEl = this.itemsElement()?.nativeElement;
     if (itemsEl) {
