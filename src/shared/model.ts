@@ -130,7 +130,7 @@ export interface LoginHistoryRow extends LoginHistory {
 export interface CoinTransaction {
     playerId: number;
     amount: number;
-    type: 'trade_in' | 'trade_out' | 'mini_game' | 'listing_sale' | 'listing_purchase' | 'admin_adjust' | 'daily_reward' | 'shop_purchase' | 'shop_sale' | 'forgery';
+    type: 'trade_in' | 'trade_out' | 'mini_game' | 'listing_sale' | 'listing_purchase' | 'admin_adjust' | 'daily_reward' | 'shop_purchase' | 'shop_sale' | 'forgery' | 'collection_reward';
     description: string | null;
     createdAt: Date;
 }

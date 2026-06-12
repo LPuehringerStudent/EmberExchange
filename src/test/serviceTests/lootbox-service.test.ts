@@ -361,13 +361,15 @@ describe('LootboxService', () => {
       // (2) isLootboxListed count → { count: 0 }
       // (3) pickStoveTypeByRarity all → [sampleStoveType]
       // (4) INSERT Stove RETURNING stoveId
-      // (5) UPDATE Lootbox openedAt
-      // (6) INSERT LootboxDrop RETURNING dropId
-      // (7) UPDATE Player lootboxCount
+      // (5) INSERT PlayerCollectionEntry
+      // (6) UPDATE Lootbox openedAt
+      // (7) INSERT LootboxDrop RETURNING dropId
+      // (8) UPDATE Player lootboxCount
       const verifyStmt = mockStmt(sampleLootbox);
       const notListedStmt = mockStmt({ count: 0 });
       const stoveTypesStmt = mockStmt(null, [sampleStoveType]);
       const insertStoveStmt = mockStmt({ stoveId: 55 }, [], { changes: 1 });
+      const insertCollectionStmt = mockStmt(null, [], { changes: 1 });
       const markOpenedStmt = mockStmt(null, [], { changes: 1 });
       const insertDropStmt = mockStmt({ dropId: 7 }, [], { changes: 1 });
       const updateCountStmt = mockStmt(null, [], { changes: 1 });
@@ -377,6 +379,7 @@ describe('LootboxService', () => {
         notListedStmt,   // isLootboxListed
         stoveTypesStmt,  // pickStoveTypeByRarity
         insertStoveStmt, // INSERT Stove RETURNING stoveId
+        insertCollectionStmt, // INSERT PlayerCollectionEntry
         markOpenedStmt,  // UPDATE Lootbox openedAt
         insertDropStmt,  // INSERT LootboxDrop RETURNING dropId
         updateCountStmt, // UPDATE Player lootboxCount
@@ -422,6 +425,7 @@ describe('LootboxService', () => {
       const notListedStmt = mockStmt({ count: 0 });
       const stoveTypesStmt = mockStmt(null, [dragonStoveType]);
       const insertStoveStmt = mockStmt({ stoveId: 55 }, [], { changes: 1 });
+      const insertCollectionStmt = mockStmt(null, [], { changes: 1 });
       const markOpenedStmt = mockStmt(null, [], { changes: 1 });
       const insertDropStmt = mockStmt({ dropId: 7 }, [], { changes: 1 });
       const updateCountStmt = mockStmt(null, [], { changes: 1 });
@@ -431,6 +435,7 @@ describe('LootboxService', () => {
         notListedStmt,
         stoveTypesStmt,  // pickDragonStoveTypeByRarity
         insertStoveStmt, // INSERT Stove RETURNING stoveId
+        insertCollectionStmt, // INSERT PlayerCollectionEntry
         markOpenedStmt,  // UPDATE Lootbox openedAt
         insertDropStmt,  // INSERT LootboxDrop RETURNING dropId
         updateCountStmt, // UPDATE Player lootboxCount
@@ -458,6 +463,7 @@ describe('LootboxService', () => {
       const notListedStmt = mockStmt({ count: 0 });
       const stoveTypesStmt = mockStmt(null, [winterStoveType]);
       const insertStoveStmt = mockStmt({ stoveId: 55 }, [], { changes: 1 });
+      const insertCollectionStmt = mockStmt(null, [], { changes: 1 });
       const markOpenedStmt = mockStmt(null, [], { changes: 1 });
       const insertDropStmt = mockStmt({ dropId: 7 }, [], { changes: 1 });
       const updateCountStmt = mockStmt(null, [], { changes: 1 });
@@ -467,6 +473,7 @@ describe('LootboxService', () => {
         notListedStmt,
         stoveTypesStmt,  // pickWinterStoveTypeByRarity
         insertStoveStmt, // INSERT Stove RETURNING stoveId
+        insertCollectionStmt, // INSERT PlayerCollectionEntry
         markOpenedStmt,  // UPDATE Lootbox openedAt
         insertDropStmt,  // INSERT LootboxDrop RETURNING dropId
         updateCountStmt, // UPDATE Player lootboxCount

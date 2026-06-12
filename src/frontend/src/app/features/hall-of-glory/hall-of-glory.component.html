@@ -1,473 +1,394 @@
-<app-page-background theme="gold">
-<div class="glory-container max-w-[900px] mx-auto p-8 px-5 pb-[60px] text-text-primary min-h-screen relative z-[1]" [ngClass]="profile()?.activeTheme?.cssClass ?? ''">
-  <!-- XP Toast -->
-  @if (xpToast(); as toast) {
-    <div class="xp-toast">
-      <span class="xp-toast-amount">+{{ toast.amount }} XP</span>
-      <span class="xp-toast-source">{{ toast.source }}</span>
-    </div>
-  }
+<app-page-background [theme]="backgroundTheme()" />
 
-  <!-- Level Up Toast -->
-  @if (levelUpToast(); as lvl) {
-    <div class="level-up-toast">
-      <div class="level-up-icon">LEVEL UP</div>
-      <div class="level-up-text">{{ lvl.oldLevel }} → {{ lvl.newLevel }}</div>
-    </div>
-  }
-
-  <!-- Loading -->
-  @if (loading()) {
-    <div class="glory-skeleton flex flex-col gap-5">
-      <div class="skeleton-hero"></div>
-      <div class="skeleton-grid grid grid-cols-4 gap-4 max-md:grid-cols-2">
+<!-- Loading Skeleton -->
+@if (loading()) {
+  <div class="glory-loading">
+    <div class="glory-skeleton">
+      <div class="skeleton-hero">
+        <div class="skeleton-avatar"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line medium"></div>
+        </div>
+      </div>
+      <div class="skeleton-grid">
+        <div class="skeleton-card large"></div>
         <div class="skeleton-card"></div>
         <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
+        <div class="skeleton-card wide"></div>
       </div>
     </div>
-  }
+  </div>
+}
 
-  <!-- Error -->
-  @if (error() && !loading()) {
-    <div class="glory-error bg-surface rounded-[20px] px-8 py-12 text-center shadow-[0_8px_30px_var(--shadow-color)] border border-border">
-      <h2 class="text-text-primary text-[22px] font-semibold m-0 mb-2">Profile Not Found</h2>
-      <p class="text-text-muted text-sm m-0">{{ error() }}</p>
-    </div>
-  }
+<!-- Error State -->
+@if (error() && !loading()) {
+  <div class="glory-error">
+    <div class="error-icon">🏛️</div>
+    <h2>Monument Not Found</h2>
+    <p>{{ error() }}</p>
+    <button class="btn-primary" routerLink="/">Return Home</button>
+  </div>
+}
 
-  @if (!loading() && !error() && profile(); as p) {
-    <!-- 1. Hero Banner -->
-    <section class="hero-banner relative overflow-hidden flex justify-between items-center flex-wrap gap-6 rounded-3xl px-10 py-9 mb-7 shadow-[0_12px_40px_var(--shadow-color)] border border-border" [class]="'hero-banner ' + (profile()?.activeBanner?.cssClass ?? '')">
-      <div class="hero-main flex items-center gap-6">
-        <div class="hero-avatar relative w-20 h-20 shrink-0">
-          <div class="avatar-ring"></div>
-          <div class="avatar-placeholder">
-            <span>{{ p.username.charAt(0).toUpperCase() }}</span>
-          </div>
-          @if (p.prestige.prestigeCount > 0) {
-            <div class="prestige-badge">P{{ p.prestige.prestigeCount }}</div>
-          }
+<!-- Main Monument Gallery -->
+@if (profile() && !loading()) {
+  <div class="glory-page" [class.edit-open]="editMode()">
+    <!-- Hero: Cinematic Monument Header -->
+    <section class="monument-hero">
+      <div class="hero-backdrop">
+        <div class="hero-particles" aria-hidden="true"></div>
+      </div>
+      <div class="hero-content">
+        <div class="hero-rank">
+          <span class="rank-badge">Level {{ profile()?.prestige?.currentLevel }}</span>
         </div>
-        <div class="hero-info">
-          <div class="hero-name-row flex items-center gap-3 flex-wrap">
-            <h1 class="hero-name text-[32px] font-bold m-0 mb-1.5 text-text-primary tracking-tight">{{ p.username }}</h1>
-            @if (p.activeTitle) {
-              <span class="hero-title" [class]="'hero-title ' + p.activeTitle!.animation">{{ p.activeTitle!.label }}</span>
-            }
-          </div>
-          @if (p.motto) {
-            <p class="hero-motto text-[15px] italic text-text-muted m-0 mb-3">"{{ p.motto }}"</p>
-          }
-          <div class="hero-meta flex gap-2 flex-wrap">
-            <span class="meta-pill">Member since {{ formatDate(p.joinedAt) }}</span>
-            <span class="meta-pill provider">{{ getProviderLabel(p.provider) }}</span>
-            @if (p.isAdmin) {
-              <span class="meta-pill admin">Admin</span>
-            }
-            <span class="meta-pill">{{ p.visitCount }} visits</span>
-          </div>
-          <!-- XP Bar -->
-          <div class="xp-bar-wrap mt-3.5 max-w-[320px]">
-            <div class="xp-bar-label flex justify-between text-[11px] text-text-muted mb-1 font-semibold">
-              <span>Level {{ p.prestige.currentLevel }}</span>
-              <span>{{ p.prestige.totalXP.toLocaleString() }} / {{ xpToNextLevel().toLocaleString() }} XP</span>
-            </div>
-            <div class="xp-bar-track h-1.5 bg-surface-secondary rounded-[3px] overflow-hidden border border-border">
-              <div class="xp-bar-fill h-full rounded-[3px]" [style.width.%]="xpProgress()"></div>
+        <div class="hero-avatar-wrap">
+          <div class="hero-avatar-ring" [class.own-profile]="isOwnProfile()">
+            <div class="hero-avatar">
+              <img [src]="'assets/images/default-avatar.png'" [alt]="profile()?.username" />
             </div>
           </div>
         </div>
-      </div>
-      <div class="hero-actions shrink-0 flex flex-col gap-2 items-end">
-        @if (isOwnProfile() && canPrestige()) {
-          <button class="btn-prestige px-4 py-2 bg-gradient-to-br from-[#f59e0b] to-[#d97706] text-white border-none rounded-lg font-bold text-[13px] cursor-pointer shadow-[0_4px_12px_rgba(245,158,11,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(245,158,11,0.5)]" (click)="prestige()">
-            Prestige Now
-          </button>
-        }
+        <h1 class="hero-name">
+          {{ profile()?.username }}
+          @if (profile()?.activeTitle) {
+            <span class="hero-title">{{ profile()?.activeTitle?.label }}</span>
+          }
+        </h1>
+        <p class="hero-tagline">{{ profile()?.motto || 'No motto set.' }}</p>
+        <div class="hero-meta">
+          <span class="meta-item">
+            <svg viewBox="0 0 24 24" class="meta-icon"><path d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM6 8a6 6 0 1 1 12 0A6 6 0 0 1 6 8zm2 10a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4H8z"/></svg>
+            {{ getProviderLabel(profile()?.provider) }} account
+          </span>
+          <span class="meta-item">
+            <svg viewBox="0 0 24 24" class="meta-icon"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10z"/></svg>
+            Joined {{ formatDate(profile()?.joinedAt || '') }}
+          </span>
+        </div>
         @if (isOwnProfile()) {
-          <button class="btn-edit px-4 py-2 bg-transparent text-accent border-[1.5px] border-accent rounded-lg font-semibold text-[13px] cursor-pointer transition-all duration-200 hover:bg-accent hover:text-white" (click)="toggleEditMode()">
-            @if (editMode()) {
-              <span>Done</span>
-            } @else {
-              <span>Edit Profile</span>
-            }
-          </button>
+          <div class="hero-actions">
+            <button class="btn-glow" (click)="openEditDrawer()">
+              <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+              Curate Monument
+            </button>
+            <button class="btn-ghost" (click)="prestige()" [disabled]="!canPrestige()">
+              <svg viewBox="0 0 24 24"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              Ascend
+            </button>
+          </div>
         }
-
       </div>
     </section>
 
-    <!-- Edit Mode Panel -->
-    @if (editMode()) {
-      <section class="edit-panel bg-surface-secondary border border-border rounded-2xl p-6 mb-6">
-        <div class="section-header mb-5">
-          <h2 class="text-xl font-semibold m-0 mb-1 text-text-primary">Edit Profile</h2>
-          <p class="section-sub text-sm text-text-muted m-0">Customize your Hall of Glory</p>
+    <!-- Trophy Stage -->
+    <section class="trophy-stage glory-reveal">
+      <div class="section-header">
+        <h2>Trophy Stage</h2>
+        <span class="section-sub">Pinned masterpieces</span>
+      </div>
+      <div class="stage-track">
+        @for (stove of profile()?.topStoves; track stove.stoveId) {
+          <div class="stage-pedestal">
+            <div class="pedestal-glow"></div>
+            <div class="stage-stove" [class]="'rarity-' + (stove.rarity.toLowerCase() || 'common')">
+              <div class="stove-image">
+                <img [src]="stove.imageUrl || 'assets/images/stoves/default.png'" [alt]="stove.name" />
+              </div>
+              <div class="stove-info">
+                <span class="stove-name">{{ stove.name || 'Unknown Stove' }}</span>
+                <span class="stove-rarity">{{ stove.rarity || 'Common' }}</span>
+              </div>
+            </div>
+          </div>
+        }
+        @if ((profile()?.topStoves?.length ?? 0) === 0) {
+          <div class="stage-pedestal empty">
+            <div class="empty-pedestal">
+              <span class="empty-icon">+</span>
+              <span class="empty-label">No stoves on display</span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Achievement Wall -->
+    <section class="achievement-wall glory-reveal">
+      <div class="section-header">
+        <h2>Achievement Wall</h2>
+        <span class="section-sub">{{ unlockedBadges().length }} of {{ badges().length }} honors earned</span>
+      </div>
+      <div class="masonry">
+        @for (badge of unlockedBadges().slice(0, 8); track badge.id) {
+          <div class="masonry-tile unlocked" [class.featured]="isAchievementPinned(badge.id)">
+            <div class="tile-shine"></div>
+            <div class="tile-icon">{{ badge.label.charAt(0) }}</div>
+            <div class="tile-body">
+              <h3>{{ badge.label }}</h3>
+              <p>{{ badge.description }}</p>
+              <div class="tile-rewards">
+                @if (badge.rewardCoins) {
+                  <span class="reward-chip">+{{ badge.rewardCoins }} 🪙</span>
+                }
+                @if (badge.rewardXP) {
+                  <span class="reward-chip">+{{ badge.rewardXP }} XP</span>
+                }
+              </div>
+            </div>
+            @if (isAchievementPinned(badge.id)) {
+              <div class="tile-pin">📌</div>
+            }
+          </div>
+        }
+        @for (badge of lockedBadges().slice(0, 4); track badge.id) {
+          <div class="masonry-tile locked">
+            <div class="tile-icon">?</div>
+            <div class="tile-body">
+              <h3>{{ badge.label }}</h3>
+              <p>{{ badge.description }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <div class="split-layout">
+      <!-- Vertical Stats Timeline -->
+      <section class="stats-timeline glory-reveal">
+        <div class="section-header">
+          <h2>Chronicle</h2>
+          <span class="section-sub">Lifetime by category</span>
         </div>
-        @if (editLoading()) {
-          <div class="edit-loading py-5">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              @for (_ of [0, 1, 2]; track $index) {
-                <div class="space-y-3">
-                  <div class="h-3 w-20 rounded skeleton-shimmer"></div>
-                  <div class="flex flex-wrap gap-2">
-                    @for (_ of [0, 1, 2, 3]; track $index) {
-                      <div class="h-9 w-24 rounded-lg skeleton-shimmer"></div>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        } @else {
-          @if (editError()) {
-            <div class="edit-error">{{ editError() }}</div>
-          }
-          <div class="edit-grid grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5">
-            <!-- Theme Selector -->
-            <div class="edit-group">
-              <h3 class="text-[13px] font-bold uppercase tracking-wide text-text-muted mb-2.5">Theme</h3>
-              <div class="edit-options flex flex-wrap gap-2">
-                @for (theme of availableThemes(); track theme.themeId) {
-                  <button
-                    class="edit-option px-3.5 py-2 rounded-lg border-[1.5px] border-border bg-transparent text-text-secondary text-[13px] font-medium cursor-pointer transition-all duration-200 hover:border-accent hover:text-accent"
-                    [class.active]="theme.isActive"
-                    (click)="activateTheme(theme.themeId)"
-                  >
-                    {{ theme.name }}
-                  </button>
-                }
+        <div class="timeline">
+          @for (cat of statCategories(); track cat.title) {
+            <div class="timeline-node">
+              <div class="timeline-dot" [style.--accent]="cat.accent">
+                <svg viewBox="0 0 24 24" class="dot-icon">
+                  <path [attr.d]="getCategoryIcon(cat.icon)" />
+                </svg>
               </div>
-            </div>
-
-            <!-- Title Selector -->
-            <div class="edit-group">
-              <h3 class="text-[13px] font-bold uppercase tracking-wide text-text-muted mb-2.5">Title</h3>
-              <div class="edit-options flex flex-wrap gap-2">
-                @for (title of availableTitles(); track title.titleId) {
-                  <button
-                    class="edit-option px-3.5 py-2 rounded-lg border-[1.5px] border-border bg-transparent text-text-secondary text-[13px] font-medium cursor-pointer transition-all duration-200 hover:border-accent hover:text-accent"
-                    [class.active]="title.isActive"
-                    (click)="activateTitle(title.titleId)"
-                  >
-                    {{ title.label }}
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- Banner Selector -->
-            <div class="edit-group">
-              <h3 class="text-[13px] font-bold uppercase tracking-wide text-text-muted mb-2.5">Banner</h3>
-              <div class="edit-options flex flex-wrap gap-2">
-                @for (banner of availableBanners(); track banner.bannerId) {
-                  <button
-                    class="edit-option px-3.5 py-2 rounded-lg border-[1.5px] border-border bg-transparent text-text-secondary text-[13px] font-medium cursor-pointer transition-all duration-200 hover:border-accent hover:text-accent"
-                    [class.active]="banner.isActive"
-                    (click)="activateBanner(banner.bannerId)"
-                  >
-                    {{ banner.name }}
-                  </button>
-                }
-              </div>
-            </div>
-          </div>
-
-          <!-- Showcase Picker -->
-          <div class="edit-section mt-6 pt-6 border-t border-border">
-            <h3 class="edit-section-title text-base font-bold text-text-primary mb-1">Trophy Case Showcase</h3>
-            <p class="edit-section-sub text-[13px] text-text-muted mb-4">Select up to 6 stoves to feature</p>
-            <div class="showcase-slots grid grid-cols-3 gap-2.5 mb-5 max-sm:grid-cols-2">
-              @for (slot of [0,1,2,3,4,5]; track slot) {
-                <div class="showcase-slot min-h-[100px] flex flex-col items-center justify-center gap-1.5 p-3 text-center bg-surface-secondary border-[1.5px] border-dashed border-border rounded-[10px]">
-                  <span class="showcase-slot-label text-[10px] font-bold uppercase tracking-wider text-text-muted">Slot {{ slot + 1 }}</span>
-                  @if (showcaseData().has(slot); as hasSlot) {
-                    <div class="showcase-slot-filled flex flex-col items-center gap-1">
-                      @if (getOwnedStoveById(showcaseData().get(slot)!); as stove) {
-                        <img [src]="stove.imageUrl" [alt]="stove.name" class="showcase-slot-img w-10 h-10 object-contain" />
-                        <span class="showcase-slot-heat text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-[10px] whitespace-nowrap border-none heat-{{stove.heatLevel | heatTier | lowercase}}">
-                          {{ stove.heatLevel | heatTier }}
-                        </span>
-                        <span class="showcase-slot-name text-xs font-semibold text-text-primary">{{ stove.name }}</span>
-                      } @else {
-                        <span class="showcase-slot-name text-xs font-semibold text-text-primary">Stove #{{ showcaseData().get(slot) }}</span>
-                      }
-                      <button class="showcase-slot-remove text-[11px] text-[#f44336] bg-transparent border-none cursor-pointer px-1.5 py-0.5 opacity-70 transition-opacity hover:opacity-100 hover:underline" (click)="removeFromShowcase(slot)">Remove</button>
+              <div class="timeline-card" [style.--accent]="cat.accent">
+                <div class="timeline-title">{{ cat.title }}</div>
+                <div class="timeline-stats">
+                  @for (item of cat.items; track item.label) {
+                    <div class="timeline-stat">
+                      <span class="stat-label">{{ item.label }}</span>
+                      <span class="stat-value" [class.rarity]="item.type === 'rarity'" [class]="item.type === 'rarity' ? getRarityClass(item.value) : ''">
+                        {{ item.value }}
+                      </span>
                     </div>
-                  } @else {
-                    <div class="showcase-slot-empty text-[13px] text-text-muted">Empty</div>
                   }
                 </div>
-              }
-            </div>
-            <div class="showcase-picker">
-              <p class="showcase-picker-label text-[13px] text-text-secondary mb-2.5">Click a stove to add to the first empty slot:</p>
-              <div class="showcase-picker-grid grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-2">
-                @for (stove of ownedStoves(); track stove.stoveId) {
-                  <button
-                    class="showcase-picker-item flex flex-col items-center gap-1 p-2 bg-surface-secondary border-[1.5px] border-border rounded-lg cursor-pointer transition-all duration-200 hover:border-accent hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
-                    [class]="'showcase-picker-item ' + getRarityClass(stove.rarity) + (isStoveInShowcase(stove.stoveId) ? ' showcase-picker-disabled' : '')"
-                    (click)="addToShowcase(getFirstEmptyShowcaseSlot(), stove.stoveId)"
-                    [disabled]="showcaseSaving() !== null || getFirstEmptyShowcaseSlot() === -1 || isStoveInShowcase(stove.stoveId)"
-                  >
-                    <img [src]="stove.imageUrl" [alt]="stove.name" class="showcase-picker-img w-9 h-9 object-contain" />
-                    <span class="showcase-picker-name text-[10px] font-medium text-text-secondary text-center leading-tight">{{ stove.name }}</span>
-                    @if (isStoveInShowcase(stove.stoveId)) {
-                      <span class="showcase-picker-badge">Showcased</span>
-                    }
-                  </button>
-                }
               </div>
             </div>
+          }
+        </div>
+
+        <!-- Resource Bars -->
+        <div class="resource-bars">
+          <div class="resource-bar">
+            <div class="bar-label">
+              <span>Coins</span>
+              <span>{{ formatBigNumber(animatedCoins()) }}</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill coins" [style.width.%]="coinsPercent()"></div></div>
           </div>
-        }
-      </section>
-    }
-
-    <!-- Featured Achievements -->
-    @if (p.featuredAchievements.length > 0) {
-      <section class="featured-achievements mb-6">
-        <div class="section-header mb-5">
-          <h2 class="text-xl font-semibold m-0 mb-1 text-text-primary">Featured Achievements</h2>
-          <p class="section-sub text-sm text-text-muted m-0">Pinned milestones</p>
-        </div>
-        <div class="featured-grid flex flex-wrap gap-2.5">
-          @for (achId of p.featuredAchievements; track achId) {
-            @if (getBadgeById(achId); as badge) {
-              <div class="featured-card flex items-center gap-2 px-3.5 py-2 bg-surface-secondary border-[1.5px] border-border rounded-[10px] opacity-60" [class.unlocked]="badge.unlocked">
-                <div class="featured-icon w-5 h-5 text-accent">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                </div>
-                <span class="featured-label text-[13px] font-semibold text-text-primary">{{ badge.label }}</span>
-              </div>
-            }
-          }
-        </div>
-      </section>
-    }
-
-    <!-- 2. Wealth Dashboard -->
-    <section class="dashboard grid grid-cols-4 gap-4 mb-7 max-md:grid-cols-2">
-      <div class="dash-card bg-surface rounded-[20px] py-6 px-5 text-center border border-border shadow-[0_4px_16px_var(--shadow-color)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_8px_28px_var(--shadow-color)]">
-        <div class="dash-icon w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-[0_4px_12px_rgba(0,0,0,0.15)]" style="background: linear-gradient(135deg, #e85d04, #f48c06);">
-          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12h6M12 9v6"/></svg>
-        </div>
-        <div class="dash-value text-[26px] font-bold text-text-primary mb-1 leading-tight">{{ animatedCoins().toLocaleString() }}</div>
-        <div class="dash-label text-xs text-text-muted uppercase tracking-wider font-medium">Coins</div>
-      </div>
-      <div class="dash-card bg-surface rounded-[20px] py-6 px-5 text-center border border-border shadow-[0_4px_16px_var(--shadow-color)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_8px_28px_var(--shadow-color)]">
-        <div class="dash-icon w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-[0_4px_12px_rgba(0,0,0,0.15)]" style="background: linear-gradient(135deg, #4caf50, #66bb6a);">
-          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        </div>
-        <div class="dash-value text-[26px] font-bold text-text-primary mb-1 leading-tight">{{ animatedNetWorth().toLocaleString() }}</div>
-        <div class="dash-label text-xs text-text-muted uppercase tracking-wider font-medium">Net Worth</div>
-      </div>
-      <div class="dash-card bg-surface rounded-[20px] py-6 px-5 text-center border border-border shadow-[0_4px_16px_var(--shadow-color)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_8px_28px_var(--shadow-color)]">
-        <div class="dash-icon w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-[0_4px_12px_rgba(0,0,0,0.15)]" style="background: linear-gradient(135deg, #9c27b0, #ab47bc);">
-          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
-        </div>
-        <div class="dash-value text-[26px] font-bold text-text-primary mb-1 leading-tight">{{ animatedStoves().toLocaleString() }}</div>
-        <div class="dash-label text-xs text-text-muted uppercase tracking-wider font-medium">Collection</div>
-      </div>
-      <div class="dash-card bg-surface rounded-[20px] py-6 px-5 text-center border border-border shadow-[0_4px_16px_var(--shadow-color)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_8px_28px_var(--shadow-color)]">
-        <div class="dash-icon w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-[0_4px_12px_rgba(0,0,0,0.15)]" style="background: linear-gradient(135deg, #2196f3, #42a5f5);">
-          <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        </div>
-        <div class="dash-value text-[26px] font-bold text-text-primary mb-1 leading-tight">{{ animatedActivity().toLocaleString() }}</div>
-        <div class="dash-label text-xs text-text-muted uppercase tracking-wider font-medium">Activity Score</div>
-      </div>
-    </section>
-
-    <!-- 3. Trophy Shelf (Event Trophies) -->
-    @if (p.trophies.length > 0) {
-      <section class="trophy-shelf mb-7">
-        <div class="section-header mb-5">
-          <h2 class="text-xl font-semibold m-0 mb-1 text-text-primary">Trophy Shelf</h2>
-          <p class="section-sub text-sm text-text-muted m-0">Special achievements and event awards</p>
-        </div>
-        <div class="shelf-grid grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3.5 max-sm:grid-cols-2">
-          @for (trophy of p.trophies; track trophy.trophyId) {
-            <div class="shelf-item bg-surface rounded-2xl p-5 px-3.5 text-center border-2 border-border relative overflow-hidden transition-all duration-300 hover:-translate-y-[3px]" [class]="'shelf-item ' + getRarityClass(trophy.rarity)">
-              <div class="shelf-icon w-9 h-9 mx-auto mb-2.5 flex items-center justify-center text-accent">
-                <svg class="w-7 h-7 fill-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-              </div>
-              <span class="shelf-name block text-[13px] font-semibold text-text-primary mb-1">{{ trophy.name }}</span>
-              <span class="shelf-desc block text-[10px] text-text-muted leading-tight mb-1">{{ trophy.description }}</span>
-              @if (trophy.season) {
-                <span class="shelf-season inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-accent-light text-accent">{{ trophy.season }}</span>
-              }
+          <div class="resource-bar">
+            <div class="bar-label">
+              <span>Net Worth</span>
+              <span>{{ formatBigNumber(animatedNetWorth()) }}</span>
             </div>
-          }
-        </div>
-      </section>
-    }
-
-    <!-- 4. Trophy Case -->
-    <section class="trophy-case mb-7">
-      <div class="section-header mb-5">
-        <h2 class="text-xl font-semibold m-0 mb-1 text-text-primary">Trophy Case</h2>
-        <p class="section-sub text-sm text-text-muted m-0">Rarest stoves in this player's collection</p>
-      </div>
-      @if (p.topStoves.length === 0) {
-        <div class="empty-case bg-surface rounded-[20px] p-12 text-center text-text-muted border border-dashed border-border">
-          <p>No stoves collected yet.</p>
-        </div>
-      } @else {
-        <div class="trophy-grid grid grid-cols-3 gap-4 max-md:grid-cols-2">
-          @for (stove of p.topStoves; track stove.stoveId) {
-            <div class="trophy-card bg-surface rounded-[20px] py-6 px-4 text-center border-2 border-border relative overflow-hidden transition-all duration-300 cursor-default" [class]="'trophy-card ' + getRarityClass(stove.rarity)">
-              <div class="trophy-glow absolute inset-0 rounded-[20px] opacity-0 transition-opacity duration-300 pointer-events-none"></div>
-              <div class="trophy-image-wrap w-20 h-20 mx-auto mb-3.5 flex items-center justify-center relative">
-                <img [src]="stove.imageUrl" [alt]="stove.name" class="trophy-image max-w-full max-h-full object-contain transition-transform duration-300" />
-                <span class="heat-badge absolute -top-1 -right-1 heat-sm heat-{{stove.heatLevel | heatTier | lowercase}}">
-                  {{ stove.heatLevel | heatTier }}
-                </span>
-              </div>
-              <div class="trophy-info">
-                <span class="trophy-name block text-sm font-semibold text-text-primary mb-1">{{ stove.name }}</span>
-                <span class="trophy-rarity inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-[10px] bg-surface-secondary" [style.color]="getRarityColor(stove.rarity)">{{ stove.rarity }}</span>
-              </div>
-            </div>
-          }
-        </div>
-      }
-    </section>
-
-    <!-- 5. Stats Wall -->
-    <section class="stats-wall mb-7">
-      <div class="section-header mb-5">
-        <h2 class="text-xl font-semibold m-0 mb-1 text-text-primary">Statistics</h2>
-        <p class="section-sub text-sm text-text-muted m-0">A breakdown of player activity</p>
-      </div>
-      <div class="stats-grid grid grid-cols-4 gap-4 max-md:grid-cols-2">
-        @for (cat of statCategories(); track cat.title) {
-          <div class="stats-card bg-surface rounded-[20px] py-6 px-5 border border-border shadow-[0_4px_16px_var(--shadow-color)] relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_var(--shadow-color)]">
-            <div class="stats-accent absolute top-0 left-0 right-0 h-1" [style.background]="cat.accent"></div>
-            <h3 class="stats-title text-sm font-semibold text-text-primary m-0 mb-4 uppercase tracking-wider">{{ cat.title }}</h3>
-            <div class="stats-items flex flex-col gap-2.5">
-              @for (item of cat.items; track item.label) {
-                <div class="stats-item flex justify-between items-center text-[13px]">
-                  <span class="stats-item-label text-text-muted">{{ item.label }}</span>
-                  @if (item.type === 'rarity') {
-                    <span class="stats-item-value rarity-pill px-2 py-0.5 rounded-lg text-[11px] uppercase tracking-wider bg-surface-secondary font-semibold text-text-primary" [class]="'stats-item-value rarity-pill ' + getRarityClass(item.value)">{{ item.value }}</span>
-                  } @else {
-                    <span class="stats-item-value font-semibold text-text-primary">{{ item.value }}</span>
-                  }
-                </div>
-              }
-            </div>
+            <div class="bar-track"><div class="bar-fill worth" [style.width.%]="netWorthPercent()"></div></div>
           </div>
-        }
-      </div>
-    </section>
-
-    <!-- 6. Achievement Badges -->
-    <section class="badges-section mb-7">
-      <div class="section-header mb-5">
-        <h2 class="text-xl font-semibold m-0 mb-1 text-text-primary">Achievements</h2>
-        <p class="section-sub text-sm text-text-muted m-0">Milestones reached on the journey</p>
-      </div>
-      <div class="badges-grid grid grid-cols-4 gap-3.5 max-md:grid-cols-2">
-        @for (badge of badges(); track badge.id) {
-          <div class="badge-card bg-surface rounded-2xl py-5 px-3.5 text-center border border-border shadow-[0_4px_12px_var(--shadow-color)] transition-all duration-300 relative" [class.unlocked]="badge.unlocked" [class.tier-legendary]="badge.tier === 'legendary'" [class.tier-secret]="badge.tier === 'secret'" [class.tier-epic]="badge.tier === 'epic'">
-            <div class="badge-icon w-10 h-10 mx-auto mb-2.5 flex items-center justify-center">
-              @if (badge.unlocked) {
-                <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-              } @else {
-                <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <path d="M12 8v8M8 12h8"/>
-                </svg>
-              }
+          <div class="resource-bar">
+            <div class="bar-label">
+              <span>Collection</span>
+              <span>{{ animatedStoves() }} stoves</span>
             </div>
-            <span class="badge-label block text-[13px] font-semibold text-text-primary mb-0.5">{{ badge.label }}</span>
-            <span class="badge-desc block text-[11px] text-text-muted leading-tight">{{ badge.description }}</span>
-            @if (badge.rewardCoins || badge.rewardXP) {
-              <span class="badge-rewards block text-[10px] text-accent font-semibold mt-1">
-                @if (badge.rewardCoins) { 💰 {{ badge.rewardCoins.toLocaleString() }} }
-                @if (badge.rewardXP) { ⭐ {{ badge.rewardXP.toLocaleString() }} XP }
-              </span>
+            <div class="bar-track"><div class="bar-fill collection" [style.width.%]="collectionPercent()"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Trophy Carousel (Ranked) -->
+      <section class="trophy-carousel glory-reveal">
+        <div class="section-header">
+          <h2>Hall Trophies</h2>
+          <span class="section-sub">Earned honors</span>
+        </div>
+        <div class="carousel-viewport">
+          <div class="carousel-track">
+            @for (badge of unlockedBadges(); track badge.id) {
+              <div class="carousel-card" [class]="'tier-' + badge.tier.toLowerCase()">
+                <div class="carousel-ring"></div>
+                <div class="carousel-icon">{{ badge.label.charAt(0) }}</div>
+                <div class="carousel-name">{{ badge.label }}</div>
+                <div class="carousel-tier">{{ badge.tier }}</div>
+              </div>
             }
-            @if (!badge.unlocked) {
-              <span class="badge-locked-text absolute top-2.5 right-2.5 text-[9px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] bg-surface-secondary px-2 py-0.5 rounded-md">Locked</span>
+            @if (unlockedBadges().length === 0) {
+              <div class="carousel-empty">
+                <span>No trophies yet.</span>
+                <p>Start opening lootboxes and trading to earn your first honor.</p>
+              </div>
             }
-            @if (editMode() && badge.unlocked) {
-              <button
-                class="badge-pin mt-2 px-2.5 py-1 text-[11px] font-semibold rounded-md border border-border bg-transparent text-text-muted cursor-pointer transition-all duration-200 hover:border-accent hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed"
-                [class.pinned]="p.featuredAchievements.includes(badge.id)"
-                (click)="toggleFeaturedAchievement(badge.id)"
-                [disabled]="achievementSaving() === badge.id"
-              >
-                @if (p.featuredAchievements.includes(badge.id)) {
-                  <span>Unpin</span>
-                } @else {
-                  <span>Pin</span>
-                }
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Guestbook -->
+    <section class="guestbook glory-reveal">
+      <div class="section-header">
+        <h2>Guestbook</h2>
+        <span class="section-sub">{{ guestbook().length }} messages</span>
+      </div>
+      <div class="guestbook-grid">
+        @for (entry of guestbook(); track entry.entryId) {
+          <div class="guestbook-card">
+            <div class="guestbook-header">
+              <span class="guestbook-author">{{ entry.authorName }}</span>
+              <span class="guestbook-date">{{ formatDate(entry.postedAt) }}</span>
+            </div>
+            <p class="guestbook-text">{{ entry.message }}</p>
+            @if (authService.getCurrentUser()?.playerId === entry.authorId || isOwnProfile()) {
+              <button class="guestbook-delete" (click)="deleteGuestbookEntry(entry.entryId)" title="Delete">
+                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
               </button>
             }
           </div>
         }
       </div>
-    </section>
-
-    <!-- 7. Guestbook -->
-    <section class="guestbook-section mt-8">
-      <div class="section-header mb-5">
-        <h2 class="text-xl font-semibold m-0 mb-1 text-text-primary">Guestbook</h2>
-        <p class="section-sub text-sm text-text-muted m-0">Leave a message for {{ p.username }}</p>
-      </div>
-      <div class="guestbook-entries flex flex-col gap-3 mb-5">
-        @if (guestbook().length === 0) {
-          <div class="guestbook-empty p-6 text-center text-text-muted bg-surface-secondary rounded-xl border border-dashed border-border">
-            <p>No entries yet. Be the first to leave a message!</p>
-          </div>
-        } @else {
-          @for (entry of guestbook(); track entry.entryId) {
-            <div class="guestbook-entry bg-surface-secondary border border-border rounded-xl p-4 transition-shadow duration-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
-              <div class="guestbook-entry-header flex justify-between items-center mb-2">
-                <span class="guestbook-author font-semibold text-sm text-text-primary">{{ entry.authorName }}</span>
-                <span class="guestbook-date text-xs text-text-muted">{{ formatDate(entry.postedAt) }}</span>
-              </div>
-              <p class="guestbook-message text-sm text-text-secondary leading-relaxed m-0">{{ entry.message }}</p>
-              @if (isOwnProfile() || authService.getCurrentUser()?.playerId === entry.authorId) {
-                <button class="guestbook-delete mt-2.5 text-xs text-[#f44336] bg-transparent border-none cursor-pointer px-0 py-0 opacity-70 transition-opacity hover:opacity-100 hover:underline" (click)="deleteGuestbookEntry(entry.entryId)">Delete</button>
-              }
-            </div>
-          }
-        }
-      </div>
-      @if (authService.getCurrentUser() && !isOwnProfile()) {
-        <div class="guestbook-form flex gap-2.5 items-center">
+      @if (authService.authenticated() && !isOwnProfile()) {
+        <div class="guestbook-input-row">
           <input
             type="text"
-            class="guestbook-input flex-1 px-3.5 py-2.5 border border-border rounded-lg bg-surface-secondary text-text-primary text-sm outline-none transition-colors duration-200 focus:border-accent placeholder:text-text-muted"
-            [value]="guestbookMessage()"
-            (input)="guestbookMessage.set($any($event).target.value)"
-            placeholder="Write a message..."
-            maxlength="200"
+            class="guestbook-input"
+            [ngModel]="guestbookMessage()"
+            (ngModelChange)="guestbookMessage.set($event)"
+            placeholder="Leave a message..."
+            maxlength="280"
           />
-          <button
-            class="guestbook-submit px-5 py-2.5 bg-accent text-white border-none rounded-lg font-semibold text-sm cursor-pointer transition-all duration-200 hover:opacity-90 hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
-            (click)="submitGuestbook()"
-            [disabled]="guestbookLoading() || !guestbookMessage().trim()"
-          >
-            @if (guestbookLoading()) {
-              <span>Sending...</span>
-            } @else {
-              <span>Post</span>
-            }
+          <button class="btn-primary" (click)="submitGuestbook()" [disabled]="guestbookLoading() || !guestbookMessage().trim()">
+            {{ guestbookLoading() ? 'Sending...' : 'Sign' }}
           </button>
         </div>
       }
     </section>
-  }
-</div>
-</app-page-background>
+  </div>
+}
+
+<!-- Edit Drawer -->
+@if (editMode()) {
+  <div class="drawer-backdrop" (click)="closeEditDrawer()"></div>
+  <aside class="edit-drawer">
+    <div class="drawer-header">
+      <h2>Curate Monument</h2>
+      <button class="drawer-close" (click)="closeEditDrawer()">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+
+    <div class="drawer-tabs">
+      <button class="drawer-tab" [class.active]="editTab() === 'theme'" (click)="setEditTab('theme')">Theme</button>
+      <button class="drawer-tab" [class.active]="editTab() === 'title'" (click)="setEditTab('title')">Title</button>
+      <button class="drawer-tab" [class.active]="editTab() === 'banner'" (click)="setEditTab('banner')">Banner</button>
+      <button class="drawer-tab" [class.active]="editTab() === 'showcase'" (click)="setEditTab('showcase')">Showcase</button>
+    </div>
+
+    <div class="drawer-body">
+      @if (editLoading()) {
+        <div class="drawer-loading">Loading your collection…</div>
+      } @else if (editError()) {
+        <div class="drawer-error">{{ editError() }}</div>
+      } @else {
+        @switch (editTab()) {
+          @case ('theme') {
+            <div class="drawer-grid">
+              @for (theme of availableThemes(); track theme.themeId) {
+                <button class="drawer-card theme-card" [class.active]="theme.themeId === profile()?.activeTheme?.themeId" (click)="activateTheme(theme.themeId)">
+                  <div class="theme-preview" [class]="theme.cssClass"></div>
+                  <span class="drawer-card-label">{{ theme.name }}</span>
+                  @if (theme.themeId === profile()?.activeTheme?.themeId) {
+                    <span class="drawer-card-badge">Active</span>
+                  }
+                </button>
+              }
+            </div>
+          }
+          @case ('title') {
+            <div class="drawer-list">
+              @for (title of availableTitles(); track title.titleId) {
+                <button class="drawer-list-item" [class.active]="title.titleId === profile()?.activeTitle?.titleId" (click)="activateTitle(title.titleId)">
+                  <span class="list-title">{{ title.label }}</span>
+                  @if (title.titleId === profile()?.activeTitle?.titleId) {
+                    <span class="list-badge">Active</span>
+                  }
+                </button>
+              }
+            </div>
+          }
+          @case ('banner') {
+            <div class="drawer-grid">
+              @for (banner of availableBanners(); track banner.bannerId) {
+                <button class="drawer-card banner-card" [class.active]="banner.bannerId === profile()?.activeBanner?.bannerId" (click)="activateBanner(banner.bannerId)">
+                  <div class="banner-preview" [style.background]="banner.gradient"></div>
+                  <span class="drawer-card-label">{{ banner.name }}</span>
+                </button>
+              }
+            </div>
+          }
+          @case ('showcase') {
+            <div class="showcase-manager">
+              <p class="drawer-hint">Assign up to 6 owned stoves to your Trophy Stage.</p>
+              <div class="showcase-slots">
+                @for (slot of [0,1,2,3,4,5]; track slot) {
+                  <div class="showcase-slot" [class.empty]="!showcaseData().has(slot)">
+                    @let stoveId = showcaseData().get(slot);
+                    @if (stoveId) {
+                      @let stove = getOwnedStoveById(stoveId);
+                      <div class="slot-stove" [class]="'rarity-' + (stove?.rarity?.toLowerCase() || 'common')">
+                        <img [src]="stove?.imageUrl || 'assets/images/stoves/default.png'" />
+                        <span>{{ stove?.name }}</span>
+                      </div>
+                      <button class="slot-remove" (click)="removeFromShowcase(slot)" [disabled]="showcaseSaving() === slot">
+                        {{ showcaseSaving() === slot ? '…' : '×' }}
+                      </button>
+                    } @else {
+                      <span class="slot-index">{{ slot + 1 }}</span>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="showcase-pool">
+                @for (stove of ownedStoves(); track stove.stoveId) {
+                  <button class="pool-item" [class.in-showcase]="isStoveInShowcase(stove.stoveId)" [disabled]="isStoveInShowcase(stove.stoveId) || getFirstEmptyShowcaseSlot() === -1" (click)="addToShowcase(getFirstEmptyShowcaseSlot(), stove.stoveId)">
+                    <img [src]="stove.imageUrl || 'assets/images/stoves/default.png'" />
+                    <span>{{ stove.name }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
+  </aside>
+}
+
+<!-- Toasts -->
+@if (xpToast()) {
+  <div class="glory-toast xp-toast">
+    <span>+{{ xpToast()?.amount }} XP</span>
+    <small>{{ xpToast()?.source }}</small>
+  </div>
+}
+@if (levelUpToast()) {
+  <div class="glory-toast level-toast">
+    <span>Level Up!</span>
+    <small>{{ levelUpToast()?.oldLevel }} → {{ levelUpToast()?.newLevel }}</small>
+  </div>
+}

@@ -1,6 +1,7 @@
 import { ServiceBase } from "./service-base";
 import { Unit } from "../utils/unit";
 import { StoveRow } from "../../shared/model";
+import { CollectionService } from "./collection-service";
 
 export class StoveService extends ServiceBase {
     constructor(unit: Unit) {
@@ -90,7 +91,12 @@ export class StoveService extends ServiceBase {
              VALUES (@typeId, @currentOwnerId, NOW(), @heatLevel)`,
             { typeId, currentOwnerId, heatLevel }
         );
-        return await this.executeStmt(stmt);
+        const result = await this.executeStmt(stmt);
+        if (result[0]) {
+            const collectionService = new CollectionService(this.unit);
+            await collectionService.recordDiscovery(currentOwnerId, typeId, "admin");
+        }
+        return result;
     }
 
     /**

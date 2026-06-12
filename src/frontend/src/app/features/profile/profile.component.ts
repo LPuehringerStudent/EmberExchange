@@ -5,6 +5,8 @@ import { PlayerStatisticsService, PlayerStatistics } from '@core/services/player
 import { firstValueFrom } from 'rxjs';
 import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
 
+type RarityKey = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'limited' | 'secret' | null | undefined;
+
 @Component({
   selector: 'app-profile',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,5 +66,40 @@ export class ProfileComponent implements OnInit {
   formatNumber(num: number | null | undefined): string {
     if (num === null || num === undefined) return '0';
     return num.toLocaleString();
+  }
+
+  rarityColorClass(rarity: RarityKey): string {
+    if (!rarity) return 'text-text-muted';
+    const map: Record<string, string> = {
+      common: 'text-rarity-common',
+      uncommon: 'text-rarity-uncommon',
+      rare: 'text-rarity-rare',
+      epic: 'text-rarity-epic',
+      legendary: 'text-rarity-legendary',
+      limited: 'text-rarity-limited',
+      secret: 'text-rarity-secret'
+    };
+    return map[rarity.toLowerCase()] || 'text-text-muted';
+  }
+
+  rarityBgClass(rarity: RarityKey): string {
+    if (!rarity) return 'bg-surface-secondary';
+    const map: Record<string, string> = {
+      common: 'bg-rarity-common/10 text-rarity-common border-rarity-common/30',
+      uncommon: 'bg-rarity-uncommon/10 text-rarity-uncommon border-rarity-uncommon/30',
+      rare: 'bg-rarity-rare/10 text-rarity-rare border-rarity-rare/30',
+      epic: 'bg-rarity-epic/10 text-rarity-epic border-rarity-epic/30',
+      legendary: 'bg-rarity-legendary/10 text-rarity-legendary border-rarity-legendary/30',
+      limited: 'bg-rarity-limited/10 text-rarity-limited border-rarity-limited/30',
+      secret: 'bg-rarity-secret/10 text-rarity-secret border-rarity-secret/30'
+    };
+    return map[rarity.toLowerCase()] || 'bg-surface-secondary';
+  }
+
+  winRate(stats: PlayerStatistics | null): string {
+    if (!stats) return '0%';
+    const total = stats.totalMiniGameWins + stats.totalMiniGameLosses;
+    if (total === 0) return '0%';
+    return `${Math.round((stats.totalMiniGameWins / total) * 100)}%`;
   }
 }

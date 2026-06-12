@@ -3,6 +3,7 @@ import { Unit } from "../utils/unit";
 import { LootboxRow, LootboxTypeRow, LootboxDropRow } from "../../shared/model";
 import { ListingService } from "./listing-service";
 import { PlayerPrestigeService } from "./player-prestige-service";
+import { CollectionService } from "./collection-service";
 import { AchievementEngine } from "./achievement-engine";
 import { PityService } from "./pity-service";
 import { QuestService } from "./quest-service";
@@ -295,6 +296,9 @@ export class LootboxService extends ServiceBase {
         const stoveRow = await stoveStmt.get();
         if (!stoveRow) return [false, null];
         const stoveId = stoveRow.stoveId;
+
+        const collectionService = new CollectionService(this.unit);
+        await collectionService.recordDiscovery(playerId, stoveType.typeId, "lootbox");
 
         // 4. Mark lootbox as opened
         const opened = await this.unit.prepare(

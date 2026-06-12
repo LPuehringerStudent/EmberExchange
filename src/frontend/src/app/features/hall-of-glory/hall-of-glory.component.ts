@@ -7,15 +7,16 @@ import {
   effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { HallOfGloryService, type GloryProfile, type GloryGuestbookEntry } from '../../core/services/hall-of-glory.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StoveService, type Stove } from '../../core/services/stove.service';
-import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
-import type { PlayerStatisticsRow as PlayerStatistics } from '@shared/model';
+
 import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
+import type { PageBackgroundTheme } from "../../shared/components/page-background/page-background.component";
 
 interface Badge {
   id: string;
@@ -30,6 +31,7 @@ interface Badge {
 interface StatCategory {
   title: string;
   accent: string;
+  icon: string;
   items: { label: string; value: string | number; type?: 'rarity' }[];
 }
 
@@ -37,7 +39,7 @@ interface StatCategory {
   selector: 'app-hall-of-glory',
   standalone: true,
   imports: [
-    CommonModule, HeatTierPipe, PageBackgroundComponent,
+    CommonModule, FormsModule, RouterLink, PageBackgroundComponent,
   ],
   templateUrl: './hall-of-glory.component.html',
   styleUrls: ['./hall-of-glory.component.css'],
@@ -56,6 +58,7 @@ export class HallOfGloryComponent implements OnInit {
 
   isOwnProfile = signal(false);
   editMode = signal(false);
+  editTab = signal<'theme' | 'title' | 'banner' | 'showcase'>('theme');
   guestbook = signal<GloryGuestbookEntry[]>([]);
   guestbookMessage = signal('');
   guestbookLoading = signal(false);
@@ -97,6 +100,9 @@ export class HallOfGloryComponent implements OnInit {
     }));
   });
 
+  unlockedBadges = computed(() => this.badges().filter(b => b.unlocked));
+  lockedBadges = computed(() => this.badges().filter(b => !b.unlocked));
+
   statCategories = computed<StatCategory[]>(() => {
     const stats = this.profile()?.stats;
     if (!stats) return [];
@@ -104,6 +110,7 @@ export class HallOfGloryComponent implements OnInit {
       {
         title: 'Lootbox',
         accent: '#e85d04',
+        icon: 'lootbox',
         items: [
           { label: 'Opened', value: stats.totalLootboxesOpened ?? 0 },
           { label: 'Best Drop', value: stats.bestDropRarity ?? '-', type: 'rarity' as const },
@@ -113,6 +120,7 @@ export class HallOfGloryComponent implements OnInit {
       {
         title: 'Market',
         accent: '#4caf50',
+        icon: 'market',
         items: [
           { label: 'Listings', value: stats.totalListingsCreated ?? 0 },
           { label: 'Sold', value: stats.totalListingsSold ?? 0 },
@@ -123,6 +131,7 @@ export class HallOfGloryComponent implements OnInit {
       {
         title: 'Games',
         accent: '#2196f3',
+        icon: 'games',
         items: [
           { label: 'Played', value: stats.totalMiniGamesPlayed ?? 0 },
           { label: 'Wins', value: stats.totalMiniGameWins ?? 0 },
@@ -133,6 +142,7 @@ export class HallOfGloryComponent implements OnInit {
       {
         title: 'Collection',
         accent: '#9c27b0',
+        icon: 'collection',
         items: [
           { label: 'Acquired', value: stats.totalStovesAcquired ?? 0 },
           { label: 'Sold', value: stats.totalStovesSold ?? 0 },
@@ -160,6 +170,25 @@ export class HallOfGloryComponent implements OnInit {
     return Math.min(100, Math.max(0, (currentInLevel / levelXP) * 100));
   });
 
+  coinsPercent = computed(() => Math.min(100, (this.animatedCoins() / 1_000_000) * 100));
+  netWorthPercent = computed(() => Math.min(100, (this.animatedNetWorth() / 5_000_000) * 100));
+  collectionPercent = computed(() => Math.min(100, this.animatedStoves() * 2));
+
+  backgroundTheme = computed<PageBackgroundTheme>(() => {
+    const active = this.profile()?.activeTheme?.cssClass?.replace('theme-', '') ?? 'gold';
+    const map: Record<string, PageBackgroundTheme> = {
+      ember: 'ember',
+      midnight: 'profile',
+      gold: 'gold',
+      forest: 'forge',
+      cyber: 'arcade',
+      crimson: 'forge',
+      ocean: 'market',
+      void: 'profile',
+    };
+    return map[active] ?? 'gold';
+  });
+
   private countersAnimated = false;
 
   // XP Toast
@@ -177,6 +206,25 @@ export class HallOfGloryComponent implements OnInit {
         this.animateCounter(profile.stats.currentStoveCount ?? 0, this.animatedStoves, 1200);
         this.animateCounter(profile.stats.marketActivityScore ?? 0, this.animatedActivity, 1200);
         this.lastSeenXP = profile.prestige.totalXP;
+      }
+    });
+
+    effect(() => {
+      if (!this.loading() && typeof window !== 'undefined') {
+        setTimeout(() => {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add('in-view');
+                  observer.unobserve(entry.target);
+                }
+              });
+            },
+            { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+          );
+          document.querySelectorAll('.glory-reveal').forEach((el) => observer.observe(el));
+        }, 50);
       }
     });
   }
@@ -237,7 +285,19 @@ export class HallOfGloryComponent implements OnInit {
       const currentUser = this.authService.getCurrentUser();
       this.isOwnProfile.set(currentUser?.playerId === playerId);
 
-      // Record visit if viewing another player's profile
+      // Load public customization data (showcase, etc.)
+      try {
+        const customization = await firstValueFrom(this.gloryService.getCustomization(playerId));
+        this.refreshShowcaseMap(customization.showcase);
+      } catch {
+        // Fall back to top stoves as showcase if customization is unavailable
+        const fallbackShowcase = (profile.topStoves ?? []).slice(0, 6).map((stove, index) => ({
+          slotIndex: index,
+          stoveId: stove.stoveId,
+        }));
+        this.refreshShowcaseMap(fallbackShowcase);
+      }
+
       if (currentUser && currentUser.playerId !== playerId) {
         try {
           await firstValueFrom(this.gloryService.recordVisit(currentUser.playerId, playerId));
@@ -264,21 +324,21 @@ export class HallOfGloryComponent implements OnInit {
     try {
       const result = await firstValueFrom(this.gloryService.prestige(playerId));
       if (result.success) {
-        // Reload profile to show updated prestige state
         const profile = await firstValueFrom(this.gloryService.getGloryProfile(playerId));
         this.profile.set(profile);
-        this.showLevelUpToast(100, 1); // Show dramatic level reset toast
+        this.showLevelUpToast(100, 1);
       }
     } catch (err) {
       console.error('Prestige failed:', err);
     }
   }
 
-  async toggleEditMode(): Promise<void> {
-    const enteringEdit = !this.editMode();
-    this.editMode.update(v => !v);
+  async openEditDrawer(): Promise<void> {
+    this.editMode.set(true);
+    this.editTab.set('theme');
+    this.editError.set(null);
 
-    if (enteringEdit && this.isOwnProfile()) {
+    if (this.isOwnProfile() && this.availableThemes().length === 0) {
       this.editLoading.set(true);
       try {
         const customization = await firstValueFrom(
@@ -294,10 +354,27 @@ export class HallOfGloryComponent implements OnInit {
         this.ownedStoves.set(stoves);
       } catch (err) {
         console.error('Failed to load customization:', err);
+        this.editError.set('Failed to load customization options.');
       } finally {
         this.editLoading.set(false);
       }
     }
+  }
+
+  closeEditDrawer(): void {
+    this.editMode.set(false);
+  }
+
+  toggleEditMode(): void {
+    if (this.editMode()) {
+      this.closeEditDrawer();
+    } else {
+      void this.openEditDrawer();
+    }
+  }
+
+  setEditTab(tab: 'theme' | 'title' | 'banner' | 'showcase'): void {
+    this.editTab.set(tab);
   }
 
   private async withEditError<T>(fn: () => Promise<T>): Promise<T | undefined> {
@@ -480,6 +557,14 @@ export class HallOfGloryComponent implements OnInit {
     });
   }
 
+  formatBigNumber(num: number | null | undefined): string {
+    if (num === null || num === undefined) return '0';
+    if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return num.toLocaleString();
+  }
+
   getRarityClass(rarity: string | number): string {
     return `rarity-${String(rarity).toLowerCase()}`;
   }
@@ -497,7 +582,7 @@ export class HallOfGloryComponent implements OnInit {
     return map[rarity.toLowerCase()] ?? '#9e9e9e';
   }
 
-  getProviderLabel(provider: string | null): string {
+  getProviderLabel(provider: string | null | undefined): string {
     if (!provider) return 'Local';
     return provider.charAt(0).toUpperCase() + provider.slice(1);
   }
@@ -523,5 +608,15 @@ export class HallOfGloryComponent implements OnInit {
 
   getBadgeById(id: string): Badge | undefined {
     return this.badges().find(b => b.id === id);
+  }
+
+  getCategoryIcon(icon: string): string {
+    const icons: Record<string, string> = {
+      lootbox: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z',
+      market: 'M3 3h18v18H3zM3 9h18M9 21V9',
+      games: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z',
+      collection: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+    };
+    return icons[icon] ?? icons['lootbox'];
   }
 }

@@ -60,6 +60,7 @@ describe("Lootbox opening integration flow", () => {
     jest.spyOn(Math, "random").mockReturnValue(0);
 
     const insertStoveStmt = mockStmt({ stoveId: 501 }, [], { changes: 1 });
+    const insertCollectionStmt = mockStmt(null, [], { changes: 1 });
     const openLootboxStmt = mockStmt(null, [], { changes: 1 });
     const insertDropStmt = mockStmt({ dropId: 900 }, [], { changes: 1 });
     const decrementCountStmt = mockStmt(null, [], { changes: 1 });
@@ -77,6 +78,7 @@ describe("Lootbox opening integration flow", () => {
         },
       ]),
       insertStoveStmt,
+      insertCollectionStmt,
       openLootboxStmt,
       insertDropStmt,
       decrementCountStmt,
@@ -93,6 +95,7 @@ describe("Lootbox opening integration flow", () => {
       lootboxId: 10,
     });
     expect(insertStoveStmt.get).toHaveBeenCalledTimes(1);
+    expect(insertCollectionStmt.run).toHaveBeenCalledTimes(1);
     expect(openLootboxStmt.run).toHaveBeenCalledTimes(1);
     expect(insertDropStmt.get).toHaveBeenCalledTimes(1);
     expect(decrementCountStmt.run).toHaveBeenCalledTimes(1);
