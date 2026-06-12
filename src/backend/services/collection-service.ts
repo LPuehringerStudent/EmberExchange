@@ -44,9 +44,6 @@ export class CollectionService {
     constructor(private unit: Unit) {}
 
     async getPlayerCollections(playerId: number): Promise<CollectionProgress[]> {
-        await this.ensureCollectionSchema();
-        await this.tryBackfillPlayerDiscoveries(playerId);
-
         const allTypesStmt = this.unit.prepare<{
             typeId: number;
             name: string;
@@ -123,7 +120,6 @@ export class CollectionService {
     }
 
     async recordDiscovery(playerId: number, typeId: number, source: string): Promise<void> {
-        await this.ensureCollectionSchema();
         await this.unit.prepare(
             `INSERT INTO PlayerCollectionEntry (playerId, typeId, discoveredAt, source)
              SELECT @playerId, @typeId, NOW(), @source
@@ -148,10 +144,6 @@ export class CollectionService {
     }
 
     async claimStoveReward(playerId: number, typeId: number): Promise<ClaimCollectionRewardResult> {
-        await this.ensureCollectionSchema();
-        await this.tryBackfillPlayerDiscoveries(playerId);
-        await this.ensureDiscoveredEntryForType(playerId, typeId);
-
         const stoveType = await this.unit.prepare<{ name: string; rarity: Rarity }, { typeId: number }>(
             `SELECT name, rarity FROM StoveType WHERE typeId = @typeId`,
             { typeId }
@@ -238,115 +230,6 @@ export class CollectionService {
             default:
                 return { rewardCoins: 250, rewardXP: 15 };
         }
-    }
-
-    async backfillPlayerDiscoveries(playerId: number): Promise<void> {
-        await this.unit.prepare(
-            `INSERT INTO PlayerCollectionEntry (playerId, typeId, discoveredAt, source)
-             SELECT s.currentOwnerId, s.typeId, COALESCE(MIN(s.mintedAt), CURRENT_TIMESTAMP::TEXT), 'current_owner'
-             FROM Stove s
-             JOIN StoveType st ON st.typeId = s.typeId
-             WHERE s.currentOwnerId = @playerId
-               AND st.rarity <> 'limited'
-               AND st.name <> 'One of a Kind'
-             GROUP BY s.currentOwnerId, s.typeId
-             ON CONFLICT (playerId, typeId) DO NOTHING`,
-            { playerId }
-        ).run();
-
-        await this.unit.prepare(
-            `INSERT INTO PlayerCollectionEntry (playerId, typeId, discoveredAt, source)
-             SELECT o.playerId, s.typeId, COALESCE(MIN(o.acquiredAt), CURRENT_TIMESTAMP::TEXT), 'ownership'
-             FROM Ownership o
-             JOIN Stove s ON s.stoveId = o.stoveId
-             JOIN StoveType st ON st.typeId = s.typeId
-             WHERE o.playerId = @playerId
-               AND st.rarity <> 'limited'
-               AND st.name <> 'One of a Kind'
-             GROUP BY o.playerId, s.typeId
-             ON CONFLICT (playerId, typeId) DO NOTHING`,
-            { playerId }
-        ).run();
-    }
-
-    private async ensureCollectionSchema(): Promise<void> {
-        await this.runStep("create PlayerCollectionEntry table", () => this.unit.prepare(
-            `CREATE TABLE IF NOT EXISTS PlayerCollectionEntry (
-                playerId INTEGER NOT NULL REFERENCES Player(playerId) ON DELETE CASCADE,
-                typeId INTEGER NOT NULL REFERENCES StoveType(typeId) ON DELETE CASCADE,
-                discoveredAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                source TEXT NOT NULL DEFAULT 'unknown',
-                rewardClaimedAt TEXT,
-                PRIMARY KEY (playerId, typeId)
-            )`
-        ).run());
-        await this.runStep("add PlayerCollectionEntry columns", () => this.unit.prepare(
-            `ALTER TABLE PlayerCollectionEntry
-                ADD COLUMN IF NOT EXISTS discoveredAt TEXT,
-                ADD COLUMN IF NOT EXISTS source TEXT,
-                ADD COLUMN IF NOT EXISTS rewardClaimedAt TEXT`
-        ).run());
-        await this.runStep("repair PlayerCollectionEntry discoveredAt", () => this.unit.prepare(
-            `UPDATE PlayerCollectionEntry
-             SET discoveredAt = CURRENT_TIMESTAMP
-             WHERE discoveredAt IS NULL`
-        ).run());
-        await this.runStep("repair PlayerCollectionEntry source", () => this.unit.prepare(
-            `UPDATE PlayerCollectionEntry
-             SET source = 'unknown'
-             WHERE source IS NULL`
-        ).run());
-        await this.runStep("enforce PlayerCollectionEntry defaults", () => this.unit.prepare(
-            `ALTER TABLE PlayerCollectionEntry
-                ALTER COLUMN discoveredAt SET DEFAULT CURRENT_TIMESTAMP,
-                ALTER COLUMN discoveredAt SET NOT NULL,
-                ALTER COLUMN source SET DEFAULT 'unknown',
-                ALTER COLUMN source SET NOT NULL`
-        ).run());
-    }
-
-    private async tryBackfillPlayerDiscoveries(playerId: number): Promise<void> {
-        try {
-            await this.unit.savepoint("collection_backfill");
-            await this.backfillPlayerDiscoveries(playerId);
-        } catch (err) {
-            console.warn("Collection backfill failed; serving derived progress instead:", err);
-            try {
-                await this.unit.rollbackToSavepoint("collection_backfill");
-            } catch {
-                // If savepoints are not available in a test/mock, continue with derived progress.
-            }
-        }
-    }
-
-    private async ensureDiscoveredEntryForType(playerId: number, typeId: number): Promise<void> {
-        await this.unit.prepare(
-            `INSERT INTO PlayerCollectionEntry (playerId, typeId, discoveredAt, source)
-             SELECT @playerId, @typeId, COALESCE(MIN(sourceRows.discoveredAt), CURRENT_TIMESTAMP::TEXT), 'derived'
-             FROM (
-                SELECT s.mintedAt as discoveredAt
-                FROM Stove s
-                JOIN StoveType st ON st.typeId = s.typeId
-                WHERE s.currentOwnerId = @playerId
-                  AND s.typeId = @typeId
-                  AND st.rarity <> 'limited'
-                  AND st.name <> 'One of a Kind'
-
-                UNION ALL
-
-                SELECT o.acquiredAt as discoveredAt
-                FROM Ownership o
-                JOIN Stove s ON s.stoveId = o.stoveId
-                JOIN StoveType st ON st.typeId = s.typeId
-                WHERE o.playerId = @playerId
-                  AND s.typeId = @typeId
-                  AND st.rarity <> 'limited'
-                  AND st.name <> 'One of a Kind'
-             ) sourceRows
-             HAVING COUNT(*) > 0
-             ON CONFLICT (playerId, typeId) DO NOTHING`,
-            { playerId, typeId }
-        ).run();
     }
 
     private isExcludedStoveType(name: string, rarity: string): boolean {
