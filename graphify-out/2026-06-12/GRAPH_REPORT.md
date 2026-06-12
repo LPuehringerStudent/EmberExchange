@@ -1,18 +1,12 @@
-# Graph Report - EmberExchange  (2026-06-12)
+# Graph Report - .  (2026-06-11)
 
 ## Corpus Check
-- 389 files · ~1,626,215 words
-- Verdict: corpus is large enough that graph structure adds value.
+- Large corpus: 492 files · ~1,543,947 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder.
 
 ## Summary
-- 3703 nodes · 6179 edges · 277 communities (160 shown, 117 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 31 edges (avg confidence: 0.84)
+- 2946 nodes · 5193 edges · 236 communities (128 shown, 108 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 32 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
-
-## Graph Freshness
-- Built from commit: `b2170004`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Express App & Routers|Express App & Routers]]
@@ -239,7 +233,6 @@
 - [[_COMMUNITY_Small Utilities|Small Utilities]]
 - [[_COMMUNITY_Notification System|Notification System]]
 - [[_COMMUNITY_Small Utilities|Small Utilities]]
-- [[_COMMUNITY_Small Utilities|Small Utilities]]
 - [[_COMMUNITY_Notification System|Notification System]]
 - [[_COMMUNITY_Small Utilities|Small Utilities]]
 - [[_COMMUNITY_Small Utilities|Small Utilities]]
@@ -247,69 +240,30 @@
 - [[_COMMUNITY_Security Settings Component|Security Settings Component]]
 - [[_COMMUNITY_Project Documentation|Project Documentation]]
 - [[_COMMUNITY_CICD Workflow|CI/CD Workflow]]
-- [[_COMMUNITY_Community 236|Community 236]]
-- [[_COMMUNITY_Community 237|Community 237]]
-- [[_COMMUNITY_Community 238|Community 238]]
-- [[_COMMUNITY_Community 239|Community 239]]
-- [[_COMMUNITY_Community 240|Community 240]]
-- [[_COMMUNITY_Community 241|Community 241]]
-- [[_COMMUNITY_Community 242|Community 242]]
-- [[_COMMUNITY_Community 243|Community 243]]
-- [[_COMMUNITY_Community 244|Community 244]]
-- [[_COMMUNITY_Community 245|Community 245]]
-- [[_COMMUNITY_Community 246|Community 246]]
-- [[_COMMUNITY_Community 247|Community 247]]
-- [[_COMMUNITY_Community 248|Community 248]]
-- [[_COMMUNITY_Community 249|Community 249]]
-- [[_COMMUNITY_Community 250|Community 250]]
-- [[_COMMUNITY_Community 251|Community 251]]
-- [[_COMMUNITY_Community 252|Community 252]]
-- [[_COMMUNITY_Community 253|Community 253]]
-- [[_COMMUNITY_Community 254|Community 254]]
-- [[_COMMUNITY_Community 255|Community 255]]
-- [[_COMMUNITY_Community 256|Community 256]]
-- [[_COMMUNITY_Community 257|Community 257]]
-- [[_COMMUNITY_Community 258|Community 258]]
-- [[_COMMUNITY_Community 259|Community 259]]
-- [[_COMMUNITY_Community 260|Community 260]]
-- [[_COMMUNITY_Community 261|Community 261]]
-- [[_COMMUNITY_Community 262|Community 262]]
-- [[_COMMUNITY_Community 263|Community 263]]
-- [[_COMMUNITY_Community 264|Community 264]]
-- [[_COMMUNITY_Community 265|Community 265]]
-- [[_COMMUNITY_Community 266|Community 266]]
-- [[_COMMUNITY_Community 267|Community 267]]
-- [[_COMMUNITY_Community 268|Community 268]]
-- [[_COMMUNITY_Community 269|Community 269]]
-- [[_COMMUNITY_Community 270|Community 270]]
-- [[_COMMUNITY_Community 271|Community 271]]
-- [[_COMMUNITY_Community 272|Community 272]]
-- [[_COMMUNITY_Community 273|Community 273]]
-- [[_COMMUNITY_Community 274|Community 274]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Unit` - 210 edges
-2. `AuthService` - 98 edges
-3. `ServiceBase` - 75 edges
+1. `Unit` - 182 edges
+2. `AuthService` - 92 edges
+3. `ServiceBase` - 69 edges
 4. `ApiService` - 41 edges
 5. `GloryCustomizationService` - 36 edges
-6. `ConnectionManager` - 34 edges
-7. `Investing` - 32 edges
-8. `MarketplaceComponent` - 32 edges
-9. `HallOfGloryComponent` - 31 edges
-10. `ShopComponent` - 31 edges
+6. `ConnectionManager` - 33 edges
+7. `HallOfGloryComponent` - 31 edges
+8. `ShopComponent` - 31 edges
+9. `PlayerService` - 29 edges
+10. `MarketplaceComponent` - 29 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Epic 8: First Impressions & Onboarding` --conceptually_related_to--> `Onboarding Overlay Tour`  [INFERRED]
-  Sprint6Epic8/README.md → src/frontend/src/app/core/components/onboarding-overlay/onboarding-overlay.component.html
 - `AGENTS.md Project Guide` --conceptually_related_to--> `Security Audit v1 (2026-06-01)`  [INFERRED]
   AGENTS.md → Security_Audits/SECURITY_AUDIT_2026-06-01.md
-- `Product Backlog` --semantically_similar_to--> `Product Backlog`  [INFERRED] [semantically similar]
-  backlogs/ProductBacklog.md → backlogs/OldProductBacklog.md
-- `Stream 1: Database Schema Changes` --semantically_similar_to--> `Stream 7: Data Migration & Cleanup`  [INFERRED] [semantically similar]
-  plans/notification-rework/01-database.md → plans/notification-rework/07-migration.md
+- `Epic 8: First Impressions & Onboarding` --conceptually_related_to--> `Onboarding Overlay Tour`  [INFERRED]
+  Sprint6Epic8/README.md → src/frontend/src/app/core/components/onboarding-overlay/onboarding-overlay.component.html
 - `Main Menu Component HTML` --references_as_icon--> `Quests Icon Image`  [EXTRACTED]
   src/frontend/src/app/features/home/main-menu.component.html → src/frontend/public/icon/quests.png
+- `createRoom()` --calls--> `Request`  [INFERRED]
+  src/test/websocket-integration.test.ts → src/backend/middleware/require-auth.ts
+- `handleDisconnect()` --calls--> `clearTurnTimer()`  [EXTRACTED]
+  src/backend/websocket/index.ts → src/backend/websocket/turn-timer.ts
 
 ## Import Cycles
 - None detected.
@@ -330,102 +284,106 @@
 - **Shop Tab Navigation** — shop_shop_daily, shop_shop_stoves, shop_shop_lootboxes, shop_shop_sell, shop_shop_codes [EXTRACTED 1.00]
 - **Startup Feature Showcase** — startup_startup_feature_collect, startup_startup_feature_trade, startup_startup_feature_games [EXTRACTED 1.00]
 
-## Communities (277 total, 117 thin omitted)
+## Communities (236 total, 108 thin omitted)
 
 ### Community 0 - "Express App & Routers"
-Cohesion: 0.07
-Nodes (31): allowedOrigins, FORBIDDEN_BODY_KEYS, requireAdmin(), checkPlayerBanned(), requireAuth(), chatMessageRouter, coinTransactionRouter, collectionRouter (+23 more)
+Cohesion: 0.06
+Nodes (44): allowedOrigins, app, FORBIDDEN_BODY_KEYS, initDb(), options, swaggerSpec, requireAdmin(), checkPlayerBanned() (+36 more)
 
 ### Community 1 - "Shared Models & Core Services"
-Cohesion: 0.05
-Nodes (19): ACHIEVEMENT_DEFINITIONS, FriendWithUser, DROP_TABLES, DropTable, PrestigeData, RARITY_ORDER, ServiceBase, TradeOfferResult (+11 more)
+Cohesion: 0.07
+Nodes (14): FriendWithUser, CacheEntry, RARITY_BASE_PRICE, RARITY_ORDER, ServiceBase, TradeOfferResult, TestService, DailySummary (+6 more)
 
 ### Community 2 - "Daily Statistics Service"
-Cohesion: 0.06
-Nodes (14): CreateDailyStatisticsResponse, SuccessMessage, CreatePlayerStatisticsResponse, SuccessMessage, DailyStatistics, DailyStatisticsRow, PlayerStatistics, PlayerStatisticsRow (+6 more)
+Cohesion: 0.05
+Nodes (17): CreateDailyStatisticsResponse, SuccessMessage, CreateStoveTypeStatisticsResponse, SuccessMessage, DailyStatistics, DailyStatisticsRow, StoveTypeStatistics, StoveTypeStatisticsRow (+9 more)
 
 ### Community 3 - "Shop & Unit Testing"
 Cohesion: 0.05
 Nodes (15): FORGEABLE_RARITIES, ForgeSlot, MergePhase, RARITY_ORDER, InfoTooltipComponent, InventoryComponent, InventoryLootbox, REROLL_BASE_COST (+7 more)
 
 ### Community 4 - "Game Lobby & API Services"
-Cohesion: 0.05
-Nodes (38): ApiError, ApiService, AuthResponse, LoginRequest, OAuthStatus, RegisterRequest, TwoFALoginResponse, TwoFASetupResponse (+30 more)
+Cohesion: 0.06
+Nodes (22): RoomListItem, ApiError, ApiService, CountResponse, CreateChatMessageResponse, SuccessMessage, Game, CountResponse (+14 more)
 
 ### Community 5 - "GitHub Charts & Update Log"
 Cohesion: 0.05
 Nodes (11): GloryBanner, GloryCustomizationService, GloryGuestbookEntry, GloryShowcaseItem, GloryTheme, GloryTitle, GloryTrophy, PlayerGloryBanner (+3 more)
 
 ### Community 6 - "Angular Build Config"
-Cohesion: 0.06
-Nodes (16): CATEGORY_FILTERS, CategoryFilter, FALLBACK_META, FilterCategory, FilterOption, QUEST_META, QuestCategory, QuestMeta (+8 more)
+Cohesion: 0.07
+Nodes (12): CATEGORY_MAP, FILTER_CHIPS, FilterCategory, FilterChip, QuestsComponent, TEMPLATE_COLOR, TEMPLATE_ICON, ClaimAllResult (+4 more)
 
 ### Community 7 - "Frontend Auth Service"
 Cohesion: 0.05
 Nodes (40): build, serve, test, builder, configurations, defaultConfiguration, options, cli (+32 more)
 
 ### Community 8 - "Production Dependencies"
-Cohesion: 0.22
-Nodes (3): { DB }, { DB }, DB
+Cohesion: 0.05
+Nodes (15): { DB }, { DB }, { DB }, { DB }, { DB }, { DB }, { DB }, { DB } (+7 more)
 
 ### Community 10 - "Player Router & Achievements"
-Cohesion: 0.12
-Nodes (3): LootboxComponent, OpenLootboxResponse, PityProgress
+Cohesion: 0.08
+Nodes (11): DRAGON_DROPS, DragonDrop, DROP_RATES, DropRateEntry, LootboxComponent, PREVIEW_DROPS, PreviewDrop, WINTER_DROPS (+3 more)
 
 ### Community 11 - "Player Service Core"
 Cohesion: 0.05
 Nodes (37): dependencies, @angular/common, @angular/compiler, @angular/core, @angular/forms, @angular/platform-browser, @angular/router, axios (+29 more)
 
 ### Community 12 - "Glory Customization Service"
-Cohesion: 0.15
-Nodes (8): DAILY_TEMPLATES, getNextSundayMidnight(), getTomorrowMidnight(), pickRandom(), PlayerQuestRow, QuestTemplate, WEEKLY_TEMPLATES, QuestService
+Cohesion: 0.07
+Nodes (9): LootboxService, DAILY_TEMPLATES, getNextSundayMidnight(), getTomorrowMidnight(), pickRandom(), PlayerQuestRow, QuestTemplate, WEEKLY_TEMPLATES (+1 more)
 
 ### Community 13 - "Hall of Glory Component"
-Cohesion: 0.04
-Nodes (40): RARITY_ORDER, CacheEntry, RARITY_BASE_PRICE, player, sampleStoveType, AchievementDefinition, ClientMessageType, ForgedStove (+32 more)
+Cohesion: 0.07
+Nodes (28): ClientMessage, ClientMessageType, CoinTransaction, CoinTransactionRow, GameState, GameStateRow, InvestableAsset, InvestmentTransaction (+20 more)
 
 ### Community 14 - "Marketplace Component"
-Cohesion: 0.09
+Cohesion: 0.10
 Nodes (6): ChartModel, ChartPoint, ChartSegment, MarketplaceComponent, PricePoint, Listing
 
 ### Community 15 - "Coin & Trade Services"
-Cohesion: 0.12
-Nodes (14): player, playerServiceMock, unitMock, handleRoomChat(), readRateLimiter, gameRouter, playerRouter, getResend() (+6 more)
+Cohesion: 0.09
+Nodes (10): readRateLimiter, gameRouter, listingRouter, playerRouter, tradeRouter, ACHIEVEMENT_DEFINITIONS, DROP_TABLES, DropTable (+2 more)
 
 ### Community 16 - "Investing Component"
 Cohesion: 0.06
 Nodes (32): devDependencies, @angular/build, @angular/cli, @angular/compiler-cli, eslint, http-status-codes, jest, jsdom (+24 more)
 
 ### Community 20 - "Lootbox Component"
-Cohesion: 0.12
-Nodes (5): ADMIN_ROUTES, CheckEmailComponent, adminGuard(), StartupComponent, VerifyEmailComponent
+Cohesion: 0.08
+Nodes (12): ADMIN_ROUTES, adminGuard(), NotificationsComponent, OAuthCallbackComponent, AuthResponse, LoginRequest, OAuthStatus, RegisterRequest (+4 more)
 
 ### Community 21 - "Achievement Engine"
-Cohesion: 0.12
-Nodes (14): getColumn(), getDozen(), getNumberColor(), isEven(), isHigh(), RED_NUMBERS, RouletteBet, RouletteEngine (+6 more)
+Cohesion: 0.13
+Nodes (13): getColumn(), getDozen(), getNumberColor(), isEven(), isHigh(), RED_NUMBERS, RouletteBet, RouletteEngine (+5 more)
 
 ### Community 22 - "Poker Engine & Logic"
-Cohesion: 0.27
-Nodes (4): VerificationRequiredError, BehaviorSnapshot, TurnstileOptions, Window
+Cohesion: 0.09
+Nodes (6): VerificationRequiredError, BehaviorSnapshot, BehaviorTrackerService, TurnstileOptions, TurnstileService, Window
+
+### Community 23 - "Login Component"
+Cohesion: 0.11
+Nodes (3): ForgeryComponent, outputType, Rarity
 
 ### Community 25 - "Player Statistics Service"
-Cohesion: 0.09
-Nodes (13): Cache, CacheEntry, handleAxiosError(), GitHubCodeFrequencyWeek, GitHubCommit, GitHubCommitActivityWeek, GitHubContributor, GitHubLanguages (+5 more)
+Cohesion: 0.18
+Nodes (12): Cache, CacheEntry, handleAxiosError(), GitHubCodeFrequencyWeek, GitHubCommit, GitHubCommitActivityWeek, GitHubContributor, GitHubLanguages (+4 more)
 
 ### Community 26 - "Inventory Component"
-Cohesion: 0.16
-Nodes (14): Card, EngineResult, PokerAction, PokerPhase, PokerPot, PokerStateView, ValidActionHint, compareHands() (+6 more)
+Cohesion: 0.15
+Nodes (15): Card, EngineResult, PokerAction, PokerPhase, PokerPlayerState, PokerPot, PokerStateView, ValidActionHint (+7 more)
 
 ### Community 27 - "Auth Router & Session"
-Cohesion: 0.07
-Nodes (34): EngineRegistry, handleChatMessage(), handleJoinRoom(), handleLeaveRoom(), handlePlayerAction(), handleRequestSync(), handleStartGame(), EventLogService (+26 more)
+Cohesion: 0.13
+Nodes (8): EngineRegistry, roomRouter, GameStateService, RoomPlayerService, ConnectionState, handleTurnTimeout(), TimerEntry, timers
 
 ### Community 28 - "Ownership Service"
-Cohesion: 0.04
-Nodes (45): 1.1 `requireAuth` Does NOT Check Ban Status 🔴 CRITICAL, 1.2 IP Ban Check Fails Open on Database Errors 🔴 CRITICAL, 1.3 Registration Race Condition — Duplicate Accounts 🟡 MEDIUM, 1. Authentication & Authorization Bypasses Missed by v1/v2, 2.1 Trade Execution — Double-Spend / Negative Balance 🔴 CRITICAL, 2.2 Shop Purchase — Overspending & Negative Stock 🔴 CRITICAL, 2.3 Daily Reward — Duplicate Claims 🔴 CRITICAL, 2.4 WebSocket Room Join — Overfill Race Condition 🟠 HIGH (+37 more)
+Cohesion: 0.13
+Nodes (6): CreatePlayerStatisticsResponse, SuccessMessage, PlayerStatistics, PlayerStatisticsRow, PlayerStatisticsService, PlayerStatisticsService
 
 ### Community 29 - "WebSocket Handlers"
-Cohesion: 0.10
+Cohesion: 0.11
 Nodes (4): QueuedMessage, QueuedMessage, ServerMessage, ConnectionManager
 
 ### Community 30 - "Express Middleware"
@@ -433,87 +391,87 @@ Cohesion: 0.10
 Nodes (4): Ownership, OwnershipRow, OwnershipService, OwnershipService
 
 ### Community 32 - "Poker Game Logic"
-Cohesion: 0.07
-Nodes (9): RotationResult, ShopRotationService, DailyClaimResult, DailyReward, DailyRewardStatus, PurchaseResult, REWARD_TABLE, ShopItemDisplay (+1 more)
+Cohesion: 0.10
+Nodes (8): RotationResult, ShopRotationService, DailyClaimResult, DailyReward, DailyRewardStatus, PurchaseResult, REWARD_TABLE, ShopItemDisplay
 
 ### Community 34 - "Blackjack Engine"
 Cohesion: 0.13
 Nodes (7): AddFriendModalComponent, ChatThreadComponent, FriendListComponent, FriendWithPreview, MarketplaceThread, TradeableItem, TradeOfferModalComponent
 
 ### Community 36 - "Blackjack Engine"
-Cohesion: 0.19
-Nodes (18): BlackjackPhase, BlackjackPlayerState, BlackjackPlayerStateView, BlackjackStateView, Card, HandResult, canDouble(), canSplit() (+10 more)
+Cohesion: 0.22
+Nodes (15): BlackjackPhase, BlackjackPlayerState, BlackjackPlayerStateView, BlackjackStateView, Card, HandResult, canDouble(), canSplit() (+7 more)
 
 ### Community 37 - "Listing Module"
 Cohesion: 0.15
 Nodes (4): OnboardingService, OnboardingStep, TUTORIAL_STEPS, SettingsComponent
 
 ### Community 38 - "Lootbox Module"
-Cohesion: 0.08
-Nodes (18): rotationServiceMock, shopServiceMock, unitMock, adminRouter, shopRouter, RedeemCodeInput, RedeemCodeRow, RedeemCodeService (+10 more)
+Cohesion: 0.12
+Nodes (10): adminRouter, RedeemCodeInput, RedeemCodeRow, RedeemCodeService, RedeemResult, logRequest(), purgeOldRequestLogs(), queryRequestLogs() (+2 more)
 
 ### Community 39 - "Poker Game Logic"
-Cohesion: 0.04
-Nodes (44): 1.1 OAuth — Complete Bypass of ALL Anti-Bot Controls 🔴 CRITICAL, 1.2 Login Endpoint Fails Open on Turnstile 🔴 CRITICAL, 1.3 Turnstile Fail-Open Design 🔴 CRITICAL, 1.4 Localhost IP Bypass 🟠 HIGH, 1.5 Rate Limiting Bypasses 🟠 HIGH, 1.6 Timing Guard Bypass 🟠 HIGH, 1.7 Header Guard Trivially Bypassed 🟠 HIGH, 1.8 Honeypot Bypass 🟠 HIGH (+36 more)
+Cohesion: 0.16
+Nodes (18): fakeResponses, honeypotRouter, botMap, BotRecord, BotTrapEvent, botTrapLog, checkHoneypot(), clearBotTrapLog() (+10 more)
 
 ### Community 40 - "Handlers Module"
-Cohesion: 0.05
-Nodes (43): 1. Audit v1 — Fix Verification, 2. Audit v2 — Fix Verification, 3. Audit v3 — Fix Verification, 4. NEW Vulnerabilities (Missed by Audits v1–v3), 5. Recommended Fix Priority, 🔴 CRITICAL / HIGH, EmberExchange Security Audit Verification Report, 🔴 Executive Summary (+35 more)
+Cohesion: 0.32
+Nodes (13): handleJoinRoom(), handleLeaveRoom(), handlePlayerAction(), handleRequestSync(), handleStartGame(), ErrorCode, StatePlayer, syncPlayerCoinsFromState() (+5 more)
 
 ### Community 41 - "Investing Module"
-Cohesion: 0.06
-Nodes (41): BJ_SEAT_POSITIONS, BlackjackCard, BlackjackHand, BlackjackPlayer, Blackjack Felt Table, ValidAction, AVATAR_COLORS, RoomResponse (+33 more)
+Cohesion: 0.13
+Nodes (19): Main Menu Dashboard, Blackjack Quick Access Card, Poker Quick Access Card, Quests Quick Access Card, Shop Quick Access Card, Live Recent Pulls Feed, Player Stat Cards, Quests Page (+11 more)
 
 ### Community 42 - "Chat Module"
-Cohesion: 0.08
-Nodes (32): headerGuard(), Bucket, challengeRateLimiter, LimiterConfig, loginRateLimiter, registerRateLimiter, resendVerificationRateLimiter, supportRateLimiter (+24 more)
+Cohesion: 0.13
+Nodes (12): Bucket, challengeRateLimiter, LimiterConfig, loginRateLimiter, registerRateLimiter, resendVerificationRateLimiter, supportRateLimiter, twoFactorRateLimiter (+4 more)
 
-### Community 44 - "Blackjack Engine"
-Cohesion: 0.05
-Nodes (7): PlayersComponent, AdminPlayerList, SuccessMessage, Player, PlayerRow, PlayerService, PlayerService
-
-### Community 45 - "Forgery System"
-Cohesion: 0.20
-Nodes (3): PokerEngine, PokerPlayerState, PokerState
+### Community 43 - "Lootbox Module"
+Cohesion: 0.13
+Nodes (8): NotificationItem, PlayerInRoom, WsConnectionState, WsError, Notification, NotificationPriority, NotificationRow, NotificationService
 
 ### Community 46 - "Roulette Game Logic"
-Cohesion: 0.09
-Nodes (17): ChartModel, ChartPoint, ChartSegment, InvestableAsset, OwnedStock, PortfolioStock, PricePoint, TimeRange (+9 more)
+Cohesion: 0.12
+Nodes (16): ChartModel, ChartPoint, ChartSegment, InvestableAsset, OwnedStock, PortfolioStock, PricePoint, TimeRange (+8 more)
 
 ### Community 47 - "Honeypot Module"
 Cohesion: 0.16
 Nodes (3): ChatMessage, ChatMessageRow, ChatMessageService
 
 ### Community 48 - "Hall Module"
-Cohesion: 0.06
-Nodes (33): 1. Bot Protections — Fix Verification, 2. Authentication & Authorization — Fix Verification, 3. Injection, XSS & WebSocket — Fix Verification, 4. Secrets, Configuration & Information Leakage — Fix Verification, 5. Recommended Fix Priority, Appendix: Quick Exploit PoCs, EmberExchange Security Re-Audit Report, 🔴 Executive Summary (+25 more)
-
-### Community 49 - "Lootbox Module"
 Cohesion: 0.14
-Nodes (3): Listing, ListingRow, ListingService
+Nodes (7): InvestmentPosition, InvestmentPositionRow, LeaderboardEntry, PortfolioPosition, StovePriceHistory, StovePriceHistoryRow, InvestmentService
 
 ### Community 54 - "Tsconfig Module"
 Cohesion: 0.12
 Nodes (16): compilerOptions, declaration, declarationMap, esModuleInterop, forceConsistentCasingInFileNames, lib, module, outDir (+8 more)
 
 ### Community 55 - "Check Module"
-Cohesion: 0.11
-Nodes (7): CreateStoveTypeStatisticsResponse, SuccessMessage, StoveTypeStatistics, StoveTypeStatisticsRow, StoveTypeStatisticsService, MarketSummary, StoveTypeStatisticsService
+Cohesion: 0.13
+Nodes (13): BJ_SEAT_POSITIONS, BlackjackCard, BlackjackHand, BlackjackPlayer, Blackjack Felt Table, ValidAction, RoomResponse, PokerCard (+5 more)
+
+### Community 56 - "Blackjack Engine"
+Cohesion: 0.32
+Nodes (3): BlackJackEngine, BlackjackState, isBlackjack()
 
 ### Community 57 - "Test Suite"
-Cohesion: 0.24
-Nodes (4): TestEngine, GameEngine, PlayerAction, ValidAction
+Cohesion: 0.18
+Nodes (5): TestEngine, GameEngine, ValidAction, RoomPlayer, RoomPlayerRow
+
+### Community 58 - "Games Module"
+Cohesion: 0.12
+Nodes (5): DisplayGame, FilterMode, Friend, GAME_ENRICHMENTS, GamesComponent
 
 ### Community 59 - "Two Module"
-Cohesion: 0.15
-Nodes (4): InputStove, Stove, StoveRow, StoveService
+Cohesion: 0.16
+Nodes (3): Stove, StoveRow, StoveService
 
 ### Community 60 - "Shop Module"
-Cohesion: 0.15
-Nodes (3): BannedIPRecord, PunishmentService, ViolationRecord
+Cohesion: 0.16
+Nodes (5): getClientIp(), ipBanCheck(), BannedIPRecord, PunishmentService, ViolationRecord
 
 ### Community 62 - "Poker Game Logic"
-Cohesion: 0.12
+Cohesion: 0.14
 Nodes (3): SetupResult, TwoFactorService, VerifyResult
 
 ### Community 63 - "Quest System"
@@ -525,20 +483,20 @@ Cohesion: 0.13
 Nodes (15): PB-78: Stove Loadouts & Passive Bonuses, PB-79: Factory, Blackjack, Database Migration (SQLite to PostgreSQL), Poker (Texas Hold'em), Sprint 4 Backlog, Multiplayer Infrastructure (WebSocket), Forgery (+7 more)
 
 ### Community 65 - "Quest System"
-Cohesion: 0.36
-Nodes (8): datacenterGuard(), cache, CachedAsn, DATACENTER_ASNS, fetchAsn(), isDatacenterIp(), lookupAsn(), parseAsn()
+Cohesion: 0.22
+Nodes (12): datacenterGuard(), logSecurityEvent(), purgeOldSecurityEvents(), SecurityEventData, SecurityEventType, cache, CachedAsn, DATACENTER_ASNS (+4 more)
 
 ### Community 66 - "Stove Module"
-Cohesion: 0.10
-Nodes (24): anomalyScorer(), AnomalySignals, detectGenericUA(), EXPECTED_BODY_KEYS, GENERIC_UAS, scoreRequest(), getClientIp(), ipBanCheck() (+16 more)
+Cohesion: 0.17
+Nodes (11): authRateLimiter, oauthCallbackRateLimiter, getClientIp(), isLocalhost(), turnstileMiddleware(), TurnstileVerifyResponse, verifyTurnstileToken(), oauthRouter (+3 more)
 
 ### Community 67 - "Hall Module"
 Cohesion: 0.25
 Nodes (14): addDays(), batchInsert(), batchInsertReturning(), BOT_NAMES, clearBotData(), { Client }, formatDate(), generatePriceWalk() (+6 more)
 
 ### Community 68 - "Express Middleware"
-Cohesion: 0.09
-Nodes (9): CoinTransactionService, DailySpinService, PRIZE_WHEEL, SpinPrize, SpinResult, SpinStatus, sampleTransaction, CoinTransaction (+1 more)
+Cohesion: 0.14
+Nodes (6): CoinTransactionService, DailySpinService, PRIZE_WHEEL, SpinPrize, SpinResult, SpinStatus
 
 ### Community 69 - "Chat Module"
 Cohesion: 0.18
@@ -549,12 +507,12 @@ Cohesion: 0.16
 Nodes (3): StoveTypeService, StoveType, StoveTypeRow
 
 ### Community 73 - "Handlers Module"
-Cohesion: 0.13
+Cohesion: 0.16
 Nodes (3): LootboxTypeService, LootboxType, LootboxTypeRow
 
 ### Community 74 - "Lootbox Module"
-Cohesion: 0.10
-Nodes (7): CreateMiniGameSessionResponse, MiniGameStats, SuccessMessage, MiniGameSession, MiniGameSessionRow, MiniGameSessionService, MiniGameSessionService
+Cohesion: 0.19
+Nodes (6): CreateMiniGameSessionResponse, MiniGameStats, SuccessMessage, MiniGameSession, MiniGameSessionRow, MiniGameSessionService
 
 ### Community 75 - "Onboarding Module"
 Cohesion: 0.18
@@ -565,16 +523,12 @@ Cohesion: 0.17
 Nodes (3): AppComponent, ToastHostComponent, ShellComponent
 
 ### Community 77 - "Friend Module"
-Cohesion: 0.21
-Nodes (8): Collections Route, MainMenuComponent, Collections Icon, Locked Unknown Slot, Pixel Art Style, Stove Rarity Tiers, Magnifying Glass Search, Stove Catalog Book
+Cohesion: 0.19
+Nodes (10): Collections Route, Game, Collections Icon, Locked Unknown Slot, Pixel Art Style, Stove Rarity Tiers, Magnifying Glass Search, Stove Catalog Book (+2 more)
 
 ### Community 78 - "Pity Module"
-Cohesion: 0.18
-Nodes (10): Badge, StatCategory, ActiveBanner, ActiveCosmetic, ActiveTitle, GloryGuestbookEntry, GloryProfile, GloryStove (+2 more)
-
-### Community 81 - "Daily Spin"
-Cohesion: 0.07
-Nodes (28): Affected Endpoints, 🔴 Critical — Blind Ownership Transfer in Trade Execution, Executive Summary, Finding, Finding, Finding, Finding, Finding (+20 more)
+Cohesion: 0.19
+Nodes (11): Badge, StatCategory, ActiveBanner, ActiveCosmetic, ActiveTitle, GloryGuestbookEntry, GloryProfile, GloryStove (+3 more)
 
 ### Community 82 - "Agents Module"
 Cohesion: 0.23
@@ -596,14 +550,6 @@ Nodes (11): /api, changeOrigin, logLevel, secure, target, /ws, changeOrigin, log
 Cohesion: 0.17
 Nodes (12): scripts, build, dev, dev:full, frontend:build, frontend:serve, frontend:test, frontend:watch (+4 more)
 
-### Community 90 - "Codes Module"
-Cohesion: 0.08
-Nodes (23): AGENTS.md — EmberExchange, Backend, Build & Development Commands, CI / Automation, Code Style Guidelines, Common Pitfalls, Cron jobs (initialized in `app.ts`), Database Architecture (+15 more)
-
-### Community 91 - "Shop Module"
-Cohesion: 0.10
-Nodes (20): API Verification Results, Bugs Found & Fixed During Sprint 5, By Developer, Definition of Done (Sprint 5), Epic 10: Update Log, Epic 11: Admin Panel, Epic 1: Forgery, Epic 2: Shop (+12 more)
-
 ### Community 92 - "Trade System"
 Cohesion: 0.30
 Nodes (4): FriendRequestResponse, FriendRespondResponse, FriendWithUser, FriendService
@@ -613,28 +559,16 @@ Cohesion: 0.17
 Nodes (4): PriceStatsResponse, RecordSaleResponse, SuccessMessage, PriceHistoryService
 
 ### Community 94 - "App Module"
-Cohesion: 0.17
-Nodes (5): RoomService, sampleRoom, Room, RoomRow, RoomStatus
+Cohesion: 0.26
+Nodes (4): RoomService, Room, RoomRow, RoomStatus
 
 ### Community 95 - "Notification System"
 Cohesion: 0.27
 Nodes (5): appConfig, routes, authGuard(), reverseAuthGuard(), SETTINGS_ROUTES
 
-### Community 99 - "Express Middleware"
-Cohesion: 0.16
-Nodes (3): Lootbox, LootboxRow, LootboxService
-
-### Community 100 - "WebSocket Layer"
-Cohesion: 0.12
-Nodes (3): LootboxDropService, LootboxDrop, LootboxDropRow
-
-### Community 101 - "Admin Module"
-Cohesion: 0.12
-Nodes (15): Acceptance Criteria, Definition of Done, Description, Guiding Principles, Implementation Strategy, Notes, P0 — Must Fix (Judges will see these), P1 — Should Fix (Judges might explore) (+7 more)
-
 ### Community 103 - "Quest System"
-Cohesion: 0.13
-Nodes (14): API Documentation, Blackjack, Branches, EmberExchange, Environment Variables, Multiplayer Games, Poker (Texas Hold'em), Project Structure (+6 more)
+Cohesion: 0.22
+Nodes (7): createRoom(), joinRoom(), startGame(), waitForMessage(), AutoFoldTimer, GraceTimer, SocketMeta
 
 ### Community 104 - "Login Module"
 Cohesion: 0.20
@@ -649,16 +583,16 @@ Cohesion: 0.24
 Nodes (10): Shop Icon Asset, Shop Building, Card Game, Gold Coins, Heart Suit, Lootbox System, Marketplace, Pixel Art Style (+2 more)
 
 ### Community 108 - "WebSocket Layer"
-Cohesion: 0.25
-Nodes (8): Acceptance Criteria, Goal, Notes for Agent, Stream 2: Backend Notification Service Overhaul, Stream 3: Backend Event Triggers, Notification Grouping & Deduplication, Notification System Rework Master Plan, Notification Priority System
+Cohesion: 0.31
+Nodes (10): Stream 1: Database Schema Changes, Stream 2: Backend Notification Service Overhaul, Stream 3: Backend Event Triggers, Stream 4: WebSocket Real-time Push, Stream 5: Frontend Notification Service Update, Stream 6: Frontend Notification UI Polish, Stream 7: Data Migration & Cleanup, Notification Grouping & Deduplication (+2 more)
 
 ### Community 110 - "Players Module"
 Cohesion: 0.20
 Nodes (4): CreateListingRequest, CreateListingResponse, FilterParams, ListingService
 
 ### Community 111 - "Quest System"
-Cohesion: 0.07
-Nodes (9): LoginHistoryService, SessionService, sampleLogin, LoginHistory, LoginHistoryRow, Session, SessionRow, configurePassport() (+1 more)
+Cohesion: 0.24
+Nodes (3): LoginHistoryService, LoginHistory, LoginHistoryRow
 
 ### Community 112 - "Notification System"
 Cohesion: 0.29
@@ -669,44 +603,36 @@ Cohesion: 0.24
 Nodes (3): REROLL_BASE_COST, SPARKS_BASE, SparksService
 
 ### Community 114 - "Daily Spin"
-Cohesion: 0.14
-Nodes (13): 1. `src/backend/services/shop-service.ts`, 2. `src/backend/services/quest-service.ts`, 3. `src/backend/services/sparks-service.ts`, 4. `src/backend/routers/trade-router.ts`, 5. `src/backend/routers/auth-router.ts`, 6. `src/backend/routers/friend-router.ts`, 7. `src/backend/routers/chat-message-router.ts` and `src/backend/websocket/handlers/chat-message.ts`, 8. `src/backend/services/achievement-engine.ts` (+5 more)
+Cohesion: 0.22
+Nodes (5): authenticateSession(), handleDisconnect(), wsConnectionsByIp, Bucket, RateLimiter
 
 ### Community 115 - "Update Module"
 Cohesion: 0.33
 Nodes (9): Lootboxes Icon, Card Suit Symbols, Golden Glow, Jester Hat, Gold Keyhole, Lootbox Game Feature, Mystery Chest, Red Pixel Border (+1 more)
 
 ### Community 116 - "Poker Game Logic"
-Cohesion: 0.19
-Nodes (4): PlayerAchievementService, sampleAchievement, PlayerAchievement, PlayerAchievementRow
-
-### Community 117 - "Banned Module"
-Cohesion: 0.15
-Nodes (12): Definition of Done (Unified), Epic 1: Authentication & User Management, Epic 2: Statistics & Tracking, Epic 3: Marketplace & Economy, Epic 4: Lootbox System, Epic 5: Social & Chat, Epic 6: UI/UX & Frontend Infrastructure, Epic 7: Backend Infrastructure & Quality Assurance (+4 more)
+Cohesion: 0.31
+Nodes (3): PlayerAchievementService, PlayerAchievement, PlayerAchievementRow
 
 ### Community 118 - "Forgery System"
-Cohesion: 0.31
-Nodes (6): SpinService, SpinPrize, SpinResult, SpinStatus, ICON_PATHS, WHEEL_SEGMENTS
+Cohesion: 0.36
+Nodes (5): SpinService, SpinPrize, SpinResult, SpinStatus, WHEEL_SEGMENTS
 
 ### Community 119 - "Player Module"
 Cohesion: 0.25
 Nodes (9): App Chart Component Usage, Changelog Tab, Code Velocity Chart, Commit Activity Chart, Contributors Tab, Insights Tab, Releases Tab, Repository Info Display (+1 more)
 
 ### Community 120 - "Quest System"
-Cohesion: 0.29
-Nodes (4): initDb(), ensureSampleDataInserted(), transformRow(), TypedStatement
+Cohesion: 0.25
+Nodes (4): convertNamedParams(), ensureSampleDataInserted(), transformRow(), TypedStatement
 
 ### Community 122 - "Scripts Module"
 Cohesion: 0.25
 Nodes (8): Main Menu Component HTML, Quests Icon Image, Pixel Art Visual Style, Quests Game Feature, Quill Pen and Inkwell, Scroll Parchment, Teal Emerald UI Theme, Green Wax Seal with Checkmark
 
-### Community 123 - "Quest System"
-Cohesion: 0.19
-Nodes (9): DRAGON_DROPS, DragonDrop, DROP_RATES, DropRateEntry, PREVIEW_DROPS, PreviewDrop, WINTER_DROPS, LootBoxHelper (+1 more)
-
 ### Community 127 - "Redeem Module"
-Cohesion: 0.15
-Nodes (12): Acceptance Criteria, Backdrop Technique, Definition of Done, Description, Implementation Hints, Integration Points, Notes, State Storage (+4 more)
+Cohesion: 0.25
+Nodes (6): getColor(), RED_NUMBERS, RoulettePlayerView, SVG Roulette Wheel, WHEEL_ORDER, WinnerView
 
 ### Community 128 - "Room Module"
 Cohesion: 0.43
@@ -717,108 +643,80 @@ Cohesion: 0.25
 Nodes (7): BanRequest, CoinAdjustmentRequest, PlayerListItem, PlayerListResult, AdminPlayerDetail, AdminSystemStats, PlayerFilters
 
 ### Community 130 - "Theme Module"
-Cohesion: 0.17
-Nodes (11): Definition of Done (Sprint 6), Epic 1: Factory, Epic 2: Stove Loadouts & Passive Bonuses, Epic 3: Game <-> Social Bridge, Epic 4: Investing, Epic 5: Tournaments & Leaderboards, Epic 6: More Mini-Games, Epic 7: Security Hardening — June 3 Audit Remediation (+3 more)
+Cohesion: 0.29
+Nodes (5): InputStove, RARITY_ORDER, ForgedStove, ForgeryResult, ForgeryService
 
-### Community 131 - "Test Suite"
-Cohesion: 0.17
-Nodes (12): 4.3 🟡 MEDIUM, NEW-11: OAuth Session Cookie Not Cryptographically Signed, NEW-12: `JSON.parse` on Untrusted WebSocket Messages, NEW-13: `JSON.parse` on Untrusted OAuth Cookie, NEW-14: Email Service Logs PII to Console, NEW-15: Passport OAuth Logs Email and Profile IDs, NEW-16: Auth Router Logs PII, NEW-17: `/api-docs` (Swagger) Exposes Sensitive Schema Fields (+4 more)
-
-### Community 132 - "Sprint6Epic8 Module"
-Cohesion: 0.17
-Nodes (11): Acceptance Criteria, Definition of Done, Description, Implementation Hints, Notes, Page Structure, Routing, Step Data (+3 more)
-
-### Community 135 - "Appearance Module"
-Cohesion: 0.22
-Nodes (4): AppearanceComponent, ThemeOption, Theme, ThemeService
+### Community 134 - "App Module"
+Cohesion: 0.36
+Nodes (3): ReRollResult, SalvageResult, SparksService
 
 ### Community 136 - "Social Features"
 Cohesion: 0.25
 Nodes (4): sampleLootbox, sampleLootboxDrop, sampleLootboxType, sampleStoveType
 
 ### Community 137 - "Express Middleware"
-Cohesion: 0.07
-Nodes (21): ChartComponent, getCssVar(), RoomListItem, DisplayGame, FilterMode, Friend, GAME_ENRICHMENTS, PageBackgroundComponent (+13 more)
+Cohesion: 0.25
+Nodes (7): DailyStatus, DROP_RATES, DropRateEntry, PlayerStove, RARITY_ORDER, ShopItem, StoveMarketStats
 
 ### Community 138 - "Nodemon Module"
-Cohesion: 0.13
-Nodes (16): Notification Bell Component, Toast Host Component, Shell Layout Component, Onboarding Overlay Tour, Onboarding Walkthrough, Contextual Tooltips, How It Works Page, Landing Page Polish (+8 more)
-
-### Community 139 - "Profile System"
-Cohesion: 0.17
-Nodes (11): Acceptance Criteria, Current File, Definition of Done, Description, Feature Preview Card Layout, Implementation Hints, Notes, Scroll-Reveal Snippet (CSS-only) (+3 more)
-
-### Community 141 - "Scripts Module"
-Cohesion: 0.18
-Nodes (9): buyer, listing, listingServiceMock, playerServiceMock, seller, trade, tradeServiceMock, unitMock (+1 more)
+Cohesion: 0.32
+Nodes (8): Onboarding Walkthrough, Contextual Tooltips, How It Works Page, Landing Page Polish, Mobile Responsiveness Polish, Visual Consistency Pass, Epic 8: First Impressions & Onboarding, First Impressions Guiding Principles
 
 ### Community 142 - "Collection System"
-Cohesion: 0.18
-Nodes (10): 1. `src/backend/services/notification-service.ts`, 2. Find and verify WebSocket manager, 3. `src/frontend/src/app/core/services/notification.service.ts`, 4. `src/frontend/src/app/shared/components/notification-bell.component.ts`, Acceptance Criteria, Architecture, Files to Modify, Goal (+2 more)
-
-### Community 143 - "Danger Module"
-Cohesion: 0.18
-Nodes (11): 1. `src/frontend/src/app/shared/components/notification-bell.component.ts`, 2. `src/frontend/src/app/shared/components/notification-bell.component.html`, 3. `src/frontend/src/app/shared/components/notification-bell.component.css`, 4. `src/frontend/src/app/core/layout/shell.component.html` (or wherever toast subscription lives), Add count badge styling:, Add priority-high styling:, Add quest-complete styling:, Add quest icon and color: (+3 more)
+Cohesion: 0.48
+Nodes (3): AppearanceComponent, ThemeOption, Theme
 
 ### Community 144 - "Poker Game Logic"
 Cohesion: 0.29
 Nodes (7): Room Chat Overlay, Dynamic Game Component Loader, Game Room Template, Chat Thread, Friend List, Social Template, Trade Offer Modal
 
 ### Community 145 - "Collection System"
-Cohesion: 0.18
-Nodes (10): Acceptance Criteria, Component Signature, Definition of Done, Description, Implementation Hints, Notes, Styling, Task 2: Contextual Tooltips (+2 more)
+Cohesion: 0.43
+Nodes (3): handleChatMessage(), escapeHtml(), sanitizeText()
 
 ### Community 146 - "Email Module"
 Cohesion: 0.38
 Nodes (7): The Forge Icon, Anvil, Orange Decorative Border, Forge Game Feature, Hammer, Pixel Art Style, Sparks and Fire
 
 ### Community 147 - "Event Module"
-Cohesion: 0.18
-Nodes (10): Acceptance Criteria, Definition of Done, Description, Empty State Pattern, Implementation Hints, Notes, Route Fade Animation, Skeleton Component (+2 more)
+Cohesion: 0.38
+Nodes (6): anomalyScorer(), AnomalySignals, detectGenericUA(), EXPECTED_BODY_KEYS, GENERIC_UAS, scoreRequest()
 
 ### Community 148 - "Stove Module"
-Cohesion: 0.20
-Nodes (9): Definition of Done (Sprint 4), Epic 1: Database Migration (SQLite → PostgreSQL), Epic 2: Multiplayer Infrastructure (WebSocket), Epic 3: Poker (Texas Hold'em), Epic 4: Blackjack, Epic 5: Deployment & DevOps, Key Deliverables, Sprint Backlog — Sprint 4 (+1 more)
+Cohesion: 0.38
+Nodes (3): headerGuard(), timingGuard(), antiBotConfig
 
 ### Community 149 - "Test Suite"
 Cohesion: 0.29
 Nodes (6): delay, exec, ext, ignore, watch, nodemon
 
-### Community 151 - "Profile System"
-Cohesion: 0.20
-Nodes (8): Acceptance Criteria, Goal, Notes for Agent, Stream 5: Frontend Notification Service Update, Acceptance Criteria, Goal, Notes for Agent, Stream 6: Frontend Notification UI Polish
-
 ### Community 152 - "Notification System"
-Cohesion: 0.25
-Nodes (6): CountResponse, CreateLootboxDropResponse, CreateLootboxResponse, CreateLootboxTypeResponse, SuccessMessage, RecentPull
+Cohesion: 0.29
+Nodes (6): CountResponse, CreateLootboxDropResponse, CreateLootboxResponse, CreateLootboxTypeResponse, OpenLootboxResponse, SuccessMessage
 
 ### Community 154 - "How Module"
-Cohesion: 0.20
-Nodes (9): Acceptance Criteria (all must pass), Current Pain Points, Execution Order, Goal, Key Decisions (locked), Notification System Rework — Master Plan (Option C), Shared Contracts, Target Architecture (+1 more)
+Cohesion: 0.33
+Nodes (4): AdminRequestLog, AdminPlayerDetail, AdminSystemStats, PlayerFilters
 
 ### Community 155 - "Inventory Module"
 Cohesion: 0.33
 Nodes (3): COLLECTION_BONUSES, CollectionProgress, CollectionService
 
 ### Community 156 - "Mocks Module"
-Cohesion: 0.20
-Nodes (9): checkLimit, handleChatMessage, handleJoinRoom, handleLeaveRoom, handlePlayerAction, handleRequestSync, handleStartGame, isDuplicate (+1 more)
+Cohesion: 0.60
+Nodes (5): getResend(), sendEmail(), sendPasswordResetEmail(), sendVerificationEmail(), verificationEmailTemplate()
 
 ### Community 157 - "Notification System"
 Cohesion: 0.40
 Nodes (3): Game, GameRow, GameService
 
 ### Community 158 - "Package Module"
-Cohesion: 0.22
-Nodes (8): 1. `src/backend/utils/unit.ts`, 2. `src/shared/model.ts`, Acceptance Criteria, Files to Modify, Goal, Migration Strategy, Notes for Agent, Stream 1: Database Schema Changes
-
-### Community 161 - "Forgery System"
-Cohesion: 0.22
-Nodes (9): 1. `src/frontend/src/app/core/services/notification.service.ts`, 2. `src/frontend/src/app/core/services/toast.service.ts`, 3. `src/frontend/src/app/features/settings/pages/notifications/notifications.component.ts`, 4. `src/frontend/src/app/features/settings/pages/notifications/notifications.component.html`, Add high-priority Observable:, Add WebSocket hook placeholder:, Files to Modify, Update `loadNotifications()`: (+1 more)
+Cohesion: 0.33
+Nodes (5): CountResponse, CreateStoveResponse, CreateStoveTypeResponse, SuccessMessage, TotalWeightResponse
 
 ### Community 163 - "Settings Components"
-Cohesion: 0.22
-Nodes (8): 1. Database Migration (in `src/backend/utils/unit.ts` or migration file), 2. Optional: Periodic Cleanup Job, 3. Optional: One-time deduplication of existing spam, Acceptance Criteria, Files to Modify, Goal, Notes for Agent, Stream 7: Data Migration & Cleanup
+Cohesion: 0.40
+Nodes (5): Notification Bell Component, Toast Host Component, Shell Layout Component, Onboarding Overlay Tour, Epic 8: First Impressions & Onboarding
 
 ### Community 165 - "Investing Module"
 Cohesion: 0.40
@@ -837,12 +735,8 @@ Cohesion: 0.40
 Nodes (5): 3D Tilt Inspect Modal, Info Tooltip, Inventory Template, Sell Modal, Stove Detail Modal
 
 ### Community 169 - "Scripts Module"
-Cohesion: 0.36
+Cohesion: 0.60
 Nodes (4): behaviorGuard(), BehaviorSnapshot, decodeToken(), totalKeystrokes()
-
-### Community 170 - "Scripts Module"
-Cohesion: 0.12
-Nodes (7): completeMock, player, playerServiceMock, sessionServiceMock, unitMock, ExpressRateLimiter, authRouter
 
 ### Community 172 - "Scripts Module"
 Cohesion: 0.40
@@ -864,10 +758,6 @@ Nodes (4): Marketplace Trading Feature, Marketplace Icon Image, Pixel Art Visual
 Cohesion: 0.50
 Nodes (4): Investing Template, SVG Portfolio Performance Chart, Marketplace Template, SVG Price History Chart
 
-### Community 188 - "Test Suite"
-Cohesion: 0.22
-Nodes (8): 1. Methodology, 5. Recommended Fix Priority, EmberExchange Security Audit Report, 🔴 Executive Summary, Most Dangerous Remaining Risks, P0 — Fix Today (Critical Exploits), P1 — This Week (High Impact), P2 — Hardening (Medium/Low)
-
 ### Community 190 - "Small Utilities"
 Cohesion: 0.50
 Nodes (4): Bug Report Category, Feature Request Category, Support Component Template, Support Ticket Form
@@ -888,85 +778,25 @@ Nodes (3): Async Mock Pattern, Integration Test Strategy, SQLite to PostgreSQL T
 Cohesion: 0.67
 Nodes (3): DM Sans Font, Angular Entry Point, Lora Font
 
-### Community 206 - "Small Utilities"
-Cohesion: 0.17
-Nodes (10): Backlog Summary, Definition of Done, Notes, Product Backlog, Sprint 1 — Foundation & Core Systems, Sprint 2 — Stove Trading, Marketplace & Auth Expansion, Sprint 3 — Marketplace Frontend, Lootbox Rework & Polish, Sprint 4 — Roulette & Blackjack MiniGames + Settings (+2 more)
-
-### Community 237 - "Community 237"
-Cohesion: 0.25
-Nodes (7): Effort Table — EmberExchange, Per-Epic Totals (Sprints 2–4), Per-Person Totals, Sprint 2 (February – March 20, 2026), Sprint 3 (March 20 – April 16, 2026), Sprint 4 (April 16 – May 7, 2026), Sprint 5 (Planned — May 14 – June 11, 2026)
-
-### Community 238 - "Community 238"
-Cohesion: 0.32
-Nodes (5): createRoom(), joinRoom(), startGame(), waitForMessage(), Request
-
-### Community 239 - "Community 239"
-Cohesion: 0.25
-Nodes (8): 2. Verified Fixes (What IS Patched), Authentication (18 Fixed), Bot Protection (8 Fixed), DoS / Resource Exhaustion (5 Fixed), Injection / XSS / Input Validation (10 Fixed), Race Conditions / Economy (10 Fixed), Secrets / Config (6 Fixed), WebSocket Security (5 Fixed)
-
-### Community 240 - "Community 240"
-Cohesion: 0.25
-Nodes (8): 6. Appendix: Quick Exploit PoCs, PoC A: Read any private message (no auth), PoC B: Steal a session ID from login history (no auth), PoC C: Corrupt a victim's coin balance with NaN, PoC D: Crash the server with unbounded GET, PoC E: Mass-register bots via OAuth, PoC F: Read any player's trade history (no auth), PoC G: Read any player's ownership history (no auth)
-
-### Community 242 - "Community 242"
-Cohesion: 0.29
-Nodes (4): listing, listingServiceMock, unitMock, listingRouter
-
-### Community 243 - "Community 243"
-Cohesion: 0.29
-Nodes (5): listingServiceMock, lootbox, lootboxServiceMock, unitMock, lootboxRouter
-
-### Community 244 - "Community 244"
-Cohesion: 0.24
-Nodes (4): options, swaggerSpec, investmentRouter, RARITY_BASE_PRICE
-
-### Community 245 - "Community 245"
-Cohesion: 0.29
-Nodes (7): 1. `src/backend/services/notification-service.ts`, 2. `src/backend/services/player-settings-service.ts`, Files to Modify, Grouping Logic (inside `create()`):, New `create()` signature:, New Methods to Add:, Settings Check Update:
-
-### Community 246 - "Community 246"
-Cohesion: 0.29
-Nodes (7): 4.2 🟠 HIGH, NEW-10: 86 `SELECT * FROM` Statements — Broad Latent Leak Risk, NEW-5: Unbounded Public GET Endpoints (DoS), NEW-6: Unbounded Auth-Gated GET Endpoints (DoS + Information Leak), NEW-7: Public Player-Specific Data Endpoints, NEW-8: Latent SQL Injection in Purge Functions, NEW-9: `SELECT * FROM Player` Latent Credential Leak
-
-### Community 248 - "Community 248"
-Cohesion: 0.33
-Nodes (4): ownership, ownershipServiceMock, unitMock, ownershipRouter
-
-### Community 249 - "Community 249"
-Cohesion: 0.47
-Nodes (4): app, main(), resetDatabase(), setupWebSocketServer()
-
-### Community 250 - "Community 250"
-Cohesion: 0.33
-Nodes (6): 4.4 🟢 LOW, 4. NEW Findings (Not in Any Previous Audit), NEW-22: `/auth/verify-email/:token` Has No Rate Limiting, NEW-23: `/auth/resend-verification` Lacks Layered Bot Protection, NEW-24: `POST /login-history` Has No Auth (Wait — Actually Has `requireAdmin`), NEW-25: `GET /mini-game-sessions/:id` Has No Auth
-
-### Community 252 - "Community 252"
-Cohesion: 0.40
-Nodes (5): 3.1 Bot Protection — Partially Fixed, 3.2 Auth & Authorization — Partially Fixed, 3.3 Secrets / Info Leak — Partially Fixed, 3.4 NOT FIXED from Previous Audits, 3. Remaining Open Issues from Previous Audits
-
-### Community 253 - "Community 253"
-Cohesion: 0.40
-Nodes (5): 4.1 🔴 CRITICAL, NEW-1: Six Chat Endpoints Leak Private Messages Without Auth, NEW-2: Login History Endpoint Returns Active Session IDs Without Auth, NEW-3: Trade Offer Acceptance Accepts Negative / NaN / Zero Prices, NEW-4: OAuth Callback Lacks All Bot-Protection Layers
-
 ## Knowledge Gaps
-- **1059 isolated node(s):** `watch`, `ext`, `ignore`, `exec`, `delay` (+1054 more)
+- **577 isolated node(s):** `watch`, `ext`, `ignore`, `exec`, `delay` (+572 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **117 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **108 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Unit` connect `Shared Models & Core Services` to `Express App & Routers`, `Sparks Module`, `Daily Statistics Service`, `Community 258`, `Community 259`, `GitHub Charts & Update Log`, `Community 260`, `Community 261`, `Social Features`, `Express Middleware`, `Community 262`, `Community 263`, `Glory Customization Service`, `Hall of Glory Component`, `Community 264`, `Coin & Trade Services`, `Community 265`, `Community 266`, `Tooltip Component`, `Inventory Module`, `Auth Router & Session`, `Notification System`, `Express Middleware`, `Poker Game Logic`, `Support System`, `Lootbox Module`, `Production Dependencies`, `Chat Module`, `Scripts Module`, `Blackjack Engine`, `Lootbox Module`, `Quest System`, `Honeypot Module`, `Trade System`, `Lootbox Module`, `Small Utilities`, `Check Module`, `Small Utilities`, `Small Utilities`, `Small Utilities`, `Two Module`, `Shop Module`, `Small Utilities`, `Poker Game Logic`, `Small Utilities`, `Collection System`, `Stove Module`, `Express Middleware`, `Chat Module`, `Social Features`, `Small Utilities`, `Handlers Module`, `Lootbox Module`, `Onboarding Module`, `Agents Module`, `Notification System`, `App Module`, `Express Middleware`, `WebSocket Layer`, `Inventory Module`, `Community 238`, `Quest System`, `Notification System`, `Community 241`, `Player Module`, `Community 244`, `Poker Game Logic`, `Community 249`, `Community 254`?**
-  _High betweenness centrality (0.084) - this node is a cross-community bridge._
-- **Why does `AuthService` connect `Dev Dependencies` to `Shop & Unit Testing`, `Game Lobby & API Services`, `Angular Build Config`, `Express Middleware`, `Marketplace Component`, `Lootbox Component`, `Poker Engine & Logic`, `Notification System`, `Profile System`, `Blackjack Engine`, `Listing Module`, `Investing Module`, `Blackjack Engine`, `Roulette Game Logic`, `Quest System`, `Friend Module`, `Pity Module`, `WebSocket Layer`, `Proxy Module`, `Trade System`, `Notification System`, `Quest System`, `Players Module`, `Forgery System`, `Community 251`?**
-  _High betweenness centrality (0.040) - this node is a cross-community bridge._
-- **Why does `ServiceBase` connect `Shared Models & Core Services` to `Sparks Module`, `Daily Statistics Service`, `GitHub Charts & Update Log`, `Hall of Glory Component`, `Tooltip Component`, `Auth Router & Session`, `Notification System`, `Express Middleware`, `Lootbox Module`, `Blackjack Engine`, `Quest System`, `Honeypot Module`, `Lootbox Module`, `Check Module`, `Two Module`, `Shop Module`, `Express Middleware`, `Chat Module`, `Social Features`, `Handlers Module`, `Lootbox Module`, `Onboarding Module`, `Notification System`, `App Module`, `Express Middleware`, `WebSocket Layer`, `Inventory Module`, `Quest System`, `Notification System`, `Community 241`, `Poker Game Logic`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
+- **Why does `AuthService` connect `Dev Dependencies` to `Daily Statistics Service`, `Shop & Unit Testing`, `Game Lobby & API Services`, `Angular Build Config`, `App Module`, `Express Middleware`, `Player Router & Achievements`, `Marketplace Component`, `Lootbox Component`, `Poker Engine & Logic`, `WebSocket Layer`, `Notification System`, `Profile System`, `How Module`, `Package Module`, `Test Suite`, `Forgery System`, `Blackjack Engine`, `Listing Module`, `Lootbox Module`, `Roulette Game Logic`, `Check Module`, `Quest System`, `Friend Module`, `Pity Module`, `WebSocket Layer`, `Shop Module`, `Trade System`, `Notification System`, `Players Module`, `Forgery System`, `Redeem Module`?**
+  _High betweenness centrality (0.138) - this node is a cross-community bridge._
+- **Why does `Unit` connect `Shared Models & Core Services` to `Express App & Routers`, `Sparks Module`, `Daily Statistics Service`, `Theme Module`, `GitHub Charts & Update Log`, `Social Features`, `Production Dependencies`, `Glory Customization Service`, `Coin & Trade Services`, `Collection System`, `Profile System`, `Tooltip Component`, `Login Component`, `Inventory Module`, `Auth Router & Session`, `WebSocket Handlers`, `Notification System`, `Express Middleware`, `Ownership Service`, `Poker Game Logic`, `Support System`, `Lootbox Module`, `Poker Game Logic`, `Handlers Module`, `Chat Module`, `Lootbox Module`, `Blackjack Engine`, `Quest System`, `Honeypot Module`, `Hall Module`, `Lootbox Module`, `Trade System`, `Small Utilities`, `Small Utilities`, `Small Utilities`, `Small Utilities`, `Small Utilities`, `Two Module`, `Shop Module`, `Small Utilities`, `Poker Game Logic`, `Test Suite`, `Collection System`, `Quest System`, `Express Middleware`, `Chat Module`, `Social Features`, `Small Utilities`, `Handlers Module`, `Onboarding Module`, `Daily Spin`, `Agents Module`, `Notification System`, `Codes Module`, `App Module`, `WebSocket Layer`, `Admin Module`, `Quest System`, `Inventory Module`, `Quest System`, `Notification System`, `Player Module`, `Daily Spin`, `Poker Game Logic`, `Quest System`?**
+  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+- **Why does `ApiService` connect `Game Lobby & API Services` to `Daily Statistics Service`, `Angular Build Config`, `App Module`, `Express Middleware`, `Lootbox Component`, `Poker Engine & Logic`, `Notification System`, `Player Statistics Service`, `How Module`, `Ownership Service`, `Package Module`, `Test Suite`, `Lootbox Module`, `Roulette Game Logic`, `Check Module`, `Lootbox Module`, `Pity Module`, `Trade System`, `App Module`, `Players Module`, `Banned Module`, `Forgery System`?**
+  _High betweenness centrality (0.039) - this node is a cross-community bridge._
 - **What connects `watch`, `ext`, `ignore` to the rest of the system?**
-  _1072 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _591 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Express App & Routers` be split into smaller, more focused modules?**
-  _Cohesion score 0.07432651736449204 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05773726040205704 - nodes in this community are weakly interconnected._
 - **Should `Shared Models & Core Services` be split into smaller, more focused modules?**
-  _Cohesion score 0.04658454647256439 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06892010535557506 - nodes in this community are weakly interconnected._
 - **Should `Daily Statistics Service` be split into smaller, more focused modules?**
-  _Cohesion score 0.05656565656565657 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
