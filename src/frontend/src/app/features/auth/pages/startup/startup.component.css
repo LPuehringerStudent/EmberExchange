@@ -504,9 +504,9 @@
    ============================= */
 
 .pixel-icon {
-  image-rendering: pixelated;
   width: 64px;
-  height: auto;
+  height: 64px;
+  object-fit: contain;
 }
 
 /* =============================

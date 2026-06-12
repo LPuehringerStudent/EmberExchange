@@ -7,6 +7,8 @@ import { LootboxService } from '@core/services/lootbox.service';
 import { PriceHistoryService } from '@core/services/price-history.service';
 import { StoveService } from '@core/services/stove.service';
 import { TradeService } from '@core/services/trade.service';
+import { ChatMessageService } from '@core/services/chat-message.service';
+import { Listing } from '@core/services/listing.service';
 
 import { MarketplaceComponent } from './marketplace.component';
 
@@ -30,6 +32,7 @@ describe('MarketplaceComponent', () => {
           provide: ListingService,
           useValue: {
             getActiveListings: vi.fn().mockReturnValue(of([])),
+            getAllListings: vi.fn().mockReturnValue(of([])),
             getListingsBySellerId: vi.fn().mockReturnValue(of([])),
             cancelListing: vi.fn().mockReturnValue(of(undefined)),
           },
@@ -57,6 +60,13 @@ describe('MarketplaceComponent', () => {
           provide: PriceHistoryService,
           useValue: {
             getPriceHistoryByTypeId: vi.fn().mockReturnValue(of([])),
+            getRecentPrices: vi.fn().mockReturnValue(of([])),
+          },
+        },
+        {
+          provide: ChatMessageService,
+          useValue: {
+            sendChatMessage: vi.fn().mockReturnValue(of({})),
           },
         },
       ],
@@ -70,5 +80,23 @@ describe('MarketplaceComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('allows messaging active listings from other sellers', () => {
+    const listing = { listingId: 1, sellerId: 2, status: 'active' } as Listing;
+
+    expect(component.canMessageSeller(listing)).toBe(true);
+  });
+
+  it('does not allow messaging sold listings', () => {
+    const listing = { listingId: 1, sellerId: 2, status: 'sold' } as Listing;
+
+    expect(component.canMessageSeller(listing)).toBe(false);
+  });
+
+  it('does not allow messaging own listings', () => {
+    const listing = { listingId: 1, sellerId: 1, status: 'active' } as Listing;
+
+    expect(component.canMessageSeller(listing)).toBe(false);
   });
 });

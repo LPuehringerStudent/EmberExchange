@@ -1,586 +1,581 @@
 <app-page-background theme="market">
-<div class="marketplace-page">
-
-
-  <div class="content-wrapper relative z-[1]">
-    <!-- Header -->
-    <header class="page-header">
-      <div class="header-main">
-        <div class="header-branding">
-          <p class="header-label">EmberExchange</p>
-          <h1 class="header-title">Marketplace</h1>
-          <p class="header-subtitle">Buy and sell stoves with other players</p>
-        </div>
-        <a routerLink="/inventory" class="inventory-link">
-          <div class="inventory-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-              <line x1="12" y1="22.08" x2="12" y2="12"/>
-            </svg>
+  <div class="marketplace-page">
+    <div class="content-wrapper relative z-[1]">
+      <header class="market-hero">
+        <div class="hero-copy">
+          <div class="hero-kicker">
+            <img src="icon/marketplace.png" alt="" />
+            <span>EmberExchange Market</span>
           </div>
-          <span>Sell from Inventory</span>
-          <svg class="inventory-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </a>
-      </div>
+          <h1>Marketplace</h1>
+          <p>Browse active stove listings, track recent sales, and spot rising market heat before other collectors do.</p>
+        </div>
 
-      <div class="stats-row">
+        <div class="hero-actions">
+          <a routerLink="/inventory" class="inventory-link">
+            <span class="inventory-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+            </span>
+            <span>Sell from Inventory</span>
+            <svg class="inventory-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </a>
+        </div>
+      </header>
+
+      <section class="stats-row" aria-label="Marketplace stats">
         <div class="stat-pill">
-          <div class="stat-icon">
+          <span class="stat-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/>
             </svg>
-          </div>
-          <div class="stat-text">
-            <p class="stat-label">Active Listings</p>
-            <p class="stat-value">{{ allListings().length }}</p>
-          </div>
+          </span>
+          <span class="stat-text">
+            <span class="stat-label">Active Listings</span>
+            <span class="stat-value">{{ filteredActiveListings().length }}</span>
+          </span>
         </div>
+
         <div class="stat-pill">
-          <div class="stat-icon accent">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
-            </svg>
-          </div>
-          <div class="stat-text">
-            <p class="stat-label">From</p>
-            <p class="stat-value">{{ formatPrice(lowestPrice()) }} Coal</p>
-          </div>
+          <span class="stat-icon accent">
+            <img src="Ember_Exchange_Logo.png" alt="" />
+          </span>
+          <span class="stat-text">
+            <span class="stat-label">From</span>
+            <span class="stat-value">{{ formatPrice(lowestPrice()) }} Coal</span>
+          </span>
         </div>
+
         <div class="stat-pill">
-          <div class="stat-icon rare">
+          <span class="stat-icon rare">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
-              <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+              <polyline points="16 7 22 7 22 13"/>
             </svg>
-          </div>
-          <div class="stat-text">
-            <p class="stat-label">My Listings</p>
-            <p class="stat-value">{{ myListings().length }}</p>
-          </div>
+          </span>
+          <span class="stat-text">
+            <span class="stat-label">Rising</span>
+            <span class="stat-value">{{ risingListings().length }}</span>
+          </span>
         </div>
-      </div>
-    </header>
+      </section>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <div class="section-divider">
-        <div class="divider-line left"></div>
-        <span class="divider-label">Browse</span>
-        <div class="divider-line right"></div>
-      </div>
+      <main class="market-shell">
+        <div class="browse-toolbar">
+          <div class="tab-bar" role="tablist" aria-label="Marketplace tabs">
+            <button type="button" class="tab-btn" [class.active]="activeTab() === 'all'" (click)="setTab('all')">
+              All Listings
+              <span>{{ filteredActiveListings().length }}</span>
+            </button>
+            <button type="button" class="tab-btn" [class.active]="activeTab() === 'my'" (click)="setTab('my')">
+              My Listings
+              <span>{{ filteredMyListings().length }}</span>
+            </button>
+          </div>
 
-      <!-- Tab bar -->
-      <div class="tab-bar">
-        <button
-          type="button"
-          class="tab-btn"
-          [class.active]="activeTab() === 'all'"
-          (click)="activeTab.set('all')"
-        >
-          All Listings ({{ allListings().length }})
-        </button>
-        <button
-          type="button"
-          class="tab-btn"
-          [class.active]="activeTab() === 'my'"
-          (click)="activeTab.set('my')"
-        >
-          My Listings ({{ myListings().length }})
-        </button>
-      </div>
-
-      <!-- Error banner -->
-      @if (error()) {
-        <div class="error-banner">
-          <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <span>{{ error() }}</span>
-          <button type="button" class="error-dismiss" (click)="error.set(null)">Dismiss</button>
-        </div>
-      }
-
-      <!-- Loading -->
-      @if (loading()) {
-        <div class="space-y-6">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            @for (_ of [0, 1, 2]; track $index) {
-              <div class="bg-surface/80 border border-border rounded-2xl p-4 space-y-3">
-                <div class="h-3 w-24 rounded skeleton-shimmer"></div>
-                <div class="h-7 w-20 rounded skeleton-shimmer"></div>
-              </div>
+          <div class="rarity-filter" aria-label="Filter by rarity">
+            <button type="button" class="rarity-chip all" [class.active]="!hasRarityFilters()" (click)="clearRarityFilters()">
+              All
+            </button>
+            @for (rarity of rarityFilters; track rarity.value) {
+              <button
+                type="button"
+                class="rarity-chip"
+                [class.active]="isRaritySelected(rarity.value)"
+                [attr.data-rarity]="rarity.value"
+                (click)="toggleRarity(rarity.value)">
+                {{ rarity.label }}
+              </button>
             }
           </div>
-
-          <div class="bg-surface/80 border border-border rounded-2xl p-4 space-y-4">
-            <div class="h-4 w-32 rounded skeleton-shimmer"></div>
-            <div class="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-4">
-              <div class="space-y-3">
-                @for (_ of [0, 1, 2, 3, 4]; track $index) {
-                  <div class="h-20 rounded-xl skeleton-shimmer"></div>
-                }
-              </div>
-              <div class="space-y-3">
-                <div class="h-80 rounded-2xl skeleton-shimmer"></div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  @for (_ of [0, 1, 2, 3]; track $index) {
-                    <div class="h-16 rounded-xl skeleton-shimmer"></div>
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-      }
 
-      @if (!loading() && !error()) {
-        <!-- Recently Sold -->
-        @if (activeTab() === 'all' && recentSales().length > 0) {
-          <div class="recently-sold">
-            <div class="section-divider">
-              <div class="divider-line left"></div>
-              <span class="divider-label">Recently Sold</span>
-              <div class="divider-line right"></div>
-            </div>
-            <div class="recent-sales-scroll">
-              @for (sale of recentSales(); track sale.listingId) {
-                <div class="recent-sale-card" (click)="openDetails(sale)">
-                  <div class="recent-sale-image">
-                    @if (getImageUrl(sale); as imgUrl) {
-                      <img [src]="imgUrl" [alt]="getItemName(sale)" />
-                    } @else {
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
-                        <circle cx="12" cy="5" r="2"/>
-                      </svg>
-                    }
-                  </div>
-                  <div class="recent-sale-body">
-                    <p class="recent-sale-name">{{ getItemName(sale) }}</p>
-                    <p class="recent-sale-price">{{ formatPrice(sale.price) }} Coal</p>
-                    <span
-                      class="recent-sale-rarity"
-                      [style.background]="getRarityColor(sale) + '22'"
-                      [style.color]="getRarityColor(sale)"
-                    >
-                      {{ getRarity(sale) }}
-                    </span>
-                  </div>
-                </div>
-              }
-            </div>
+        @if (error()) {
+          <div class="error-banner">
+            <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ error() }}</span>
+            <button type="button" class="error-dismiss" (click)="error.set(null)">Dismiss</button>
           </div>
         }
 
-        <!-- Empty state -->
-        @if (currentListings().length === 0) {
-          <div class="empty-state">
-            <div class="empty-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/>
-              </svg>
-            </div>
-            <p class="empty-title">
-              @if (activeTab() === 'all') { No active listings yet } @else { You have no listings }
-            </p>
-            <p class="empty-subtitle">
-              @if (activeTab() === 'all') { Be the first to list an item! } @else { Go to Inventory to list your items. }
-            </p>
-            <a routerLink="/inventory" class="btn-primary">Go to Inventory</a>
+        @if (loading()) {
+          <div class="loading-stack">
+            @for (_ of [0, 1, 2]; track $index) {
+              <section class="market-row loading-row">
+                <div class="row-heading">
+                  <div>
+                    <div class="h-4 w-36 rounded skeleton-shimmer"></div>
+                    <div class="h-3 w-56 rounded skeleton-shimmer mt-2"></div>
+                  </div>
+                </div>
+                <div class="row-scroll">
+                  @for (__ of [0, 1, 2, 3]; track $index) {
+                    <div class="market-card skeleton-card">
+                      <div class="skeleton-img skeleton-shimmer"></div>
+                      <div class="h-4 w-32 rounded skeleton-shimmer"></div>
+                      <div class="h-3 w-24 rounded skeleton-shimmer"></div>
+                      <div class="h-9 w-full rounded-xl skeleton-shimmer mt-auto"></div>
+                    </div>
+                  }
+                </div>
+              </section>
+            }
           </div>
         }
 
-        <!-- Listings Grid -->
-        @if (currentListings().length > 0) {
-          <div class="listings-grid">
-            @for (listing of currentListings(); track listing.listingId) {
-              <div
-                class="listing-card"
-                [class]="'rarity-' + getRarity(listing)"
-              >
-                <!-- Rarity accent line -->
-                <div class="rarity-line" [class]="'rarity-line-' + getRarity(listing)"></div>
-
-                <!-- Image area -->
-                <div class="card-image-area">
-                  @if (getImageUrl(listing); as imgUrl) {
-                    <img [src]="imgUrl" [alt]="getItemName(listing)" class="card-image" />
-                  } @else {
-                    <svg class="card-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      @if (isLootboxListing(listing)) {
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="3" y1="9" x2="21" y2="9"/>
-                        <line x1="9" y1="21" x2="9" y2="9"/>
-                      } @else {
-                        <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
-                        <circle cx="12" cy="5" r="2"/>
-                      }
-                    </svg>
-                  }
-
-                  <span
-                    class="rarity-badge"
-                    [style.background]="getRarityColor(listing) + '18'"
-                    [style.color]="getRarityColor(listing)"
-                  >
-                    {{ getRarity(listing) }}
-                  </span>
-
-                  @if (getHeatLevel(listing) !== null) {
-                    <span class="heat-badge">{{ getHeatLevel(listing)! | heatTier }}</span>
-                  }
-
-                  @if (isLootboxListing(listing)) {
-                    <span class="lootbox-badge">Lootbox</span>
-                  }
-
-                  @if (activeTab() === 'my' && listing.status !== 'active') {
-                    <span class="status-badge" [class]="listing.status">{{ listing.status }}</span>
-                  }
-                </div>
-
-                <!-- Card body -->
-                <div class="card-body">
-                  <h4 class="card-name">{{ getItemName(listing) }}</h4>
-                  <p class="card-meta">{{ getItemMeta(listing) }}</p>
-                  <p class="card-seller">
-                    @if (activeTab() === 'all') { Sold by {{ listing.sellerName || 'Unknown' }} }
-                  </p>
-                </div>
-
-                <!-- Price + CTA -->
-                <div class="card-footer">
-                  <div class="price-block">
-                    <p class="price-value">{{ formatPrice(listing.price) }}</p>
-                    <p class="price-label">Coal</p>
+        @if (!loading() && !error()) {
+          @if (activeTab() === 'all') {
+            @if (recentSales().length > 0) {
+              <section class="market-row">
+                <div class="row-heading">
+                  <div>
+                    <p class="row-kicker">Fresh movement</p>
+                    <h2>Recently Sold</h2>
                   </div>
-                  <button
-                    type="button"
-                    class="btn-details"
-                    (click)="openDetails(listing)"
-                  >
-                    View Details
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="9 18 15 12 9 6"/>
-                    </svg>
+                  <div class="row-controls">
+                    <button type="button" (click)="scrollRowById('recent-sold-row', 'left')" aria-label="Scroll recently sold left">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <button type="button" (click)="scrollRowById('recent-sold-row', 'right')" aria-label="Scroll recently sold right">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="row-scroll" id="recent-sold-row">
+                  @for (listing of recentSales(); track listing.listingId) {
+                    <article class="market-card sold-card" [attr.data-rarity]="getRarity(listing)">
+                      <div class="rarity-line" [attr.data-rarity]="getRarity(listing)"></div>
+                      <div class="card-image-area">
+                        @if (getImageUrl(listing); as imgUrl) {
+                          <img [src]="imgUrl" [alt]="getItemName(listing)" class="card-image" />
+                        } @else {
+                          <svg class="card-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                            <circle cx="12" cy="5" r="2"/>
+                          </svg>
+                        }
+                        <span class="status-badge sold">Sold</span>
+                      </div>
+                      <div class="card-body">
+                        <span class="rarity-badge" [style.color]="getRarityColor(listing)" [style.background]="getRarityColor(listing) + '1f'">{{ getRarity(listing) }}</span>
+                        <h3>{{ getItemName(listing) }}</h3>
+                        <p>{{ listing.sellerName || 'Unknown seller' }}</p>
+                      </div>
+                      <div class="card-footer">
+                        <span class="price-block"><strong>{{ formatPrice(listing.price) }}</strong><small>Coal</small></span>
+                        <button type="button" class="btn-details" (click)="openDetails(listing)">Details</button>
+                      </div>
+                    </article>
+                  }
+                </div>
+              </section>
+            }
+
+            @if (risingListings().length > 0) {
+              <section class="market-row">
+                <div class="row-heading">
+                  <div>
+                    <p class="row-kicker">Market heat</p>
+                    <h2>Went Up in Price</h2>
+                  </div>
+                  <div class="row-controls">
+                    <button type="button" (click)="scrollRowById('rising-row', 'left')" aria-label="Scroll rising listings left">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <button type="button" (click)="scrollRowById('rising-row', 'right')" aria-label="Scroll rising listings right">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="row-scroll" id="rising-row">
+                  @for (listing of risingListings(); track listing.listingId) {
+                    <article class="market-card rising-card" [attr.data-rarity]="getRarity(listing)">
+                      <div class="rarity-line" [attr.data-rarity]="getRarity(listing)"></div>
+                      <div class="card-image-area">
+                        @if (getImageUrl(listing); as imgUrl) {
+                          <img [src]="imgUrl" [alt]="getItemName(listing)" class="card-image" />
+                        } @else {
+                          <svg class="card-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                            <circle cx="12" cy="5" r="2"/>
+                          </svg>
+                        }
+                        @if (getTrend(listing); as trend) {
+                          <span class="trend-badge">+{{ trend.percent.toFixed(1) }}%</span>
+                        }
+                      </div>
+                      <div class="card-body">
+                        <span class="rarity-badge" [style.color]="getRarityColor(listing)" [style.background]="getRarityColor(listing) + '1f'">{{ getRarity(listing) }}</span>
+                        <h3>{{ getItemName(listing) }}</h3>
+                        <p>{{ listing.sellerName || 'Unknown seller' }}</p>
+                      </div>
+                      <div class="card-footer">
+                        <span class="price-block"><strong>{{ formatPrice(listing.price) }}</strong><small>Coal</small></span>
+                        <button type="button" class="btn-details" (click)="openDetails(listing)">Details</button>
+                      </div>
+                    </article>
+                  }
+                </div>
+              </section>
+            }
+
+            <section class="market-row">
+              <div class="row-heading">
+                <div>
+                  <p class="row-kicker">Available now</p>
+                  <h2>General Selling</h2>
+                </div>
+                <div class="row-controls">
+                  <button type="button" (click)="scrollRowById('general-row', 'left')" aria-label="Scroll general listings left">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <button type="button" (click)="scrollRowById('general-row', 'right')" aria-label="Scroll general listings right">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                   </button>
                 </div>
               </div>
-            }
-          </div>
-        }
-      }
-    </main>
-  </div>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       DETAIL MODAL
-  ════════════════════════════════════════════════════════════ -->
-  @if (selectedListing(); as listing) {
-    <div
-      class="modal-backdrop"
-      (click)="closeDetails()"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-label]="'Item details for ' + getItemName(listing)"
-    >
-      <div
-        class="modal-panel"
-        (click)="$event.stopPropagation()"
-      >
-        <!-- Close button -->
-        <button
-          type="button"
-          class="modal-close"
-          (click)="closeDetails()"
-          aria-label="Close details"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-
-        <!-- Top rarity strip -->
-        <div class="modal-rarity-strip" [class]="'rarity-line-' + getRarity(listing)"></div>
-
-        <div class="modal-grid">
-          <!-- Left: Item identity -->
-          <div class="modal-left">
-            <div class="modal-image-wrap">
-              @if (getImageUrl(listing); as imgUrl) {
-                <img [src]="imgUrl" [alt]="getItemName(listing)" class="modal-image" />
+              @if (filteredActiveListings().length > 0) {
+                <div class="row-scroll" id="general-row">
+                  @for (listing of filteredActiveListings(); track listing.listingId) {
+                    <article class="market-card" [attr.data-rarity]="getRarity(listing)">
+                      <div class="rarity-line" [attr.data-rarity]="getRarity(listing)"></div>
+                      <div class="card-image-area">
+                        @if (getImageUrl(listing); as imgUrl) {
+                          <img [src]="imgUrl" [alt]="getItemName(listing)" class="card-image" />
+                        } @else {
+                          <svg class="card-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                            <circle cx="12" cy="5" r="2"/>
+                          </svg>
+                        }
+                        @if (getHeatLevel(listing) !== null) {
+                          <span class="heat-badge">{{ getHeatLevel(listing)! | heatTier }}</span>
+                        }
+                      </div>
+                      <div class="card-body">
+                        <span class="rarity-badge" [style.color]="getRarityColor(listing)" [style.background]="getRarityColor(listing) + '1f'">{{ getRarity(listing) }}</span>
+                        <h3>{{ getItemName(listing) }}</h3>
+                        <p>Sold by {{ listing.sellerName || 'Unknown' }}</p>
+                      </div>
+                      <div class="card-footer">
+                        <span class="price-block"><strong>{{ formatPrice(listing.price) }}</strong><small>Coal</small></span>
+                        <button type="button" class="btn-details" (click)="openDetails(listing)">Details</button>
+                      </div>
+                    </article>
+                  }
+                </div>
               } @else {
-                <svg class="modal-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  @if (isLootboxListing(listing)) {
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="3" y1="9" x2="21" y2="9"/>
-                    <line x1="9" y1="21" x2="9" y2="9"/>
-                  } @else {
+                <div class="empty-state compact">
+                  <p class="empty-title">No active listings match your filters</p>
+                  <p class="empty-subtitle">Clear rarity filters or check again later.</p>
+                  <button type="button" class="btn-secondary" (click)="clearRarityFilters()">Clear Filters</button>
+                </div>
+              }
+            </section>
+          } @else {
+            <section class="market-row">
+              <div class="row-heading">
+                <div>
+                  <p class="row-kicker">Your storefront</p>
+                  <h2>My Listings</h2>
+                </div>
+                <div class="row-controls">
+                  <button type="button" (click)="scrollRowById('my-listings-row', 'left')" aria-label="Scroll my listings left">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <button type="button" (click)="scrollRowById('my-listings-row', 'right')" aria-label="Scroll my listings right">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              @if (filteredMyListings().length > 0) {
+                <div class="row-scroll" id="my-listings-row">
+                  @for (listing of filteredMyListings(); track listing.listingId) {
+                    <article class="market-card" [attr.data-rarity]="getRarity(listing)">
+                      <div class="rarity-line" [attr.data-rarity]="getRarity(listing)"></div>
+                      <div class="card-image-area">
+                        @if (getImageUrl(listing); as imgUrl) {
+                          <img [src]="imgUrl" [alt]="getItemName(listing)" class="card-image" />
+                        } @else {
+                          <svg class="card-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
+                            <circle cx="12" cy="5" r="2"/>
+                          </svg>
+                        }
+                        @if (listing.status !== 'active') {
+                          <span class="status-badge" [class.sold]="listing.status === 'sold'" [class.cancelled]="listing.status === 'cancelled'">{{ listing.status }}</span>
+                        }
+                      </div>
+                      <div class="card-body">
+                        <span class="rarity-badge" [style.color]="getRarityColor(listing)" [style.background]="getRarityColor(listing) + '1f'">{{ getRarity(listing) }}</span>
+                        <h3>{{ getItemName(listing) }}</h3>
+                        <p>{{ getItemMeta(listing) }}</p>
+                      </div>
+                      <div class="card-footer">
+                        <span class="price-block"><strong>{{ formatPrice(listing.price) }}</strong><small>Coal</small></span>
+                        <button type="button" class="btn-details" (click)="openDetails(listing)">Details</button>
+                      </div>
+                    </article>
+                  }
+                </div>
+              } @else {
+                <div class="empty-state compact">
+                  <p class="empty-title">You have no listings here</p>
+                  <p class="empty-subtitle">List a stove from your inventory to start selling.</p>
+                  <a routerLink="/inventory" class="btn-primary">Go to Inventory</a>
+                </div>
+              }
+            </section>
+          }
+        }
+      </main>
+    </div>
+
+    @if (selectedListing(); as listing) {
+      <div class="modal-backdrop" (click)="closeDetails()" role="dialog" aria-modal="true" [attr.aria-label]="'Item details for ' + getItemName(listing)">
+        <div class="modal-panel" (click)="$event.stopPropagation()">
+          <button type="button" class="modal-close" (click)="closeDetails()" aria-label="Close details">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+
+          <div class="modal-rarity-strip" [attr.data-rarity]="getRarity(listing)"></div>
+
+          <div class="modal-grid">
+            <div class="modal-left">
+              <div class="modal-image-wrap">
+                @if (getImageUrl(listing); as imgUrl) {
+                  <img [src]="imgUrl" [alt]="getItemName(listing)" class="modal-image" />
+                } @else {
+                  <svg class="modal-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M4 18h16M4 14h16M8 14V8a4 4 0 0 1 8 0v6"/>
                     <circle cx="12" cy="5" r="2"/>
-                  }
-                </svg>
-              }
-            </div>
-
-            <div class="modal-identity">
-              <span
-                class="modal-rarity-badge"
-                [style.background]="getRarityColor(listing) + '22'"
-                [style.color]="getRarityColor(listing)"
-              >
-                {{ getRarity(listing) }}
-              </span>
-              <h2 class="modal-name">{{ getItemName(listing) }}</h2>
-              <p class="modal-meta">{{ getItemMeta(listing) }}</p>
-              <p class="modal-description">{{ getItemDescription(listing) }}</p>
-              @if (getHeatLevel(listing) !== null) {
-                <p class="modal-heat">Heat: {{ getHeatLevel(listing)! | heatTier }}</p>
-              }
-            </div>
-
-            <div class="modal-seller">
-              <p class="seller-label">Listed by</p>
-              <p class="seller-name">{{ listing.sellerName || 'Unknown' }}</p>
-              <p class="seller-date">{{ formatDate(listing.listedAt) }}</p>
-            </div>
-          </div>
-
-          <!-- Right: Chart + Stats + Actions -->
-          <div class="modal-right">
-            <!-- Price + Action bar -->
-            <div class="price-action-bar">
-              <div class="price-display">
-                <p class="price-label">Asking Price</p>
-                <p class="price-value">{{ formatPrice(listing.price) }} <span>Coal</span></p>
+                  </svg>
+                }
               </div>
 
-              @if (isOwnListing(listing)) {
-                @if (listing.status === 'active') {
-                  <button
-                    type="button"
-                    class="btn-danger"
-                    [disabled]="processingId() === listing.listingId"
-                    (click)="showConfirm(listing, 'cancel')"
-                  >
-                    @if (processingId() === listing.listingId) {
-                      <span class="spinner"></span>
-                      Cancelling...
-                    } @else {
-                      Cancel Listing
-                    }
-                  </button>
-                } @else {
-                  <span class="status-pill" [class]="listing.status">{{ listing.status }}</span>
+              <div class="modal-identity">
+                <span class="modal-rarity-badge" [style.background]="getRarityColor(listing) + '22'" [style.color]="getRarityColor(listing)">
+                  {{ getRarity(listing) }}
+                </span>
+                <h2 class="modal-name">{{ getItemName(listing) }}</h2>
+                <p class="modal-meta">{{ getItemMeta(listing) }}</p>
+                <p class="modal-description">{{ getItemDescription(listing) }}</p>
+                @if (getHeatLevel(listing) !== null) {
+                  <p class="modal-heat">Heat: {{ getHeatLevel(listing)! | heatTier }}</p>
                 }
-              } @else {
-                <button
-                  type="button"
-                  class="btn-primary"
-                  [disabled]="listing.status !== 'active' || processingId() === listing.listingId"
-                  (click)="showConfirm(listing, 'buy')"
-                >
-                  @if (processingId() === listing.listingId) {
-                    <span class="spinner"></span>
-                    Buying...
-                  } @else {
-                    Buy Now
-                  }
-                </button>
-              }
+              </div>
+
+              <div class="modal-seller">
+                <p class="seller-label">Listed by</p>
+                <p class="seller-name">{{ listing.sellerName || 'Unknown' }}</p>
+                <p class="seller-date">{{ formatDate(listing.listedAt) }}</p>
+              </div>
             </div>
 
-            <!-- Chart -->
-            <div class="chart-section">
-              <div class="chart-header">
-                <p class="chart-title">Avg. Price History (30 days)</p>
-                <!-- Fixed tooltip spot: absolute, never moves layout -->
-                <div class="chart-tooltip-spot">
-                  @if (hoveredPoint(); as point) {
-                    <div class="chart-tooltip">
-                      <span class="tooltip-price">{{ formatPrice(point.price) }} Coal</span>
-                      <span class="tooltip-date">{{ formatDateShort(point.timestamp) }}</span>
+            <div class="modal-right">
+              <div class="price-action-bar">
+                <div class="price-display">
+                  <p class="price-label">Asking Price</p>
+                  <p class="price-value">{{ formatPrice(listing.price) }} <span>Coal</span></p>
+                </div>
+
+                @if (isOwnListing(listing)) {
+                  @if (listing.status === 'active') {
+                    <button type="button" class="btn-danger" [disabled]="processingId() === listing.listingId" (click)="showConfirm(listing, 'cancel')">
+                      @if (processingId() === listing.listingId) {
+                        <span class="spinner"></span>
+                        Cancelling...
+                      } @else {
+                        Cancel Listing
+                      }
+                    </button>
+                  } @else {
+                    <span class="status-pill" [class.sold]="listing.status === 'sold'" [class.cancelled]="listing.status === 'cancelled'">{{ listing.status }}</span>
+                  }
+                } @else {
+                  <button type="button" class="btn-primary" [disabled]="listing.status !== 'active' || processingId() === listing.listingId" (click)="showConfirm(listing, 'buy')">
+                    @if (processingId() === listing.listingId) {
+                      <span class="spinner"></span>
+                      Buying...
+                    } @else {
+                      Buy Now
+                    }
+                  </button>
+                }
+              </div>
+
+              <div class="chart-section">
+                <div class="chart-header">
+                  <p class="chart-title">Avg. Price History (30 days)</p>
+                  <div class="chart-tooltip-spot">
+                    @if (hoveredPoint(); as point) {
+                      <div class="chart-tooltip">
+                        <span class="tooltip-price">{{ formatPrice(point.price) }} Coal</span>
+                        <span class="tooltip-date">{{ formatDateShort(point.timestamp) }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="chart-container">
+                  @if (chartModel(); as chart) {
+                    <svg
+                      class="chart-svg"
+                      [attr.viewBox]="chart.viewBox"
+                      preserveAspectRatio="none"
+                      (mousemove)="onChartMouseMove($event)"
+                      (mouseleave)="onChartMouseLeave()"
+                      role="img"
+                      [attr.aria-label]="'Average price history chart for ' + getItemName(listing)"
+                    >
+                      <defs>
+                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#e85d04" stop-opacity="0.3" />
+                          <stop offset="100%" stop-color="#e85d04" stop-opacity="0" />
+                        </linearGradient>
+                      </defs>
+
+                      @for (y of [0, 10, 20, 30, 40]; track y) {
+                        <line class="chart-grid-line" x1="0" [attr.y1]="y" x2="100" [attr.y2]="y" />
+                      }
+
+                      <path class="chart-area" [attr.d]="chart.areaPath" />
+
+                      @for (segment of chart.segments; track $index) {
+                        <line
+                          [class.chart-segment-up]="segment.isUp"
+                          [class.chart-segment-down]="!segment.isUp"
+                          [attr.x1]="segment.x1"
+                          [attr.y1]="segment.y1"
+                          [attr.x2]="segment.x2"
+                          [attr.y2]="segment.y2"
+                        />
+                      }
+
+                      @if (hoverIndex() >= 0) {
+                        @if (chart.points[hoverIndex()]; as point) {
+                          <line class="chart-crosshair" [attr.x1]="point.x" y1="0" [attr.x2]="point.x" y2="40" />
+                          <circle class="chart-hover-circle" [attr.cx]="point.x" [attr.cy]="point.y" r="0.8" />
+                        }
+                      }
+                    </svg>
+
+                    <div class="chart-axis-labels y-axis">
+                      <span>{{ formatCompact(chart.maxPrice) }}</span>
+                      <span>{{ formatCompact(chart.minPrice + chart.priceRange * 0.75) }}</span>
+                      <span>{{ formatCompact(chart.minPrice + chart.priceRange * 0.5) }}</span>
+                      <span>{{ formatCompact(chart.minPrice + chart.priceRange * 0.25) }}</span>
+                      <span>{{ formatCompact(chart.minPrice) }}</span>
                     </div>
+                  } @else {
+                    @if (priceHistory().length === 1) {
+                      <div class="chart-loading">Not enough data for chart</div>
+                    } @else {
+                      <div class="h-[420px] rounded-2xl skeleton-shimmer"></div>
+                    }
                   }
                 </div>
               </div>
 
-              <div class="chart-container">
-                @if (chartModel(); as chart) {
-                  <svg
-                    class="chart-svg"
-                    [attr.viewBox]="chart.viewBox"
-                    preserveAspectRatio="none"
-                    (mousemove)="onChartMouseMove($event)"
-                    (mouseleave)="onChartMouseLeave()"
-                    role="img"
-                    aria-label="Average price history chart for {{ getItemName(listing) }}"
-                  >
-                    <defs>
-                      <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#e85d04" stop-opacity="0.3" />
-                        <stop offset="100%" stop-color="#e85d04" stop-opacity="0" />
-                      </linearGradient>
-                    </defs>
+              <div class="modal-stats">
+                <div class="stat-box">
+                  <p class="stat-box-label">Avg</p>
+                  <p class="stat-box-value">{{ formatPrice(averageHistoryPrice()) }}</p>
+                </div>
+                <div class="stat-box">
+                  <p class="stat-box-label">Low</p>
+                  <p class="stat-box-value low">{{ formatPrice(chartModel()?.minPrice ?? 0) }}</p>
+                </div>
+                <div class="stat-box">
+                  <p class="stat-box-label">High</p>
+                  <p class="stat-box-value high">{{ formatPrice(chartModel()?.maxPrice ?? 0) }}</p>
+                </div>
+              </div>
 
-                    @for (y of [0, 10, 20, 30, 40]; track y) {
-                      <line class="chart-grid-line" x1="0" [attr.y1]="y" x2="100" [attr.y2]="y" />
-                    }
-
-                    <path class="chart-area" [attr.d]="chart.areaPath" />
-
-                    @for (segment of chart.segments; track $index) {
-                      <line
-                        [class.chart-segment-up]="segment.isUp"
-                        [class.chart-segment-down]="!segment.isUp"
-                        [attr.x1]="segment.x1"
-                        [attr.y1]="segment.y1"
-                        [attr.x2]="segment.x2"
-                        [attr.y2]="segment.y2"
-                      />
-                    }
-
-                    @if (hoverIndex() >= 0) {
-                      @if (chart.points[hoverIndex()]; as point) {
-                        <line
-                          class="chart-crosshair"
-                          [attr.x1]="point.x"
-                          y1="0"
-                          [attr.x2]="point.x"
-                          y2="40"
-                        />
-                        <circle
-                          class="chart-hover-circle"
-                          [attr.cx]="point.x"
-                          [attr.cy]="point.y"
-                          r="0.8"
-                        />
-                      }
-                    }
-                  </svg>
-
-                  <div class="chart-axis-labels y-axis">
-                    <span>{{ formatCompact(chart.maxPrice) }}</span>
-                    <span>{{ formatCompact(chart.minPrice + chart.priceRange * 0.75) }}</span>
-                    <span>{{ formatCompact(chart.minPrice + chart.priceRange * 0.5) }}</span>
-                    <span>{{ formatCompact(chart.minPrice + chart.priceRange * 0.25) }}</span>
-                    <span>{{ formatCompact(chart.minPrice) }}</span>
-                  </div>
-
-                } @else {
-                  @if (priceHistory().length === 1) {
-                    <div class="chart-loading">Not enough data for chart</div>
+              @if (canMessageSeller(listing)) {
+                <div class="message-seller-section">
+                  @if (!messageMode()) {
+                    <button type="button" class="btn-message" (click)="toggleMessageMode()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                      Message Seller
+                    </button>
                   } @else {
-                    <div class="h-[420px] rounded-2xl skeleton-shimmer"></div>
-                  }
-                }
-              </div>
-            </div>
-
-            <!-- Stats -->
-            <div class="modal-stats">
-              <div class="stat-box">
-                <p class="stat-box-label">Avg</p>
-                <p class="stat-box-value">{{ formatPrice(averageHistoryPrice()) }}</p>
-              </div>
-              <div class="stat-box">
-                <p class="stat-box-label">Low</p>
-                <p class="stat-box-value low">{{ formatPrice(chartModel()?.minPrice ?? 0) }}</p>
-              </div>
-              <div class="stat-box">
-                <p class="stat-box-label">High</p>
-                <p class="stat-box-value high">{{ formatPrice(chartModel()?.maxPrice ?? 0) }}</p>
-              </div>
-            </div>
-
-            <!-- Message Seller -->
-            @if (!isOwnListing(listing)) {
-              <div class="message-seller-section">
-                @if (!messageMode()) {
-                  <button type="button" class="btn-message" (click)="toggleMessageMode()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    Message Seller
-                  </button>
-                } @else {
-                  <div class="message-composer">
-                    <textarea
-                      [value]="messageText()"
-                      (input)="messageText.set($any($event.target).value)"
-                      placeholder="Hi, I'm interested in your item..."
-                      rows="2"
-                    ></textarea>
-                    <div class="message-actions">
-                      <button type="button" class="btn-secondary" (click)="toggleMessageMode()">Cancel</button>
-                      <button
-                        type="button"
-                        class="btn-primary"
-                        [disabled]="!messageText().trim() || processingId() !== null"
-                        (click)="sendMessageToSeller()"
-                      >
-                        @if (processingId() !== null) {
-                          <span class="spinner"></span>
-                          Sending...
-                        } @else {
-                          Send Message
-                        }
-                      </button>
+                    <div class="message-composer">
+                      <textarea
+                        [value]="messageText()"
+                        (input)="messageText.set($any($event.target).value)"
+                        placeholder="Hi, I'm interested in your item..."
+                        rows="2"
+                      ></textarea>
+                      <div class="message-actions">
+                        <button type="button" class="btn-secondary" (click)="toggleMessageMode()">Cancel</button>
+                        <button type="button" class="btn-primary" [disabled]="!messageText().trim() || processingId() !== null" (click)="sendMessageToSeller()">
+                          @if (processingId() !== null) {
+                            <span class="spinner"></span>
+                            Sending...
+                          } @else {
+                            Send Message
+                          }
+                        </button>
+                      </div>
+                      @if (messageSent()) {
+                        <span class="message-success">Message sent successfully!</span>
+                      }
                     </div>
-                    @if (messageSent()) {
-                      <span class="message-success">Message sent successfully!</span>
-                    }
-                  </div>
-                }
-              </div>
-            }
+                  }
+                </div>
+              }
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  }
+    }
 
-  <!-- ═══════════════════════════════════════════════════════════
-       CONFIRMATION MODAL
-  ════════════════════════════════════════════════════════════ -->
-  @if (confirmModal()) {
-    <div
-      class="modal-backdrop confirm-backdrop"
-      (click)="closeConfirm()"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div class="confirm-panel" (click)="$event.stopPropagation()">
-        <h3 class="confirm-title">Confirm {{ confirmType() === 'buy' ? 'Purchase' : 'Cancellation' }}</h3>
-        <p class="confirm-body">
-          Are you sure you want to <strong>{{ confirmType() }}</strong>
-          <strong>{{ getItemName(confirmListing()!) }}</strong> for
-          <strong>{{ formatPrice(confirmListing()!.price) }} Coal</strong>?
-        </p>
-        <div class="confirm-actions">
-          <button type="button" class="btn-secondary" (click)="closeConfirm()">Cancel</button>
-          <button
-            type="button"
-            class="btn-primary"
-            [class.btn-danger]="confirmType() === 'cancel'"
-            [disabled]="processingId() !== null"
-            (click)="executeConfirmedAction()"
-          >
-            @if (processingId()) {
-              <span class="spinner"></span>
-              Processing...
-            } @else {
-              Confirm {{ confirmType() === 'buy' ? 'Purchase' : 'Cancellation' }}
-            }
-          </button>
+    @if (confirmModal()) {
+      <div class="modal-backdrop confirm-backdrop" (click)="closeConfirm()" role="dialog" aria-modal="true">
+        <div class="confirm-panel" (click)="$event.stopPropagation()">
+          <h3 class="confirm-title">Confirm {{ confirmType() === 'buy' ? 'Purchase' : 'Cancellation' }}</h3>
+          <p class="confirm-body">
+            Are you sure you want to <strong>{{ confirmType() }}</strong>
+            <strong>{{ getItemName(confirmListing()!) }}</strong> for
+            <strong>{{ formatPrice(confirmListing()!.price) }} Coal</strong>?
+          </p>
+          <div class="confirm-actions">
+            <button type="button" class="btn-secondary" (click)="closeConfirm()">Cancel</button>
+            <button
+              type="button"
+              class="btn-primary"
+              [class.btn-danger]="confirmType() === 'cancel'"
+              [disabled]="processingId() !== null"
+              (click)="executeConfirmedAction()"
+            >
+              @if (processingId()) {
+                <span class="spinner"></span>
+                Processing...
+              } @else {
+                Confirm {{ confirmType() === 'buy' ? 'Purchase' : 'Cancellation' }}
+              }
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  }
-</div>
+    }
+  </div>
 </app-page-background>
