@@ -5,6 +5,9 @@ import { sanitizeText } from "../utils/sanitize";
 import { ChatMessageService } from "../services/chat-message-service";
 import { NotificationService } from "../services/notification-service";
 import { QuestService } from "../services/quest-service";
+import { PlayerService } from "../services/player-service";
+import { PlayerSettingsService } from "../services/player-settings-service";
+import { sendChatMessageEmail } from "../services/email-service";
 import { connectionManager } from "../websocket/connection-manager";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
@@ -16,6 +19,39 @@ function isConstraintError(err: unknown): boolean {
     const pgErr = err as { code?: string };
     return pgErr.code === "23503" ||
         pgErr.code === "23505";
+}
+
+async function sendChatEmailIfAllowed(
+    unit: Unit,
+    receiverId: number,
+    senderId: number,
+    content: string,
+    isMarketplace: boolean,
+    shouldSend: boolean
+): Promise<void> {
+    if (!shouldSend) return;
+
+    try {
+        const settingsService = new PlayerSettingsService(unit);
+        const settings = await settingsService.ensureSettings(receiverId);
+        if (!settings.notifyChatMessages) return;
+
+        const playerService = new PlayerService(unit);
+        const [receiver, sender] = await Promise.all([
+            playerService.getInfoByID(receiverId),
+            playerService.getInfoByID(senderId),
+        ]);
+        if (!receiver?.email || !sender?.username) return;
+
+        await sendChatMessageEmail({
+            email: receiver.email,
+            senderName: sender.username,
+            preview: content,
+            isMarketplace,
+        });
+    } catch (err) {
+        console.error("[ChatMessageRouter] Failed to send chat email:", err);
+    }
 }
 
 /**
@@ -534,6 +570,8 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
                 // Ignore quest tracking errors
             }
 
+            const isMarketplace = msgData["source"] === "marketplace";
+
             // Push to recipient if online
             let pushed = false;
             if (receiverId && typeof receiverId === "number") {
@@ -567,6 +605,15 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
                         // Ignore notification errors
                     }
                 }
+
+                await sendChatEmailIfAllowed(
+                    unit,
+                    receiverId,
+                    senderId,
+                    safeContent,
+                    isMarketplace,
+                    isMarketplace || !pushed
+                );
             }
             ok = true;
             res.status(StatusCodes.CREATED).json({ messageId: id, senderId, receiverId: receiverId ?? null, messageType: msgType });
@@ -580,6 +627,48 @@ chatMessageRouter.post("/chat-messages", requireAuth, async (req, res) => {
             console.error("Route error:", err);
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
         }
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
+chatMessageRouter.patch("/chat-messages/conversation/:senderId/:receiverId/read", requireAuth, async (req, res) => {
+    const unit = await Unit.create(false);
+    const service = new ChatMessageService(unit);
+    let ok = false;
+
+    try {
+        const senderId = Number(req.params.senderId);
+        const receiverId = Number(req.params.receiverId);
+
+        if (!Number.isInteger(senderId) || !Number.isInteger(receiverId)) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Sender and receiver IDs must be valid numbers" });
+            return;
+        }
+
+        if (req.playerId !== receiverId) {
+            res.status(StatusCodes.FORBIDDEN).json({ error: "You can only mark messages sent to you as read" });
+            return;
+        }
+
+        const updated = await service.markConversationAsRead(senderId, receiverId);
+        ok = true;
+
+        if (updated > 0) {
+            connectionManager.sendToPlayerGlobal(senderId, {
+                type: "chat_read_receipt",
+                payload: {
+                    readerId: receiverId,
+                    senderId,
+                    readAt: new Date().toISOString(),
+                },
+            });
+        }
+
+        res.status(StatusCodes.OK).json({ message: "Conversation marked as read", count: updated });
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     } finally {
         await unit.complete(ok);
     }

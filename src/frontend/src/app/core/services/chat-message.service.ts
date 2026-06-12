@@ -21,6 +21,10 @@ export interface SuccessMessage {
   message: string;
 }
 
+export interface MarkConversationReadResponse extends SuccessMessage {
+  count: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChatMessageService {
   private api = inject(ApiService);
@@ -77,6 +81,14 @@ export class ChatMessageService {
 
   markMessageAsRead(id: number): Observable<SuccessMessage> {
     return this.api.patch<SuccessMessage>(`/chat-messages/${id}/read`, {}, this.getHeaders());
+  }
+
+  markConversationAsRead(senderId: number, receiverId: number): Observable<MarkConversationReadResponse> {
+    return this.api.patch<MarkConversationReadResponse>(
+      `/chat-messages/conversation/${senderId}/${receiverId}/read`,
+      {},
+      this.getHeaders()
+    );
   }
 
   deleteChatMessage(id: number): Observable<SuccessMessage> {
