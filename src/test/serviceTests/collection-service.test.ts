@@ -18,13 +18,7 @@ function mockUnitSequence(stmts: ReturnType<typeof mockStmt>[]) {
       return stmt;
     }),
     getLastRowId: jest.fn().mockResolvedValue(1),
-    savepoint: jest.fn().mockResolvedValue(undefined),
-    rollbackToSavepoint: jest.fn().mockResolvedValue(undefined),
   } as unknown as Unit;
-}
-
-function collectionSchemaStmts() {
-  return [mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt()];
 }
 
 describe('CollectionService', () => {
@@ -59,7 +53,7 @@ describe('CollectionService', () => {
           rewardClaimedAt: null,
         },
       ]);
-      const unit = mockUnitSequence([...collectionSchemaStmts(), mockStmt(), mockStmt(), allTypesStmt]);
+      const unit = mockUnitSequence([allTypesStmt]);
       const service = new CollectionService(unit);
 
       const result = await service.getPlayerCollections(10);
@@ -128,7 +122,7 @@ describe('CollectionService', () => {
           rewardClaimedAt: null,
         },
       ]);
-      const unit = mockUnitSequence([...collectionSchemaStmts(), mockStmt(), mockStmt(), allTypesStmt]);
+      const unit = mockUnitSequence([allTypesStmt]);
       const service = new CollectionService(unit);
 
       const result = await service.getPlayerCollections(99);
@@ -158,30 +152,12 @@ describe('CollectionService', () => {
 
     it('returns an empty array when no collections exist', async () => {
       const allTypesStmt = mockStmt(undefined, []);
-      const unit = mockUnitSequence([...collectionSchemaStmts(), mockStmt(), mockStmt(), allTypesStmt]);
+      const unit = mockUnitSequence([allTypesStmt]);
       const service = new CollectionService(unit);
 
       const result = await service.getPlayerCollections(10);
 
       expect(result).toEqual([]);
-    });
-
-    it('reconciles existing collection tables before reading reward claim state', async () => {
-      const allTypesStmt = mockStmt(undefined, []);
-      const unit = mockUnitSequence([...collectionSchemaStmts(), mockStmt(), mockStmt(), allTypesStmt]);
-      const service = new CollectionService(unit);
-
-      await service.getPlayerCollections(10);
-
-      const schemaSql = (unit.prepare as jest.Mock).mock.calls
-        .slice(0, 5)
-        .map(call => call[0] as string);
-      expect(schemaSql[1]).toContain('ADD COLUMN IF NOT EXISTS rewardClaimedAt TEXT');
-      expect(schemaSql[4]).toContain('ALTER COLUMN discoveredAt SET NOT NULL');
-      expect(schemaSql[4]).toContain("ALTER COLUMN source SET DEFAULT 'unknown'");
-      for (const sql of schemaSql) {
-        expect(sql).not.toMatch(/;\s*\S/);
-      }
     });
 
     it('reports the failing collection read step', async () => {
@@ -190,7 +166,7 @@ describe('CollectionService', () => {
         all: jest.fn().mockRejectedValue(new Error('relation "playercollectionentry" does not exist')),
         run: jest.fn(),
       };
-      const unit = mockUnitSequence([...collectionSchemaStmts(), mockStmt(), mockStmt(), allTypesStmt]);
+      const unit = mockUnitSequence([allTypesStmt]);
       const service = new CollectionService(unit);
 
       await expect(service.getPlayerCollections(10)).rejects.toThrow(
@@ -200,7 +176,7 @@ describe('CollectionService', () => {
 
     it('casts collection fallback timestamps to text for PostgreSQL COALESCE', async () => {
       const allTypesStmt = mockStmt(undefined, []);
-      const unit = mockUnitSequence([...collectionSchemaStmts(), mockStmt(), mockStmt(), allTypesStmt]);
+      const unit = mockUnitSequence([allTypesStmt]);
       const service = new CollectionService(unit);
 
       await service.getPlayerCollections(10);
@@ -232,7 +208,7 @@ describe('CollectionService', () => {
           rewardClaimedAt: null,
         },
       ]);
-      const unit = mockUnitSequence([...collectionSchemaStmts(), mockStmt(), mockStmt(), allTypesStmt]);
+      const unit = mockUnitSequence([allTypesStmt]);
       const service = new CollectionService(unit);
 
       const result = await service.getPlayerCollections(10);
@@ -261,13 +237,23 @@ describe('CollectionService', () => {
     });
   });
 
+  describe('recordDiscovery', () => {
+    it('inserts a discovery entry for a non-limited stove type', async () => {
+      const insertStmt = mockStmt(undefined, [], { changes: 1 });
+      const unit = mockUnitSequence([insertStmt]);
+      const service = new CollectionService(unit);
+
+      await service.recordDiscovery(10, 7, 'lootbox');
+
+      expect(insertStmt.run).toHaveBeenCalled();
+      const sql = (unit.prepare as jest.Mock).mock.calls[0][0] as string;
+      expect(sql).toContain('INSERT INTO PlayerCollectionEntry');
+    });
+  });
+
   describe('claimStoveReward', () => {
     it('rejects undiscovered stove types', async () => {
       const unit = mockUnitSequence([
-        ...collectionSchemaStmts(),
-        mockStmt(),
-        mockStmt(),
-        mockStmt(),
         mockStmt({ name: 'Iron Stove', rarity: 'common' }),
         mockStmt(null),
       ]);
@@ -283,10 +269,6 @@ describe('CollectionService', () => {
 
     it('rejects already claimed rewards', async () => {
       const unit = mockUnitSequence([
-        ...collectionSchemaStmts(),
-        mockStmt(),
-        mockStmt(),
-        mockStmt(),
         mockStmt({ name: 'Iron Stove', rarity: 'common' }),
         mockStmt({ rewardClaimedAt: '2026-01-01', name: 'Iron Stove', rarity: 'common' }),
       ]);
@@ -302,10 +284,6 @@ describe('CollectionService', () => {
 
     it('rejects direct claims for limited collection-excluded types', async () => {
       const unit = mockUnitSequence([
-        ...collectionSchemaStmts(),
-        mockStmt(),
-        mockStmt(),
-        mockStmt(),
         mockStmt({ name: 'One of a Kind', rarity: 'limited' }),
       ]);
       const service = new CollectionService(unit);
@@ -321,10 +299,6 @@ describe('CollectionService', () => {
     it('awards legendary collection rewards once', async () => {
       const prestige = { playerId: 10, totalXP: 100, currentLevel: 4, prestigeCount: 0, updatedAt: 'now' };
       const unit = mockUnitSequence([
-        ...collectionSchemaStmts(),
-        mockStmt(),
-        mockStmt(),
-        mockStmt(),
         mockStmt({ name: 'Steel Stove', rarity: 'legendary' }),
         mockStmt({ rewardClaimedAt: null, name: 'Steel Stove', rarity: 'legendary' }),
         mockStmt({ typeId: 5 }),

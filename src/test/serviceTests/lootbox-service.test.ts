@@ -59,10 +59,6 @@ function mockUnitSequence(stmts: ReturnType<typeof mockStmt>[]) {
   } as unknown as Unit;
 }
 
-function collectionSchemaStmts() {
-  return [mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt()];
-}
-
 function mockUnit(stmt = mockStmt()) {
   return {
     prepare: jest.fn().mockReturnValue(stmt),
@@ -373,7 +369,6 @@ describe('LootboxService', () => {
       const notListedStmt = mockStmt({ count: 0 });
       const stoveTypesStmt = mockStmt(null, [sampleStoveType]);
       const insertStoveStmt = mockStmt({ stoveId: 55 }, [], { changes: 1 });
-      const collectionSchema = collectionSchemaStmts();
       const insertCollectionStmt = mockStmt(null, [], { changes: 1 });
       const markOpenedStmt = mockStmt(null, [], { changes: 1 });
       const insertDropStmt = mockStmt({ dropId: 7 }, [], { changes: 1 });
@@ -384,7 +379,6 @@ describe('LootboxService', () => {
         notListedStmt,   // isLootboxListed
         stoveTypesStmt,  // pickStoveTypeByRarity
         insertStoveStmt, // INSERT Stove RETURNING stoveId
-        ...collectionSchema, // PlayerCollectionEntry schema guard
         insertCollectionStmt, // INSERT PlayerCollectionEntry
         markOpenedStmt,  // UPDATE Lootbox openedAt
         insertDropStmt,  // INSERT LootboxDrop RETURNING dropId
@@ -431,7 +425,6 @@ describe('LootboxService', () => {
       const notListedStmt = mockStmt({ count: 0 });
       const stoveTypesStmt = mockStmt(null, [dragonStoveType]);
       const insertStoveStmt = mockStmt({ stoveId: 55 }, [], { changes: 1 });
-      const collectionSchema = collectionSchemaStmts();
       const insertCollectionStmt = mockStmt(null, [], { changes: 1 });
       const markOpenedStmt = mockStmt(null, [], { changes: 1 });
       const insertDropStmt = mockStmt({ dropId: 7 }, [], { changes: 1 });
@@ -442,7 +435,6 @@ describe('LootboxService', () => {
         notListedStmt,
         stoveTypesStmt,  // pickDragonStoveTypeByRarity
         insertStoveStmt, // INSERT Stove RETURNING stoveId
-        ...collectionSchema, // PlayerCollectionEntry schema guard
         insertCollectionStmt, // INSERT PlayerCollectionEntry
         markOpenedStmt,  // UPDATE Lootbox openedAt
         insertDropStmt,  // INSERT LootboxDrop RETURNING dropId
@@ -471,7 +463,6 @@ describe('LootboxService', () => {
       const notListedStmt = mockStmt({ count: 0 });
       const stoveTypesStmt = mockStmt(null, [winterStoveType]);
       const insertStoveStmt = mockStmt({ stoveId: 55 }, [], { changes: 1 });
-      const collectionSchema = collectionSchemaStmts();
       const insertCollectionStmt = mockStmt(null, [], { changes: 1 });
       const markOpenedStmt = mockStmt(null, [], { changes: 1 });
       const insertDropStmt = mockStmt({ dropId: 7 }, [], { changes: 1 });
@@ -482,7 +473,6 @@ describe('LootboxService', () => {
         notListedStmt,
         stoveTypesStmt,  // pickWinterStoveTypeByRarity
         insertStoveStmt, // INSERT Stove RETURNING stoveId
-        ...collectionSchema, // PlayerCollectionEntry schema guard
         insertCollectionStmt, // INSERT PlayerCollectionEntry
         markOpenedStmt,  // UPDATE Lootbox openedAt
         insertDropStmt,  // INSERT LootboxDrop RETURNING dropId

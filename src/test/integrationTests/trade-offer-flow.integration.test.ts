@@ -21,10 +21,6 @@ function mockUnitSequence(stmts: ReturnType<typeof mockStmt>[]) {
   } as unknown as Unit;
 }
 
-function collectionSchemaStmts() {
-  return [mockStmt(), mockStmt(), mockStmt(), mockStmt(), mockStmt()];
-}
-
 describe("Trade offer integration flow", () => {
   const message = {
     messageId: 100,
@@ -41,7 +37,6 @@ describe("Trade offer integration flow", () => {
     const getStoveTypeStmt = mockStmt({ typeId: 9 });
     const updateStoveOwnerStmt = mockStmt(null, [], { changes: 1 });
     const insertOwnershipStmt = mockStmt(null, [], { changes: 1 });
-    const collectionSchema = collectionSchemaStmts();
     const insertCollectionStmt = mockStmt(null, [], { changes: 1 });
     const buyerCoinTransactionStmt = mockStmt(null, [], { changes: 1 });
     const sellerCoinTransactionStmt = mockStmt(null, [], { changes: 1 });
@@ -57,7 +52,6 @@ describe("Trade offer integration flow", () => {
       getStoveTypeStmt,
       updateStoveOwnerStmt,
       insertOwnershipStmt,
-      ...collectionSchema,
       insertCollectionStmt,
       buyerCoinTransactionStmt,
       sellerCoinTransactionStmt,
@@ -72,9 +66,6 @@ describe("Trade offer integration flow", () => {
     expect(getStoveTypeStmt.get).toHaveBeenCalledTimes(1);
     expect(updateStoveOwnerStmt.run).toHaveBeenCalledTimes(1);
     expect(insertOwnershipStmt.run).toHaveBeenCalledTimes(1);
-    for (const stmt of collectionSchema) {
-      expect(stmt.run).toHaveBeenCalledTimes(1);
-    }
     expect(insertCollectionStmt.run).toHaveBeenCalledTimes(1);
     expect(buyerCoinTransactionStmt.run).toHaveBeenCalledTimes(1);
     expect(sellerCoinTransactionStmt.run).toHaveBeenCalledTimes(1);

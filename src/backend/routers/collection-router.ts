@@ -29,7 +29,7 @@ function collectionErrorResponse(err: unknown): { error: string } {
  *         description: Unauthorized
  */
 collectionRouter.get("/player/collections", requireAuth, async (req, res) => {
-    const unit = await Unit.create(false);
+    const unit = await Unit.create(true);
     let ok = false;
     try {
         const collectionService = new CollectionService(unit);
