@@ -445,7 +445,6 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
       this.lootboxCount.update(count => Math.max(0, count - 1));
       void this.authService.refreshUser();
-      await this.loadPityData();
 
       this.availableLootboxes.set(available.filter(lb => lb.lootboxId !== target.lootboxId));
       this.selectedLootboxId.set(null);
@@ -493,7 +492,18 @@ export class LootboxComponent implements AfterViewInit, OnInit {
         const offset = -(40 * itemWidth) + rollerWidth / 2 - itemWidth / 2;
 
         itemsEl.style.transform = `translateX(${offset}px)`;
-        setTimeout(() => this.showResult(result), 4000);
+
+        const onTransitionEnd = (event: TransitionEvent): void => {
+          if (event.target !== itemsEl || event.propertyName !== 'transform') return;
+          itemsEl.removeEventListener('transitionend', onTransitionEnd);
+          clearTimeout(fallbackTimer);
+          void this.showResult(result);
+        };
+        itemsEl.addEventListener('transitionend', onTransitionEnd);
+        const fallbackTimer = setTimeout(() => {
+          itemsEl.removeEventListener('transitionend', onTransitionEnd);
+          void this.showResult(result);
+        }, 6000);
       }, 100);
     }, 1400);
   }
@@ -511,9 +521,11 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     this.showPopup.set(true);
     this.isOpening.set(false);
     this.cdr.detectChanges();
+
+    await this.loadPityData();
   }
 
-  private showResult(result: OpenLootboxResponse): void {
+  private async showResult(result: OpenLootboxResponse): Promise<void> {
     this.resultText.set(result.stoveName);
     this.resultImageUrl.set(result.imageUrl);
     this.resultRarity.set(result.rarity);
@@ -523,6 +535,8 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     this.showPopup.set(true);
     this.isOpening.set(false);
     this.cdr.detectChanges();
+
+    await this.loadPityData();
   }
 
   resetAll(): void {
