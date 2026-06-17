@@ -251,4 +251,49 @@ describe('BlackjackStageManager', () => {
     expect((mgr.displayedStateBlob()?.['players'] as any[])[0].result).toBe('won');
     expect(mgr.isAnimating()).toBe(false);
   });
+
+  it('snaps instantly when reduced motion is preferred', () => {
+    const mgr = new BlackjackStageManager({ reducedMotion: true });
+    mgr.setTarget(
+      makeBlob('player_turn', ['5h', 'back'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1000,
+          hands: [['Ah', '10d']],
+          bets: [20],
+          result: 'playing',
+        },
+      ])
+    );
+
+    expect(mgr.isAnimating()).toBe(false);
+    expect((mgr.displayedStateBlob()?.['players'] as any[])[0].hands[0]).toEqual([
+      'Ah',
+      '10d',
+    ]);
+  });
+
+  it('jumps ahead on reconnect or phase skip', () => {
+    const mgr = new BlackjackStageManager();
+    mgr.setTarget(makeBlob('betting', [], []));
+    jest.advanceTimersByTime(0);
+
+    // Dealer phase would normally animate, but we leap from betting → dealer
+    mgr.setTarget(
+      makeBlob('dealer_turn', ['5h', '8c', 'Ks'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1000,
+          hands: [['Ah', '10d']],
+          bets: [20],
+          result: 'playing',
+        },
+      ])
+    );
+
+    expect(mgr.isAnimating()).toBe(false);
+    expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c', 'Ks']);
+  });
 });
