@@ -401,6 +401,24 @@
   animation: hand-ring-pulse 1.5s ease-in-out infinite;
 }
 
+.bj-hand--win {
+  outline: 2px solid rgba(74, 222, 128, 0.6);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+.bj-hand--lose {
+  outline: 2px solid rgba(239, 83, 80, 0.5);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+.bj-hand--push {
+  outline: 2px solid var(--border);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
 @keyframes hand-ring-pulse {
   0%, 100% { box-shadow: 0 0 0 2px rgba(200, 136, 26, 0.35); }
   50%       { box-shadow: 0 0 0 5px rgba(200, 136, 26, 0.15); }
@@ -472,6 +490,26 @@
 .chip--green  { background: radial-gradient(circle at 30% 30%, #81c784, #2e7d32); }
 .chip--black  { background: radial-gradient(circle at 30% 30%, #757575, #212121); }
 .chip--gold   { background: radial-gradient(circle at 30% 30%, #ffd54f, #c8881a); }
+
+.bj-hand--win .bj-chip,
+.bj-hand--blackjack .bj-chip {
+  animation: chip-payout 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes chip-payout {
+  0% {
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 1;
+  }
+  60% {
+    transform: translateX(-50%) translateY(-28px) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-40px) scale(0.85);
+    opacity: 0;
+  }
+}
 
 .bj-bet__amount {
   position: absolute;
