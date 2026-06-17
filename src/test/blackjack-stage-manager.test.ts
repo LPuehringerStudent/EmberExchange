@@ -212,6 +212,43 @@ describe('BlackjackStageManager', () => {
 
     jest.advanceTimersByTime(TIMING.settlePause);
     expect((mgr.displayedStateBlob()?.['players'] as any[])[0].result).toBe('won');
+    expect((mgr.displayedStateBlob()?.['players'] as any[])[0].stack).toBe(1020);
+    expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c', 'Ks']);
+    expect(mgr.isAnimating()).toBe(false);
+  });
+
+  it('snaps dealer hand when baseline is incomplete, then settles', () => {
+    const mgr = new BlackjackStageManager();
+    const player = {
+      playerId: 1,
+      username: 'Hero',
+      stack: 1000,
+      hands: [['Ah', '10d']],
+      bets: [20],
+      result: 'playing',
+    };
+
+    mgr.setTarget(makeBlob('dealer_turn', ['5h', '8c', 'Ks'], [player]));
+    expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c', 'Ks']);
+    expect(mgr.isAnimating()).toBe(false);
+    expect(mgr.stage()).toBe('idle');
+
+    mgr.setTarget(
+      makeBlob('settled', ['5h', '8c', 'Ks'], [
+        {
+          ...player,
+          stack: 1020,
+          result: 'won',
+          handResults: ['won'],
+        },
+      ])
+    );
+
+    expect(mgr.isAnimating()).toBe(true);
+    expect(mgr.stage()).toBe('settling');
+
+    jest.advanceTimersByTime(TIMING.settlePause);
+    expect((mgr.displayedStateBlob()?.['players'] as any[])[0].result).toBe('won');
     expect(mgr.isAnimating()).toBe(false);
   });
 });

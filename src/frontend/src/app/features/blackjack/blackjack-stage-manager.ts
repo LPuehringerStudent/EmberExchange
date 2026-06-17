@@ -82,6 +82,15 @@ export class BlackjackStageManager {
     );
     const targetPhase = normalizePhase(String(blob['phase'] ?? ''));
     if (targetPhase === 'betting') return true;
+
+    const displayedDealerHand = ((this.displayedStateBlob()?.['dealerHand'] as string[]) ?? []);
+    if (
+      (targetPhase === 'dealer' || targetPhase === 'showdown') &&
+      displayedDealerHand.length < 2
+    ) {
+      return true;
+    }
+
     if (!displayedPhase || displayedPhase === targetPhase) return false;
 
     // Normal flow can skip insurance (betting -> playing), so allow that single step.
@@ -173,26 +182,24 @@ export class BlackjackStageManager {
     const dealerDisplayed = ((this.displayedStateBlob()?.['dealerHand'] as string[]) ?? []);
 
     if (targetPhase === 'dealer' || targetPhase === 'showdown') {
-      if (dealerDisplayed.length >= 2) {
-        if (dealerDisplayed[1] === 'back' && dealerTarget[1] && dealerTarget[1] !== 'back') {
-          events.push({
-            type: 'reveal_hole_card',
-            stage: 'dealer-turn',
-            delay: events.length === 0 ? 0 : TIMING.holeFlip,
-            card: dealerTarget[1],
-          });
-        }
+      if (dealerDisplayed[1] === 'back' && dealerTarget[1] && dealerTarget[1] !== 'back') {
+        events.push({
+          type: 'reveal_hole_card',
+          stage: 'dealer-turn',
+          delay: events.length === 0 ? 0 : TIMING.holeFlip,
+          card: dealerTarget[1],
+        });
+      }
 
-        for (let i = 2; i < dealerTarget.length; i++) {
-          if (i >= dealerDisplayed.length || dealerDisplayed[i] !== dealerTarget[i]) {
-            events.push({
-              type: 'dealer_draw',
-              stage: 'dealer-turn',
-              delay: TIMING.dealerDrawPause,
-              index: i,
-              card: dealerTarget[i],
-            });
-          }
+      for (let i = 2; i < dealerTarget.length; i++) {
+        if (i >= dealerDisplayed.length || dealerDisplayed[i] !== dealerTarget[i]) {
+          events.push({
+            type: 'dealer_draw',
+            stage: 'dealer-turn',
+            delay: TIMING.dealerDrawPause,
+            index: i,
+            card: dealerTarget[i],
+          });
         }
       }
     }
