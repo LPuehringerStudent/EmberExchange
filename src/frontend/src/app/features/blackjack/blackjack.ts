@@ -9,11 +9,17 @@ import {
 import { CommonModule } from '@angular/common';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { AuthService } from '../../core/services/auth.service';
+import {
+  BlackjackStageManager,
+  buildDealerCardId,
+  buildPlayerCardId,
+} from './blackjack-stage-manager';
 
 export interface BlackjackCard {
   rank: string;
   suit: string;
   faceUp: boolean;
+  cardId: string;
 }
 
 export interface BlackjackHand {
@@ -60,9 +66,16 @@ const BJ_SEAT_POSITIONS: Array<{ x: number; y: number }> = [
 export class BlackjackComponent {
   private ws = inject(WebSocketService);
   private auth = inject(AuthService);
+  private stageManager = new BlackjackStageManager({
+    reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  });
 
-  readonly stateBlob = this.ws.stateBlob;
+  readonly stateBlob = this.stageManager.displayedStateBlob;
   readonly lastError = this.ws.lastError;
+
+  readonly isAnimating = this.stageManager.isAnimating;
+  readonly stage = this.stageManager.stage;
+  readonly enteringCardIds = this.stageManager.enteringCardIds;
 
   private readonly suitMap: Record<string, string> = {
     h: 'hearts', d: 'diamonds', c: 'clubs', s: 'spades',
@@ -94,10 +107,11 @@ export class BlackjackComponent {
   readonly dealerHand = computed((): BlackjackCard[] => {
     const blob = this.stateBlob();
     const cards = (blob?.['dealerHand'] as string[]) ?? [];
-    return cards.map((c) => ({
+    return cards.map((c, index) => ({
       rank: this.cardRank(c),
       suit: this.cardSuit(c),
       faceUp: c !== 'back',
+      cardId: buildDealerCardId(index, c),
     }));
   });
 
@@ -127,10 +141,11 @@ export class BlackjackComponent {
       const betsArr = p['bets'] as number[] | undefined;
 
       const hands: BlackjackHand[] = (handsArr ?? []).map((handCards, idx) => {
-        const cards: BlackjackCard[] = handCards.map((c) => ({
+        const cards: BlackjackCard[] = handCards.map((c, index) => ({
           rank: this.cardRank(c),
           suit: this.cardSuit(c),
           faceUp: c !== 'back',
+          cardId: buildPlayerCardId(playerId, idx, index, c),
         }));
         const handResult = handResultsArr?.[idx] ?? result;
         return {
@@ -243,6 +258,15 @@ export class BlackjackComponent {
     return labels[this.phase()] ?? this.phase();
   });
 
+  readonly stageMessage = computed(() => {
+    switch (this.stage()) {
+      case 'dealing': return 'Dealing…';
+      case 'dealer-turn': return 'Dealer is drawing…';
+      case 'settling': return 'Settling…';
+      default: return '';
+    }
+  });
+
   // Animation / pacing state
   showAnnouncement = signal(false);
   announcementText = signal('');
@@ -251,42 +275,99 @@ export class BlackjackComponent {
   // Betting state
   betAmount = signal<number>(20);
 
+  // Rendering helpers
+  readonly heroHasBet = computed(() => {
+    return this.heroHands().some((h) => h.bet > 0);
+  });
+
+  readonly showWaitingOverlay = computed(() => {
+    return this.players().length === 0;
+  });
+
+  readonly showStartHint = computed(() => {
+    return this.isBetting() && this.isHeroTurn() && !this.heroHasBet();
+  });
+
+  readonly resultRows = computed(() => {
+    const rows: Array<{
+      name: string;
+      label: string;
+      amount: number;
+      resultClass: string;
+      handName?: string;
+    }> = [];
+
+    for (const player of this.players()) {
+      for (const hand of player.hands) {
+        const status = hand.status;
+        let amount = 0;
+        let label = this.resultLabel(status);
+        let resultClass = this.resultClass(status);
+
+        if (status === 'win' || status === 'blackjack') {
+          amount = hand.bet;
+        } else if (status === 'lose' || status === 'bust') {
+          amount = -hand.bet;
+        }
+
+        rows.push({
+          name: player.name,
+          label,
+          amount,
+          resultClass,
+          handName: player.hands.length > 1 ? `Hand ${player.hands.indexOf(hand) + 1}` : undefined,
+        });
+      }
+    }
+    return rows;
+  });
+
   constructor() {
+    // Feed authoritative state into the stage manager
+    effect(() => {
+      this.stageManager.setTarget(this.ws.stateBlob());
+    });
+
     let lastPhase = '';
     let showdownTimer: number | null = null;
 
     effect(() => {
       const currentPhase = this.phase();
-      if (currentPhase === lastPhase) return;
-      lastPhase = currentPhase;
+      const animating = this.isAnimating();
 
-      // Phase announcements
-      if (currentPhase === 'insurance') {
-        this.announcementText.set('Dealer shows Ace — Insurance?');
-        this.showAnnouncement.set(true);
-        setTimeout(() => this.showAnnouncement.set(false), 2000);
-      } else if (currentPhase === 'dealer') {
-        this.announcementText.set("Dealer's Turn");
-        this.showAnnouncement.set(true);
-        setTimeout(() => this.showAnnouncement.set(false), 1500);
-      } else if (currentPhase === 'showdown') {
-        this.announcementText.set('Showdown');
-        this.showAnnouncement.set(true);
-        setTimeout(() => this.showAnnouncement.set(false), 1500);
-      } else {
-        this.showAnnouncement.set(false);
+      if (currentPhase !== lastPhase) {
+        lastPhase = currentPhase;
+
+        // Phase announcements
+        if (currentPhase === 'insurance') {
+          this.announcementText.set('Dealer shows Ace — Insurance?');
+          this.showAnnouncement.set(true);
+          setTimeout(() => this.showAnnouncement.set(false), 2000);
+        } else if (currentPhase === 'dealer') {
+          this.announcementText.set("Dealer's Turn");
+          this.showAnnouncement.set(true);
+          setTimeout(() => this.showAnnouncement.set(false), 1500);
+        } else if (currentPhase === 'showdown') {
+          this.announcementText.set('Showdown');
+          this.showAnnouncement.set(true);
+          setTimeout(() => this.showAnnouncement.set(false), 1500);
+        } else {
+          this.showAnnouncement.set(false);
+        }
+
+        // Reset bet amount to min when entering betting phase
+        if (currentPhase === 'betting') {
+          this.betAmount.set(this.minBet());
+        }
       }
 
-      // Reset bet amount to min when entering betting phase
-      if (currentPhase === 'betting') {
-        this.betAmount.set(this.minBet());
-      }
-
-      // Delay results overlay so player can see final table state
-      if (currentPhase === 'showdown') {
-        showdownTimer = window.setTimeout(() => {
-          this.showResultsOverlay.set(true);
-        }, 2000);
+      // Results overlay: only trigger once dealer/settle animation is done
+      if (currentPhase === 'showdown' && !animating) {
+        if (!showdownTimer) {
+          showdownTimer = window.setTimeout(() => {
+            this.showResultsOverlay.set(true);
+          }, 2000);
+        }
       } else {
         if (showdownTimer) {
           clearTimeout(showdownTimer);
@@ -353,7 +434,7 @@ export class BlackjackComponent {
   }
 
   canAction(type: string): boolean {
-    return this.validActions().some((a) => a.type === type);
+    return !this.isAnimating() && this.validActions().some((a) => a.type === type);
   }
 
   getHandValueDisplay(hand: BlackjackHand): string {
@@ -373,6 +454,35 @@ export class BlackjackComponent {
 
   cardBackSrc(): string {
     return 'assets/poker_cards/back.png';
+  }
+
+  chipStack(bet: number): string[] {
+    if (bet <= 0) return [];
+    const colors = ['chip--red', 'chip--blue', 'chip--green', 'chip--black', 'chip--gold'];
+    const count = Math.min(8, Math.max(1, Math.ceil(bet / 25)));
+    return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
+  }
+
+  resultClass(status: string): string {
+    switch (status) {
+      case 'win': return 'result--win';
+      case 'blackjack': return 'result--blackjack';
+      case 'lose': return 'result--lose';
+      case 'bust': return 'result--lose';
+      case 'push': return 'result--push';
+      default: return 'result--push';
+    }
+  }
+
+  resultLabel(status: string): string {
+    switch (status) {
+      case 'win': return 'Win';
+      case 'blackjack': return 'Blackjack';
+      case 'lose': return 'Lose';
+      case 'bust': return 'Bust';
+      case 'push': return 'Push';
+      default: return status;
+    }
   }
 
   private cardRank(card: string): string {
