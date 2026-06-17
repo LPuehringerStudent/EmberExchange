@@ -169,6 +169,32 @@ export class BlackjackStageManager {
       }
     }
 
+    const dealerTarget = (blob['dealerHand'] as string[]) ?? [];
+    const dealerDisplayed = ((this.displayedStateBlob()?.['dealerHand'] as string[]) ?? []);
+
+    if (targetPhase === 'dealer' || targetPhase === 'showdown') {
+      if (dealerDisplayed[1] === 'back' && dealerTarget[1] && dealerTarget[1] !== 'back') {
+        events.push({
+          type: 'reveal_hole_card',
+          stage: 'dealer-turn',
+          delay: events.length === 0 ? 0 : TIMING.holeFlip,
+          card: dealerTarget[1],
+        });
+      }
+
+      for (let i = 2; i < dealerTarget.length; i++) {
+        if (i >= dealerDisplayed.length || dealerDisplayed[i] !== dealerTarget[i]) {
+          events.push({
+            type: 'dealer_draw',
+            stage: 'dealer-turn',
+            delay: TIMING.dealerDrawPause,
+            index: i,
+            card: dealerTarget[i],
+          });
+        }
+      }
+    }
+
     return events;
   }
 
@@ -241,6 +267,17 @@ export class BlackjackStageManager {
       }
       case 'deal_dealer_hole': {
         (next['dealerHand'] as string[]).push('back');
+        break;
+      }
+      case 'reveal_hole_card': {
+        const hand = next['dealerHand'] as string[];
+        hand[1] = event.card;
+        this.markEntering(buildDealerCardId(1, event.card));
+        break;
+      }
+      case 'dealer_draw': {
+        (next['dealerHand'] as string[]).push(event.card);
+        this.markEntering(buildDealerCardId(event.index, event.card));
         break;
       }
       default:

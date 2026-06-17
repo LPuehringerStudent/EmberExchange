@@ -84,4 +84,52 @@ describe('BlackjackStageManager', () => {
     expect(mgr.isAnimating()).toBe(false);
     expect(mgr.stage()).toBe('idle');
   });
+
+  it('reveals the hole card and draws dealer cards one by one', () => {
+    const mgr = new BlackjackStageManager();
+
+    // Start from a fully dealt playing state
+    mgr.setTarget(
+      makeBlob('player_turn', ['5h', 'back'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1000,
+          hands: [['Ah', '10d']],
+          bets: [20],
+          result: 'playing',
+        },
+      ])
+    );
+    jest.advanceTimersByTime(10_000); // finish initial deal
+
+    mgr.setTarget(
+      makeBlob('dealer_turn', ['5h', '8c', 'Ks'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1000,
+          hands: [['Ah', '10d']],
+          bets: [20],
+          result: 'playing',
+        },
+      ])
+    );
+
+    expect(mgr.isAnimating()).toBe(true);
+    expect(mgr.stage()).toBe('dealer-turn');
+
+    // Hole card revealed
+    jest.advanceTimersByTime(TIMING.holeFlip);
+    expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c']);
+
+    // First dealer draw
+    jest.advanceTimersByTime(TIMING.dealerDrawPause);
+    expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c', 'Ks']);
+
+    // Queue finishes
+    jest.advanceTimersByTime(TIMING.dealerDrawPause);
+    expect(mgr.isAnimating()).toBe(false);
+    expect(mgr.stage()).toBe('idle');
+  });
 });
