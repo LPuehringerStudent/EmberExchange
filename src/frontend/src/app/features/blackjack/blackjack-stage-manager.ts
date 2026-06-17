@@ -173,26 +173,59 @@ export class BlackjackStageManager {
     const dealerDisplayed = ((this.displayedStateBlob()?.['dealerHand'] as string[]) ?? []);
 
     if (targetPhase === 'dealer' || targetPhase === 'showdown') {
-      if (dealerDisplayed[1] === 'back' && dealerTarget[1] && dealerTarget[1] !== 'back') {
-        events.push({
-          type: 'reveal_hole_card',
-          stage: 'dealer-turn',
-          delay: events.length === 0 ? 0 : TIMING.holeFlip,
-          card: dealerTarget[1],
-        });
-      }
-
-      for (let i = 2; i < dealerTarget.length; i++) {
-        if (i >= dealerDisplayed.length || dealerDisplayed[i] !== dealerTarget[i]) {
+      if (dealerDisplayed.length >= 2) {
+        if (dealerDisplayed[1] === 'back' && dealerTarget[1] && dealerTarget[1] !== 'back') {
           events.push({
-            type: 'dealer_draw',
+            type: 'reveal_hole_card',
             stage: 'dealer-turn',
-            delay: TIMING.dealerDrawPause,
-            index: i,
-            card: dealerTarget[i],
+            delay: events.length === 0 ? 0 : TIMING.holeFlip,
+            card: dealerTarget[1],
           });
         }
+
+        for (let i = 2; i < dealerTarget.length; i++) {
+          if (i >= dealerDisplayed.length || dealerDisplayed[i] !== dealerTarget[i]) {
+            events.push({
+              type: 'dealer_draw',
+              stage: 'dealer-turn',
+              delay: TIMING.dealerDrawPause,
+              index: i,
+              card: dealerTarget[i],
+            });
+          }
+        }
       }
+    }
+
+    if (targetPhase === 'playing' && displayedPhase === 'playing') {
+      const targetPlayers = (blob['players'] as any[]) ?? [];
+      const displayedPlayers = ((this.displayedStateBlob()?.['players'] as any[]) ?? []);
+
+      for (const tp of targetPlayers) {
+        const playerId = tp['playerId'] as number;
+        const dp = displayedPlayers.find((p) => p['playerId'] === playerId);
+        const targetHands = (tp['hands'] as string[][]) ?? [];
+        const displayedHands = ((dp?.['hands'] as string[][]) ?? []).map((h) => h ?? []);
+
+        for (let h = 0; h < targetHands.length; h++) {
+          const displayedHand = displayedHands[h] ?? [];
+          for (let i = displayedHand.length; i < targetHands[h].length; i++) {
+            events.push({
+              type: 'player_draw',
+              stage: 'player-turn',
+              delay: TIMING.dealStagger,
+              playerId,
+              handIndex: h,
+              index: i,
+              card: targetHands[h][i],
+            });
+          }
+        }
+      }
+    }
+
+    if (targetPhase === 'showdown') {
+      events.push({ type: 'settle', stage: 'settling', delay: TIMING.settlePause });
     }
 
     return events;
@@ -276,9 +309,30 @@ export class BlackjackStageManager {
         break;
       }
       case 'dealer_draw': {
-        (next['dealerHand'] as string[]).push(event.card);
+        const dealerHand = (next['dealerHand'] as string[]) ?? [];
+        dealerHand.push(event.card);
+        next['dealerHand'] = dealerHand;
         this.markEntering(buildDealerCardId(event.index, event.card));
         break;
+      }
+      case 'player_draw': {
+        const player = ((next['players'] as any[]) ?? []).find(
+          (p) => p['playerId'] === event.playerId
+        );
+        if (player) {
+          player['hands'][event.handIndex].push(event.card);
+          this.markEntering(
+            buildPlayerCardId(event.playerId, event.handIndex, event.index, event.card)
+          );
+        }
+        break;
+      }
+      case 'settle': {
+        const target = this.targetStateBlob();
+        if (target) {
+          this.displayedStateBlob.set(clone(target));
+        }
+        return;
       }
       default:
         break;

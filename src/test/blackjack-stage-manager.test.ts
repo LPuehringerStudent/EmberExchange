@@ -132,4 +132,86 @@ describe('BlackjackStageManager', () => {
     expect(mgr.isAnimating()).toBe(false);
     expect(mgr.stage()).toBe('idle');
   });
+
+  it('animates a player hit', () => {
+    const mgr = new BlackjackStageManager();
+    mgr.setTarget(
+      makeBlob('player_turn', ['5h', 'back'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1000,
+          hands: [['Ah', '10d']],
+          bets: [20],
+          result: 'playing',
+        },
+      ])
+    );
+    jest.advanceTimersByTime(10_000);
+
+    mgr.setTarget(
+      makeBlob('player_turn', ['5h', 'back'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1000,
+          hands: [['Ah', '10d', '3c']],
+          bets: [20],
+          result: 'playing',
+        },
+      ])
+    );
+
+    expect(mgr.isAnimating()).toBe(true);
+    expect(mgr.stage()).toBe('player-turn');
+
+    jest.advanceTimersByTime(TIMING.dealStagger);
+    expect((mgr.displayedStateBlob()?.['players'] as any[])[0].hands[0]).toEqual([
+      'Ah',
+      '10d',
+      '3c',
+    ]);
+
+    jest.advanceTimersByTime(TIMING.dealStagger);
+    expect(mgr.isAnimating()).toBe(false);
+  });
+
+  it('animates the settle highlight', () => {
+    const mgr = new BlackjackStageManager();
+    mgr.setTarget(
+      makeBlob('dealer_turn', ['5h', '8c', 'Ks'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1000,
+          hands: [['Ah', '10d']],
+          bets: [20],
+          result: 'won',
+          handResults: ['won'],
+        },
+      ])
+    );
+    jest.advanceTimersByTime(10_000);
+
+    mgr.setTarget(
+      makeBlob('settled', ['5h', '8c', 'Ks'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1020,
+          hands: [['Ah', '10d']],
+          bets: [20],
+          result: 'won',
+          handResults: ['won'],
+        },
+      ])
+    );
+
+    expect(mgr.isAnimating()).toBe(true);
+    expect(mgr.stage()).toBe('settling');
+
+    jest.advanceTimersByTime(TIMING.settlePause);
+    expect((mgr.displayedStateBlob()?.['players'] as any[])[0].result).toBe('won');
+    expect(mgr.isAnimating()).toBe(false);
+  });
 });
