@@ -4,6 +4,7 @@ import {
   computed,
   effect,
   inject,
+  OnDestroy,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -63,11 +64,11 @@ const BJ_SEAT_POSITIONS: Array<{ x: number; y: number }> = [
   styleUrl: './blackjack.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BlackjackComponent {
+export class BlackjackComponent implements OnDestroy {
   private ws = inject(WebSocketService);
   private auth = inject(AuthService);
   private stageManager = new BlackjackStageManager({
-    reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    reducedMotion: typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   });
 
   readonly stateBlob = this.stageManager.displayedStateBlob;
@@ -376,6 +377,10 @@ export class BlackjackComponent {
         this.showResultsOverlay.set(false);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.stageManager.destroy();
   }
 
   isHeroSeat(seatIdx: number): boolean {

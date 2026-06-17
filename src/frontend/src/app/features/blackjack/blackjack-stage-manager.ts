@@ -52,6 +52,7 @@ export class BlackjackStageManager {
   private readonly reducedMotion: boolean;
   private queueRunning = false;
   private pendingTarget: Record<string, unknown> | null = null;
+  private readonly timers: Array<ReturnType<typeof setTimeout>> = [];
 
   constructor(options: StageManagerOptions = {}) {
     this.reducedMotion = options.reducedMotion ?? false;
@@ -231,7 +232,7 @@ export class BlackjackStageManager {
       }
     }
 
-    if (targetPhase === 'showdown') {
+    if (targetPhase === 'showdown' && displayedPhase !== 'showdown') {
       events.push({ type: 'settle', stage: 'settling', delay: TIMING.settlePause });
     }
 
@@ -262,7 +263,7 @@ export class BlackjackStageManager {
         this.applyEvent(event);
         step();
       } else {
-        setTimeout(() => {
+        this.schedule(() => {
           this.applyEvent(event);
           step();
         }, event.delay);
@@ -352,11 +353,42 @@ export class BlackjackStageManager {
     const ids = new Set(this.enteringCardIds());
     ids.add(id);
     this.enteringCardIds.set(ids);
-    setTimeout(() => {
+    this.schedule(() => {
       const updated = new Set(this.enteringCardIds());
       updated.delete(id);
       this.enteringCardIds.set(updated);
     }, TIMING.enteringCardDuration);
+  }
+
+  private schedule(
+    callback: () => void,
+    delay: number
+  ): ReturnType<typeof setTimeout> {
+    const id = setTimeout(() => {
+      this.clearTimer(id);
+      callback();
+    }, delay);
+    this.timers.push(id);
+    return id;
+  }
+
+  private clearTimer(id: ReturnType<typeof setTimeout>): void {
+    const index = this.timers.indexOf(id);
+    if (index >= 0) {
+      this.timers.splice(index, 1);
+    }
+  }
+
+  destroy(): void {
+    for (const id of this.timers) {
+      clearTimeout(id);
+    }
+    this.timers.length = 0;
+    this.pendingTarget = null;
+    this.queueRunning = false;
+    this.isAnimating.set(false);
+    this.stage.set('idle');
+    this.enteringCardIds.set(new Set());
   }
 
   private blankStateFrom(target: Record<string, unknown>): Record<string, unknown> {

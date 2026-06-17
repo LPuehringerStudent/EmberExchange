@@ -127,6 +127,7 @@
                       [class.bj-hand--active]="hand.isCurrentTurn"
                       [class.bj-hand--settled]="isShowdown()"
                       [class.bj-hand--win]="hand.status === 'win' || hand.status === 'blackjack'"
+                      [class.bj-hand--blackjack]="hand.status === 'blackjack'"
                       [class.bj-hand--lose]="hand.status === 'lose' || hand.status === 'bust'"
                       [class.bj-hand--push]="hand.status === 'push'"
                     >
