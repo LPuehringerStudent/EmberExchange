@@ -271,8 +271,12 @@
 /* 3D Card flip */
 .card-flip {
   perspective: 800px;
-  animation: card-deal-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
   flex-shrink: 0;
+}
+
+/* Only newly entering cards animate */
+.card-flip--entering {
+  animation: card-deal-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .card-flip--dealer {
