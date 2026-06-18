@@ -1,6 +1,8 @@
 :host {
   display: block;
-  min-height: 100vh;
+  height: calc(100vh - 4rem);
+  min-height: 0;
+  overflow: hidden;
   --social-bg: #120c09;
   --social-surface: #1c130f;
   --social-raised: #251a15;
