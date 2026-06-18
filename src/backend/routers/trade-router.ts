@@ -485,6 +485,21 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
             return;
         }
 
+        if (listing.stoveId !== undefined && listing.stoveId !== null) {
+            const stove = await stoveService.getStoveById(listing.stoveId);
+            if (stove === null || stove.currentOwnerId !== listing.sellerId) {
+                res.status(StatusCodes.CONFLICT).json({ error: "Listing is no longer available" });
+                return;
+            }
+        } else if (listing.lootboxId !== undefined && listing.lootboxId !== null) {
+            const lootboxService = new LootboxService(unit);
+            const lootbox = await lootboxService.getLootboxById(listing.lootboxId);
+            if (lootbox === null || lootbox.playerId !== listing.sellerId) {
+                res.status(StatusCodes.CONFLICT).json({ error: "Listing is no longer available" });
+                return;
+            }
+        }
+
         // Atomically transfer coins — prevents race-condition double-spending
         const buyerDeducted = await playerService.deductCoinsAtomic(buyerId, listing.price);
         if (!buyerDeducted) {
@@ -512,7 +527,7 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
         if (listing.stoveId !== undefined && listing.stoveId !== null) {
             const transferSuccess = await stoveService.updateOwner(listing.stoveId, buyerId, listing.sellerId);
             if (!transferSuccess) {
-                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer stove ownership" });
+                res.status(StatusCodes.CONFLICT).json({ error: "Listing is no longer available" });
                 return;
             }
 
@@ -536,7 +551,7 @@ tradeRouter.post("/trades", requireAuth, async (req, res) => {
             const lootboxService = new LootboxService(unit);
             const transferSuccess = await lootboxService.updateLootboxOwner(listing.lootboxId, buyerId, listing.sellerId);
             if (!transferSuccess) {
-                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to transfer lootbox ownership" });
+                res.status(StatusCodes.CONFLICT).json({ error: "Listing is no longer available" });
                 return;
             }
 

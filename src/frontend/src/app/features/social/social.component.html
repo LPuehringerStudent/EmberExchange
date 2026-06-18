@@ -1,93 +1,47 @@
 <app-page-background theme="social">
-  <div class="social-page">
-    <aside class="social-rail" aria-label="Social navigation">
-      <img class="rail-logo" src="Ember_Exchange_Logo.png" alt="Ember Exchange" />
-      <button
-        type="button"
-        class="rail-btn"
-        [class.active]="activeTab() === 'friends'"
-        (click)="activeTab.set('friends')"
-        aria-label="Friends"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      </button>
-      <button
-        type="button"
-        class="rail-btn"
-        [class.active]="activeTab() === 'marketplace'"
-        (click)="activeTab.set('marketplace')"
-        aria-label="Marketplace messages"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-          <path d="M3 6h18"/>
-          <path d="M16 10a4 4 0 0 1-8 0"/>
-        </svg>
-      </button>
-      <button
-        type="button"
-        class="rail-btn"
-        [class.active]="activeTab() === 'requests'"
-        (click)="activeTab.set('requests')"
-        aria-label="Friend requests"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <line x1="19" y1="8" x2="19" y2="14"/>
-          <line x1="22" y1="11" x2="16" y2="11"/>
-        </svg>
-      </button>
-    </aside>
-
-    <main class="social-main">
-      <section class="conversation-column">
-        <app-friend-list
-          [friends]="friends()"
-          [pendingRequests]="pendingRequests()"
-          [marketplaceThreads]="marketplaceThreads()"
-          [selectedFriendId]="selectedFriend()?.friendId ?? null"
-          [selectedMarketplacePlayerId]="selectedMarketplaceThread()?.playerId ?? null"
-          [activeTab]="activeTab()"
-          [currentPlayerId]="currentPlayerId()"
-          (onSelectFriend)="selectFriend($event)"
-          (onSelectMarketplaceThread)="selectMarketplaceThread($event)"
-          (onViewGlory)="viewGlory($event)"
-          (onAddFriend)="showAddFriendModal.set(true)"
-          (onRespondRequest)="respondToRequest($event.friendId, $event.accept)"
-          (onTabChange)="activeTab.set($event)"
-        />
-      </section>
-
-      <section class="thread-column">
-        @if (activeTab() === 'marketplace' && selectedMarketplaceThread()) {
-          <app-chat-thread
-            [friend]="{ username: selectedMarketplaceThread()!.username }"
-            [messages]="marketplaceMessages()"
-            [currentPlayerId]="currentPlayerId()"
-            [allowTradeOffer]="false"
-            (onSendMessage)="sendMarketplaceMessage($event)"
-          />
-        } @else {
-          <app-chat-thread
-            [friend]="selectedFriend()"
-            [messages]="messages()"
-            [currentPlayerId]="currentPlayerId()"
-            [allowTradeOffer]="activeTab() === 'friends'"
-            (onSendMessage)="sendMessage($event)"
-            (onMakeOffer)="showTradeOfferModal.set(true)"
-            (onAcceptOffer)="acceptTradeOffer($event)"
-            (onDeclineOffer)="declineTradeOffer($event)"
-          />
-        }
-      </section>
-    </main>
+<div class="h-[calc(100vh-4rem)] flex flex-col lg:flex-row overflow-hidden relative z-[1]">
+  <!-- Left sidebar: Friend list -->
+  <div class="w-full lg:w-[20rem] shrink-0 h-[45%] lg:h-full border-b lg:border-b-0 lg:border-r border-border">
+    <app-friend-list
+      [friends]="friends()"
+      [pendingRequests]="pendingRequests()"
+      [marketplaceThreads]="marketplaceThreads()"
+      [selectedFriendId]="selectedFriend()?.friendId ?? null"
+      [selectedMarketplacePlayerId]="selectedMarketplaceThread()?.playerId ?? null"
+      [activeTab]="activeTab()"
+      [currentPlayerId]="currentPlayerId()"
+      (onSelectFriend)="selectFriend($event)"
+      (onSelectMarketplaceThread)="selectMarketplaceThread($event)"
+      (onViewGlory)="viewGlory($event)"
+      (onAddFriend)="showAddFriendModal.set(true)"
+      (onRespondRequest)="respondToRequest($event.friendId, $event.accept)"
+      (onTabChange)="activeTab.set($event)"
+    />
   </div>
+
+  <!-- Right panel: Chat thread -->
+  <div class="flex-1 h-[55%] lg:h-full min-h-0">
+    @if (activeTab() === 'marketplace' && selectedMarketplaceThread()) {
+      <app-chat-thread
+        [friend]="{ username: selectedMarketplaceThread()!.username }"
+        [messages]="marketplaceMessages()"
+        [currentPlayerId]="currentPlayerId()"
+        (onSendMessage)="sendMarketplaceMessage($event)"
+      />
+    } @else {
+      <app-chat-thread
+        [friend]="selectedFriend()"
+        [messages]="messages()"
+        [currentPlayerId]="currentPlayerId()"
+        (onSendMessage)="sendMessage($event)"
+        (onMakeOffer)="showTradeOfferModal.set(true)"
+        (onAcceptOffer)="acceptTradeOffer($event)"
+        (onDeclineOffer)="declineTradeOffer($event)"
+        (onInspectStove)="inspectStoveFromOffer($event)"
+      />
+    }
+  </div>
+</div>
 
 <!-- Add Friend Modal -->
 @if (showAddFriendModal()) {
@@ -103,6 +57,17 @@
     [items]="tradeItems()"
     (onClose)="showTradeOfferModal.set(false)"
     (onSubmit)="makeTradeOffer($event)"
+  />
+}
+
+<!-- Stove Inspect Modal -->
+@if (showInspectModal() && inspectStove()) {
+  <app-stove-detail
+    [stove]="inspectStove()!"
+    [sparksBalance]="0"
+    [isListed]="false"
+    [readOnly]="true"
+    (onClose)="closeInspectModal()"
   />
 }
 </app-page-background>

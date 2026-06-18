@@ -253,18 +253,32 @@
     aria-modal="true"
     aria-label="Rolling for your reward">
 
-    <div class="flex flex-col items-center gap-3">
-      <p class="text-[13px] font-semibold tracking-[2px] uppercase text-white/55 m-0" aria-live="polite">Rolling your reward…</p>
+    <div class="roller-stage">
+      <p class="roller-title" aria-live="polite">
+        Rolling your reward
+        <span class="roller-dots"><span>.</span><span>.</span><span>.</span></span>
+      </p>
 
-      <div id="roller">
-        <div id="marker" aria-hidden="true"></div>
-        <div id="items" #itemsContainer>
-          @for (item of items; track item.name) {
-            <div class="item" [style.background]="item.color">{{ item.name }}</div>
-          }
+      <div class="roller-frame">
+        
+
+        <div id="roller" class="roller-window">
+          <div id="marker" aria-hidden="true"></div>
+          <div id="items" #itemsContainer>
+            @for (item of items; track $index) {
+              <div class="item" [class]="'item--' + item.rarity">
+                <div class="item-glow" aria-hidden="true"></div>
+                <div class="item-image">
+                  <img [src]="item.image" [alt]="item.label" loading="eager" />
+                </div>
+                <span class="item-label">{{ item.label }}</span>
+              </div>
+            }
+          </div>
         </div>
       </div>
 
+      <p class="roller-hint">Good luck!</p>
     </div>
 
   </div>
@@ -277,21 +291,82 @@
     id="popup"
     role="dialog"
     aria-modal="true"
-    aria-labelledby="resultHeading">
+    aria-labelledby="resultHeading"
+    [class]="'popup--' + resultRarity().toLowerCase()">
+
+    <div class="reward-backdrop" aria-hidden="true"></div>
+
+    <div class="confetti" aria-hidden="true">
+      @for (piece of confettiConfig; track $index) {
+        <span
+          [style.--tx]="piece.tx"
+          [style.--ty]="piece.ty"
+          [style.--delay]="piece.delay"
+          [style.--duration]="piece.duration"
+          [style.--size]="piece.size"
+          [style.--color]="piece.color"
+          [style.--rot]="piece.rot"
+          [class.confetti-circle]="piece.shape === 'circle'"
+          [class.confetti-pill]="piece.shape === 'pill'"></span>
+      }
+    </div>
 
     <div id="popupBox">
-      <div class="popup-icon" aria-hidden="true">
-        @if (resultImageUrl()) {
-          <img [src]="resultImageUrl()" alt="Reward" class="w-[140px] h-[140px] object-contain rounded-xl" />
-        } @else {
-          <svg class="w-8 h-8 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+      <div class="reward-glow" aria-hidden="true"></div>
+
+      <div class="reward-badge">
+        <span [style.color]="getRarityMeta(resultRarity()).color">{{ getRarityMeta(resultRarity()).label }}</span>
+      </div>
+
+      <div class="reward-stars" aria-hidden="true">
+        @for (star of [].constructor(getRarityMeta(resultRarity()).stars); track $index) {
+          <svg viewBox="0 0 24 24" [style.fill]="getRarityMeta(resultRarity()).color">
+            <path d="M12 2l2.3 4.66 5.14.75-3.72 3.63.88 5.12L12 14.74 7.4 17.16l.88-5.12-3.72-3.63 5.14-.75L12 2z"/>
           </svg>
         }
       </div>
-      <h2 id="result" class="text-base text-accent font-bold m-0 mb-1.5">{{ resultText() }}</h2>
-      <p class="text-[13px] text-text-secondary m-0 mb-7">The item has been added to your inventory.</p>
-      <button id="okBtn" (click)="closePopup()">Close</button>
+
+      <div class="reward-image">
+        @if (resultImageUrl()) {
+          <img [src]="resultImageUrl()" [alt]="resultText()" />
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0 1.125-.504 1.125-1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+          </svg>
+        }
+      </div>
+
+      <h2 id="result" class="reward-title">{{ resultText() }}</h2>
+      <p class="reward-subtitle">Added to your inventory</p>
+
+      <div class="reward-stats">
+        <div class="reward-stat">
+          <span class="reward-stat-label">Rarity</span>
+          <span class="reward-stat-value" [style.color]="getRarityMeta(resultRarity()).color">{{ getRarityMeta(resultRarity()).label }}</span>
+        </div>
+        <div class="reward-stat">
+          <span class="reward-stat-label">Drop rate</span>
+          <span class="reward-stat-value">{{ getResultDropRate() }}</span>
+        </div>
+        <div class="reward-stat">
+          <span class="reward-stat-label">Crate</span>
+          <span class="reward-stat-value">{{ resultLootboxTypeName() || 'Lootbox' }}</span>
+        </div>
+      </div>
+
+      <div class="reward-actions">
+        <button class="reward-btn reward-btn--primary" (click)="closePopup()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m5 12 4 4L19 6"/>
+          </svg>
+          Collect
+        </button>
+        @if (lootboxCount() > 0) {
+          <button class="reward-btn reward-btn--secondary" (click)="closePopup()">
+            Open Another
+          </button>
+        }
+      </div>
     </div>
 
   </div>

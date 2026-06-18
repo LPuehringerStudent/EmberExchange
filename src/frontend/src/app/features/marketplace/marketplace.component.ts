@@ -15,6 +15,7 @@ import { TradeService } from '@core/services/trade.service';
 import { StoveService, StoveType } from '@core/services/stove.service';
 import { LootboxService, LootboxType } from '@core/services/lootbox.service';
 import { PriceHistoryService } from '@core/services/price-history.service';
+import { InvestmentService } from '@core/services/investment.service';
 import { ChatMessageService } from '@core/services/chat-message.service';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
 import { PageBackgroundComponent } from '../../shared/components/page-background/page-background.component';
@@ -93,6 +94,7 @@ export class MarketplaceComponent implements OnInit {
 
   stoveTypes = signal<Map<number, StoveType>>(new Map());
   lootboxTypes = signal<Map<number, LootboxType>>(new Map());
+  investmentPrices = signal<Map<number, number>>(new Map());
 
   readonly selectedListing = signal<Listing | null>(null);
   readonly priceHistory = signal<PricePoint[]>([]);
@@ -150,7 +152,7 @@ export class MarketplaceComponent implements OnInit {
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const padding = (max - min) * 0.05 || max * 0.05;
-    const minPrice = min - padding;
+    const minPrice = Math.max(0, min - padding);
     const maxPrice = max + padding;
     const range = maxPrice - minPrice || 1;
     const width = 100;
@@ -203,6 +205,16 @@ export class MarketplaceComponent implements OnInit {
     return Math.round(h.reduce((s, p) => s + p.price, 0) / h.length);
   });
 
+  readonly historyLowPrice = computed(() => {
+    const h = this.priceHistory().filter((p) => Number.isFinite(p.price) && p.price >= 0);
+    return h.length ? Math.min(...h.map((p) => p.price)) : 0;
+  });
+
+  readonly historyHighPrice = computed(() => {
+    const h = this.priceHistory().filter((p) => Number.isFinite(p.price) && p.price >= 0);
+    return h.length ? Math.max(...h.map((p) => p.price)) : 0;
+  });
+
   private _authService = inject(AuthService);
   private _router = inject(Router);
   private _listingService = inject(ListingService);
@@ -210,6 +222,7 @@ export class MarketplaceComponent implements OnInit {
   private _stoveService = inject(StoveService);
   private _lootboxService = inject(LootboxService);
   private _priceHistoryService = inject(PriceHistoryService);
+  private _investmentService = inject(InvestmentService);
   private _chatService = inject(ChatMessageService);
 
   ngOnInit(): void {
@@ -228,7 +241,7 @@ export class MarketplaceComponent implements OnInit {
     this.error.set(null);
 
     try {
-      const [active, history, mine, types, lootboxTypeList] = await Promise.all([
+      const [active, history, mine, types, lootboxTypeList, investments] = await Promise.all([
         firstValueFrom(this._listingService.getActiveListings()),
         firstValueFrom(this._listingService.getAllListings(100, 0)),
         this.playerId !== null
@@ -236,6 +249,7 @@ export class MarketplaceComponent implements OnInit {
           : Promise.resolve([]),
         firstValueFrom(this._stoveService.getAllStoveTypes()),
         firstValueFrom(this._lootboxService.getAllLootboxTypes()),
+        firstValueFrom(this._investmentService.getAssets()),
       ]);
 
       this.allListings.set(active);
@@ -249,6 +263,12 @@ export class MarketplaceComponent implements OnInit {
       const lootboxTypeMap = new Map<number, LootboxType>();
       for (const lt of lootboxTypeList) lootboxTypeMap.set(lt.lootboxTypeId, lt);
       this.lootboxTypes.set(lootboxTypeMap);
+
+      const investmentPriceMap = new Map<number, number>();
+      for (const asset of investments.assets) {
+        investmentPriceMap.set(asset.assetId, asset.currentPrice);
+      }
+      this.investmentPrices.set(investmentPriceMap);
 
       await this.loadPriceTrends(active);
 
@@ -318,24 +338,34 @@ export class MarketplaceComponent implements OnInit {
       const typeId = listing.typeId;
       if (typeId) {
         try {
-          const history = await firstValueFrom(
-            this._priceHistoryService.getPriceHistoryByTypeId(typeId)
+          const result = await firstValueFrom(
+            this._investmentService.getPriceHistory(typeId, '1m')
           );
 
-          const bucketed = this.bucketByDay(history);
-          const sorted = bucketed.sort(
-            (a, b) => new Date(a.saleDate).getTime() - new Date(b.saleDate).getTime()
-          );
-
-          const points: PricePoint[] = sorted.map((h) => ({
-            timestamp: new Date(h.saleDate),
-            price: h.avgPrice,
+          const points: PricePoint[] = result.prices.map((h) => ({
+            timestamp: new Date(h.timestamp),
+            price: h.price,
           }));
 
-          if (points.length < 2) {
+          const currentInvestmentPrice = this.investmentPrices().get(typeId);
+          if (currentInvestmentPrice !== undefined && currentInvestmentPrice >= 0) {
+            if (points.length > 0) {
+              points[points.length - 1] = {
+                ...points[points.length - 1],
+                price: currentInvestmentPrice,
+              };
+            } else {
+              points.push({
+                timestamp: new Date(),
+                price: currentInvestmentPrice,
+              });
+            }
+          }
+
+          if (points.length === 1) {
             points.push({
               timestamp: new Date(),
-              price: listing.price,
+              price: points[0].price,
             });
           }
           this.priceHistory.set(points);

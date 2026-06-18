@@ -15,8 +15,9 @@ import { FriendListComponent, type FriendWithPreview, type MarketplaceThread } f
 import { ChatThreadComponent } from './chat-thread.component';
 import { AddFriendModalComponent } from './add-friend-modal.component';
 import { TradeOfferModalComponent, type TradeableItem } from './trade-offer-modal.component';
-import type { FriendWithUser, ChatMessageRow } from '@shared/model';
-import { PageBackgroundComponent } from '../../shared/components/page-background/page-background.component';
+import type { FriendWithUser, ChatMessageRow, ShowedStove } from '@shared/model';
+import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
+import { StoveDetailComponent } from '../inventory/stove-detail.component';
 
 @Component({
   selector: 'app-social',
@@ -26,7 +27,9 @@ import { PageBackgroundComponent } from '../../shared/components/page-background
     FriendListComponent,
     ChatThreadComponent,
     AddFriendModalComponent,
-    TradeOfferModalComponent, PageBackgroundComponent,
+    TradeOfferModalComponent,
+    PageBackgroundComponent,
+    StoveDetailComponent,
   ],
   templateUrl: './social.component.html',
   styleUrl: './social.component.css',
@@ -53,6 +56,12 @@ export class SocialComponent implements OnInit, OnDestroy {
   showTradeOfferModal = signal(false);
   tradeItems = signal<TradeableItem[]>([]);
   currentPlayerId = signal(0);
+
+  // Stove inspection from trade offers
+  showInspectModal = signal(false);
+  inspectStove = signal<ShowedStove | null>(null);
+  inspectLoading = signal(false);
+  inspectError = signal<string | null>(null);
 
   /* ── Marketplace messages ── */
   marketplaceThreads = signal<MarketplaceThread[]>([]);
@@ -161,7 +170,6 @@ export class SocialComponent implements OnInit, OnDestroy {
         this.chatService.getConversationPaginated(this.currentPlayerId(), otherId, 50, 0)
       );
       this.messages.set(msgs);
-      await this.markConversationRead(otherId, this.messages);
     } catch (err) {
       console.error('Failed to load conversation:', err);
     }
@@ -181,7 +189,7 @@ export class SocialComponent implements OnInit, OnDestroy {
       receiverId: otherId,
       content: text,
       sentAt: new Date(),
-      isRead: false,
+      isRead: true,
       messageType: 'text',
       data: {}
     };
@@ -205,7 +213,7 @@ export class SocialComponent implements OnInit, OnDestroy {
           receiverId: result.receiverId ?? otherId,
           content: text,
           sentAt: new Date(),
-          isRead: false,
+          isRead: true,
           messageType: 'text',
           data: {}
         };
@@ -283,6 +291,9 @@ export class SocialComponent implements OnInit, OnDestroy {
           {
             itemType: offer.item.type,
             itemId: offer.item.id,
+            itemName: offer.item.name,
+            itemImageUrl: offer.item.imageUrl,
+            itemRarity: offer.item.rarity,
             price: offer.price,
             status: 'pending'
           }
@@ -322,6 +333,38 @@ export class SocialComponent implements OnInit, OnDestroy {
       console.error('Failed to decline trade offer:', err);
       this.toast.error('Failed to decline trade offer');
     }
+  }
+
+  async inspectStoveFromOffer(stoveId: number): Promise<void> {
+    this.inspectLoading.set(true);
+    this.inspectError.set(null);
+    try {
+      const stove = await firstValueFrom(this.stoveService.getStoveById(stoveId));
+      const type = await firstValueFrom(this.stoveService.getStoveTypeById(stove.typeId));
+
+      const showedStove: ShowedStove = {
+        ...stove,
+        stoveId: stove.stoveId,
+        stoveName: type.name,
+        rarity: type.rarity,
+        imageUrl: type.imageUrl ?? '',
+        collection: type.collection ?? 'Unknown'
+      };
+
+      this.inspectStove.set(showedStove);
+      this.showInspectModal.set(true);
+    } catch (err) {
+      console.error('Failed to inspect stove:', err);
+      this.toast.error('Failed to load stove details');
+    } finally {
+      this.inspectLoading.set(false);
+    }
+  }
+
+  closeInspectModal(): void {
+    this.showInspectModal.set(false);
+    this.inspectStove.set(null);
+    this.inspectError.set(null);
   }
 
   viewGlory(friendPlayerId: number): void {
@@ -429,7 +472,6 @@ export class SocialComponent implements OnInit, OnDestroy {
         m => m.data && (m.data as Record<string, unknown>)['source'] === 'marketplace'
       );
       this.marketplaceMessages.set(filtered);
-      await this.markConversationRead(thread.playerId, this.marketplaceMessages);
     } catch (err) {
       console.error('Failed to load marketplace conversation:', err);
     }
@@ -448,40 +490,46 @@ export class SocialComponent implements OnInit, OnDestroy {
       receiverId: otherId,
       content: text,
       sentAt: new Date(),
-      isRead: false,
+      isRead: true,
       messageType: 'text',
       data: { source: 'marketplace' }
     };
     this.marketplaceMessages.update(msgs => [...msgs, optimisticMsg]);
 
-    try {
-      const result = await firstValueFrom(
-        this.chatService.sendChatMessage(playerId, text, otherId, 'text', { source: 'marketplace' })
-      );
-      const realMsg: ChatMessageRow = {
-        messageId: result.messageId,
-        senderId: result.senderId,
-        receiverId: result.receiverId ?? otherId,
-        content: text,
-        sentAt: new Date(),
-        isRead: false,
-        messageType: 'text',
-        data: { source: 'marketplace' }
-      };
-      this.marketplaceMessages.update(msgs => {
-        const idx = msgs.findIndex(m => m.messageId === 0 && m.content === text && m.senderId === playerId);
-        if (idx === -1) return [...msgs, realMsg];
-        const updated = [...msgs];
-        updated[idx] = realMsg;
-        return updated;
-      });
-      this.loadMarketplaceMessages();
-    } catch (err) {
-      console.error('Failed to send marketplace message:', err);
-      this.toast.error('Failed to send message');
-      this.marketplaceMessages.update(msgs =>
-        msgs.filter(m => !(m.messageId === 0 && m.content === text && m.senderId === playerId))
-      );
+    const wsConnected = this.ws.connectionState() === 'open';
+
+    if (wsConnected) {
+      this.ws.sendChatMessage(otherId, text);
+    } else {
+      try {
+        const result = await firstValueFrom(
+          this.chatService.sendChatMessage(playerId, text, otherId, 'text', { source: 'marketplace' })
+        );
+        const realMsg: ChatMessageRow = {
+          messageId: result.messageId,
+          senderId: result.senderId,
+          receiverId: result.receiverId ?? otherId,
+          content: text,
+          sentAt: new Date(),
+          isRead: true,
+          messageType: 'text',
+          data: { source: 'marketplace' }
+        };
+        this.marketplaceMessages.update(msgs => {
+          const idx = msgs.findIndex(m => m.messageId === 0 && m.content === text && m.senderId === playerId);
+          if (idx === -1) return [...msgs, realMsg];
+          const updated = [...msgs];
+          updated[idx] = realMsg;
+          return updated;
+        });
+        this.loadMarketplaceMessages();
+      } catch (err) {
+        console.error('Failed to send marketplace message:', err);
+        this.toast.error('Failed to send message');
+        this.marketplaceMessages.update(msgs =>
+          msgs.filter(m => !(m.messageId === 0 && m.content === text && m.senderId === playerId))
+        );
+      }
     }
   }
 
@@ -497,12 +545,6 @@ export class SocialComponent implements OnInit, OnDestroy {
       if (tradeUpdate) {
         this.refreshMessages();
         this.ws.incomingTradeUpdate.set(null);
-      }
-
-      const readReceipt = this.ws.incomingReadReceipt();
-      if (readReceipt) {
-        this.handleReadReceipt(readReceipt.readerId);
-        this.ws.incomingReadReceipt.set(null);
       }
     }, 100);
 
@@ -544,7 +586,6 @@ export class SocialComponent implements OnInit, OnDestroy {
       const thread = this.selectedMarketplaceThread();
       if (thread && thread.playerId === otherId) {
         this.marketplaceMessages.update(msgs => [...msgs, msg]);
-        void this.markConversationRead(otherId, this.marketplaceMessages);
       } else {
         const current = this.marketplaceUnreadCounts.get(otherId) ?? 0;
         this.marketplaceUnreadCounts.set(otherId, current + 1);
@@ -562,7 +603,6 @@ export class SocialComponent implements OnInit, OnDestroy {
 
     if (friend && (friend.requesterId === otherId || friend.addresseeId === otherId)) {
       this.messages.update(msgs => [...msgs, msg]);
-      void this.markConversationRead(Number(otherId), this.messages);
     } else {
       const friendEntry = this.friends().find(
         f => f.requesterId === otherId || f.addresseeId === otherId
@@ -579,41 +619,5 @@ export class SocialComponent implements OnInit, OnDestroy {
         );
       }
     }
-  }
-
-  private async markConversationRead(
-    senderId: number,
-    target: { update: (updater: (messages: ChatMessageRow[]) => ChatMessageRow[]) => void }
-  ): Promise<void> {
-    const receiverId = this.currentPlayerId();
-    if (!senderId || !receiverId) return;
-
-    try {
-      const result = await firstValueFrom(this.chatService.markConversationAsRead(senderId, receiverId));
-      if (result.count > 0) {
-        target.update(messages =>
-          messages.map(message =>
-            message.senderId === senderId && message.receiverId === receiverId
-              ? { ...message, isRead: true }
-              : message
-          )
-        );
-      }
-    } catch (err) {
-      console.error('Failed to mark conversation as read:', err);
-    }
-  }
-
-  private handleReadReceipt(readerId: number): void {
-    const playerId = this.currentPlayerId();
-    const markSentRead = (messages: ChatMessageRow[]) =>
-      messages.map(message =>
-        message.senderId === playerId && message.receiverId === readerId
-          ? { ...message, isRead: true }
-          : message
-      );
-
-    this.messages.update(markSentRead);
-    this.marketplaceMessages.update(markSentRead);
   }
 }

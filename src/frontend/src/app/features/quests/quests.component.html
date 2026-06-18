@@ -60,14 +60,17 @@
           [disabled]="!hasClaimable() || claimingAll()"
           (click)="claimAll()"
         >
+          <span class="btn-shimmer" aria-hidden="true"></span>
           @if (claimingAll()) {
             <span class="btn-spinner"></span>
-            Claiming
+            <span class="btn-text">Claiming...</span>
           } @else {
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7m16 0H4m16 0v-2a2 2 0 0 0-2-2h-3.5M4 12v-2a2 2 0 0 1 2-2h3.5m0 0H12m-2.5 0C7 8 7 4 9.5 4S12 8 12 8m0 0h2.5M12 8s0-4 2.5-4S17 8 14.5 8M12 12v9"/>
+            <span class="btn-glow" aria-hidden="true"></span>
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6L12 2z"/>
             </svg>
-            Claim All ({{ claimableCount() }})
+            <span class="btn-text">Claim All Rewards</span>
+            <span class="btn-badge">{{ claimableCount() }}</span>
           }
         </button>
       </div>

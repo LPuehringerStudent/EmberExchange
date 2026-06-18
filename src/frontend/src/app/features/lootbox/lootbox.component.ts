@@ -118,6 +118,9 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   showPopup    = signal<boolean>(false);
   resultText   = signal<string>('');
   resultImageUrl = signal<string>('');
+  resultRarity = signal<string>('');
+  resultStoveId = signal<number | null>(null);
+  resultLootboxTypeName = signal<string>('');
   selectedLootboxId = signal<number | null>(null);
   selectedTypeName  = signal<string>('Standard Lootbox');
   activeLootboxTypeId = signal<number | null>(null);
@@ -139,12 +142,32 @@ export class LootboxComponent implements AfterViewInit, OnInit {
   readonly dragonDrops  = DRAGON_DROPS;
   readonly winterDrops  = WINTER_DROPS;
   readonly dropRates    = DROP_RATES;
+  readonly confettiConfig = LootboxComponent.generateConfetti(42);
 
   readonly acquisitionLabels: Record<string, string> = {
     free: 'Free',
     purchase: 'Purchased',
     reward: 'Reward'
   };
+
+  private static generateConfetti(count: number): { tx: string; ty: string; delay: string; duration: string; size: string; color: string; rot: string; shape: string }[] {
+    const pieces = [];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 35 + Math.random() * 40;
+      pieces.push({
+        tx: `${Math.cos(angle) * distance}vw`,
+        ty: `${Math.sin(angle) * distance}vh`,
+        delay: `${Math.random() * 0.25}s`,
+        duration: `${1.4 + Math.random() * 0.9}s`,
+        size: `${0.35 + Math.random() * 0.45}rem`,
+        color: `hsl(${Math.random() * 360}, 90%, 62%)`,
+        rot: `${360 + Math.random() * 720}deg`,
+        shape: Math.random() > 0.6 ? 'circle' : (Math.random() > 0.3 ? 'rectangle' : 'pill'),
+      });
+    }
+    return pieces;
+  }
 
   private lootBoxHelper = new LootBoxHelper();
   private lootboxApi    = inject(LootboxService);
@@ -276,6 +299,26 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     return this.acquisitionLabels[how] || how;
   }
 
+  getRarityMeta(rarity: string): { label: string; color: string; stars: number } {
+    switch (rarity.toLowerCase()) {
+      case 'rare': return { label: 'Rare', color: '#3b82f6', stars: 2 };
+      case 'epic': return { label: 'Epic', color: '#a855f7', stars: 3 };
+      case 'legendary': return { label: 'Legendary', color: '#f59e0b', stars: 4 };
+      case 'secret': return { label: 'Secret', color: '#d946ef', stars: 5 };
+      default: return { label: 'Common', color: '#94a3b8', stars: 1 };
+    }
+  }
+
+  getResultDropRate(): string {
+    const typeId = this.getSelectedLootboxTypeId();
+    if (typeId === null) return '-';
+    const rarity = this.resultRarity();
+    const table = this.dropRates[typeId];
+    if (!table || !rarity) return '-';
+    const entry = table.find(r => r.rarity.toLowerCase() === rarity.toLowerCase());
+    return entry?.rate ?? '-';
+  }
+
   getSelectorChestImage(typeName: string): string {
     const name = typeName.toLowerCase();
     if (name.includes('dragon')) {
@@ -402,7 +445,6 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
       this.lootboxCount.update(count => Math.max(0, count - 1));
       void this.authService.refreshUser();
-      await this.loadPityData();
 
       this.availableLootboxes.set(available.filter(lb => lb.lootboxId !== target.lootboxId));
       this.selectedLootboxId.set(null);
@@ -428,7 +470,7 @@ export class LootboxComponent implements AfterViewInit, OnInit {
 
     setTimeout(() => {
       this.playingGif.set(false);
-      this.lootBoxHelper.buildStripFor(result.rarity);
+      this.lootBoxHelper.buildStripFor(result.rarity, result.imageUrl);
       this.items = this.lootBoxHelper.items;
       this.finalItem = this.lootBoxHelper.finalItem;
       this.showOverlay.set(true);
@@ -450,7 +492,18 @@ export class LootboxComponent implements AfterViewInit, OnInit {
         const offset = -(40 * itemWidth) + rollerWidth / 2 - itemWidth / 2;
 
         itemsEl.style.transform = `translateX(${offset}px)`;
-        setTimeout(() => this.showResult(result.stoveName, result.imageUrl), 4000);
+
+        const onTransitionEnd = (event: TransitionEvent): void => {
+          if (event.target !== itemsEl || event.propertyName !== 'transform') return;
+          itemsEl.removeEventListener('transitionend', onTransitionEnd);
+          clearTimeout(fallbackTimer);
+          void this.showResult(result);
+        };
+        itemsEl.addEventListener('transitionend', onTransitionEnd);
+        const fallbackTimer = setTimeout(() => {
+          itemsEl.removeEventListener('transitionend', onTransitionEnd);
+          void this.showResult(result);
+        }, 6000);
       }, 100);
     }, 1400);
   }
@@ -460,20 +513,30 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     const result = await this.doOpen();
     if (!result) return;
 
-    this.resultText.set(`You got: ${result.stoveName}`);
+    this.resultText.set(result.stoveName);
     this.resultImageUrl.set(result.imageUrl);
+    this.resultRarity.set(result.rarity);
+    this.resultStoveId.set(result.stoveId);
+    this.resultLootboxTypeName.set(this.selectedTypeName());
     this.showPopup.set(true);
     this.isOpening.set(false);
     this.cdr.detectChanges();
+
+    await this.loadPityData();
   }
 
-  private showResult(stoveName: string, imageUrl: string): void {
-    this.resultText.set(`You got: ${stoveName}`);
-    this.resultImageUrl.set(imageUrl);
+  private async showResult(result: OpenLootboxResponse): Promise<void> {
+    this.resultText.set(result.stoveName);
+    this.resultImageUrl.set(result.imageUrl);
+    this.resultRarity.set(result.rarity);
+    this.resultStoveId.set(result.stoveId);
+    this.resultLootboxTypeName.set(this.selectedTypeName());
     this.showOverlay.set(false);
     this.showPopup.set(true);
     this.isOpening.set(false);
     this.cdr.detectChanges();
+
+    await this.loadPityData();
   }
 
   resetAll(): void {
@@ -482,6 +545,8 @@ export class LootboxComponent implements AfterViewInit, OnInit {
     this.isOpening.set(false);
     this.playingGif.set(false);
     this.activeLootboxTypeId.set(null);
+    this.resultRarity.set('');
+    this.resultStoveId.set(null);
 
     const itemsEl = this.itemsElement()?.nativeElement;
     if (itemsEl) {

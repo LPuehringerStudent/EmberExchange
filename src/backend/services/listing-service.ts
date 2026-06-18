@@ -67,6 +67,8 @@ export class ListingService extends ServiceBase {
             `${this.enrichedSelect}
              WHERE l.status = 'active'
                AND p.bannedAt IS NULL
+               AND (l.stoveId IS NULL OR s.currentOwnerId = l.sellerId)
+               AND (l.lootboxId IS NULL OR lb.playerId = l.sellerId)
              ORDER BY l.listedAt DESC
              LIMIT @limit OFFSET @offset`,
             { limit, offset }
@@ -86,7 +88,10 @@ export class ListingService extends ServiceBase {
         sortBy?: 'price_asc' | 'price_desc' | 'newest';
         search?: string;
     }, limit: number = 100, offset: number = 0): Promise<ListingRow[]> {
-        let where = "l.status = 'active' AND p.bannedAt IS NULL";
+        let where = `l.status = 'active'
+            AND p.bannedAt IS NULL
+            AND (l.stoveId IS NULL OR s.currentOwnerId = l.sellerId)
+            AND (l.lootboxId IS NULL OR lb.playerId = l.sellerId)`;
         const params: Record<string, unknown> = {};
 
         if (filters.itemType === 'stove') {
@@ -160,7 +165,12 @@ export class ListingService extends ServiceBase {
     async getActiveListingsBySellerId(sellerId: number): Promise<ListingRow[]> {
         const stmt = this.unit.prepare<ListingRow>(
             `${this.enrichedSelect}
-             WHERE l.sellerId = @sellerId AND l.status = 'active' AND p.bannedAt IS NULL ORDER BY l.listedAt DESC`,
+             WHERE l.sellerId = @sellerId
+               AND l.status = 'active'
+               AND p.bannedAt IS NULL
+               AND (l.stoveId IS NULL OR s.currentOwnerId = l.sellerId)
+               AND (l.lootboxId IS NULL OR lb.playerId = l.sellerId)
+             ORDER BY l.listedAt DESC`,
             { sellerId }
         );
         return await stmt.all();
@@ -174,7 +184,10 @@ export class ListingService extends ServiceBase {
     async getActiveListingByStoveId(stoveId: number): Promise<ListingRow | null> {
         const stmt = this.unit.prepare<ListingRow>(
             `${this.enrichedSelect}
-             WHERE l.stoveId = @stoveId AND l.status = 'active' AND p.bannedAt IS NULL`,
+             WHERE l.stoveId = @stoveId
+               AND l.status = 'active'
+               AND p.bannedAt IS NULL
+               AND s.currentOwnerId = l.sellerId`,
             { stoveId }
         );
         return (await stmt.get()) ?? null;
@@ -188,7 +201,10 @@ export class ListingService extends ServiceBase {
     async getActiveListingByLootboxId(lootboxId: number): Promise<ListingRow | null> {
         const stmt = this.unit.prepare<ListingRow>(
             `${this.enrichedSelect}
-             WHERE l.lootboxId = @lootboxId AND l.status = 'active' AND p.bannedAt IS NULL`,
+             WHERE l.lootboxId = @lootboxId
+               AND l.status = 'active'
+               AND p.bannedAt IS NULL
+               AND lb.playerId = l.sellerId`,
             { lootboxId }
         );
         return (await stmt.get()) ?? null;

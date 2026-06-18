@@ -408,14 +408,18 @@
                     <span class="status-pill" [class.sold]="listing.status === 'sold'" [class.cancelled]="listing.status === 'cancelled'">{{ listing.status }}</span>
                   }
                 } @else {
-                  <button type="button" class="btn-primary" [disabled]="listing.status !== 'active' || processingId() === listing.listingId" (click)="showConfirm(listing, 'buy')">
-                    @if (processingId() === listing.listingId) {
-                      <span class="spinner"></span>
-                      Buying...
-                    } @else {
-                      Buy Now
-                    }
-                  </button>
+                  @if (listing.status === 'active') {
+                    <button type="button" class="btn-primary" [disabled]="processingId() === listing.listingId" (click)="showConfirm(listing, 'buy')">
+                      @if (processingId() === listing.listingId) {
+                        <span class="spinner"></span>
+                        Buying...
+                      } @else {
+                        Buy Now
+                      }
+                    </button>
+                  } @else {
+                    <span class="status-pill" [class.sold]="listing.status === 'sold'" [class.cancelled]="listing.status === 'cancelled'">{{ listing.status }}</span>
+                  }
                 }
               </div>
 
@@ -499,11 +503,11 @@
                 </div>
                 <div class="stat-box">
                   <p class="stat-box-label">Low</p>
-                  <p class="stat-box-value low">{{ formatPrice(chartModel()?.minPrice ?? 0) }}</p>
+                  <p class="stat-box-value low">{{ formatPrice(historyLowPrice()) }}</p>
                 </div>
                 <div class="stat-box">
                   <p class="stat-box-label">High</p>
-                  <p class="stat-box-value high">{{ formatPrice(chartModel()?.maxPrice ?? 0) }}</p>
+                  <p class="stat-box-value high">{{ formatPrice(historyHighPrice()) }}</p>
                 </div>
               </div>
 

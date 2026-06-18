@@ -1,71 +1,354 @@
-<div class="how-it-works-page min-h-screen bg-body text-text-primary">
-  <div class="max-w-[1200px] mx-auto px-6 py-16 md:py-24">
-    <div class="text-center mb-12 md:mb-20">
-      <h1 class="text-3xl md:text-5xl font-extrabold mb-4 bg-gradient-to-br from-accent to-[#f48c06] bg-clip-text text-transparent">
-        How It Works
-      </h1>
-      <p class="text-text-secondary text-base md:text-lg max-w-[600px] mx-auto">
-        Four simple steps from your first lootbox to the high-stakes mini-games.
-      </p>
-    </div>
+<app-page-background theme="ember">
+  <div class="how-it-works-page min-h-screen text-text-primary relative z-[1] overflow-x-hidden">
 
-    <div class="steps-grid">
-      <!-- Step 1 -->
-      <div class="step-card">
-        <div class="step-number">1</div>
-        <div class="step-icon bg-red-500/10 border-red-500/10">
-          <svg class="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-            <line x1="12" y1="22.08" x2="12" y2="12"/>
+    <!-- Hero -->
+    <section class="hero-section min-h-[70vh] flex items-center justify-center px-6 py-20">
+      <div class="max-w-[900px] mx-auto text-center">
+        <div class="hero-visual mx-auto mb-8">
+          <img src="Ember_Exchange_Logo.png" alt="Ember Exchange" class="hero-logo" />
+          <div class="hero-glow"></div>
+        </div>
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-5 bg-gradient-to-br from-accent to-[#f48c06] bg-clip-text text-transparent">
+          How EmberExchange Works
+        </h1>
+        <p class="text-lg md:text-xl text-text-secondary max-w-[650px] mx-auto mb-10 leading-relaxed">
+          Collect rare digital stoves, trade them with other players, upgrade them in the Forge, and bet your coins in live mini-games. All in one place.
+        </p>
+        <div class="flex flex-wrap items-center justify-center gap-4">
+          <a routerLink="/register" class="btn-primary text-base px-8 py-4">Create Free Account</a>
+          <a routerLink="/about" class="btn-secondary text-base px-8 py-4">About the Project</a>
+        </div>
+
+        <div class="scroll-indicator" aria-hidden="true">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
           </svg>
         </div>
-        <h3 class="step-title">Open Lootboxes</h3>
-        <p class="step-desc">Buy lootboxes with coal and crack them open to reveal rare and legendary stoves. Every box is a chance to score something epic.</p>
       </div>
+    </section>
 
-      <!-- Step 2 -->
-      <div class="step-card">
-        <div class="step-number">2</div>
-        <div class="step-icon bg-indigo-500/10 border-indigo-500/10">
-          <svg class="w-6 h-6 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 11H5m14 0a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2m14 0V9a2 2 0 0 0-2-2M5 11V9a2 2 0 0 1 2-2m0 0V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2M7 7h10"/>
-          </svg>
+    <!-- Core Loop -->
+    <section class="reveal px-6 py-16 md:py-24">
+      <div class="max-w-[1200px] mx-auto">
+        <div class="text-center mb-14">
+          <span class="inline-block px-4 py-1.5 rounded-full bg-accent-light text-accent text-xs font-bold tracking-wide uppercase mb-4">The Loop</span>
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">From Lootbox to Legendary</h2>
+          <p class="text-text-secondary max-w-[600px] mx-auto">Four simple steps. No pay-to-win, no downloads — just skill, luck, and strategy.</p>
         </div>
-        <h3 class="step-title">Collect &amp; Trade</h3>
-        <p class="step-desc">Build your personal collection and trade duplicates with other players on the marketplace. Prices are set by the community, not us.</p>
-      </div>
 
-      <!-- Step 3 -->
-      <div class="step-card">
-        <div class="step-number">3</div>
-        <div class="step-icon bg-orange-500/10 border-orange-500/10">
-          <svg class="w-6 h-6 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/>
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-          </svg>
+        <div class="steps-wrapper">
+          <div class="steps-line" aria-hidden="true"></div>
+
+          <div class="steps-grid">
+            <!-- Step 1 -->
+            <div class="step-card">
+              <div class="step-number">1</div>
+              <div class="step-icon bg-red-500/10 border-red-500/20">
+                <img src="icon/lootboxes.png" alt="" class="w-8 h-8 object-contain" />
+              </div>
+              <h3 class="step-title">Open Lootboxes</h3>
+              <p class="step-desc">Spend coins to open lootboxes and reveal stoves from Common all the way to Secret rarity.</p>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step-card">
+              <div class="step-number">2</div>
+              <div class="step-icon bg-indigo-500/10 border-indigo-500/20">
+                <img src="icon/marketplace.png" alt="" class="w-8 h-8 object-contain" />
+              </div>
+              <h3 class="step-title">Collect &amp; Trade</h3>
+              <p class="step-desc">List duplicates on the marketplace or trade with friends. Prices are set by players, not us.</p>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step-card">
+              <div class="step-number">3</div>
+              <div class="step-icon bg-orange-500/10 border-orange-500/20">
+                <img src="icon/the_forge.png" alt="" class="w-8 h-8 object-contain" />
+              </div>
+              <h3 class="step-title">Upgrade in the Forge</h3>
+              <p class="step-desc">Sacrifice six stoves of the same rarity to forge one even rarer stove. Salvage extras into Sparks.</p>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step-card">
+              <div class="step-number">4</div>
+              <div class="step-icon bg-yellow-500/10 border-yellow-500/20">
+                <img src="icon/games.png" alt="" class="w-8 h-8 object-contain" />
+              </div>
+              <h3 class="step-title">Play Mini-Games</h3>
+              <p class="step-desc">Bet your coins in Poker, Blackjack, or Roulette. Win big and fund your next legendary pull.</p>
+            </div>
+          </div>
         </div>
-        <h3 class="step-title">Upgrade (Forge)</h3>
-        <p class="step-desc">Take six stoves of the same rarity and melt them down in the Forge to create a single, more powerful stove. Risky, but the rewards are worth it.</p>
       </div>
+    </section>
 
-      <!-- Step 4 -->
-      <div class="step-card">
-        <div class="step-number">4</div>
-        <div class="step-icon bg-yellow-500/10 border-yellow-500/10">
-          <svg class="w-6 h-6 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="6" width="20" height="12" rx="2"/>
-            <path d="M6 12h.01M18 12h.01M8 10v4M16 10v4M12 10v4"/>
-          </svg>
+    <!-- Currencies -->
+    <section class="reveal px-6 py-16 md:py-24 bg-surface/50 border-y border-border">
+      <div class="max-w-[1000px] mx-auto">
+        <div class="text-center mb-14">
+          <span class="inline-block px-4 py-1.5 rounded-full bg-accent-light text-accent text-xs font-bold tracking-wide uppercase mb-4">Economy</span>
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">Two Currencies, Endless Strategy</h2>
+          <p class="text-text-secondary max-w-[600px] mx-auto">Every coin and spark has a purpose. Spend wisely, trade smart, and grow your empire.</p>
         </div>
-        <h3 class="step-title">Play Mini-Games</h3>
-        <p class="step-desc">Use your coal to play Poker, Blackjack, and Roulette against friends or the house. Win big and reinvest in your collection.</p>
-      </div>
-    </div>
 
-    <div class="cta-section">
-      <a routerLink="/register" class="cta-button">Create Free Account</a>
-      <p class="cta-sub">No credit card required. Start collecting in under a minute.</p>
-    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="currency-card coins">
+            <div class="currency-glow coins-glow"></div>
+            <div class="currency-icon coins-icon">
+              <svg class="w-8 h-8 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9 9h6v6H9z"/>
+                <path d="M12 6v12"/>
+              </svg>
+            </div>
+            <h3 class="currency-title">Coins <span class="text-text-muted font-normal text-sm">(Coal)</span></h3>
+            <p class="currency-desc">The main currency of EmberExchange. Use coins to open lootboxes, buy stoves on the marketplace, place bets in mini-games, and complete trades.</p>
+            <ul class="currency-list">
+              <li>Open lootboxes</li>
+              <li>Buy &amp; sell on the market</li>
+              <li>Bet in Poker, Blackjack &amp; Roulette</li>
+            </ul>
+          </div>
+
+          <div class="currency-card sparks">
+            <div class="currency-glow sparks-glow"></div>
+            <div class="currency-icon sparks-icon">
+              <svg class="w-8 h-8 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/>
+              </svg>
+            </div>
+            <h3 class="currency-title">Sparks</h3>
+            <p class="currency-desc">Earned by salvaging unwanted stoves. Sparks let you re-roll a stove's heat level and appear as prizes on the daily spin wheel.</p>
+            <ul class="currency-list sparks-list">
+              <li>Salvage stoves</li>
+              <li>Re-roll heat levels</li>
+              <li>Daily spin rewards</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lootboxes -->
+    <section class="reveal px-6 py-16 md:py-24">
+      <div class="max-w-[1200px] mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <span class="inline-block px-4 py-1.5 rounded-full bg-accent-light text-accent text-xs font-bold tracking-wide uppercase mb-4">Lootboxes</span>
+            <h2 class="text-2xl md:text-4xl font-extrabold mb-4">Every Box Is a Chance at Greatness</h2>
+            <p class="text-text-secondary leading-relaxed mb-6">
+              Lootboxes are the heart of EmberExchange. Spend coins, crack one open, and watch as a random stove appears. Higher rarities mean higher value — and bigger bragging rights.
+            </p>
+
+            <div class="rarity-legend">
+              <div class="rarity-row"><span class="rarity-dot common"></span><span>Common</span></div>
+              <div class="rarity-row"><span class="rarity-dot uncommon"></span><span>Uncommon</span></div>
+              <div class="rarity-row"><span class="rarity-dot rare"></span><span>Rare</span></div>
+              <div class="rarity-row"><span class="rarity-dot epic"></span><span>Epic</span></div>
+              <div class="rarity-row"><span class="rarity-dot legendary"></span><span>Legendary</span></div>
+              <div class="rarity-row"><span class="rarity-dot secret"></span><span>Secret</span></div>
+            </div>
+          </div>
+
+          <div class="lootbox-showcase">
+            <div class="chest-frame">
+              <img src="assets/animation/chest-idle.gif" alt="Animated lootbox chest" class="chest-gif" />
+              <div class="chest-glow"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rarity Marquee -->
+        <div class="marquee-section mt-16">
+          <div class="marquee-track">
+            @for (stove of rarityShowcase; track stove.alt) {
+              <div class="marquee-card {{ stove.rarity }}">
+                <img [src]="stove.src" [alt]="stove.alt" class="marquee-img" />
+                <span class="marquee-badge">{{ stove.label }}</span>
+              </div>
+            }
+            @for (stove of rarityShowcase; track stove.alt) {
+              <div class="marquee-card {{ stove.rarity }}">
+                <img [src]="stove.src" [alt]="stove.alt" class="marquee-img" />
+                <span class="marquee-badge">{{ stove.label }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Forge -->
+    <section class="reveal px-6 py-16 md:py-24 bg-surface/50 border-y border-border">
+      <div class="max-w-[1200px] mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div class="order-2 lg:order-1">
+            <div class="forge-visual">
+              <img src="assets/forging-table.png" alt="The Forge" class="forge-img" />
+              <div class="forge-ember ember-a"></div>
+              <div class="forge-ember ember-b"></div>
+              <div class="forge-ember ember-c"></div>
+            </div>
+          </div>
+
+          <div class="order-1 lg:order-2">
+            <span class="inline-block px-4 py-1.5 rounded-full bg-accent-light text-accent text-xs font-bold tracking-wide uppercase mb-4">The Forge</span>
+            <h2 class="text-2xl md:text-4xl font-extrabold mb-4">Turn Six Into Something Legendary</h2>
+            <p class="text-text-secondary leading-relaxed mb-6">
+              The Forge lets you gamble for power. Take six stoves of the same rarity, melt them down, and create one stove of the next rarity tier. The risk is real — but so is the reward.
+            </p>
+
+            <div class="forge-flow">
+              <div class="forge-step">
+                <span class="forge-count">6×</span>
+                <span class="forge-label">Same rarity</span>
+              </div>
+              <div class="forge-arrow" aria-hidden="true">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+              <div class="forge-step">
+                <span class="forge-count">1×</span>
+                <span class="forge-label">Higher rarity</span>
+              </div>
+            </div>
+
+            <p class="text-text-muted text-sm mt-6">
+              Got duplicates? Salvage them for Sparks instead and use those sparks to re-roll a stove's heat level.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Marketplace -->
+    <section class="reveal px-6 py-16 md:py-24">
+      <div class="max-w-[1000px] mx-auto">
+        <div class="text-center mb-14">
+          <span class="inline-block px-4 py-1.5 rounded-full bg-accent-light text-accent text-xs font-bold tracking-wide uppercase mb-4">Marketplace</span>
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">A Player-Driven Economy</h2>
+          <p class="text-text-secondary max-w-[600px] mx-auto">There is no fixed shop. Every price is set by real players buying, selling, and trading stoves.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div class="market-card">
+            <div class="market-icon">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
+            </div>
+            <h3 class="market-title">List</h3>
+            <p class="market-desc">Put your duplicates up for sale at any price you want.</p>
+          </div>
+          <div class="market-card">
+            <div class="market-icon">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+            </div>
+            <h3 class="market-title">Buy</h3>
+            <p class="market-desc">Browse listings and buy stoves instantly with coins.</p>
+          </div>
+          <div class="market-card">
+            <div class="market-icon">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            </div>
+            <h3 class="market-title">Trade</h3>
+            <p class="market-desc">Send trade offers to friends and negotiate directly.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mini-Games -->
+    <section class="reveal px-6 py-16 md:py-24 bg-surface/50 border-y border-border">
+      <div class="max-w-[1000px] mx-auto">
+        <div class="text-center mb-14">
+          <span class="inline-block px-4 py-1.5 rounded-full bg-accent-light text-accent text-xs font-bold tracking-wide uppercase mb-4">Mini-Games</span>
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">Play, Bet, Win</h2>
+          <p class="text-text-secondary max-w-[600px] mx-auto">Take your coins to the game rooms and compete against other players in real time.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="game-card poker">
+            <div class="game-visual">
+              <img src="assets/poker_cards/spades_ace.png" alt="Poker card" class="game-card-img" />
+              <img src="assets/poker_cards/hearts_king.png" alt="Poker card" class="game-card-img second" />
+            </div>
+            <h3 class="game-title">Poker</h3>
+            <p class="game-desc">Texas Hold'em against real players. Bluff, raise, and take down the pot.</p>
+          </div>
+
+          <div class="game-card blackjack">
+            <div class="game-visual">
+              <img src="assets/poker_cards/diamonds_queen.png" alt="Blackjack card" class="game-card-img" />
+              <img src="assets/poker_cards/clubs_jack.png" alt="Blackjack card" class="game-card-img second" />
+            </div>
+            <h3 class="game-title">Blackjack</h3>
+            <p class="game-desc">Hit, stand, or double down. Get closest to 21 without busting.</p>
+          </div>
+
+          <div class="game-card roulette">
+            <div class="game-visual roulette-wheel">
+              <div class="roulette-inner"></div>
+            </div>
+            <h3 class="game-title">Roulette</h3>
+            <p class="game-desc">Pick a number, color, or range and watch the wheel decide your fate.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Collections -->
+    <section class="reveal px-6 py-16 md:py-24">
+      <div class="max-w-[1000px] mx-auto">
+        <div class="text-center mb-14">
+          <span class="inline-block px-4 py-1.5 rounded-full bg-accent-light text-accent text-xs font-bold tracking-wide uppercase mb-4">Collections</span>
+          <h2 class="text-2xl md:text-4xl font-extrabold mb-3">Complete Sets, Earn Bonuses</h2>
+          <p class="text-text-secondary max-w-[600px] mx-auto">Stoves belong to themed collections. Own enough of a set and unlock permanent bonuses.</p>
+        </div>
+
+        <div class="collection-showcase">
+          <div class="collection-group dragon">
+            <div class="collection-header">
+              <h3 class="collection-name">Dragon Collection</h3>
+              <span class="collection-bonus">+5% sparks from salvage</span>
+            </div>
+            <div class="collection-stoves">
+              <img src="assets/stove_sprites/new_stoves/dirt-dragon.png" alt="Dirt Dragon Stove" />
+              <img src="assets/stove_sprites/new_stoves/green-dragon.png" alt="Green Dragon Stove" />
+              <img src="assets/stove_sprites/new_stoves/celestial-stove.png" alt="Celestial Stove" />
+              <img src="assets/stove_sprites/new_stoves/black-dragon.png" alt="Black Dragon Stove" />
+            </div>
+          </div>
+
+          <div class="collection-group winter">
+            <div class="collection-header">
+              <h3 class="collection-name">Winter Collection</h3>
+              <span class="collection-bonus">+5% sparks from salvage</span>
+            </div>
+            <div class="collection-stoves">
+              <img src="assets/stove_sprites/winter_stove/pine_stove.png" alt="Pine Stove" />
+              <img src="assets/stove_sprites/winter_stove/snowman_stove.png" alt="Snowman Stove" />
+              <img src="assets/stove_sprites/winter_stove/lantern_stove.png" alt="Lantern Stove" />
+              <img src="assets/stove_sprites/winter_stove/festival_stove.png" alt="Festival Stove" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="reveal px-6 py-16 md:py-24">
+      <div class="max-w-[700px] mx-auto">
+        <div class="final-cta">
+          <h2 class="text-2xl md:text-3xl font-extrabold mb-3">Ready to stoke the fire?</h2>
+          <p class="text-text-secondary mb-8 max-w-[420px] mx-auto">Join the marketplace, open your first lootbox, and start building your collection today.</p>
+          <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            <a routerLink="/register" class="btn-primary text-base px-8 py-4 w-full sm:w-auto">Create Free Account</a>
+            <a routerLink="/login" class="btn-secondary text-base px-8 py-4 w-full sm:w-auto">I Already Have One</a>
+          </div>
+          <p class="mt-6 text-xs text-text-muted">No credit card required. Start collecting in under a minute.</p>
+        </div>
+      </div>
+    </section>
+
   </div>
-</div>
+</app-page-background>
