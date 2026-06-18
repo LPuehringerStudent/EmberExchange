@@ -180,6 +180,15 @@ class ConnectionManager {
         return false;
     }
 
+    isPlayerOnline(playerId: number): boolean {
+        for (const [, meta] of this.sockets) {
+            if (meta.playerId === playerId && meta.ws.readyState === WebSocket.OPEN) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     isDuplicate(socketId: string, sequenceNumber: number): boolean {
         const meta = this.sockets.get(socketId);
         if (!meta) return false;

@@ -2,9 +2,9 @@ import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy }
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { FriendService, type Friend } from '../../core/services/friend.service';
+import { FriendService } from '../../core/services/friend.service';
 import { PlayerService } from '../../core/services/player.service';
-import { ChatMessageService, type ChatMessage } from '../../core/services/chat-message.service';
+import { ChatMessageService } from '../../core/services/chat-message.service';
 import { TradeOfferService } from '../../core/services/trade-offer.service';
 import { StoveService } from '../../core/services/stove.service';
 import { LootboxService } from '../../core/services/lootbox.service';
@@ -12,7 +12,7 @@ import { WebSocketService } from '../../core/services/websocket.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FriendListComponent, type FriendWithPreview, type MarketplaceThread } from './friend-list.component';
-import { ChatThreadComponent } from './chat-thread.component';
+import { ChatThreadComponent, type ChatPerson } from './chat-thread.component';
 import { AddFriendModalComponent } from './add-friend-modal.component';
 import { TradeOfferModalComponent, type TradeableItem } from './trade-offer-modal.component';
 import type { FriendWithUser, ChatMessageRow, ShowedStove } from '@shared/model';
@@ -97,12 +97,42 @@ export class SocialComponent implements OnInit, OnDestroy {
   }
 
   async loadFriends(): Promise<void> {
+    const playerId = this.currentPlayerId();
     try {
-      const list = await firstValueFrom(this.friendService.getFriends());
+      const [list, sent, received] = await Promise.all([
+        firstValueFrom(this.friendService.getFriends()),
+        playerId ? firstValueFrom(this.chatService.getSentMessages(playerId)) : Promise.resolve([]),
+        playerId ? firstValueFrom(this.chatService.getReceivedMessages(playerId)) : Promise.resolve([])
+      ]);
+
+      const normalMessages = [...sent, ...received]
+        .filter(msg => !this.isMarketplaceMessage(msg))
+        .sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+
+      const lastByPlayer = new Map<number, ChatMessageRow>();
+      const unreadByPlayer = new Map<number, number>();
+
+      for (const msg of normalMessages) {
+        const otherId = msg.senderId === playerId ? (msg.receiverId ?? 0) : msg.senderId;
+        if (!otherId) continue;
+        lastByPlayer.set(otherId, msg);
+        if (msg.receiverId === playerId && !msg.isRead) {
+          unreadByPlayer.set(otherId, (unreadByPlayer.get(otherId) ?? 0) + 1);
+        }
+      }
+
       const withPreview: FriendWithPreview[] = list.map(f => ({
         ...f,
-        unreadCount: this.unreadCounts.get(f.friendId) ?? 0
+        unreadCount: unreadByPlayer.get(this.getOtherPlayerId(f)) ?? this.unreadCounts.get(f.friendId) ?? 0,
+        lastMessage: lastByPlayer.get(this.getOtherPlayerId(f))?.content,
+        lastMessageAt: this.toDate(lastByPlayer.get(this.getOtherPlayerId(f))?.sentAt)
       }));
+
+      this.unreadCounts.clear();
+      for (const friend of withPreview) {
+        this.unreadCounts.set(friend.friendId, friend.unreadCount);
+      }
+
       this.friends.set(withPreview);
     } catch (err) {
       console.error('Failed to load friends:', err);
@@ -155,6 +185,7 @@ export class SocialComponent implements OnInit, OnDestroy {
 
   async selectFriend(friend: FriendWithUser): Promise<void> {
     this.selectedFriend.set(friend);
+    this.selectedMarketplaceThread.set(null);
     this.activeTab.set('friends');
 
     // Clear unread count
@@ -164,12 +195,14 @@ export class SocialComponent implements OnInit, OnDestroy {
     );
 
     // Load conversation
-    const otherId = friend.requesterId === this.currentPlayerId() ? friend.addresseeId : friend.requesterId;
+    const otherId = this.getOtherPlayerId(friend);
     try {
       const msgs = await firstValueFrom(
         this.chatService.getConversationPaginated(this.currentPlayerId(), otherId, 50, 0)
       );
-      this.messages.set(msgs);
+      const normalMsgs = msgs.filter(msg => !this.isMarketplaceMessage(msg));
+      this.messages.set(normalMsgs);
+      await this.markConversationRead(otherId);
     } catch (err) {
       console.error('Failed to load conversation:', err);
     }
@@ -179,7 +212,7 @@ export class SocialComponent implements OnInit, OnDestroy {
     const friend = this.selectedFriend();
     if (!friend) return;
 
-    const otherId = friend.requesterId === this.currentPlayerId() ? friend.addresseeId : friend.requesterId;
+    const otherId = this.getOtherPlayerId(friend);
     const playerId = this.currentPlayerId();
 
     // Optimistically add message to UI
@@ -189,11 +222,12 @@ export class SocialComponent implements OnInit, OnDestroy {
       receiverId: otherId,
       content: text,
       sentAt: new Date(),
-      isRead: true,
+      isRead: false,
       messageType: 'text',
       data: {}
     };
     this.messages.update(msgs => [...msgs, optimisticMsg]);
+    this.updateFriendPreview(otherId, text, new Date(), 0);
 
     const wsConnected = this.ws.connectionState() === 'open';
 
@@ -213,7 +247,7 @@ export class SocialComponent implements OnInit, OnDestroy {
           receiverId: result.receiverId ?? otherId,
           content: text,
           sentAt: new Date(),
-          isRead: true,
+          isRead: false,
           messageType: 'text',
           data: {}
         };
@@ -279,7 +313,7 @@ export class SocialComponent implements OnInit, OnDestroy {
     const friend = this.selectedFriend();
     if (!friend) return;
 
-    const otherId = friend.requesterId === this.currentPlayerId() ? friend.addresseeId : friend.requesterId;
+    const otherId = this.getOtherPlayerId(friend);
 
     try {
       await firstValueFrom(
@@ -306,7 +340,7 @@ export class SocialComponent implements OnInit, OnDestroy {
       const msgs = await firstValueFrom(
         this.chatService.getConversationPaginated(this.currentPlayerId(), otherId, 50, 0)
       );
-      this.messages.set(msgs);
+      this.messages.set(msgs.filter(msg => !this.isMarketplaceMessage(msg)));
     } catch (err) {
       console.error('Failed to send trade offer:', err);
       this.toast.error('Failed to send trade offer');
@@ -368,18 +402,47 @@ export class SocialComponent implements OnInit, OnDestroy {
   }
 
   viewGlory(friendPlayerId: number): void {
-    this.router.navigate(['/glory', friendPlayerId]);
+    void this.router.navigate(['/glory', friendPlayerId]);
+  }
+
+  reportPlayer(): void {
+    void this.router.navigate(['/support']);
+  }
+
+  async unfriend(friendId: number): Promise<void> {
+    try {
+      await firstValueFrom(this.friendService.removeFriend(friendId));
+      this.toast.success('Friend removed');
+      const selected = this.selectedFriend();
+      if (selected?.friendId === friendId) {
+        this.selectedFriend.set(null);
+        this.messages.set([]);
+      }
+      await this.loadFriends();
+    } catch (err) {
+      console.error('Failed to remove friend:', err);
+      this.toast.error('Failed to remove friend');
+    }
+  }
+
+  getChatPerson(friend: FriendWithUser): ChatPerson {
+    return {
+      username: friend.username,
+      playerId: this.getOtherPlayerId(friend),
+      friendId: friend.friendId,
+      canMakeOffer: true
+    };
   }
 
   private async refreshMessages(): Promise<void> {
     const friend = this.selectedFriend();
     if (!friend) return;
-    const otherId = friend.requesterId === this.currentPlayerId() ? friend.addresseeId : friend.requesterId;
+    const otherId = this.getOtherPlayerId(friend);
     try {
       const msgs = await firstValueFrom(
         this.chatService.getConversationPaginated(this.currentPlayerId(), otherId, 50, 0)
       );
-      this.messages.set(msgs);
+      this.messages.set(msgs.filter(msg => !this.isMarketplaceMessage(msg)));
     } catch (err) {
       console.error('Failed to refresh messages:', err);
     }
@@ -472,6 +535,7 @@ export class SocialComponent implements OnInit, OnDestroy {
         m => m.data && (m.data as Record<string, unknown>)['source'] === 'marketplace'
       );
       this.marketplaceMessages.set(filtered);
+      await this.markConversationRead(thread.playerId, true);
     } catch (err) {
       console.error('Failed to load marketplace conversation:', err);
     }
@@ -490,7 +554,7 @@ export class SocialComponent implements OnInit, OnDestroy {
       receiverId: otherId,
       content: text,
       sentAt: new Date(),
-      isRead: true,
+      isRead: false,
       messageType: 'text',
       data: { source: 'marketplace' }
     };
@@ -511,7 +575,7 @@ export class SocialComponent implements OnInit, OnDestroy {
           receiverId: result.receiverId ?? otherId,
           content: text,
           sentAt: new Date(),
-          isRead: true,
+          isRead: false,
           messageType: 'text',
           data: { source: 'marketplace' }
         };
@@ -545,6 +609,12 @@ export class SocialComponent implements OnInit, OnDestroy {
       if (tradeUpdate) {
         this.refreshMessages();
         this.ws.incomingTradeUpdate.set(null);
+      }
+
+      const readReceipt = this.ws.incomingReadReceipt();
+      if (readReceipt) {
+        this.handleReadReceipt(readReceipt.readerId);
+        this.ws.incomingReadReceipt.set(null);
       }
     }, 100);
 
@@ -586,6 +656,7 @@ export class SocialComponent implements OnInit, OnDestroy {
       const thread = this.selectedMarketplaceThread();
       if (thread && thread.playerId === otherId) {
         this.marketplaceMessages.update(msgs => [...msgs, msg]);
+        void this.markConversationRead(otherId, true);
       } else {
         const current = this.marketplaceUnreadCounts.get(otherId) ?? 0;
         this.marketplaceUnreadCounts.set(otherId, current + 1);
@@ -601,8 +672,10 @@ export class SocialComponent implements OnInit, OnDestroy {
     const friend = this.selectedFriend();
     const otherId = msg.senderId === playerId ? msg.receiverId : msg.senderId;
 
-    if (friend && (friend.requesterId === otherId || friend.addresseeId === otherId)) {
+    if (friend && this.getOtherPlayerId(friend) === otherId) {
       this.messages.update(msgs => [...msgs, msg]);
+      this.updateFriendPreview(otherId ?? 0, msg.content, this.toDate(msg.sentAt) ?? new Date(), 0);
+      void this.markConversationRead(otherId ?? 0);
     } else {
       const friendEntry = this.friends().find(
         f => f.requesterId === otherId || f.addresseeId === otherId
@@ -613,11 +686,75 @@ export class SocialComponent implements OnInit, OnDestroy {
         this.friends.update(list =>
           list.map(f =>
             f.friendId === friendEntry.friendId
-              ? { ...f, unreadCount: current + 1, lastMessage: msg.content }
+              ? { ...f, unreadCount: current + 1, lastMessage: msg.content, lastMessageAt: this.toDate(msg.sentAt) }
               : f
           )
         );
       }
     }
+  }
+
+  private handleReadReceipt(readerId: number): void {
+    const playerId = this.currentPlayerId();
+    this.messages.update(msgs =>
+      msgs.map(msg =>
+        msg.senderId === playerId && msg.receiverId === readerId ? { ...msg, isRead: true } : msg
+      )
+    );
+    this.marketplaceMessages.update(msgs =>
+      msgs.map(msg =>
+        msg.senderId === playerId && msg.receiverId === readerId ? { ...msg, isRead: true } : msg
+      )
+    );
+  }
+
+  private async markConversationRead(senderId: number, marketplace = false): Promise<void> {
+    if (!senderId) return;
+    try {
+      const result = await firstValueFrom(
+        this.chatService.markConversationAsRead(senderId, this.currentPlayerId())
+      );
+      if (result.count <= 0) return;
+
+      if (marketplace) {
+        this.marketplaceMessages.update(msgs =>
+          msgs.map(msg => msg.senderId === senderId ? { ...msg, isRead: true } : msg)
+        );
+        return;
+      }
+
+      this.messages.update(msgs =>
+        msgs.map(msg => msg.senderId === senderId ? { ...msg, isRead: true } : msg)
+      );
+    } catch (err) {
+      console.error('Failed to mark conversation as read:', err);
+    }
+  }
+
+  private updateFriendPreview(otherPlayerId: number, content: string, sentAt: Date, unreadCount?: number): void {
+    this.friends.update(list =>
+      list.map(friend => {
+        if (this.getOtherPlayerId(friend) !== otherPlayerId) return friend;
+        return {
+          ...friend,
+          lastMessage: content,
+          lastMessageAt: sentAt,
+          unreadCount: unreadCount ?? friend.unreadCount
+        };
+      })
+    );
+  }
+
+  private getOtherPlayerId(friend: FriendWithUser): number {
+    return friend.requesterId === this.currentPlayerId() ? friend.addresseeId : friend.requesterId;
+  }
+
+  private isMarketplaceMessage(msg: ChatMessageRow): boolean {
+    return Boolean(msg.data && (msg.data as Record<string, unknown>)['source'] === 'marketplace');
+  }
+
+  private toDate(value: Date | string | undefined): Date | undefined {
+    if (!value) return undefined;
+    return value instanceof Date ? value : new Date(value);
   }
 }

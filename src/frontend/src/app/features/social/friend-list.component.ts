@@ -85,6 +85,7 @@ export interface MarketplaceThread {
                 type="button"
                 (click)="onSelectFriend.emit(friend)"
                 class="conversation-row"
+                [class.unread]="friend.unreadCount > 0"
                 [class.active]="selectedFriendId() === friend.friendId"
               >
                 <div class="avatar">{{ friend.username.charAt(0).toUpperCase() }}</div>
@@ -97,13 +98,15 @@ export interface MarketplaceThread {
                   }
                 </div>
                 <div class="conversation-actions">
-                  <span class="status-dot"></span>
+                  @if (friend.isOnline) {
+                    <span class="status-dot" aria-label="Online"></span>
+                  }
+                  @if (friend.lastMessageAt) {
+                    <time>{{ friend.lastMessageAt | date:'shortTime' }}</time>
+                  }
                   @if (friend.unreadCount > 0) {
                     <span class="count-pill">{{ friend.unreadCount }}</span>
                   }
-                  <span class="glory-link" (click)="$event.stopPropagation(); onViewGlory.emit(getFriendPlayerId(friend))">
-                    Glory
-                  </span>
                 </div>
               </button>
             } @empty {
@@ -195,11 +198,9 @@ export class FriendListComponent {
   selectedFriendId = input<number | null>(null);
   selectedMarketplacePlayerId = input<number | null>(null);
   activeTab = input.required<'friends' | 'requests' | 'marketplace'>();
-  currentPlayerId = input<number>(0);
 
   onSelectFriend = output<FriendWithUser>();
   onSelectMarketplaceThread = output<MarketplaceThread>();
-  onViewGlory = output<number>();
   onAddFriend = output<void>();
   onRespondRequest = output<{ friendId: number; accept: boolean }>();
   onTabChange = output<'friends' | 'requests' | 'marketplace'>();
@@ -219,9 +220,4 @@ export class FriendListComponent {
     if (this.activeTab() === 'requests') return 'Pending Requests';
     return 'Friend Conversations';
   });
-
-  getFriendPlayerId(friend: FriendWithUser): number {
-    const currentId = this.currentPlayerId();
-    return friend.requesterId === currentId ? friend.addresseeId : friend.requesterId;
-  }
 }

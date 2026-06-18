@@ -6,6 +6,7 @@ import { NotificationService } from "../services/notification-service";
 import { requireAuth } from "../middleware/require-auth";
 import { StatusCodes } from "http-status-codes";
 import { isNullOrWhiteSpace } from "../utils/util";
+import { connectionManager } from "../websocket/connection-manager";
 
 export const friendRouter = express.Router();
 
@@ -42,7 +43,14 @@ friendRouter.get("/friends/list", requireAuth, async (req, res) => {
 
     try {
         const friends = await friendService.getFriends(req.playerId!);
-        res.status(StatusCodes.OK).json(friends);
+        const withPresence = friends.map((friend) => {
+            const otherPlayerId = friend.requesterId === req.playerId ? friend.addresseeId : friend.requesterId;
+            return {
+                ...friend,
+                isOnline: connectionManager.isPlayerOnline(otherPlayerId)
+            };
+        });
+        res.status(StatusCodes.OK).json(withPresence);
     } catch (err) {
         console.error("Route error:", err);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });

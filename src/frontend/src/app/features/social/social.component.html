@@ -9,10 +9,8 @@
       [selectedFriendId]="selectedFriend()?.friendId ?? null"
       [selectedMarketplacePlayerId]="selectedMarketplaceThread()?.playerId ?? null"
       [activeTab]="activeTab()"
-      [currentPlayerId]="currentPlayerId()"
       (onSelectFriend)="selectFriend($event)"
       (onSelectMarketplaceThread)="selectMarketplaceThread($event)"
-      (onViewGlory)="viewGlory($event)"
       (onAddFriend)="showAddFriendModal.set(true)"
       (onRespondRequest)="respondToRequest($event.friendId, $event.accept)"
       (onTabChange)="activeTab.set($event)"
@@ -23,14 +21,16 @@
   <div class="flex-1 h-[55%] lg:h-full min-h-0">
     @if (activeTab() === 'marketplace' && selectedMarketplaceThread()) {
       <app-chat-thread
-        [friend]="{ username: selectedMarketplaceThread()!.username }"
+        [friend]="{ username: selectedMarketplaceThread()!.username, playerId: selectedMarketplaceThread()!.playerId, canMakeOffer: false }"
         [messages]="marketplaceMessages()"
         [currentPlayerId]="currentPlayerId()"
         (onSendMessage)="sendMarketplaceMessage($event)"
+        (onReportPlayer)="reportPlayer()"
+        (onViewProfile)="viewGlory($event)"
       />
     } @else {
       <app-chat-thread
-        [friend]="selectedFriend()"
+        [friend]="selectedFriend() ? getChatPerson(selectedFriend()!) : null"
         [messages]="messages()"
         [currentPlayerId]="currentPlayerId()"
         (onSendMessage)="sendMessage($event)"
@@ -38,6 +38,9 @@
         (onAcceptOffer)="acceptTradeOffer($event)"
         (onDeclineOffer)="declineTradeOffer($event)"
         (onInspectStove)="inspectStoveFromOffer($event)"
+        (onReportPlayer)="reportPlayer()"
+        (onUnfriend)="unfriend($event)"
+        (onViewProfile)="viewGlory($event)"
       />
     }
   </div>

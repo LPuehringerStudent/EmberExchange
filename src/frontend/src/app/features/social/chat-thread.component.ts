@@ -1,82 +1,121 @@
-import { Component, input, output, viewChild, ChangeDetectionStrategy, AfterViewChecked, effect } from '@angular/core';
+import { Component, input, output, viewChild, ChangeDetectionStrategy, effect, HostListener, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { ChatMessageRow } from '@shared/model';
+
+export interface ChatPerson {
+  username: string;
+  playerId?: number;
+  friendId?: number;
+  canMakeOffer?: boolean;
+}
 
 @Component({
   selector: 'app-chat-thread',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="h-full flex flex-col bg-body">
-      <!-- Header -->
+    <div class="thread-shell">
       @if (friend()) {
-        <div class="flex items-center justify-between p-4 border-b border-border bg-surface">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">
-              {{ friend()!.username.charAt(0).toUpperCase() }}
-            </div>
-            <span class="font-medium text-text-primary">{{ friend()!.username }}</span>
+        <header class="thread-header">
+          <div class="person-menu-wrap">
+            <button type="button" class="thread-person person-trigger" (click)="togglePersonMenu($event)">
+              <div class="avatar">{{ friend()!.username.charAt(0).toUpperCase() }}</div>
+              <div>
+                <h2>{{ friend()!.username }}</h2>
+                <p>Conversation</p>
+              </div>
+              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+
+            @if (personMenuOpen()) {
+              <div class="person-menu" (click)="$event.stopPropagation()">
+                <button type="button" (click)="reportPerson()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <path d="M12 17h.01"/>
+                  </svg>
+                  <span>Report</span>
+                </button>
+                @if (friend()!.friendId) {
+                  <button type="button" class="danger" (click)="unfriendPerson()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M22 11h-6"/>
+                    </svg>
+                    <span>Unfriend</span>
+                  </button>
+                }
+                @if (friend()!.playerId) {
+                  <button type="button" (click)="viewProfile()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                      <path d="M4 22h16"/>
+                      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                    </svg>
+                    <span>View profile</span>
+                  </button>
+                }
+              </div>
+            }
           </div>
-          <button
-            (click)="onMakeOffer.emit()"
-            class="px-3 py-1.5 rounded-lg border border-accent text-accent text-sm font-medium hover:bg-accent/10 transition-colors"
-          >
-            Make Offer
-          </button>
-        </div>
+
+          @if (friend()!.canMakeOffer) {
+            <button type="button" class="offer-btn" (click)="onMakeOffer.emit()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14"/>
+                <path d="M5 12h14"/>
+              </svg>
+              Make Offer
+            </button>
+          }
+        </header>
+      } @else {
+        <header class="thread-header muted">
+          <div class="thread-person">
+            <div class="avatar empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h2>No chat selected</h2>
+              <p>Select a conversation</p>
+            </div>
+          </div>
+        </header>
       }
 
-      <!-- Messages -->
-      <div #messagesContainer class="flex-1 overflow-y-auto p-4 space-y-3">
-        @for (msg of messages(); track msg.messageId) {
-          <div
-            [class.justify-end]="msg.senderId === currentPlayerId()"
-            [class.justify-start]="msg.senderId !== currentPlayerId()"
-            class="flex"
-          >
+      <div #messagesContainer class="messages-scroll">
+        @for (msg of messages(); track trackMessage(msg, $index)) {
+          <div class="message-line" [class.own]="msg.senderId === currentPlayerId()">
             @if (msg.messageType === 'trade_offer') {
-              <div
-                [class.bg-accent/20]="msg.senderId === currentPlayerId()"
-                [class.border-accent]="msg.senderId === currentPlayerId()"
-                [class.bg-surface]="msg.senderId !== currentPlayerId()"
-                [class.border-border]="msg.senderId !== currentPlayerId()"
-                class="max-w-[80%] rounded-2xl p-4 border"
-              >
-                <p class="text-xs font-semibold text-accent mb-2">TRADE OFFER</p>
-
-                <!-- Compact item card -->
-                <div class="flex items-center gap-3 mb-3 p-2 rounded-xl bg-body/50 border border-border/50">
+              <article class="trade-card" [class.own]="msg.senderId === currentPlayerId()">
+                <span class="trade-label">Trade Offer</span>
+                <div class="trade-item">
                   @if ($any(msg.data)['itemImageUrl']) {
-                    <img
-                      [src]="$any(msg.data)['itemImageUrl']"
-                      [alt]="$any(msg.data)['itemName'] || 'Item'"
-                      class="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0"
-                    />
+                    <img [src]="$any(msg.data)['itemImageUrl']" [alt]="$any(msg.data)['itemName'] || 'Item'" />
                   } @else {
-                    <div class="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center text-accent font-bold text-sm shrink-0">
-                      {{ $any(msg.data)['itemType'] === 'stove' ? 'S' : 'L' }}
-                    </div>
+                    <div class="trade-placeholder">{{ $any(msg.data)['itemType'] === 'stove' ? 'S' : 'L' }}</div>
                   }
-                  <div class="min-w-0 flex-1">
-                    <p class="text-sm font-semibold text-text-primary truncate">
-                      {{ $any(msg.data)['itemName'] || (($any(msg.data)['itemType'] | titlecase) + ' #' + $any(msg.data)['itemId']) }}
-                    </p>
+                  <div>
+                    <h3>{{ $any(msg.data)['itemName'] || (($any(msg.data)['itemType'] | titlecase) + ' #' + $any(msg.data)['itemId']) }}</h3>
                     @if ($any(msg.data)['itemRarity']) {
-                      <span class="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent font-medium">
-                        {{ $any(msg.data)['itemRarity'] | titlecase }}
-                      </span>
+                      <span class="rarity">{{ $any(msg.data)['itemRarity'] | titlecase }}</span>
                     } @else {
-                      <p class="text-xs text-text-secondary">{{ $any(msg.data)['itemType'] | titlecase }}</p>
+                      <p>{{ $any(msg.data)['itemType'] | titlecase }}</p>
                     }
                   </div>
                   @if ($any(msg.data)['itemType'] === 'stove') {
-                    <button
-                      (click)="onInspectStove.emit($any(msg.data)['itemId']); $event.stopPropagation()"
-                      class="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/80 transition-colors shrink-0"
-                      title="Inspect stove"
-                    >
-                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button type="button" class="inspect-btn" (click)="onInspectStove.emit($any(msg.data)['itemId']); $event.stopPropagation()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"/>
                         <path d="m21 21-4.35-4.35"/>
                         <path d="M11 8v6"/>
@@ -86,88 +125,88 @@ import type { ChatMessageRow } from '@shared/model';
                     </button>
                   }
                 </div>
-
-                <p class="text-sm font-medium text-text-primary mb-3">{{ $any(msg.data)['price'] }} Coal</p>
+                <p class="trade-price">{{ $any(msg.data)['price'] }} Coal</p>
 
                 @if (msg.senderId !== currentPlayerId() && $any(msg.data)['status'] === 'pending') {
-                  <div class="flex gap-2">
-                    <button
-                      (click)="onAcceptOffer.emit(msg.messageId)"
-                      class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-medium hover:opacity-90 transition-opacity"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      (click)="onDeclineOffer.emit(msg.messageId)"
-                      class="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium hover:opacity-90 transition-opacity"
-                    >
-                      Decline
-                    </button>
+                  <div class="trade-actions">
+                    <button type="button" class="accept" (click)="onAcceptOffer.emit(msg.messageId)">Accept</button>
+                    <button type="button" class="decline" (click)="onDeclineOffer.emit(msg.messageId)">Decline</button>
                   </div>
                 } @else if ($any(msg.data)['status']) {
-                  <p class="text-xs font-medium"
-                    [class.text-green-500]="$any(msg.data)['status'] === 'accepted'"
-                    [class.text-red-500]="$any(msg.data)['status'] === 'declined'"
-                  >
+                  <p class="trade-status" [class.accepted]="$any(msg.data)['status'] === 'accepted'" [class.declined]="$any(msg.data)['status'] === 'declined'">
                     {{ $any(msg.data)['status'] | titlecase }}
                   </p>
                 }
-                <p class="text-[0.625rem] text-text-secondary mt-2">{{ msg.sentAt | date:'shortTime' }}</p>
-              </div>
+                <footer>
+                  <time>{{ msg.sentAt | date:'shortTime' }}</time>
+                  @if (msg.senderId === currentPlayerId()) {
+                    <ng-container [ngTemplateOutlet]="readTicks" [ngTemplateOutletContext]="{ read: msg.isRead }"></ng-container>
+                  }
+                </footer>
+              </article>
             } @else {
-              <div
-                [class.bg-accent]="msg.senderId === currentPlayerId()"
-                [class.text-white]="msg.senderId === currentPlayerId()"
-                [class.bg-surface]="msg.senderId !== currentPlayerId()"
-                [class.text-text-primary]="msg.senderId !== currentPlayerId()"
-                class="max-w-[75%] rounded-2xl px-4 py-2.5 text-sm"
-              >
+              <div class="message-bubble" [class.own]="msg.senderId === currentPlayerId()">
                 <p>{{ msg.content }}</p>
-                <p class="text-[0.625rem] mt-1 opacity-70">{{ msg.sentAt | date:'shortTime' }}</p>
+                <footer>
+                  <time>{{ msg.sentAt | date:'shortTime' }}</time>
+                  @if (msg.senderId === currentPlayerId()) {
+                    <ng-container [ngTemplateOutlet]="readTicks" [ngTemplateOutletContext]="{ read: msg.isRead }"></ng-container>
+                  }
+                </footer>
               </div>
             }
           </div>
         } @empty {
-          @if (friend()) {
-            <div class="flex items-center justify-center h-full text-text-secondary text-sm">
-              No messages yet. Say hello!
-            </div>
-          } @else {
-            <div class="flex items-center justify-center h-full text-text-secondary text-sm">
-              Select a friend to start chatting.
-            </div>
-          }
+          <div class="empty-thread">
+            @if (friend()) {
+              <p>No messages yet. Say hello!</p>
+            } @else {
+              <p>Select a friend to start chatting.</p>
+            }
+          </div>
         }
       </div>
 
-      <!-- Input -->
       @if (friend()) {
-        <div class="p-4 border-t border-border bg-surface">
-          <div class="flex gap-2">
-            <input
-              #messageInput
-              [(ngModel)]="messageText"
-              (keydown.enter)="sendMessage()"
-              type="text"
-              placeholder="Type a message..."
-              class="flex-1 px-4 py-2.5 rounded-xl bg-body border border-border text-text-primary text-sm placeholder:text-text-secondary focus:outline-none focus:border-accent transition-colors"
-            />
-            <button
-              (click)="sendMessage()"
-              [disabled]="!messageText.trim()"
-              class="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Send
-            </button>
-          </div>
-        </div>
+        <form class="composer" (ngSubmit)="sendMessage()">
+          <input
+            #messageInput
+            [(ngModel)]="messageText"
+            type="text"
+            name="message"
+            placeholder="Type a message..."
+          />
+          <button type="submit" [disabled]="!messageText.trim()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m22 2-7 20-4-9-9-4Z"/>
+              <path d="M22 2 11 13"/>
+            </svg>
+            Send
+          </button>
+        </form>
       }
+
+      <ng-template #readTicks let-read="read">
+        <span class="read-ticks" [class.read]="read" [attr.aria-label]="read ? 'Read' : 'Sent'">
+          @if (read) {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m3 12 4 4 8-8"/>
+              <path d="m13 16 8-8"/>
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m5 12 4 4 10-10"/>
+            </svg>
+          }
+        </span>
+      </ng-template>
     </div>
   `,
+  styleUrl: './chat-thread.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ChatThreadComponent implements AfterViewChecked {
-  friend = input<{ username: string } | null>(null);
+export class ChatThreadComponent {
+  friend = input<ChatPerson | null>(null);
   messages = input.required<ChatMessageRow[]>();
   currentPlayerId = input.required<number>();
   messageText = '';
@@ -177,23 +216,27 @@ export class ChatThreadComponent implements AfterViewChecked {
   onAcceptOffer = output<number>();
   onDeclineOffer = output<number>();
   onInspectStove = output<number>();
+  onReportPlayer = output<ChatPerson>();
+  onUnfriend = output<number>();
+  onViewProfile = output<number>();
 
   private messagesContainer = viewChild<HTMLDivElement>('messagesContainer');
-  private shouldScroll = false;
+  private lastMessageCount = 0;
+  personMenuOpen = signal(false);
 
   constructor() {
     effect(() => {
-      // Trigger scroll when messages change
-      const _ = this.messages();
-      this.shouldScroll = true;
+      const count = this.messages().length;
+      if (count > this.lastMessageCount) {
+        this.scheduleScrollToBottom();
+      }
+      this.lastMessageCount = count;
     });
   }
 
-  ngAfterViewChecked(): void {
-    if (this.shouldScroll) {
-      this.scrollToBottom();
-      this.shouldScroll = false;
-    }
+  @HostListener('document:click')
+  closePersonMenu(): void {
+    this.personMenuOpen.set(false);
   }
 
   sendMessage(): void {
@@ -201,6 +244,43 @@ export class ChatThreadComponent implements AfterViewChecked {
     if (!text) return;
     this.onSendMessage.emit(text);
     this.messageText = '';
+    this.scheduleScrollToBottom();
+  }
+
+  togglePersonMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.personMenuOpen.set(!this.personMenuOpen());
+  }
+
+  reportPerson(): void {
+    const person = this.friend();
+    if (!person) return;
+    this.personMenuOpen.set(false);
+    this.onReportPlayer.emit(person);
+  }
+
+  unfriendPerson(): void {
+    const friendId = this.friend()?.friendId;
+    if (!friendId) return;
+    this.personMenuOpen.set(false);
+    this.onUnfriend.emit(friendId);
+  }
+
+  viewProfile(): void {
+    const playerId = this.friend()?.playerId;
+    if (!playerId) return;
+    this.personMenuOpen.set(false);
+    this.onViewProfile.emit(playerId);
+  }
+
+  trackMessage(msg: ChatMessageRow, index: number): number | string {
+    return msg.messageId || `${msg.senderId}:${msg.content}:${index}`;
+  }
+
+  private scheduleScrollToBottom(): void {
+    queueMicrotask(() => {
+      requestAnimationFrame(() => this.scrollToBottom());
+    });
   }
 
   private scrollToBottom(): void {

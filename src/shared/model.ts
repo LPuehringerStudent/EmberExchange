@@ -242,6 +242,7 @@ export interface FriendRow extends Friend {
 
 export interface FriendWithUser extends FriendRow {
     username: string;
+    isOnline?: boolean;
 }
 
 // PlayerStatistics
