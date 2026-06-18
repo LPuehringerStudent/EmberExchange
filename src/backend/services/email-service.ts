@@ -52,7 +52,7 @@ function verificationEmailTemplate(verifyUrl: string): { html: string; text: str
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a0f0a; color: #e8e8e8; margin: 0; padding: 0; }
         .container { max-width: 480px; margin: 40px auto; background: #2d1b14; border: 1px solid rgba(232,93,4,0.3); border-radius: 16px; padding: 32px; }
-        .logo { text-align: center; margin-bottom: 24px; font-size: 28px; }
+        .logo { display: block; width: 64px; height: 64px; object-fit: contain; margin: 0 auto 24px; }
         h1 { color: #e85d04; font-size: 22px; margin-bottom: 16px; text-align: center; }
         p { line-height: 1.6; color: #c9b8b0; margin-bottom: 20px; }
         .button { display: block; width: fit-content; margin: 24px auto; padding: 14px 32px; background: linear-gradient(135deg, #e85d04, #f48c06); color: #fff; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 16px; }
@@ -62,7 +62,7 @@ function verificationEmailTemplate(verifyUrl: string): { html: string; text: str
 </head>
 <body>
     <div class="container">
-        <div class="logo">🔥</div>
+        <img class="logo" src="${FRONTEND_URL}/Ember_Exchange_Logo.png" alt="Ember Exchange logo">
         <h1>Welcome to Ember Exchange!</h1>
         <p>Your forge awaits. Click the button below to verify your email and start trading stoves.</p>
         <a href="${verifyUrl}" class="button">Verify Email</a>
@@ -78,6 +78,59 @@ function verificationEmailTemplate(verifyUrl: string): { html: string; text: str
     return { html, text };
 }
 
+function escapeHtml(value: string): string {
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function chatMessageEmailTemplate(options: {
+    senderName: string;
+    preview: string;
+    isMarketplace: boolean;
+}): { html: string; text: string } {
+    const socialUrl = `${FRONTEND_URL}/social`;
+    const logoUrl = `${FRONTEND_URL}/Ember_Exchange_Logo.png`;
+    const senderName = escapeHtml(options.senderName);
+    const preview = escapeHtml(options.preview);
+    const context = options.isMarketplace ? "marketplace message" : "message";
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>You received a new Ember Exchange message</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #140d0a; color: #f4eee8; margin: 0; padding: 0; }
+        .container { max-width: 520px; margin: 40px auto; background: #211712; border: 1px solid #3a261b; border-radius: 14px; padding: 32px; }
+        .logo { display: block; width: 64px; height: 64px; object-fit: contain; margin: 0 auto 20px; }
+        h1 { color: #f4eee8; font-size: 22px; margin: 0 0 12px; text-align: center; }
+        p { line-height: 1.6; color: #c8b6aa; margin: 0 0 18px; }
+        .preview { background: #1c130f; border: 1px solid #3a261b; border-radius: 10px; padding: 16px; color: #f4eee8; margin: 18px 0 24px; }
+        .button { display: block; width: fit-content; margin: 0 auto 24px; padding: 13px 28px; background: #e85d04; color: #fff; text-decoration: none; border-radius: 9px; font-weight: 700; }
+        .footer { text-align: center; font-size: 12px; color: #927f73; margin-top: 24px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img class="logo" src="${logoUrl}" alt="Ember Exchange logo">
+        <h1>New ${context}</h1>
+        <p><strong>${senderName}</strong> sent you a ${context} on Ember Exchange.</p>
+        <div class="preview">${preview}</div>
+        <a href="${socialUrl}" class="button">Open Socials</a>
+        <div class="footer">Ember Exchange</div>
+    </div>
+</body>
+</html>`;
+
+    const text = `New ${context} from ${options.senderName}\n\n${options.preview}\n\nOpen Socials: ${socialUrl}\n\nEmber Exchange`;
+
+    return { html, text };
+}
+
 export async function sendVerificationEmail(email: string, token: string): Promise<void> {
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}`;
     const { html, text } = verificationEmailTemplate(verifyUrl);
@@ -85,6 +138,32 @@ export async function sendVerificationEmail(email: string, token: string): Promi
     await sendEmail({
         to: email,
         subject: "Welcome to Ember Exchange — confirm your email",
+        html,
+        text,
+    });
+}
+
+export async function sendChatMessageEmail(options: {
+    email: string;
+    senderName: string;
+    preview: string;
+    isMarketplace: boolean;
+}): Promise<void> {
+    const preview =
+        options.preview.length > 180
+            ? `${options.preview.slice(0, 177)}...`
+            : options.preview;
+    const { html, text } = chatMessageEmailTemplate({
+        senderName: options.senderName,
+        preview,
+        isMarketplace: options.isMarketplace,
+    });
+
+    await sendEmail({
+        to: options.email,
+        subject: options.isMarketplace
+            ? "New marketplace message on Ember Exchange"
+            : "New message on Ember Exchange",
         html,
         text,
     });

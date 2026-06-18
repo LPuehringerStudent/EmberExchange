@@ -37,6 +37,7 @@ export class WebSocketService {
   readonly currentVersion = signal<number>(0);
   readonly stateBlob = signal<Record<string, unknown> | null>(null);
   readonly incomingChatMessage = signal<ChatMessageRow | null>(null);
+  readonly incomingReadReceipt = signal<{ readerId: number; senderId: number; readAt: string } | null>(null);
   readonly incomingTradeUpdate = signal<{ messageId: number; status: string } | null>(null);
   readonly incomingNotification = signal<Partial<NotificationRow> | null>(null);
   readonly roomChatMessages = signal<Array<{ playerId: number; username: string; content: string; timestamp: number }>>([]);
@@ -257,6 +258,10 @@ export class WebSocketService {
       case 'chat_message': {
         const chatMsg = payload as unknown as ChatMessageRow;
         this.incomingChatMessage.set(chatMsg);
+        break;
+      }
+      case 'chat_read_receipt': {
+        this.incomingReadReceipt.set(payload as { readerId: number; senderId: number; readAt: string });
         break;
       }
       case 'room_chat_message': {

@@ -4,6 +4,9 @@ import { FriendService } from "../../services/friend-service";
 import { ChatMessageService } from "../../services/chat-message-service";
 import { NotificationService } from "../../services/notification-service";
 import { QuestService } from "../../services/quest-service";
+import { PlayerService } from "../../services/player-service";
+import { PlayerSettingsService } from "../../services/player-settings-service";
+import { sendChatMessageEmail } from "../../services/email-service";
 import { sanitizeText } from "../../utils/sanitize";
 
 export async function handleChatMessage(socketId: string, payload: Record<string, unknown>): Promise<void> {
@@ -134,6 +137,28 @@ export async function handleChatMessage(socketId: string, payload: Record<string
                 );
             } catch {
                 // Ignore notification errors
+            }
+
+            try {
+                const settingsService = new PlayerSettingsService(unit);
+                const settings = await settingsService.ensureSettings(receiverId);
+                if (settings.notifyChatMessages) {
+                    const playerService = new PlayerService(unit);
+                    const [receiver, sender] = await Promise.all([
+                        playerService.getInfoByID(receiverId),
+                        playerService.getInfoByID(senderId),
+                    ]);
+                    if (receiver?.email && sender?.username) {
+                        await sendChatMessageEmail({
+                            email: receiver.email,
+                            senderName: sender.username,
+                            preview: safeContent,
+                            isMarketplace: false,
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("[WebSocketChat] Failed to send chat email:", err);
             }
         }
 

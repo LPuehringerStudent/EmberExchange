@@ -8,20 +8,19 @@ import {
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { of } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '@core/services/auth.service';
 import { ListingService, Listing } from '@core/services/listing.service';
 import { TradeService } from '@core/services/trade.service';
-import { StoveService, StoveType, Stove } from '@core/services/stove.service';
+import { StoveService, StoveType } from '@core/services/stove.service';
 import { LootboxService, LootboxType } from '@core/services/lootbox.service';
 import { PriceHistoryService } from '@core/services/price-history.service';
 import { ChatMessageService } from '@core/services/chat-message.service';
 import { HeatTierPipe } from '@shared/pipes/heat-tier.pipe';
-import { PageBackgroundComponent } from "../../shared/components/page-background/page-background.component";
+import { PageBackgroundComponent } from '../../shared/components/page-background/page-background.component';
 
-
-/* ─── Local Types ─── */
+type MarketplaceTab = 'all' | 'my';
+type RarityFilter = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'limited' | 'secret';
 
 interface PricePoint {
   timestamp: Date;
@@ -53,57 +52,91 @@ interface ChartModel {
   priceRange: number;
 }
 
+interface PriceTrend {
+  previous: number;
+  latest: number;
+  delta: number;
+  percent: number;
+}
+
 @Component({
   selector: 'app-marketplace',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterModule, CommonModule, HeatTierPipe, PageBackgroundComponent,
-  ],
+  imports: [RouterModule, CommonModule, HeatTierPipe, PageBackgroundComponent],
   templateUrl: './marketplace.component.html',
   styleUrls: ['./marketplace.component.css'],
 })
 export class MarketplaceComponent implements OnInit {
-  /* ── Tab state ── */
-  readonly activeTab = signal<'all' | 'my'>('all');
+  readonly activeTab = signal<MarketplaceTab>('all');
+  readonly selectedRarities = signal<Set<RarityFilter>>(new Set());
 
-  /* ── Listing data ── */
+  readonly rarityFilters: { value: RarityFilter; label: string }[] = [
+    { value: 'common', label: 'Common' },
+    { value: 'uncommon', label: 'Uncommon' },
+    { value: 'rare', label: 'Rare' },
+    { value: 'epic', label: 'Epic' },
+    { value: 'legendary', label: 'Legendary' },
+    { value: 'limited', label: 'Limited' },
+    { value: 'secret', label: 'Secret' },
+  ];
+
   allListings = signal<Listing[]>([]);
   myListings = signal<Listing[]>([]);
-  recentSales = signal<Listing[]>([]);
+  historyListings = signal<Listing[]>([]);
+  priceTrends = signal<Map<number, PriceTrend>>(new Map());
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
   processingId = signal<number | null>(null);
 
-  /* ── User context ── */
   playerId: number | null = null;
   coins = signal<number>(0);
 
-  /* ── Item metadata ── */
   stoveTypes = signal<Map<number, StoveType>>(new Map());
   lootboxTypes = signal<Map<number, LootboxType>>(new Map());
 
-  /* ── Detail modal state ── */
   readonly selectedListing = signal<Listing | null>(null);
   readonly priceHistory = signal<PricePoint[]>([]);
   readonly hoverIndex = signal<number>(-1);
 
-  /* ── Confirmation popup state ── */
   readonly confirmModal = signal<boolean>(false);
   readonly confirmListing = signal<Listing | null>(null);
   readonly confirmType = signal<'buy' | 'cancel' | null>(null);
 
-  /* ── Message seller state ── */
   readonly messageMode = signal<boolean>(false);
   readonly messageText = signal<string>('');
   readonly messageSent = signal<boolean>(false);
 
-  /* ── Derived state ── */
+  readonly filteredActiveListings = computed(() =>
+    this.allListings().filter((listing) => this.matchesRarityFilter(listing))
+  );
+
+  readonly filteredMyListings = computed(() =>
+    this.myListings().filter((listing) => this.matchesRarityFilter(listing))
+  );
+
+  readonly recentSales = computed(() =>
+    this.historyListings()
+      .filter((listing) => listing.status === 'sold' && this.matchesRarityFilter(listing))
+      .sort((a, b) => this.dateValue(b.listedAt) - this.dateValue(a.listedAt))
+      .slice(0, 16)
+  );
+
+  readonly risingListings = computed(() =>
+    this.filteredActiveListings()
+      .filter((listing) => {
+        if (!listing.typeId) return false;
+        return (this.priceTrends().get(listing.typeId)?.delta ?? 0) > 0;
+      })
+      .sort((a, b) => (this.getTrendPercent(b) ?? 0) - (this.getTrendPercent(a) ?? 0))
+      .slice(0, 16)
+  );
+
   readonly currentListings = computed(() =>
-    this.activeTab() === 'all' ? this.allListings() : this.myListings()
+    this.activeTab() === 'all' ? this.filteredActiveListings() : this.filteredMyListings()
   );
 
   readonly lowestPrice = computed(() => {
-    const list = this.allListings();
+    const list = this.filteredActiveListings();
     return list.length ? Math.min(...list.map((l) => l.price)) : 0;
   });
 
@@ -120,7 +153,6 @@ export class MarketplaceComponent implements OnInit {
     const minPrice = min - padding;
     const maxPrice = max + padding;
     const range = maxPrice - minPrice || 1;
-
     const width = 100;
     const height = 40;
 
@@ -171,7 +203,6 @@ export class MarketplaceComponent implements OnInit {
     return Math.round(h.reduce((s, p) => s + p.price, 0) / h.length);
   });
 
-  /* ── Services ── */
   private _authService = inject(AuthService);
   private _router = inject(Router);
   private _listingService = inject(ListingService);
@@ -181,7 +212,6 @@ export class MarketplaceComponent implements OnInit {
   private _priceHistoryService = inject(PriceHistoryService);
   private _chatService = inject(ChatMessageService);
 
-  /* ── Lifecycle ── */
   ngOnInit(): void {
     const user = this._authService.getCurrentUser();
     if (!user) {
@@ -193,14 +223,14 @@ export class MarketplaceComponent implements OnInit {
     void this.loadData();
   }
 
-  /* ── Data loading ── */
   async loadData(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
-      const [all, mine, types, lootboxTypeList] = await Promise.all([
+      const [active, history, mine, types, lootboxTypeList] = await Promise.all([
         firstValueFrom(this._listingService.getActiveListings()),
+        firstValueFrom(this._listingService.getAllListings(100, 0)),
         this.playerId !== null
           ? firstValueFrom(this._listingService.getListingsBySellerId(this.playerId))
           : Promise.resolve([]),
@@ -208,7 +238,8 @@ export class MarketplaceComponent implements OnInit {
         firstValueFrom(this._lootboxService.getAllLootboxTypes()),
       ]);
 
-      this.allListings.set(all);
+      this.allListings.set(active);
+      this.historyListings.set(history);
       this.myListings.set(mine);
 
       const typeMap = new Map<number, StoveType>();
@@ -219,15 +250,14 @@ export class MarketplaceComponent implements OnInit {
       for (const lt of lootboxTypeList) lootboxTypeMap.set(lt.lootboxTypeId, lt);
       this.lootboxTypes.set(lootboxTypeMap);
 
-      /* Attempt to load recent sales */
-      await this.loadRecentSales();
+      await this.loadPriceTrends(active);
 
-      /* Keep detail panel in sync after reload */
       const selected = this.selectedListing();
       if (selected) {
         const updated =
-          all.find((l) => l.listingId === selected.listingId) ||
-          mine.find((l) => l.listingId === selected.listingId);
+          active.find((l) => l.listingId === selected.listingId) ||
+          mine.find((l) => l.listingId === selected.listingId) ||
+          history.find((l) => l.listingId === selected.listingId);
         this.selectedListing.set(updated ?? null);
       }
     } catch (err) {
@@ -238,12 +268,44 @@ export class MarketplaceComponent implements OnInit {
     }
   }
 
-  async loadRecentSales(): Promise<void> {
-    // TODO: backend endpoint for sold listings not yet available
-    this.recentSales.set([]);
+  private async loadPriceTrends(listings: Listing[]): Promise<void> {
+    const typeIds = Array.from(
+      new Set(
+        listings
+          .map((listing) => listing.typeId)
+          .filter((typeId): typeId is number => typeof typeId === 'number')
+      )
+    ).slice(0, 24);
+
+    const trendEntries = await Promise.all(
+      typeIds.map(async (typeId) => {
+        try {
+          const points = await firstValueFrom(this._priceHistoryService.getRecentPrices(typeId, 2));
+          const sorted = [...points].sort(
+            (a, b) => this.dateValue(a.saleDate) - this.dateValue(b.saleDate)
+          );
+          if (sorted.length < 2) return null;
+
+          const previous = sorted[sorted.length - 2].salePrice;
+          const latest = sorted[sorted.length - 1].salePrice;
+          if (!Number.isFinite(previous) || previous <= 0 || !Number.isFinite(latest)) return null;
+
+          const delta = latest - previous;
+          const percent = (delta / previous) * 100;
+          return [typeId, { previous, latest, delta, percent }] as const;
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    const trendMap = new Map<number, PriceTrend>();
+    for (const entry of trendEntries) {
+      if (entry) trendMap.set(entry[0], entry[1]);
+    }
+    this.priceTrends.set(trendMap);
   }
 
-  /* ── Detail panel ── */
   async openDetails(listing: Listing): Promise<void> {
     this.selectedListing.set(listing);
     this.priceHistory.set([]);
@@ -260,12 +322,6 @@ export class MarketplaceComponent implements OnInit {
             this._priceHistoryService.getPriceHistoryByTypeId(typeId)
           );
 
-          /*
-           * Build average price per day from raw sale records.
-           * Multiple sales on the same day are averaged together,
-           * giving a proper market trend line instead of spiky
-           * individual sale prices.
-           */
           const bucketed = this.bucketByDay(history);
           const sorted = bucketed.sort(
             (a, b) => new Date(a.saleDate).getTime() - new Date(b.saleDate).getTime()
@@ -276,7 +332,6 @@ export class MarketplaceComponent implements OnInit {
             price: h.avgPrice,
           }));
 
-          /* If we have fewer than 2 data points, append current listing price */
           if (points.length < 2) {
             points.push({
               timestamp: new Date(),
@@ -304,18 +359,13 @@ export class MarketplaceComponent implements OnInit {
     }
   }
 
-  /**
-   * Groups raw price-history records by day and computes the average
-   * sale price for each day. This smooths out the chart so spikes from
-   * individual high/low sales don't distort the trend.
-   */
   private bucketByDay(
     records: { saleDate: Date | string; salePrice: number }[]
   ): { saleDate: string; avgPrice: number }[] {
     const map = new Map<string, number[]>();
 
     for (const r of records) {
-      const day = new Date(r.saleDate).toISOString().slice(0, 10); // YYYY-MM-DD
+      const day = new Date(r.saleDate).toISOString().slice(0, 10);
       const arr = map.get(day) ?? [];
       arr.push(r.salePrice);
       map.set(day, arr);
@@ -337,7 +387,6 @@ export class MarketplaceComponent implements OnInit {
     this.messageMode.set(false);
   }
 
-  /* ── Confirmation popup ── */
   showConfirm(listing: Listing, type: 'buy' | 'cancel'): void {
     this.confirmListing.set(listing);
     this.confirmType.set(type);
@@ -366,7 +415,6 @@ export class MarketplaceComponent implements OnInit {
     }
   }
 
-  /* ── Trade actions ── */
   async buyListing(listing: Listing): Promise<void> {
     if (this.playerId === null || listing.status !== 'active') return;
 
@@ -404,7 +452,6 @@ export class MarketplaceComponent implements OnInit {
     }
   }
 
-  /* ── Message seller ── */
   toggleMessageMode(): void {
     this.messageMode.update((v) => !v);
     this.messageSent.set(false);
@@ -413,7 +460,7 @@ export class MarketplaceComponent implements OnInit {
   async sendMessageToSeller(): Promise<void> {
     const listing = this.selectedListing();
     const text = this.messageText().trim();
-    if (!listing || !text || !this.playerId) return;
+    if (!listing || !text || !this.playerId || !this.canMessageSeller(listing)) return;
 
     this.processingId.set(-1);
     try {
@@ -432,7 +479,6 @@ export class MarketplaceComponent implements OnInit {
     }
   }
 
-  /* ── Chart interaction ── */
   onChartMouseMove(event: MouseEvent): void {
     const svg = event.currentTarget as SVGSVGElement;
     const rect = svg.getBoundingClientRect();
@@ -449,7 +495,55 @@ export class MarketplaceComponent implements OnInit {
     this.hoverIndex.set(-1);
   }
 
-  /* ── Helpers ── */
+  setTab(tab: MarketplaceTab): void {
+    this.activeTab.set(tab);
+  }
+
+  toggleRarity(rarity: RarityFilter): void {
+    this.selectedRarities.update((current) => {
+      const next = new Set(current);
+      if (next.has(rarity)) {
+        next.delete(rarity);
+      } else {
+        next.add(rarity);
+      }
+      return next;
+    });
+  }
+
+  clearRarityFilters(): void {
+    this.selectedRarities.set(new Set());
+  }
+
+  isRaritySelected(rarity: RarityFilter): boolean {
+    return this.selectedRarities().has(rarity);
+  }
+
+  hasRarityFilters(): boolean {
+    return this.selectedRarities().size > 0;
+  }
+
+  scrollRow(row: HTMLElement, direction: 'left' | 'right'): void {
+    const distance = Math.max(280, row.clientWidth * 0.78);
+    row.scrollBy({ left: direction === 'left' ? -distance : distance, behavior: 'smooth' });
+  }
+
+  scrollRowById(rowId: string, direction: 'left' | 'right'): void {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+    this.scrollRow(row, direction);
+  }
+
+  private matchesRarityFilter(listing: Listing): boolean {
+    const selected = this.selectedRarities();
+    if (!selected.size) return true;
+    return selected.has(this.getRarity(listing) as RarityFilter);
+  }
+
+  private dateValue(date: Date | string): number {
+    return new Date(date).getTime() || 0;
+  }
+
   isStoveListing(listing: Listing): boolean {
     return !!listing.stoveId;
   }
@@ -536,12 +630,25 @@ export class MarketplaceComponent implements OnInit {
     return '';
   }
 
+  getTrend(listing: Listing): PriceTrend | null {
+    if (!listing.typeId) return null;
+    return this.priceTrends().get(listing.typeId) ?? null;
+  }
+
+  getTrendPercent(listing: Listing): number | null {
+    return this.getTrend(listing)?.percent ?? null;
+  }
+
   isOwnListing(listing: Listing): boolean {
     return this.playerId !== null && listing.sellerId === this.playerId;
   }
 
+  canMessageSeller(listing: Listing): boolean {
+    return listing.status === 'active' && !this.isOwnListing(listing);
+  }
+
   formatPrice(price: number): string {
-    return price.toLocaleString();
+    return Math.round(price).toLocaleString();
   }
 
   formatDateShort(date: Date): string {
@@ -566,12 +673,6 @@ export class MarketplaceComponent implements OnInit {
     return points.slice(0, lastMeaningfulIndex + 1);
   }
 
-  /**
-   * Compact notation for chart axis labels.
-   * 1,234 → 1.2k
-   * 1,234,567 → 1.2M
-   * 1,234,567,890 → 1.2B
-   */
   formatCompact(value: number): string {
     const abs = Math.abs(value);
     if (abs >= 1_000_000_000) {

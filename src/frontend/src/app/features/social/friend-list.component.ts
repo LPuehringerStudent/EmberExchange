@@ -22,200 +22,170 @@ export interface MarketplaceThread {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="h-full flex flex-col bg-surface border-r border-border">
-      <!-- Header -->
-      <div class="p-4 border-b border-border flex items-center justify-between">
-        <h2 class="text-lg font-bold text-text-primary">
-          @if (activeTab() === 'marketplace') { Messages } @else { Friends }
-        </h2>
+    <div class="inbox-sidebar">
+      <header class="sidebar-header">
+        <div>
+          <p class="sidebar-kicker">Socials</p>
+          <h2>{{ title() }}</h2>
+        </div>
         @if (activeTab() !== 'marketplace') {
-          <button
-            (click)="onAddFriend.emit()"
-            class="px-3 py-1.5 rounded-lg bg-accent text-white text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            + Add
+          <button type="button" class="new-message-btn" (click)="onAddFriend.emit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14"/>
+              <path d="M5 12h14"/>
+            </svg>
+            New
           </button>
         }
-      </div>
+      </header>
 
-      <!-- Tabs -->
-      <div class="flex border-b border-border">
-        <button
-          (click)="onTabChange.emit('friends')"
-          [class.border-b-2]="activeTab() === 'friends'"
-          [class.border-accent]="activeTab() === 'friends'"
-          [class.text-text-primary]="activeTab() === 'friends'"
-          [class.text-text-secondary]="activeTab() !== 'friends'"
-          class="flex-1 py-2.5 text-sm font-medium transition-colors"
-        >
-          Friends
+      <section class="filter-panel" aria-label="Conversation filters">
+        <p class="section-label">Filters</p>
+        <button type="button" class="filter-row" [class.active]="activeTab() === 'friends'" (click)="onTabChange.emit('friends')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          </svg>
+          <span>All Friends</span>
+          <b>{{ friends().length }}</b>
         </button>
-        <button
-          (click)="onTabChange.emit('requests')"
-          [class.border-b-2]="activeTab() === 'requests'"
-          [class.border-accent]="activeTab() === 'requests'"
-          [class.text-text-primary]="activeTab() === 'requests'"
-          [class.text-text-secondary]="activeTab() !== 'requests'"
-          class="flex-1 py-2.5 text-sm font-medium transition-colors"
-        >
-          Requests
-          @if (pendingRequests().length > 0) {
-            <span class="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-xs font-bold">
-              {{ pendingRequests().length }}
-            </span>
-          }
-        </button>
-        <button
-          (click)="onTabChange.emit('marketplace')"
-          [class.border-b-2]="activeTab() === 'marketplace'"
-          [class.border-accent]="activeTab() === 'marketplace'"
-          [class.text-text-primary]="activeTab() === 'marketplace'"
-          [class.text-text-secondary]="activeTab() !== 'marketplace'"
-          class="flex-1 py-2.5 text-sm font-medium transition-colors"
-        >
-          Marketplace
+        <button type="button" class="filter-row" [class.active]="activeTab() === 'marketplace'" (click)="onTabChange.emit('marketplace')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+            <path d="M3 6h18"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span>Marketplace</span>
           @if (marketplaceUnreadCount() > 0) {
-            <span class="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-xs font-bold">
-              {{ marketplaceUnreadCount() }}
-            </span>
+            <b>{{ marketplaceUnreadCount() }}</b>
           }
         </button>
-      </div>
+        <button type="button" class="filter-row" [class.active]="activeTab() === 'requests'" (click)="onTabChange.emit('requests')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <line x1="19" y1="8" x2="19" y2="14"/>
+            <line x1="22" y1="11" x2="16" y2="11"/>
+          </svg>
+          <span>Requests</span>
+          @if (pendingRequests().length > 0) {
+            <b>{{ pendingRequests().length }}</b>
+          }
+        </button>
+      </section>
 
-      <!-- Friends list -->
-      @if (activeTab() === 'friends') {
-        <div class="flex-1 overflow-y-auto">
-          @for (friend of friends(); track friend.friendId) {
-            <div
-              (click)="onSelectFriend.emit(friend)"
-              [class.bg-accent/10]="selectedFriendId() === friend.friendId"
-              class="flex items-center gap-3 p-3 cursor-pointer hover:bg-surface-hover transition-colors border-b border-border/50"
-            >
-              <div class="relative">
-                <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">
-                  {{ friend.username.charAt(0).toUpperCase() }}
-                </div>
-                <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-surface"></div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-text-primary truncate">{{ friend.username }}</span>
-                  <div class="flex items-center gap-1.5">
-                    <button
-                      (click)="$event.stopPropagation(); onViewGlory.emit(getFriendPlayerId(friend))"
-                      class="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[0.625rem] font-semibold hover:bg-accent hover:text-white transition-colors"
-                      title="View Hall of Glory"
-                    >
-                      ✦ Glory
-                    </button>
-                    @if (friend.unreadCount > 0) {
-                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-xs font-bold">
-                        {{ friend.unreadCount }}
-                      </span>
-                    }
-                  </div>
-                </div>
-                @if (friend.lastMessage) {
-                  <p class="text-xs text-text-secondary truncate mt-0.5">{{ friend.lastMessage }}</p>
-                }
-              </div>
-            </div>
-          } @empty {
-            <div class="flex flex-col items-center justify-center py-16 px-5 text-center">
-              <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-                👋
-              </div>
-              <p class="text-base font-semibold text-text-primary m-0 mb-1">No friends yet</p>
-              <span class="text-sm text-text-secondary mb-5">Send a request to start chatting</span>
+      <section class="conversation-list">
+        <p class="section-label">{{ listLabel() }}</p>
+
+        @if (activeTab() === 'friends') {
+          <div class="list-scroll">
+            @for (friend of friends(); track friend.friendId) {
               <button
-                (click)="onAddFriend.emit()"
-                class="px-4 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+                type="button"
+                (click)="onSelectFriend.emit(friend)"
+                class="conversation-row"
+                [class.active]="selectedFriendId() === friend.friendId"
               >
-                Add Friend
-              </button>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Requests list -->
-      @if (activeTab() === 'requests') {
-        <div class="flex-1 overflow-y-auto">
-          @for (req of pendingRequests(); track req.friendId) {
-            <div class="flex items-center gap-3 p-3 border-b border-border/50">
-              <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">
-                {{ req.username.charAt(0).toUpperCase() }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <span class="text-sm font-medium text-text-primary">{{ req.username }}</span>
-                <p class="text-xs text-text-secondary">Wants to be your friend</p>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  (click)="onRespondRequest.emit({ friendId: req.friendId, accept: true })"
-                  class="px-3 py-1 rounded-lg bg-green-600 text-white text-xs font-medium hover:opacity-90 transition-opacity"
-                >
-                  Accept
-                </button>
-                <button
-                  (click)="onRespondRequest.emit({ friendId: req.friendId, accept: false })"
-                  class="px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-medium hover:opacity-90 transition-opacity"
-                >
-                  Decline
-                </button>
-              </div>
-            </div>
-          } @empty {
-            <div class="flex flex-col items-center justify-center py-16 px-5 text-center">
-              <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-                📭
-              </div>
-              <p class="text-base font-semibold text-text-primary m-0 mb-1">No pending requests</p>
-              <span class="text-sm text-text-secondary">Check back later for new requests</span>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Marketplace messages list -->
-      @if (activeTab() === 'marketplace') {
-        <div class="flex-1 overflow-y-auto">
-          @for (thread of marketplaceThreads(); track thread.playerId) {
-            <div
-              (click)="onSelectMarketplaceThread.emit(thread)"
-              [class.bg-accent/10]="selectedMarketplacePlayerId() === thread.playerId"
-              class="flex items-center gap-3 p-3 cursor-pointer hover:bg-surface-hover transition-colors border-b border-border/50"
-            >
-              <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">
-                {{ thread.username.charAt(0).toUpperCase() }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-text-primary truncate">{{ thread.username }}</span>
-                  @if (thread.unreadCount > 0) {
-                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-xs font-bold">
-                      {{ thread.unreadCount }}
-                    </span>
+                <div class="avatar">{{ friend.username.charAt(0).toUpperCase() }}</div>
+                <div class="conversation-copy">
+                  <span class="conversation-name">{{ friend.username }}</span>
+                  @if (friend.lastMessage) {
+                    <p>{{ friend.lastMessage }}</p>
+                  } @else {
+                    <p>No messages yet</p>
                   }
                 </div>
-                @if (thread.lastMessage) {
-                  <p class="text-xs text-text-secondary truncate mt-0.5">{{ thread.lastMessage }}</p>
-                }
+                <div class="conversation-actions">
+                  <span class="status-dot"></span>
+                  @if (friend.unreadCount > 0) {
+                    <span class="count-pill">{{ friend.unreadCount }}</span>
+                  }
+                  <span class="glory-link" (click)="$event.stopPropagation(); onViewGlory.emit(getFriendPlayerId(friend))">
+                    Glory
+                  </span>
+                </div>
+              </button>
+            } @empty {
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                </svg>
+                <p>No friends yet</p>
+                <span>Send a request to start chatting.</span>
               </div>
-            </div>
-          } @empty {
-            <div class="flex flex-col items-center justify-center py-16 px-5 text-center">
-              <div class="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center text-3xl mb-4 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-                💬
+            }
+          </div>
+        }
+
+        @if (activeTab() === 'requests') {
+          <div class="list-scroll">
+            @for (req of pendingRequests(); track req.friendId) {
+              <div class="request-row">
+                <div class="avatar">{{ req.username.charAt(0).toUpperCase() }}</div>
+                <div class="conversation-copy">
+                  <span class="conversation-name">{{ req.username }}</span>
+                  <p>Wants to be your friend</p>
+                </div>
+                <div class="request-actions">
+                  <button type="button" class="accept" (click)="onRespondRequest.emit({ friendId: req.friendId, accept: true })">Accept</button>
+                  <button type="button" class="decline" (click)="onRespondRequest.emit({ friendId: req.friendId, accept: false })">Decline</button>
+                </div>
               </div>
-              <p class="text-base font-semibold text-text-primary m-0 mb-1">No marketplace messages</p>
-              <span class="text-sm text-text-secondary">Messages from buyers or sellers will appear here</span>
-            </div>
-          }
-        </div>
-      }
+            } @empty {
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <p>No pending requests</p>
+                <span>New requests will appear here.</span>
+              </div>
+            }
+          </div>
+        }
+
+        @if (activeTab() === 'marketplace') {
+          <div class="list-scroll">
+            @for (thread of marketplaceThreads(); track thread.playerId) {
+              <button
+                type="button"
+                (click)="onSelectMarketplaceThread.emit(thread)"
+                class="conversation-row"
+                [class.active]="selectedMarketplacePlayerId() === thread.playerId"
+              >
+                <div class="avatar marketplace">{{ thread.username.charAt(0).toUpperCase() }}</div>
+                <div class="conversation-copy">
+                  <span class="conversation-name">{{ thread.username }}</span>
+                  @if (thread.lastMessage) {
+                    <p>{{ thread.lastMessage }}</p>
+                  }
+                </div>
+                <div class="conversation-actions">
+                  <time>{{ thread.lastMessageAt | date:'shortTime' }}</time>
+                  @if (thread.unreadCount > 0) {
+                    <span class="count-pill">{{ thread.unreadCount }}</span>
+                  }
+                </div>
+              </button>
+            } @empty {
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                  <path d="M3 6h18"/>
+                  <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                <p>No marketplace messages</p>
+                <span>Buyer and seller conversations will appear here.</span>
+              </div>
+            }
+          </div>
+        }
+      </section>
     </div>
   `,
+  styleUrl: './friend-list.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FriendListComponent {
@@ -237,6 +207,18 @@ export class FriendListComponent {
   marketplaceUnreadCount = computed(() =>
     this.marketplaceThreads().reduce((sum, t) => sum + t.unreadCount, 0)
   );
+
+  title = computed(() => {
+    if (this.activeTab() === 'marketplace') return 'Marketplace';
+    if (this.activeTab() === 'requests') return 'Requests';
+    return 'All Conversations';
+  });
+
+  listLabel = computed(() => {
+    if (this.activeTab() === 'marketplace') return 'Marketplace Threads';
+    if (this.activeTab() === 'requests') return 'Pending Requests';
+    return 'Friend Conversations';
+  });
 
   getFriendPlayerId(friend: FriendWithUser): number {
     const currentId = this.currentPlayerId();

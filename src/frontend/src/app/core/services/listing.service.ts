@@ -50,6 +50,15 @@ export class ListingService {
   private api = inject(ApiService);
   private auth = inject(AuthService);
 
+  getAllListings(limit: number = 100, offset: number = 0): Observable<Listing[]> {
+    let params = new HttpParams()
+      .set('limit', limit.toString())
+      .set('offset', offset.toString());
+    const sessionId = this.auth.getSessionId();
+    const headers = sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+    return this.api.get<Listing[]>('/listings', headers, params);
+  }
+
   getActiveListings(filter?: FilterParams): Observable<Listing[]> {
     let params = new HttpParams();
     if (filter?.rarity) params = params.set('rarity', filter.rarity);
