@@ -70,6 +70,7 @@ export class BlackjackComponent implements OnDestroy {
   private stageManager = new BlackjackStageManager({
     reducedMotion: typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   });
+  private timers = new Set<number>();
 
   readonly stateBlob = this.stageManager.displayedStateBlob;
   readonly lastError = this.ws.lastError;
@@ -332,6 +333,22 @@ export class BlackjackComponent implements OnDestroy {
     let lastPhase = '';
     let showdownTimer: number | null = null;
 
+    const setTimer = (fn: () => void, delay: number): number => {
+      const id = window.setTimeout(() => {
+        this.timers.delete(id);
+        fn();
+      }, delay);
+      this.timers.add(id);
+      return id;
+    };
+
+    const clearTimer = (id: number | null): void => {
+      if (id != null) {
+        clearTimeout(id);
+        this.timers.delete(id);
+      }
+    };
+
     effect(() => {
       const currentPhase = this.phase();
       const animating = this.isAnimating();
@@ -343,15 +360,15 @@ export class BlackjackComponent implements OnDestroy {
         if (currentPhase === 'insurance') {
           this.announcementText.set('Dealer shows Ace — Insurance?');
           this.showAnnouncement.set(true);
-          setTimeout(() => this.showAnnouncement.set(false), 2000);
+          setTimer(() => this.showAnnouncement.set(false), 2000);
         } else if (currentPhase === 'dealer') {
           this.announcementText.set("Dealer's Turn");
           this.showAnnouncement.set(true);
-          setTimeout(() => this.showAnnouncement.set(false), 1500);
+          setTimer(() => this.showAnnouncement.set(false), 1500);
         } else if (currentPhase === 'showdown') {
           this.announcementText.set('Showdown');
           this.showAnnouncement.set(true);
-          setTimeout(() => this.showAnnouncement.set(false), 1500);
+          setTimer(() => this.showAnnouncement.set(false), 1500);
         } else {
           this.showAnnouncement.set(false);
         }
@@ -365,13 +382,13 @@ export class BlackjackComponent implements OnDestroy {
       // Results overlay: only trigger once dealer/settle animation is done
       if (currentPhase === 'showdown' && !animating) {
         if (!showdownTimer) {
-          showdownTimer = window.setTimeout(() => {
+          showdownTimer = setTimer(() => {
             this.showResultsOverlay.set(true);
           }, 2000);
         }
       } else {
         if (showdownTimer) {
-          clearTimeout(showdownTimer);
+          clearTimer(showdownTimer);
           showdownTimer = null;
         }
         this.showResultsOverlay.set(false);
@@ -380,6 +397,10 @@ export class BlackjackComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    for (const id of this.timers) {
+      clearTimeout(id);
+    }
+    this.timers.clear();
     this.stageManager.destroy();
   }
 

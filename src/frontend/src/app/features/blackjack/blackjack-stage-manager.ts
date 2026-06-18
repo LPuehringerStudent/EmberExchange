@@ -52,24 +52,38 @@ export class BlackjackStageManager {
   private queueRunning = false;
   private pendingTarget: Record<string, unknown> | null = null;
   private readonly timers: Array<ReturnType<typeof setTimeout>> = [];
+  private lastProcessedJson = '';
 
   constructor(options: StageManagerOptions = {}) {
     this.reducedMotion = options.reducedMotion ?? false;
   }
 
   setTarget(blob: Record<string, unknown> | null): void {
-    this.targetStateBlob.set(blob);
     if (this.queueRunning) {
-      this.pendingTarget = blob;
+      // Queue the latest non-duplicate target to be processed after animation.
+      if (JSON.stringify(blob) !== this.lastProcessedJson) {
+        this.pendingTarget = blob;
+      }
       return;
     }
+
+    const json = JSON.stringify(blob);
+    if (json === this.lastProcessedJson) {
+      // Skip identical state broadcasts to avoid continuous re-renders.
+      return;
+    }
+    this.lastProcessedJson = json;
+    this.targetStateBlob.set(blob);
+
     if (this.reducedMotion || !blob || this.shouldJump(blob)) {
       this.jumpTo(blob);
       return;
     }
     const events = this.buildEvents(blob);
     if (events.length === 0) {
-      this.displayedStateBlob.set(clone(blob));
+      if (json !== JSON.stringify(this.displayedStateBlob())) {
+        this.displayedStateBlob.set(clone(blob));
+      }
       this.stage.set('idle');
       return;
     }
