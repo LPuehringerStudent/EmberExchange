@@ -65,7 +65,7 @@ describe('BlackjackStageManager', () => {
     // First player card
     jest.advanceTimersByTime(350);
     expect((mgr.displayedStateBlob()?.['players'] as any[])[0].hands[0]).toEqual(['Ah']);
-    expect(mgr.enteringCardIds().has(buildPlayerCardId(1, 0, 0, 'Ah'))).toBe(true);
+    expect(mgr.enteringCardIds().has(buildPlayerCardId(1, 0, 0))).toBe(true);
 
     // Dealer upcard
     jest.advanceTimersByTime(350);
@@ -295,5 +295,39 @@ describe('BlackjackStageManager', () => {
 
     expect(mgr.isAnimating()).toBe(false);
     expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c', 'Ks']);
+  });
+
+  it('snaps on split', () => {
+    const mgr = new BlackjackStageManager();
+    mgr.setTarget(
+      makeBlob('player_turn', ['5h', 'back'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1000,
+          hands: [['Ah', '10d']],
+          bets: [20],
+          result: 'playing',
+        },
+      ])
+    );
+    jest.advanceTimersByTime(10_000);
+
+    mgr.setTarget(
+      makeBlob('player_turn', ['5h', 'back'], [
+        {
+          playerId: 1,
+          username: 'Hero',
+          stack: 1000,
+          hands: [['Ah'], ['10d', '3c']],
+          bets: [20, 20],
+          result: 'playing',
+        },
+      ])
+    );
+
+    expect(mgr.isAnimating()).toBe(false);
+    const hands = (mgr.displayedStateBlob()?.['players'] as any[])[0].hands;
+    expect(hands).toEqual([['Ah'], ['10d', '3c']]);
   });
 });

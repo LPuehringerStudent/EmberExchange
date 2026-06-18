@@ -112,7 +112,7 @@ export class BlackjackComponent implements OnDestroy {
       rank: this.cardRank(c),
       suit: this.cardSuit(c),
       faceUp: c !== 'back',
-      cardId: buildDealerCardId(index, c),
+      cardId: buildDealerCardId(index),
     }));
   });
 
@@ -146,7 +146,7 @@ export class BlackjackComponent implements OnDestroy {
           rank: this.cardRank(c),
           suit: this.cardSuit(c),
           faceUp: c !== 'back',
-          cardId: buildPlayerCardId(playerId, idx, index, c),
+          cardId: buildPlayerCardId(playerId, idx, index),
         }));
         const handResult = handResultsArr?.[idx] ?? result;
         return {

@@ -16,7 +16,7 @@ export const TIMING = {
   holeFlip: 500,
   dealerDrawPause: 700,
   settlePause: 400,
-  enteringCardDuration: 500,
+  enteringCardDuration: 450,
 };
 
 type AnimationEvent =
@@ -32,14 +32,13 @@ type AnimationEvent =
 export function buildPlayerCardId(
   playerId: number,
   handIndex: number,
-  index: number,
-  card: string
+  index: number
 ): string {
-  return `${playerId}-${handIndex}-${index}-${card}`;
+  return `${playerId}-${handIndex}-${index}`;
 }
 
-export function buildDealerCardId(index: number, card: string): string {
-  return `dealer-${index}-${card}`;
+export function buildDealerCardId(index: number): string {
+  return `dealer-${index}`;
 }
 
 export class BlackjackStageManager {
@@ -92,7 +91,14 @@ export class BlackjackStageManager {
       return true;
     }
 
-    if (!displayedPhase || displayedPhase === targetPhase) return false;
+    if (!displayedPhase) return false;
+
+    if (displayedPhase === targetPhase) {
+      if (targetPhase === 'playing' && this.hasStructuralHandChange(blob)) {
+        return true;
+      }
+      return false;
+    }
 
     // Normal flow can skip insurance (betting -> playing), so allow that single step.
     if (displayedPhase === 'betting' && targetPhase === 'playing') return false;
@@ -102,6 +108,26 @@ export class BlackjackStageManager {
     const tIdx = order.indexOf(targetPhase);
     if (dIdx < 0 || tIdx < 0) return true;
     return tIdx < dIdx || tIdx - dIdx > 1;
+  }
+
+  private hasStructuralHandChange(target: Record<string, unknown>): boolean {
+    const targetPlayers = (target['players'] as any[]) ?? [];
+    const displayedPlayers = ((this.displayedStateBlob()?.['players'] as any[]) ?? []);
+
+    for (const tp of targetPlayers) {
+      const playerId = tp['playerId'] as number;
+      const dp = displayedPlayers.find((p) => p['playerId'] === playerId);
+      const targetHands = (tp['hands'] as string[][]) ?? [];
+      const displayedHands = ((dp?.['hands'] as string[][]) ?? []);
+
+      if (targetHands.length !== displayedHands.length) return true;
+
+      for (let h = 0; h < targetHands.length; h++) {
+        const displayedHand = displayedHands[h] ?? [];
+        if (targetHands[h].length < displayedHand.length) return true;
+      }
+    }
+    return false;
   }
 
   private jumpTo(blob: Record<string, unknown> | null): void {
@@ -294,8 +320,7 @@ export class BlackjackStageManager {
             buildPlayerCardId(
               event.playerId,
               event.handIndex,
-              event.index,
-              event.card
+              event.index
             )
           );
         }
@@ -303,7 +328,7 @@ export class BlackjackStageManager {
       }
       case 'deal_dealer_upcard': {
         (next['dealerHand'] as string[]).push(event.card);
-        this.markEntering(buildDealerCardId(0, event.card));
+        this.markEntering(buildDealerCardId(0));
         break;
       }
       case 'deal_dealer_hole': {
@@ -313,14 +338,14 @@ export class BlackjackStageManager {
       case 'reveal_hole_card': {
         const hand = next['dealerHand'] as string[];
         hand[1] = event.card;
-        this.markEntering(buildDealerCardId(1, event.card));
+        this.markEntering(buildDealerCardId(1));
         break;
       }
       case 'dealer_draw': {
         const dealerHand = (next['dealerHand'] as string[]) ?? [];
         dealerHand.push(event.card);
         next['dealerHand'] = dealerHand;
-        this.markEntering(buildDealerCardId(event.index, event.card));
+        this.markEntering(buildDealerCardId(event.index));
         break;
       }
       case 'player_draw': {
@@ -330,7 +355,7 @@ export class BlackjackStageManager {
         if (player) {
           player['hands'][event.handIndex].push(event.card);
           this.markEntering(
-            buildPlayerCardId(event.playerId, event.handIndex, event.index, event.card)
+            buildPlayerCardId(event.playerId, event.handIndex, event.index)
           );
         }
         break;
