@@ -303,7 +303,7 @@
 
     .text-list li {
       display: grid;
-      grid-template-columns: 34px minmax(0, 1fr);
+      grid-template-columns: minmax(52px, max-content) minmax(0, 1fr);
       gap: 14px;
       align-items: start;
       list-style: none;
@@ -315,13 +315,241 @@
     .bullet {
       display: grid;
       place-items: center;
-      width: 34px;
+      min-width: 52px;
       height: 34px;
+      padding: 0 9px;
       border-radius: 11px;
       color: white;
+      font-size: 13px;
       background: linear-gradient(135deg, var(--accent), var(--accent-2));
       font-weight: 900;
       box-shadow: 0 8px 24px rgba(232, 93, 4, 0.22);
+    }
+
+    .page-preview {
+      position: relative;
+      overflow: hidden;
+      min-height: 360px;
+      border-radius: 24px;
+      background: #120c09;
+      border: 1px solid rgba(232, 93, 4, 0.28);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    .preview-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      height: 46px;
+      padding: 0 16px;
+      background: #1c130f;
+      border-bottom: 1px solid rgba(232, 93, 4, 0.2);
+    }
+
+    .preview-title {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .preview-pill {
+      padding: 6px 10px;
+      color: var(--accent-2);
+      background: rgba(232, 93, 4, 0.12);
+      border: 1px solid rgba(232, 93, 4, 0.25);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .preview-body {
+      padding: 18px;
+    }
+
+    .market-preview .preview-body {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .listing-card {
+      min-height: 240px;
+      padding: 13px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(232, 93, 4, 0.18);
+    }
+
+    .listing-card img {
+      display: block;
+      width: 86px;
+      height: 86px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      margin: 6px auto 14px;
+    }
+
+    .listing-card h4 {
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .listing-card p {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .listing-price {
+      display: inline-flex;
+      margin-top: 12px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      color: var(--gold);
+      background: rgba(255, 186, 8, 0.1);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .sold-tag {
+      display: inline-flex;
+      margin-top: 10px;
+      padding: 6px 9px;
+      color: #86efac;
+      background: rgba(34, 197, 94, 0.13);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+    }
+
+    .invest-preview .preview-body {
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .invest-card {
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(232, 93, 4, 0.18);
+      padding: 18px;
+    }
+
+    .invest-card img {
+      display: block;
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      margin: 0 auto 12px;
+    }
+
+    .invest-card h4 {
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .invest-card p {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .invest-chart {
+      position: relative;
+      min-height: 255px;
+      border-radius: 18px;
+      background:
+        linear-gradient(to top, rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+        rgba(255,255,255,0.025);
+      background-size: 100% 25%, 25% 100%;
+      border: 1px solid rgba(232, 93, 4, 0.18);
+    }
+
+    .invest-chart svg {
+      position: absolute;
+      inset: 24px;
+      width: calc(100% - 48px);
+      height: calc(100% - 48px);
+      overflow: visible;
+    }
+
+    .social-preview {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      min-height: 360px;
+    }
+
+    .social-sidebar {
+      padding: 14px;
+      background: #1c130f;
+      border-right: 1px solid rgba(232, 93, 4, 0.18);
+    }
+
+    .social-row {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 9px;
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .social-avatar {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      color: var(--accent-2);
+      background: rgba(232, 93, 4, 0.15);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .social-name {
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .social-message {
+      color: var(--soft);
+      font-size: 11px;
+    }
+
+    .chat-preview {
+      padding: 18px;
+    }
+
+    .chat-bubble {
+      width: fit-content;
+      max-width: 76%;
+      margin-bottom: 12px;
+      padding: 10px 13px;
+      border-radius: 16px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 12px;
+    }
+
+    .chat-bubble.own {
+      margin-left: auto;
+      color: #fff;
+      background: rgba(232, 93, 4, 0.58);
+      border-color: rgba(244, 140, 6, 0.35);
     }
 
     .cards {
@@ -656,7 +884,7 @@
 
     .closing {
       text-align: center;
-      width: min(1100px, 100%);
+      width: min(1320px, 94vw);
     }
 
     .cheesy {
@@ -670,7 +898,7 @@
       max-width: 100%;
       margin: 18px auto 0;
       padding: 0 0.05em;
-      font-size: clamp(44px, 7.5vw, 112px);
+      font-size: clamp(42px, 6.8vw, 102px);
       font-weight: 1000;
       line-height: 1.02;
       color: transparent;
@@ -678,8 +906,8 @@
       background-clip: text;
       background-image: linear-gradient(135deg, #fff7ed, #ffba08 35%, #f48c06 70%, #e85d04);
       filter: drop-shadow(0 20px 70px rgba(232, 93, 4, 0.34));
-      overflow-wrap: anywhere;
-      white-space: normal;
+      overflow-wrap: normal;
+      white-space: nowrap;
     }
 
     .controls {
@@ -786,6 +1014,17 @@
         grid-template-columns: 112px minmax(0, 1fr);
       }
 
+      .market-preview .preview-body,
+      .invest-preview .preview-body,
+      .social-preview {
+        grid-template-columns: 1fr;
+      }
+
+      .social-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid rgba(232, 93, 4, 0.18);
+      }
+
       .visual-stack {
         min-height: 280px;
       }
@@ -830,6 +1069,10 @@
       .nav-hint {
         display: none;
       }
+
+      .domain {
+        white-space: normal;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -863,7 +1106,7 @@
       <div class="ember"></div>
     </div>
 
-    <div class="nav-hint">Arrow keys or space</div>
+    <div class="nav-hint">Arrows / Space</div>
 
     <section class="slides">
       <article class="slide active" data-title="Intro">
@@ -875,7 +1118,7 @@
           </div>
           <span class="kicker">Final Sprint Presentation</span>
           <h1>EmberExchange</h1>
-          <p class="lead">A virtual marketplace and collection game where players collect rare stoves, trade with friends, follow prices, and play real-time mini-games.</p>
+          <p class="lead">Ember exchange is a game where every economical decision changes your fortune.</p>
           <div class="stats-row">
             <div class="stat"><strong>Collect</strong><span>rare stoves</span></div>
             <div class="stat"><strong>Trade</strong><span>with players</span></div>
@@ -890,11 +1133,10 @@
           <div>
             <span class="kicker">Project Overview</span>
             <h2>A trading game for digital stoves.</h2>
-            <p class="lead">EmberExchange combines collection, marketplace trading, price tracking, chat, and multiplayer games in one web app.</p>
+            <p class="lead">The project combines collection, trading, price tracking, chat, and multiplayer games in one web app.</p>
             <ul class="text-list">
               <li><span class="bullet">1</span><span>Players start with Coal, open lootboxes, and receive random stove collectibles.</span></li>
               <li><span class="bullet">2</span><span>Every stove has rarity, heat, collection value, and market history.</span></li>
-              <li><span class="bullet">3</span><span>The goal is to build a valuable collection and use the economy wisely.</span></li>
             </ul>
           </div>
           <div class="panel">
@@ -973,25 +1215,31 @@
           <div>
             <span class="kicker">Marketplace</span>
             <h2>Player-driven buying and selling.</h2>
-            <p class="lead">The marketplace lets players list stoves, buy instantly, inspect item history, and see what the community thinks something is worth.</p>
+            <p class="lead">Players list stoves, buy instantly, inspect details, and compare prices.</p>
           </div>
-          <div class="panel">
-            <div class="mini-grid">
-              <div class="mini-card">
-                <h3>List</h3>
-                <p>Players choose the price for their own stove listings.</p>
+          <div class="page-preview market-preview">
+            <div class="preview-bar">
+              <span class="preview-title">Marketplace</span>
+              <span class="preview-pill">Live Listings</span>
+            </div>
+            <div class="preview-body">
+              <div class="listing-card">
+                <img src="../src/frontend/public/assets/stove_sprites/legendary/dragon.png" alt="Dragon stove listing" />
+                <h4>Dragon Stove</h4>
+                <p>Legendary stove listed by a player.</p>
+                <span class="listing-price">42,000 Coal</span>
               </div>
-              <div class="mini-card">
-                <h3>Buy</h3>
-                <p>Other players can buy listings directly with Coal.</p>
+              <div class="listing-card">
+                <img src="../src/frontend/public/assets/stove_sprites/epic/steampunk.png" alt="Steampunk stove listing" />
+                <h4>Steampunk Stove</h4>
+                <p>Epic duplicate ready for trading.</p>
+                <span class="listing-price">12,500 Coal</span>
               </div>
-              <div class="mini-card">
-                <h3>History</h3>
-                <p>Price graphs help players understand value over time.</p>
-              </div>
-              <div class="mini-card">
-                <h3>Trust</h3>
-                <p>Sold states, ownership transfer, and item details make trades clear.</p>
+              <div class="listing-card">
+                <img src="../src/frontend/public/assets/stove_sprites/secret/earthbound-stove.png" alt="Earthbound stove listing" />
+                <h4>Earthbound Stove</h4>
+                <p>Secret listing with final sale state.</p>
+                <span class="sold-tag">Sold</span>
               </div>
             </div>
           </div>
@@ -1003,54 +1251,67 @@
           <div>
             <span class="kicker">Investing</span>
             <h2>Price history and market data.</h2>
-            <p class="lead">The investing page turns item prices into something players can follow like a small stock market.</p>
+            <p class="lead">The investing page shows how stove prices move over time.</p>
             <ul class="text-list">
               <li><span class="bullet">G</span><span>Graphs show price movement and trends.</span></li>
-              <li><span class="bullet">V</span><span>Players can compare rarity, demand, and history.</span></li>
-              <li><span class="bullet">S</span><span>Smart trading becomes part of the gameplay.</span></li>
+              <li><span class="bullet">V</span><span>Players compare rarity, demand, and history.</span></li>
             </ul>
           </div>
-          <div class="panel chart-panel">
-            <div class="chart-label">Average Price History</div>
-            <div class="price-pill">30,264 Coal</div>
-            <div class="chart-line">
-              <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                <defs>
-                  <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#f48c06" stop-opacity="0.35" />
-                    <stop offset="100%" stop-color="#f48c06" stop-opacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d="M0 70 L16 58 L34 64 L50 38 L67 43 L84 24 L100 18 L100 100 L0 100 Z" fill="url(#chartFill)" />
-                <path d="M0 70 L16 58 L34 64 L50 38 L67 43 L84 24 L100 18" fill="none" stroke="#f48c06" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
-              </svg>
+          <div class="page-preview invest-preview">
+            <div class="preview-bar">
+              <span class="preview-title">Investing</span>
+              <span class="preview-pill">30,264 Coal</span>
+            </div>
+            <div class="preview-body">
+              <div class="invest-card">
+                <img src="../src/frontend/public/assets/stove_sprites/secret/earthbound-stove.png" alt="Earthbound stove" />
+                <h4>Earthbound Stove</h4>
+                <p>Secret rarity price overview.</p>
+              </div>
+              <div class="invest-chart">
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="investFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stop-color="#f48c06" stop-opacity="0.35" />
+                      <stop offset="100%" stop-color="#f48c06" stop-opacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 70 L16 58 L34 64 L50 38 L67 43 L84 24 L100 18 L100 100 L0 100 Z" fill="url(#investFill)" />
+                  <path d="M0 70 L16 58 L34 64 L50 38 L67 43 L84 24 L100 18" fill="none" stroke="#f48c06" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
       </article>
 
       <article class="slide" data-title="Social">
-        <div class="content">
-          <div class="section-title">
+        <div class="content split">
+          <div>
             <span class="kicker">Socials</span>
             <h2>Friends, chat, and trade offers.</h2>
-            <p class="lead">The social system brings friend conversations, marketplace messages, read states, and direct trade offers together.</p>
+            <p class="lead">Socials connect players through friend chats, marketplace messages, and direct trade offers.</p>
+            <ul class="text-list">
+              <li><span class="bullet">Chat</span><span>Messages show previews, unread counts, and read signs.</span></li>
+              <li><span class="bullet">Trade</span><span>Players can send item offers inside conversations.</span></li>
+            </ul>
           </div>
-          <div class="cards">
-            <div class="feature-card purple">
-              <div class="icon-box"><img src="../src/frontend/public/icon/socials.png" alt="" /></div>
-              <h3>Friends</h3>
-              <p>Add friends, see conversations, and keep marketplace chat separate.</p>
+          <div class="page-preview social-preview">
+            <div class="social-sidebar">
+              <div class="social-row">
+                <div class="social-avatar">T</div>
+                <div><div class="social-name">timon</div><div class="social-message">Last offer sent</div></div>
+              </div>
+              <div class="social-row">
+                <div class="social-avatar">L</div>
+                <div><div class="social-name">Laurenz</div><div class="social-message">No messages yet</div></div>
+              </div>
             </div>
-            <div class="feature-card orange">
-              <div class="icon-box"><img src="../src/frontend/public/icon/marketplace.png" alt="" /></div>
-              <h3>Trade Offers</h3>
-              <p>Send offers directly inside chat, inspect stoves, accept, or decline.</p>
-            </div>
-            <div class="feature-card green">
-              <div class="icon-box"><img src="../src/frontend/public/icon/collections.png" alt="" /></div>
-              <h3>Read State</h3>
-              <p>Unread counts, last message previews, and read signs make chats feel complete.</p>
+            <div class="chat-preview">
+              <div class="chat-bubble">Can you trade the Dragon Stove?</div>
+              <div class="chat-bubble own">I can make an offer.</div>
+              <div class="chat-bubble">Sounds good.</div>
+              <div class="chat-bubble own">Trade Offer: Dragon Stove read</div>
             </div>
           </div>
         </div>
@@ -1158,7 +1419,7 @@
           <div>
             <span class="kicker">Final Sprint</span>
             <h2>Final sprint focus.</h2>
-            <p class="lead">The final sprint focused on polish, reliability, and a clear presentation of the finished app.</p>
+            <p class="lead">The final sprint focused on polish, reliability, and presentation readiness.</p>
           </div>
           <div class="panel">
             <ul class="text-list">
