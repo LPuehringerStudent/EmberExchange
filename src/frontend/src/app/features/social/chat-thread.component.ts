@@ -1,4 +1,4 @@
-import { Component, input, output, viewChild, ChangeDetectionStrategy, effect, HostListener, signal } from '@angular/core';
+import { Component, input, output, viewChild, ChangeDetectionStrategy, effect, HostListener, signal, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { ChatMessageRow } from '@shared/model';
@@ -220,8 +220,9 @@ export class ChatThreadComponent {
   onUnfriend = output<number>();
   onViewProfile = output<number>();
 
-  private messagesContainer = viewChild<HTMLDivElement>('messagesContainer');
+  private messagesContainer = viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
   private lastMessageCount = 0;
+  private scrollFrame: number | null = null;
   personMenuOpen = signal(false);
 
   constructor() {
@@ -278,15 +279,24 @@ export class ChatThreadComponent {
   }
 
   private scheduleScrollToBottom(): void {
+    if (this.scrollFrame !== null) {
+      cancelAnimationFrame(this.scrollFrame);
+    }
+
     queueMicrotask(() => {
-      requestAnimationFrame(() => this.scrollToBottom());
+      this.scrollFrame = requestAnimationFrame(() => {
+        this.scrollToBottom();
+        requestAnimationFrame(() => this.scrollToBottom());
+        setTimeout(() => this.scrollToBottom(), 80);
+      });
     });
   }
 
   private scrollToBottom(): void {
-    const el = this.messagesContainer();
+    const el = this.messagesContainer()?.nativeElement;
     if (el) {
       el.scrollTop = el.scrollHeight;
+      el.scrollTo({ top: el.scrollHeight, behavior: 'auto' });
     }
   }
 }
