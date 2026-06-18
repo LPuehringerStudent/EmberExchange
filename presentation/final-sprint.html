@@ -6,10 +6,10 @@
   <title>EmberExchange Final Sprint Presentation</title>
   <style>
     :root {
-      --bg: #120c09;
-      --bg-deep: #080504;
-      --surface: rgba(28, 19, 15, 0.84);
-      --surface-strong: rgba(37, 26, 21, 0.95);
+      --bg: #0d0705;
+      --bg-deep: #030202;
+      --surface: rgba(18, 12, 9, 0.9);
+      --surface-strong: rgba(26, 17, 13, 0.96);
       --border: rgba(232, 93, 4, 0.2);
       --border-strong: rgba(244, 140, 6, 0.5);
       --text: #fff7ed;
@@ -22,7 +22,7 @@
       --blue: #3b82f6;
       --green: #22c55e;
       --danger: #ef4444;
-      --shadow: rgba(0, 0, 0, 0.45);
+      --shadow: rgba(0, 0, 0, 0.62);
     }
 
     * {
@@ -55,9 +55,9 @@
       height: 100vh;
       overflow: hidden;
       background:
-        radial-gradient(circle at 12% 85%, rgba(232, 93, 4, 0.18), transparent 34%),
-        radial-gradient(circle at 90% 14%, rgba(255, 186, 8, 0.08), transparent 30%),
-        linear-gradient(135deg, #180d08 0%, #120c09 45%, #080504 100%);
+        radial-gradient(circle at 12% 85%, rgba(232, 93, 4, 0.12), transparent 34%),
+        radial-gradient(circle at 90% 14%, rgba(255, 186, 8, 0.05), transparent 30%),
+        linear-gradient(135deg, #0f0704 0%, #090504 48%, #030202 100%);
     }
 
     .bg-grid,
@@ -72,16 +72,16 @@
 
     .bg-grid {
       background-image:
-        linear-gradient(rgba(232, 93, 4, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(232, 93, 4, 0.035) 1px, transparent 1px);
+        linear-gradient(rgba(232, 93, 4, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 93, 4, 0.025) 1px, transparent 1px);
       background-size: 64px 64px;
       mask-image: linear-gradient(to bottom, black, transparent 88%);
     }
 
     .heat-haze {
       background:
-        radial-gradient(ellipse at 50% 110%, rgba(232, 93, 4, 0.16), transparent 58%),
-        linear-gradient(to top, rgba(232, 93, 4, 0.06), transparent 60%);
+        radial-gradient(ellipse at 50% 110%, rgba(232, 93, 4, 0.1), transparent 58%),
+        linear-gradient(to top, rgba(232, 93, 4, 0.035), transparent 60%);
       animation: haze 7s ease-in-out infinite;
     }
 
@@ -93,7 +93,7 @@
       background: linear-gradient(to top, #e85d04 0%, #f48c06 24%, #ffba08 54%, rgba(255, 186, 8, 0.22) 72%, transparent 100%);
       border-radius: 52% 48% 35% 35%;
       filter: blur(16px);
-      opacity: 0.42;
+      opacity: 0.26;
       animation: flicker 4.6s ease-in-out infinite;
     }
 
@@ -491,6 +491,318 @@
       width: calc(100% - 48px);
       height: calc(100% - 48px);
       overflow: visible;
+    }
+
+    .terminal-preview {
+      min-height: 560px;
+      background: #090605;
+    }
+
+    .terminal-body {
+      display: grid;
+      grid-template-columns: 210px minmax(0, 1fr);
+      gap: 14px;
+      padding: 14px;
+      height: calc(100% - 46px);
+    }
+
+    .terminal-sidebar,
+    .terminal-main,
+    .terminal-card {
+      border: 1px solid rgba(232, 93, 4, 0.18);
+      background: rgba(18, 12, 9, 0.88);
+      border-radius: 16px;
+    }
+
+    .terminal-sidebar {
+      padding: 12px;
+    }
+
+    .terminal-label {
+      margin-bottom: 10px;
+      color: var(--soft);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .terminal-search {
+      height: 30px;
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      color: var(--soft);
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 11px;
+    }
+
+    .terminal-asset {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 9px;
+      padding: 9px;
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.032);
+      border: 1px solid rgba(255, 255, 255, 0.055);
+    }
+
+    .terminal-asset.active {
+      border-color: rgba(244, 140, 6, 0.5);
+      background: rgba(232, 93, 4, 0.12);
+    }
+
+    .terminal-asset img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .asset-line,
+    .asset-meta-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .asset-line strong {
+      color: var(--text);
+      font-size: 11px;
+    }
+
+    .asset-line span {
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .asset-meta-line {
+      margin-top: 3px;
+      color: var(--soft);
+      font-size: 10px;
+    }
+
+    .asset-meta-line .positive {
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .asset-meta-line .negative {
+      color: var(--danger);
+      font-weight: 900;
+    }
+
+    .terminal-main {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.032);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .terminal-identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .terminal-sprite {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+    }
+
+    .terminal-sprite img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .terminal-name {
+      color: var(--text);
+      font-size: 17px;
+      font-weight: 950;
+    }
+
+    .terminal-sub {
+      margin-top: 4px;
+      color: var(--soft);
+      font-size: 11px;
+    }
+
+    .terminal-price {
+      text-align: right;
+    }
+
+    .terminal-price strong {
+      display: block;
+      color: var(--text);
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .terminal-price span {
+      display: inline-flex;
+      margin-top: 6px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      color: var(--green);
+      background: rgba(34, 197, 94, 0.12);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .terminal-chart {
+      position: relative;
+      min-height: 255px;
+      padding: 14px 14px 8px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+    }
+
+    .terminal-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .time-tabs {
+      display: flex;
+      gap: 6px;
+    }
+
+    .time-tabs span,
+    .terminal-tooltip {
+      padding: 6px 10px;
+      border-radius: 8px;
+      color: var(--soft);
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .time-tabs .active {
+      color: white;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .terminal-tooltip {
+      color: var(--text);
+    }
+
+    .terminal-plot {
+      position: relative;
+      height: 190px;
+      padding-left: 48px;
+    }
+
+    .terminal-axis {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: var(--soft);
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .terminal-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .terminal-bottom {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 210px;
+      gap: 12px;
+    }
+
+    .terminal-card {
+      padding: 12px;
+    }
+
+    .terminal-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .terminal-stat {
+      display: grid;
+      gap: 4px;
+    }
+
+    .terminal-stat span:first-child,
+    .order-row span:first-child {
+      color: var(--soft);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .terminal-stat span:last-child,
+    .order-row span:last-child {
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .terminal-stat .positive {
+      color: var(--green);
+    }
+
+    .order-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .terminal-button {
+      margin-top: 12px;
+      padding: 10px 12px;
+      text-align: center;
+      border-radius: 10px;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      font-size: 12px;
+      font-weight: 950;
     }
 
     .social-preview {
@@ -1030,6 +1342,26 @@
         grid-template-columns: 1fr;
       }
 
+      .terminal-body,
+      .terminal-bottom {
+        grid-template-columns: 1fr;
+      }
+
+      .terminal-preview {
+        min-height: 720px;
+      }
+
+      .terminal-sidebar {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .terminal-label,
+      .terminal-search {
+        grid-column: 1 / -1;
+      }
+
       .social-sidebar {
         border-right: 0;
         border-bottom: 1px solid rgba(232, 93, 4, 0.18);
@@ -1074,6 +1406,25 @@
       .mini-card,
       .tech-card {
         min-height: auto;
+      }
+
+      .terminal-preview {
+        min-height: 860px;
+      }
+
+      .terminal-sidebar,
+      .terminal-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .terminal-header,
+      .terminal-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .terminal-price {
+        text-align: left;
       }
 
       .nav-hint {
@@ -1128,7 +1479,7 @@
           </div>
           <span class="kicker">Final Sprint Presentation</span>
           <h1>EmberExchange</h1>
-          <p class="lead">Ember exchange is a game where every economical decision changes your fortune.</p>
+          <p class="lead">Ember exchange is a game where every economical decision changes your fortune</p>
           <div class="stats-row">
             <div class="stat"><strong>Collect</strong><span>rare stoves</span></div>
             <div class="stat"><strong>Trade</strong><span>with players</span></div>
@@ -1142,11 +1493,11 @@
         <div class="content split">
           <div>
             <span class="kicker">Project Overview</span>
-            <h2>A trading game for digital stoves.</h2>
-            <p class="lead">The project combines collection, trading, price tracking, chat, and multiplayer games in one web app.</p>
+            <h2>A trading game for digital stoves</h2>
+            <p class="lead">The project combines collection, trading, price tracking, chat, and multiplayer games in one web app</p>
             <ul class="text-list">
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span>Players start with Coal, open lootboxes, and receive random stove collectibles.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/></svg></span><span>Every stove has rarity, heat, collection value, and market history.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span>Players start with Coal, open lootboxes, and receive random stove collectibles</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/></svg></span><span>Every stove has rarity, heat, collection value, and market history</span></li>
             </ul>
           </div>
           <div class="panel">
@@ -1164,28 +1515,28 @@
         <div class="content">
           <div class="section-title">
             <span class="kicker">Core Features</span>
-            <h2>The main parts of the project.</h2>
+            <h2>The main parts of the project</h2>
           </div>
           <div class="cards four">
             <div class="feature-card orange">
               <div class="icon-box"><img src="../src/frontend/public/icon/lootboxes.png" alt="" /></div>
-              <h3>Open</h3>
-              <p>Spend Coal on lootboxes and reveal stoves from Common to Secret rarity.</p>
+              <h3>Lootboxes</h3>
+              <p>Spend Coal on lootboxes and reveal stoves from Common to Secret rarity</p>
             </div>
             <div class="feature-card purple">
               <div class="icon-box"><img src="../src/frontend/public/icon/marketplace.png" alt="" /></div>
-              <h3>Trade</h3>
-              <p>Sell duplicates, buy missing pieces, and negotiate with friends.</p>
+              <h3>Marketplace</h3>
+              <p>Sell duplicates, buy missing pieces, and negotiate with friends</p>
             </div>
             <div class="feature-card green">
               <div class="icon-box"><img src="../src/frontend/public/icon/the_forge.png" alt="" /></div>
-              <h3>Upgrade</h3>
-              <p>Use the Forge and Sparks to improve your collection and heat levels.</p>
+              <h3>The Forge</h3>
+              <p>Use the Forge and Sparks to improve your collection and heat levels</p>
             </div>
             <div class="feature-card blue">
               <div class="icon-box"><img src="../src/frontend/public/icon/games.png" alt="" /></div>
-              <h3>Play</h3>
-              <p>Use your Coal in Poker, Blackjack, and Roulette for more risk and reward.</p>
+              <h3>Mini-Games</h3>
+              <p>Use your Coal in Poker, Blackjack, and Roulette for more risk and reward</p>
             </div>
           </div>
         </div>
@@ -1195,12 +1546,12 @@
         <div class="content split">
           <div>
             <span class="kicker">Lootboxes</span>
-            <h2>Lootboxes and stove rarities.</h2>
-            <p class="lead">Players open animated chests and receive stoves with different rarities. Higher rarity usually means higher value.</p>
+            <h2>Lootboxes</h2>
+            <p class="lead">Players open lootboxes and receive stoves with different rarities Higher rarity usually means higher value</p>
             <ul class="text-list">
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></span><span>Common stoves are easy to get and useful for forging.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2Z"/></svg></span><span>Legendary and Secret stoves are rare, valuable, and visually distinct.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 14.76V5a2 2 0 0 0-4 0v9.76a4 4 0 1 0 4 0Z"/><path d="M12 9v6"/></svg></span><span>Heat levels add another layer of value beyond rarity.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></span><span>Common stoves are easy to get and useful for forging</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2Z"/></svg></span><span>Legendary and Secret stoves are rare, valuable, and visually distinct</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 14.76V5a2 2 0 0 0-4 0v9.76a4 4 0 1 0 4 0Z"/><path d="M12 9v6"/></svg></span><span>Heat levels add another layer of value beyond rarity</span></li>
             </ul>
           </div>
           <div class="visual-stack">
@@ -1224,8 +1575,8 @@
         <div class="content wide-grid">
           <div>
             <span class="kicker">Marketplace</span>
-            <h2>Player-driven buying and selling.</h2>
-            <p class="lead">Players list stoves, buy instantly, inspect details, and compare prices.</p>
+            <h2>Marketplace</h2>
+            <p class="lead">Players list stoves, buy instantly, inspect details, and compare prices</p>
           </div>
           <div class="page-preview market-preview">
             <div class="preview-bar">
@@ -1236,19 +1587,19 @@
               <div class="listing-card">
                 <img src="../src/frontend/public/assets/stove_sprites/legendary/dragon.png" alt="Dragon stove listing" />
                 <h4>Dragon Stove</h4>
-                <p>Legendary stove listed by a player.</p>
+                <p>Legendary stove listed by a player</p>
                 <span class="listing-price">42,000 Coal</span>
               </div>
               <div class="listing-card">
                 <img src="../src/frontend/public/assets/stove_sprites/epic/steampunk.png" alt="Steampunk stove listing" />
                 <h4>Steampunk Stove</h4>
-                <p>Epic duplicate ready for trading.</p>
+                <p>Epic duplicate ready for trading</p>
                 <span class="listing-price">12,500 Coal</span>
               </div>
               <div class="listing-card">
                 <img src="../src/frontend/public/assets/stove_sprites/secret/earthbound-stove.png" alt="Earthbound stove listing" />
                 <h4>Earthbound Stove</h4>
-                <p>Secret listing with final sale state.</p>
+                <p>Secret listing with final sale state</p>
                 <span class="sold-tag">Sold</span>
               </div>
             </div>
@@ -1260,35 +1611,116 @@
         <div class="content wide-grid">
           <div>
             <span class="kicker">Investing</span>
-            <h2>Price history and market data.</h2>
-            <p class="lead">The investing page shows how stove prices move over time.</p>
+            <h2>Investing</h2>
+            <p class="lead">The investing page shows how stove prices move over time</p>
             <ul class="text-list">
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-7"/></svg></span><span>Graphs show price movement and trends.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h13"/><path d="m14 4 3 3-3 3"/><path d="M20 17H7"/><path d="m10 14-3 3 3 3"/></svg></span><span>Players compare rarity, demand, and history.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-7"/></svg></span><span>Graphs show price movement and trends</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h13"/><path d="m14 4 3 3-3 3"/><path d="M20 17H7"/><path d="m10 14-3 3 3 3"/></svg></span><span>Players compare rarity, demand, and history</span></li>
             </ul>
           </div>
-          <div class="page-preview invest-preview">
+          <div class="page-preview terminal-preview">
             <div class="preview-bar">
-              <span class="preview-title">Investing</span>
-              <span class="preview-pill">30,264 Coal</span>
+              <span class="preview-title">Investment Terminal</span>
+              <span class="preview-pill">65 Sparks</span>
             </div>
-            <div class="preview-body">
-              <div class="invest-card">
-                <img src="../src/frontend/public/assets/stove_sprites/secret/earthbound-stove.png" alt="Earthbound stove" />
-                <h4>Earthbound Stove</h4>
-                <p>Secret rarity price overview.</p>
-              </div>
-              <div class="invest-chart">
-                <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                  <defs>
-                    <linearGradient id="investFill" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stop-color="#f48c06" stop-opacity="0.35" />
-                      <stop offset="100%" stop-color="#f48c06" stop-opacity="0" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M0 70 L16 58 L34 64 L50 38 L67 43 L84 24 L100 18 L100 100 L0 100 Z" fill="url(#investFill)" />
-                  <path d="M0 70 L16 58 L34 64 L50 38 L67 43 L84 24 L100 18" fill="none" stroke="#f48c06" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
-                </svg>
+            <div class="terminal-body">
+              <aside class="terminal-sidebar">
+                <div class="terminal-label">Market</div>
+                <div class="terminal-search">Search indices</div>
+                <div class="terminal-asset active">
+                  <img src="../src/frontend/public/assets/stove_sprites/secret/earthbound-stove.png" alt="Earthbound stove" />
+                  <div>
+                    <div class="asset-line"><strong>EARTH</strong><span>30,264 Coal</span></div>
+                    <div class="asset-meta-line"><span>Earthbound Stove</span><span class="positive">+8.4%</span></div>
+                  </div>
+                </div>
+                <div class="terminal-asset">
+                  <img src="../src/frontend/public/assets/stove_sprites/legendary/dragon.png" alt="Dragon stove" />
+                  <div>
+                    <div class="asset-line"><strong>DRGN</strong><span>18,920 Coal</span></div>
+                    <div class="asset-meta-line"><span>Dragon Stove</span><span class="negative">-2.1%</span></div>
+                  </div>
+                </div>
+                <div class="terminal-asset">
+                  <img src="../src/frontend/public/assets/stove_sprites/epic/steampunk.png" alt="Steampunk stove" />
+                  <div>
+                    <div class="asset-line"><strong>STMP</strong><span>7,540 Coal</span></div>
+                    <div class="asset-meta-line"><span>Steampunk Stove</span><span class="positive">+3.6%</span></div>
+                  </div>
+                </div>
+              </aside>
+              <div class="terminal-main">
+                <div class="terminal-header">
+                  <div class="terminal-identity">
+                    <div class="terminal-sprite">
+                      <img src="../src/frontend/public/assets/stove_sprites/secret/earthbound-stove.png" alt="Earthbound stove" />
+                    </div>
+                    <div>
+                      <div class="terminal-name">Earthbound Stove <span style="color:var(--soft);font-size:12px">EARTH</span></div>
+                      <div class="terminal-sub">Stove type · Secret rarity</div>
+                    </div>
+                  </div>
+                  <div class="terminal-price">
+                    <strong>30,264 Coal</strong>
+                    <span>+8.4%</span>
+                  </div>
+                </div>
+                <div class="terminal-chart">
+                  <div class="terminal-toolbar">
+                    <div class="time-tabs"><span>1D</span><span>1W</span><span class="active">1M</span></div>
+                    <div class="terminal-tooltip">30,264 Coal · Jun 18</div>
+                  </div>
+                  <div class="terminal-plot">
+                    <div class="terminal-axis">
+                      <span>33.0k</span>
+                      <span>30.5k</span>
+                      <span>28.0k</span>
+                      <span>25.5k</span>
+                      <span>23.0k</span>
+                    </div>
+                    <svg class="terminal-svg" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="terminalAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#e85d04" stop-opacity="0.35" />
+                          <stop offset="100%" stop-color="#e85d04" stop-opacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <line x1="0" y1="4" x2="100" y2="4" stroke="rgba(255,255,255,.05)" />
+                      <line x1="0" y1="13" x2="100" y2="13" stroke="rgba(255,255,255,.05)" />
+                      <line x1="0" y1="22" x2="100" y2="22" stroke="rgba(255,255,255,.05)" />
+                      <line x1="0" y1="31" x2="100" y2="31" stroke="rgba(255,255,255,.05)" />
+                      <path d="M0 30 L14 26 L28 29 L42 21 L56 15 L70 18 L84 10 L100 7 L100 40 L0 40 Z" fill="url(#terminalAreaGradient)" />
+                      <line x1="0" y1="30" x2="14" y2="26" stroke="#22c55e" stroke-width="2.1" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                      <line x1="14" y1="26" x2="28" y2="29" stroke="#ef4444" stroke-width="2.1" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                      <line x1="28" y1="29" x2="42" y2="21" stroke="#22c55e" stroke-width="2.1" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                      <line x1="42" y1="21" x2="56" y2="15" stroke="#22c55e" stroke-width="2.1" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                      <line x1="56" y1="15" x2="70" y2="18" stroke="#ef4444" stroke-width="2.1" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                      <line x1="70" y1="18" x2="84" y2="10" stroke="#22c55e" stroke-width="2.1" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                      <line x1="84" y1="10" x2="100" y2="7" stroke="#22c55e" stroke-width="2.1" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                      <circle cx="100" cy="7" r="1.2" fill="#f48c06" stroke="#090605" stroke-width="0.8" vector-effect="non-scaling-stroke" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="terminal-bottom">
+                  <div class="terminal-card">
+                    <div class="terminal-label">Market Stats</div>
+                    <div class="terminal-stats">
+                      <div class="terminal-stat"><span>Period High</span><span>32,870 Coal</span></div>
+                      <div class="terminal-stat"><span>Period Low</span><span>24,910 Coal</span></div>
+                      <div class="terminal-stat"><span>Period Change</span><span class="positive">+8.4%</span></div>
+                      <div class="terminal-stat"><span>30d Volume</span><span>181,000 Coal</span></div>
+                      <div class="terminal-stat"><span>Total Minted</span><span>14</span></div>
+                      <div class="terminal-stat"><span>Listed</span><span>3</span></div>
+                    </div>
+                  </div>
+                  <div class="terminal-card">
+                    <div class="terminal-label">Invest</div>
+                    <div class="order-row"><span>Price / Share</span><span>30,264 Coal</span></div>
+                    <div class="order-row"><span>Quantity</span><span>1</span></div>
+                    <div class="order-row"><span>Total Cost</span><span>30,264 Coal</span></div>
+                    <div class="terminal-button">Execute Investment</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1299,11 +1731,11 @@
         <div class="content split">
           <div>
             <span class="kicker">Socials</span>
-            <h2>Friends, chat, and trade offers.</h2>
-            <p class="lead">Socials connect players through friend chats, marketplace messages, and direct trade offers.</p>
+            <h2>Socials</h2>
+            <p class="lead">Socials connect players through friend chats, marketplace messages, and direct trade offers</p>
             <ul class="text-list">
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg></span><span>Messages show previews, unread counts, and read signs.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span><span>Players can send item offers inside conversations.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg></span><span>Messages show previews, unread counts, and read signs</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span><span>Players can send item offers inside conversations</span></li>
             </ul>
           </div>
           <div class="page-preview social-preview">
@@ -1319,8 +1751,8 @@
             </div>
             <div class="chat-preview">
               <div class="chat-bubble">Can you trade the Dragon Stove?</div>
-              <div class="chat-bubble own">I can make an offer.</div>
-              <div class="chat-bubble">Sounds good.</div>
+              <div class="chat-bubble own">I can make an offer</div>
+              <div class="chat-bubble">Sounds good</div>
               <div class="chat-bubble own">Trade Offer: Dragon Stove read</div>
             </div>
           </div>
@@ -1336,12 +1768,12 @@
           </div>
           <div>
             <span class="kicker">Forge And Collections</span>
-            <h2>Forge, Sparks, and collections.</h2>
-            <p class="lead">Players can turn extra stoves into upgrades, Sparks, and collection progress.</p>
+            <h2>The Forge</h2>
+            <p class="lead">Players can turn extra stoves into upgrades, Sparks, and collection progress</p>
             <ul class="text-list">
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 8 4-8 4-8-4 8-4Z"/><path d="m4 10 8 4 8-4"/><path d="m4 14 8 4 8-4"/></svg></span><span>Six stoves of one rarity can become one stove of the next rarity.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h8l-1 8 11-14h-8l1-6Z"/></svg></span><span>Unwanted stoves can be salvaged into Sparks.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span>Collections reward players for completing themed stove sets.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 8 4-8 4-8-4 8-4Z"/><path d="m4 10 8 4 8-4"/><path d="m4 14 8 4 8-4"/></svg></span><span>Six stoves of one rarity can become one stove of the next rarity</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h8l-1 8 11-14h-8l1-6Z"/></svg></span><span>Unwanted stoves can be salvaged into Sparks</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span>Collections reward players for completing themed stove sets</span></li>
             </ul>
           </div>
         </div>
@@ -1351,8 +1783,8 @@
         <div class="content">
           <div class="section-title">
             <span class="kicker">Mini-Games</span>
-            <h2>Real-time mini-games.</h2>
-            <p class="lead">Poker, Blackjack, and Roulette let players use Coal in live game rooms.</p>
+            <h2>Mini-Games</h2>
+            <p class="lead">Poker, Blackjack, and Roulette let players use Coal in live game rooms</p>
           </div>
           <div class="games-list">
             <div class="game-row">
@@ -1362,7 +1794,7 @@
               </div>
               <div>
                 <h3>Poker</h3>
-                <p>Texas Hold'em with live rooms, turns, betting, and player actions.</p>
+                <p>Texas Hold'em with live rooms, turns, betting, and player actions</p>
               </div>
             </div>
             <div class="game-row">
@@ -1372,7 +1804,7 @@
               </div>
               <div>
                 <h3>Blackjack</h3>
-                <p>Players hit, stand, double, and try to get closest to 21.</p>
+                <p>Players hit, stand, double, and try to get closest to 21</p>
               </div>
             </div>
             <div class="game-row">
@@ -1381,7 +1813,7 @@
               </div>
               <div>
                 <h3>Roulette</h3>
-                <p>Players bet on a number, color, or range before the wheel spins.</p>
+                <p>Players bet on a number, color, or range before the wheel spins</p>
               </div>
             </div>
           </div>
@@ -1392,33 +1824,33 @@
         <div class="content">
           <div class="section-title">
             <span class="kicker">Technology</span>
-            <h2>Full-stack implementation.</h2>
-            <p class="lead">The project includes database logic, authentication, real-time communication, security, and deployment.</p>
+            <h2>Full-stack implementation</h2>
+            <p class="lead">The project includes database logic, authentication, real-time communication, security, and deployment</p>
           </div>
           <div class="tech-grid">
             <div class="tech-card">
               <h3>Angular Frontend</h3>
-              <p>Standalone components, routing, services, signals, and a polished responsive interface.</p>
+              <p>Standalone components, routing, services, signals, and a polished responsive interface</p>
             </div>
             <div class="tech-card">
               <h3>Express Backend</h3>
-              <p>TypeScript REST API with service layers for players, stoves, marketplace, chat, and games.</p>
+              <p>TypeScript REST API with service layers for players, stoves, marketplace, chat, and games</p>
             </div>
             <div class="tech-card">
               <h3>PostgreSQL</h3>
-              <p>Persistent storage for accounts, inventory, trades, prices, messages, and game data.</p>
+              <p>Persistent storage for accounts, inventory, trades, prices, messages, and game data</p>
             </div>
             <div class="tech-card">
               <h3>WebSockets</h3>
-              <p>Live chat, game rooms, read receipts, and real-time multiplayer state.</p>
+              <p>Live chat, game rooms, read receipts, and real-time multiplayer state</p>
             </div>
             <div class="tech-card">
               <h3>Security</h3>
-              <p>Sessions, rate limiting, Turnstile, IP bans, honeypots, request logs, and admin protections.</p>
+              <p>Sessions, rate limiting, Turnstile, IP bans, honeypots, request logs, and admin protections</p>
             </div>
             <div class="tech-card">
               <h3>Deployment</h3>
-              <p>Production-ready build served through Render with health checks and scheduled jobs.</p>
+              <p>Production-ready build served through Render with health checks and scheduled jobs</p>
             </div>
           </div>
         </div>
@@ -1428,15 +1860,15 @@
         <div class="content split">
           <div>
             <span class="kicker">Final Sprint</span>
-            <h2>Final sprint focus.</h2>
-            <p class="lead">The final sprint focused on polish, reliability, and presentation readiness.</p>
+            <h2>Final sprint focus</h2>
+            <p class="lead">The final sprint focused on polish, reliability, and presentation readiness</p>
           </div>
           <div class="panel">
             <ul class="text-list">
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span><span>Improved marketplace, socials, and page-level polish.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><span>Clearer states for sold items, read messages, ownership, and scrolling.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/></svg></span><span>More consistent graph and pricing behavior across pages.</span></li>
-              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H4Z"/><path d="M12 16v4"/><path d="M8 20h8"/></svg></span><span>Presentation-ready explanation of what the project does.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span><span>Improved marketplace, socials, and page-level polish</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><span>Clearer states for sold items, read messages, ownership, and scrolling</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/></svg></span><span>More consistent graph and pricing behavior across pages</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H4Z"/><path d="M12 16v4"/><path d="M8 20h8"/></svg></span><span>Presentation-ready explanation of what the project does</span></li>
             </ul>
           </div>
         </div>
