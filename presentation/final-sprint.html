@@ -326,6 +326,16 @@
       box-shadow: 0 8px 24px rgba(232, 93, 4, 0.22);
     }
 
+    .bullet svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     .page-preview {
       position: relative;
       overflow: hidden;
@@ -1135,8 +1145,8 @@
             <h2>A trading game for digital stoves.</h2>
             <p class="lead">The project combines collection, trading, price tracking, chat, and multiplayer games in one web app.</p>
             <ul class="text-list">
-              <li><span class="bullet">1</span><span>Players start with Coal, open lootboxes, and receive random stove collectibles.</span></li>
-              <li><span class="bullet">2</span><span>Every stove has rarity, heat, collection value, and market history.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span>Players start with Coal, open lootboxes, and receive random stove collectibles.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.5 1.5-3.5"/></svg></span><span>Every stove has rarity, heat, collection value, and market history.</span></li>
             </ul>
           </div>
           <div class="panel">
@@ -1188,9 +1198,9 @@
             <h2>Lootboxes and stove rarities.</h2>
             <p class="lead">Players open animated chests and receive stoves with different rarities. Higher rarity usually means higher value.</p>
             <ul class="text-list">
-              <li><span class="bullet">C</span><span>Common stoves are easy to get and useful for forging.</span></li>
-              <li><span class="bullet">L</span><span>Legendary and Secret stoves are rare, valuable, and visually distinct.</span></li>
-              <li><span class="bullet">H</span><span>Heat levels add another layer of value beyond rarity.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></span><span>Common stoves are easy to get and useful for forging.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2Z"/></svg></span><span>Legendary and Secret stoves are rare, valuable, and visually distinct.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 14.76V5a2 2 0 0 0-4 0v9.76a4 4 0 1 0 4 0Z"/><path d="M12 9v6"/></svg></span><span>Heat levels add another layer of value beyond rarity.</span></li>
             </ul>
           </div>
           <div class="visual-stack">
@@ -1253,8 +1263,8 @@
             <h2>Price history and market data.</h2>
             <p class="lead">The investing page shows how stove prices move over time.</p>
             <ul class="text-list">
-              <li><span class="bullet">G</span><span>Graphs show price movement and trends.</span></li>
-              <li><span class="bullet">V</span><span>Players compare rarity, demand, and history.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-7"/></svg></span><span>Graphs show price movement and trends.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h13"/><path d="m14 4 3 3-3 3"/><path d="M20 17H7"/><path d="m10 14-3 3 3 3"/></svg></span><span>Players compare rarity, demand, and history.</span></li>
             </ul>
           </div>
           <div class="page-preview invest-preview">
@@ -1292,8 +1302,8 @@
             <h2>Friends, chat, and trade offers.</h2>
             <p class="lead">Socials connect players through friend chats, marketplace messages, and direct trade offers.</p>
             <ul class="text-list">
-              <li><span class="bullet">Chat</span><span>Messages show previews, unread counts, and read signs.</span></li>
-              <li><span class="bullet">Trade</span><span>Players can send item offers inside conversations.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg></span><span>Messages show previews, unread counts, and read signs.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span><span>Players can send item offers inside conversations.</span></li>
             </ul>
           </div>
           <div class="page-preview social-preview">
@@ -1329,9 +1339,9 @@
             <h2>Forge, Sparks, and collections.</h2>
             <p class="lead">Players can turn extra stoves into upgrades, Sparks, and collection progress.</p>
             <ul class="text-list">
-              <li><span class="bullet">6x</span><span>Six stoves of one rarity can become one stove of the next rarity.</span></li>
-              <li><span class="bullet">S</span><span>Unwanted stoves can be salvaged into Sparks.</span></li>
-              <li><span class="bullet">+</span><span>Collections reward players for completing themed stove sets.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 8 4-8 4-8-4 8-4Z"/><path d="m4 10 8 4 8-4"/><path d="m4 14 8 4 8-4"/></svg></span><span>Six stoves of one rarity can become one stove of the next rarity.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h8l-1 8 11-14h-8l1-6Z"/></svg></span><span>Unwanted stoves can be salvaged into Sparks.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span>Collections reward players for completing themed stove sets.</span></li>
             </ul>
           </div>
         </div>
@@ -1423,10 +1433,10 @@
           </div>
           <div class="panel">
             <ul class="text-list">
-              <li><span class="bullet">UI</span><span>Improved marketplace, socials, and page-level polish.</span></li>
-              <li><span class="bullet">UX</span><span>Clearer states for sold items, read messages, ownership, and scrolling.</span></li>
-              <li><span class="bullet">Data</span><span>More consistent graph and pricing behavior across pages.</span></li>
-              <li><span class="bullet">Demo</span><span>Presentation-ready explanation of what the project does.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span><span>Improved marketplace, socials, and page-level polish.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><span>Clearer states for sold items, read messages, ownership, and scrolling.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/></svg></span><span>More consistent graph and pricing behavior across pages.</span></li>
+              <li><span class="bullet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H4Z"/><path d="M12 16v4"/><path d="M8 20h8"/></svg></span><span>Presentation-ready explanation of what the project does.</span></li>
             </ul>
           </div>
         </div>
