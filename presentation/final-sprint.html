@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EmberExchange Final Sprint Presentation</title>
+  <style>
+    :root {
+      --bg: #120c09;
+      --bg-deep: #080504;
+      --surface: rgba(28, 19, 15, 0.84);
+      --surface-strong: rgba(37, 26, 21, 0.95);
+      --border: rgba(232, 93, 4, 0.2);
+      --border-strong: rgba(244, 140, 6, 0.5);
+      --text: #fff7ed;
+      --muted: #c8b6aa;
+      --soft: #927f73;
+      --accent: #e85d04;
+      --accent-2: #f48c06;
+      --gold: #ffba08;
+      --purple: #a855f7;
+      --blue: #3b82f6;
+      --green: #22c55e;
+      --danger: #ef4444;
+      --shadow: rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-deep);
+      color: var(--text);
+      font-family: "Segoe UI", Inter, Roboto, Arial, sans-serif;
+    }
+
+    body {
+      position: relative;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .presentation {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 12% 85%, rgba(232, 93, 4, 0.18), transparent 34%),
+        radial-gradient(circle at 90% 14%, rgba(255, 186, 8, 0.08), transparent 30%),
+        linear-gradient(135deg, #180d08 0%, #120c09 45%, #080504 100%);
+    }
+
+    .bg-grid,
+    .heat-haze,
+    .flames,
+    .embers {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .bg-grid {
+      background-image:
+        linear-gradient(rgba(232, 93, 4, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 93, 4, 0.035) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(to bottom, black, transparent 88%);
+    }
+
+    .heat-haze {
+      background:
+        radial-gradient(ellipse at 50% 110%, rgba(232, 93, 4, 0.16), transparent 58%),
+        linear-gradient(to top, rgba(232, 93, 4, 0.06), transparent 60%);
+      animation: haze 7s ease-in-out infinite;
+    }
+
+    .flame {
+      position: absolute;
+      bottom: -70px;
+      width: 150px;
+      height: 360px;
+      background: linear-gradient(to top, #e85d04 0%, #f48c06 24%, #ffba08 54%, rgba(255, 186, 8, 0.22) 72%, transparent 100%);
+      border-radius: 52% 48% 35% 35%;
+      filter: blur(16px);
+      opacity: 0.42;
+      animation: flicker 4.6s ease-in-out infinite;
+    }
+
+    .flame:nth-child(1) { left: 4%; height: 330px; width: 120px; animation-delay: 0s; }
+    .flame:nth-child(2) { left: 28%; height: 430px; width: 190px; animation-delay: 0.8s; opacity: 0.5; }
+    .flame:nth-child(3) { left: 58%; height: 380px; width: 150px; animation-delay: 1.5s; }
+    .flame:nth-child(4) { right: 4%; height: 350px; width: 130px; animation-delay: 2.1s; }
+
+    .ember {
+      position: absolute;
+      bottom: -12px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      box-shadow: 0 0 10px var(--accent), 0 0 22px var(--gold);
+      animation: float-up linear infinite;
+      opacity: 0;
+    }
+
+    .ember:nth-child(1) { left: 8%; animation-duration: 10s; animation-delay: 0s; }
+    .ember:nth-child(2) { left: 18%; width: 7px; height: 7px; animation-duration: 12s; animation-delay: 1.5s; }
+    .ember:nth-child(3) { left: 33%; animation-duration: 9s; animation-delay: 3s; }
+    .ember:nth-child(4) { left: 47%; width: 4px; height: 4px; animation-duration: 11s; animation-delay: 4s; }
+    .ember:nth-child(5) { left: 61%; width: 8px; height: 8px; animation-duration: 13s; animation-delay: 2s; }
+    .ember:nth-child(6) { left: 76%; animation-duration: 10s; animation-delay: 6s; }
+    .ember:nth-child(7) { left: 88%; width: 6px; height: 6px; animation-duration: 12s; animation-delay: 5s; }
+
+    .slides {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: clamp(28px, 5vw, 72px);
+      opacity: 0;
+      transform: translateX(48px) scale(0.985);
+      pointer-events: none;
+      transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .slide.previous {
+      transform: translateX(-48px) scale(0.985);
+    }
+
+    .content {
+      width: min(1180px, 100%);
+      max-height: calc(100vh - 140px);
+    }
+
+    .hero-content {
+      text-align: center;
+      width: min(920px, 100%);
+    }
+
+    .logo-shell {
+      position: relative;
+      width: clamp(150px, 17vw, 230px);
+      height: clamp(150px, 17vw, 230px);
+      margin: 0 auto 28px;
+      display: grid;
+      place-items: center;
+      animation: gentle-float 6s ease-in-out infinite;
+    }
+
+    .logo-shell::before {
+      content: "";
+      position: absolute;
+      inset: -28%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(232, 93, 4, 0.34), transparent 70%);
+      filter: blur(8px);
+      animation: glow 4s ease-in-out infinite;
+    }
+
+    .logo-card {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 32px;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(135deg, rgba(232, 93, 4, 0.3), rgba(255, 186, 8, 0.12)),
+        rgba(28, 19, 15, 0.76);
+      border: 1px solid rgba(255, 186, 8, 0.34);
+      box-shadow: 0 24px 80px rgba(232, 93, 4, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .logo-card img {
+      width: 76%;
+      height: 76%;
+      object-fit: contain;
+      image-rendering: auto;
+      filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.4));
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding: 8px 14px;
+      color: var(--accent-2);
+      background: rgba(232, 93, 4, 0.1);
+      border: 1px solid rgba(232, 93, 4, 0.25);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent-2);
+      box-shadow: 0 0 14px var(--accent-2);
+    }
+
+    h1,
+    h2 {
+      letter-spacing: 0;
+      line-height: 1;
+    }
+
+    h1 {
+      font-size: clamp(48px, 8vw, 112px);
+      font-weight: 950;
+      background: linear-gradient(135deg, #fff7ed 0%, #ffba08 35%, #f48c06 70%, #e85d04 100%);
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: drop-shadow(0 18px 45px rgba(232, 93, 4, 0.18));
+    }
+
+    h2 {
+      margin-bottom: 22px;
+      font-size: clamp(34px, 5.2vw, 76px);
+      font-weight: 950;
+      color: var(--text);
+    }
+
+    .lead {
+      max-width: 780px;
+      margin: 20px auto 0;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 28px);
+      line-height: 1.45;
+    }
+
+    .section-title {
+      margin-bottom: 30px;
+    }
+
+    .section-title .lead {
+      margin: 10px 0 0;
+      max-width: 760px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+      gap: clamp(28px, 5vw, 64px);
+      align-items: center;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: clamp(24px, 3vw, 40px);
+      box-shadow: 0 24px 70px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 85% 10%, rgba(232, 93, 4, 0.12), transparent 42%);
+      pointer-events: none;
+    }
+
+    .text-list {
+      display: grid;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .text-list li {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      list-style: none;
+      color: var(--muted);
+      font-size: clamp(16px, 1.7vw, 21px);
+      line-height: 1.45;
+    }
+
+    .bullet {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      font-weight: 900;
+      box-shadow: 0 8px 24px rgba(232, 93, 4, 0.22);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .cards.four {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .feature-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 215px;
+      padding: 24px;
+      border-radius: 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
+    }
+
+    .feature-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--card-color, var(--accent-2)), transparent);
+    }
+
+    .feature-card.orange { --card-color: var(--accent-2); }
+    .feature-card.purple { --card-color: var(--purple); }
+    .feature-card.blue { --card-color: var(--blue); }
+    .feature-card.green { --card-color: var(--green); }
+    .feature-card.red { --card-color: var(--danger); }
+
+    .icon-box {
+      display: grid;
+      place-items: center;
+      width: 74px;
+      height: 74px;
+      margin-bottom: 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .icon-box img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .feature-card h3,
+    .mini-card h3,
+    .tech-card h3 {
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: clamp(19px, 1.8vw, 25px);
+      font-weight: 900;
+    }
+
+    .feature-card p,
+    .mini-card p,
+    .tech-card p {
+      color: var(--muted);
+      font-size: clamp(14px, 1.25vw, 18px);
+      line-height: 1.5;
+    }
+
+    .visual-stack {
+      position: relative;
+      min-height: 410px;
+      display: grid;
+      place-items: center;
+    }
+
+    .showcase-card {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      width: 180px;
+      height: 210px;
+      padding: 18px;
+      border-radius: 22px;
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      transform: rotate(var(--rotate, 0deg)) translate(var(--tx, 0), var(--ty, 0));
+    }
+
+    .showcase-card img {
+      width: 132px;
+      height: 132px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: white;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .badge.common { background: #94a3b8; }
+    .badge.rare { background: #3b82f6; }
+    .badge.epic { background: #a855f7; }
+    .badge.legendary { color: #451a03; background: linear-gradient(135deg, #f59e0b, #ffba08); }
+    .badge.secret { background: linear-gradient(135deg, #d946ef, #f0abfc); }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .stat {
+      padding: 20px 16px;
+      text-align: center;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--border);
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--accent-2);
+      font-size: clamp(28px, 3.2vw, 46px);
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 8px;
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .wide-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .chart-panel {
+      position: relative;
+      min-height: 330px;
+    }
+
+    .chart-line {
+      position: absolute;
+      inset: 70px 34px 64px;
+      background:
+        linear-gradient(to top, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 100% 25%, 25% 100%;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .chart-line svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .chart-label {
+      position: absolute;
+      top: 28px;
+      left: 34px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .price-pill {
+      position: absolute;
+      right: 34px;
+      top: 24px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: rgba(232, 93, 4, 0.14);
+      border: 1px solid rgba(232, 93, 4, 0.3);
+      color: var(--gold);
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .mini-card,
+    .tech-card {
+      min-height: 165px;
+      padding: 22px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--border);
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .game-visuals,
+    .asset-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .asset-tile {
+      display: grid;
+      place-items: center;
+      width: 122px;
+      height: 122px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+    }
+
+    .asset-tile img {
+      width: 82px;
+      height: 82px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .card-img {
+      width: 78px;
+      border-radius: 8px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .roulette {
+      width: 122px;
+      height: 122px;
+      border-radius: 999px;
+      border: 8px solid var(--gold);
+      background: conic-gradient(#dc2626 0deg 30deg, #1f2937 30deg 60deg, #dc2626 60deg 90deg, #1f2937 90deg 120deg, #dc2626 120deg 150deg, #1f2937 150deg 180deg, #dc2626 180deg 210deg, #1f2937 210deg 240deg, #dc2626 240deg 270deg, #1f2937 270deg 300deg, #dc2626 300deg 330deg, #1f2937 330deg 360deg);
+      animation: spin 9s linear infinite;
+    }
+
+    .closing {
+      text-align: center;
+      width: min(1100px, 100%);
+    }
+
+    .cheesy {
+      color: var(--muted);
+      font-size: clamp(22px, 2.4vw, 34px);
+      font-weight: 800;
+    }
+
+    .domain {
+      display: block;
+      margin-top: 18px;
+      font-size: clamp(56px, 9.5vw, 138px);
+      font-weight: 1000;
+      line-height: 0.95;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(135deg, #fff7ed, #ffba08 35%, #f48c06 70%, #e85d04);
+      filter: drop-shadow(0 20px 70px rgba(232, 93, 4, 0.34));
+    }
+
+    .controls {
+      position: fixed;
+      z-index: 10;
+      left: 28px;
+      right: 28px;
+      bottom: 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .progress-track {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--gold));
+      transition: width 0.3s ease;
+      box-shadow: 0 0 18px rgba(244, 140, 6, 0.45);
+    }
+
+    .slide-count {
+      min-width: 86px;
+      padding: 9px 12px;
+      text-align: center;
+      color: var(--muted);
+      background: rgba(8, 5, 4, 0.72);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .nav-hint {
+      position: fixed;
+      z-index: 10;
+      right: 28px;
+      top: 22px;
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    @keyframes flicker {
+      0%, 100% { transform: scaleY(1) scaleX(1); opacity: 0.42; }
+      22% { transform: scaleY(1.09) scaleX(0.95) translateX(-4px); opacity: 0.52; }
+      48% { transform: scaleY(0.94) scaleX(1.05) translateX(3px); opacity: 0.38; }
+      74% { transform: scaleY(1.06) scaleX(0.98) translateX(-2px); opacity: 0.48; }
+    }
+
+    @keyframes float-up {
+      0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+      10% { opacity: 1; }
+      55% { opacity: 0.55; }
+      100% { transform: translateY(-105vh) translateX(26px) scale(0.2); opacity: 0; }
+    }
+
+    @keyframes haze {
+      0%, 100% { opacity: 0.72; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes gentle-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    @keyframes glow {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 980px) {
+      .split,
+      .wide-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cards,
+      .cards.four,
+      .tech-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .visual-stack {
+        min-height: 280px;
+      }
+
+      .showcase-card {
+        width: 142px;
+        height: 170px;
+      }
+
+      .showcase-card img {
+        width: 98px;
+        height: 98px;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .slide {
+        padding: 26px 18px 58px;
+      }
+
+      .content {
+        max-height: calc(100vh - 96px);
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      .cards,
+      .cards.four,
+      .tech-grid,
+      .mini-grid,
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+
+      .feature-card,
+      .mini-card,
+      .tech-card {
+        min-height: auto;
+      }
+
+      .nav-hint {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="presentation" aria-live="polite">
+    <div class="bg-grid"></div>
+    <div class="heat-haze"></div>
+    <div class="flames" aria-hidden="true">
+      <div class="flame"></div>
+      <div class="flame"></div>
+      <div class="flame"></div>
+      <div class="flame"></div>
+    </div>
+    <div class="embers" aria-hidden="true">
+      <div class="ember"></div>
+      <div class="ember"></div>
+      <div class="ember"></div>
+      <div class="ember"></div>
+      <div class="ember"></div>
+      <div class="ember"></div>
+      <div class="ember"></div>
+    </div>
+
+    <div class="nav-hint">Arrow keys or space</div>
+
+    <section class="slides">
+      <article class="slide active" data-title="Intro">
+        <div class="hero-content">
+          <div class="logo-shell">
+            <div class="logo-card">
+              <img src="../src/frontend/public/Ember_Exchange_Logo.png" alt="EmberExchange logo" />
+            </div>
+          </div>
+          <span class="kicker">Final Sprint Presentation</span>
+          <h1>EmberExchange</h1>
+          <p class="lead">A virtual marketplace and collection game where players collect rare stoves, trade with friends, follow prices, and play real-time mini-games.</p>
+          <div class="stats-row">
+            <div class="stat"><strong>Collect</strong><span>rare stoves</span></div>
+            <div class="stat"><strong>Trade</strong><span>with players</span></div>
+            <div class="stat"><strong>Invest</strong><span>in prices</span></div>
+            <div class="stat"><strong>Play</strong><span>live games</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Project">
+        <div class="content split">
+          <div>
+            <span class="kicker">The Idea</span>
+            <h2>Digital stove trading, made into a game.</h2>
+            <p class="lead">EmberExchange combines collecting, economy, social features, and casino-style mini-games into one web app.</p>
+            <ul class="text-list">
+              <li><span class="bullet">1</span><span>Players start with Coal, open lootboxes, and receive random stove collectibles.</span></li>
+              <li><span class="bullet">2</span><span>Every stove has rarity, heat, collection value, and market history.</span></li>
+              <li><span class="bullet">3</span><span>The goal is simple: build the best collection and grow your fortune.</span></li>
+            </ul>
+          </div>
+          <div class="panel">
+            <div class="asset-row">
+              <div class="asset-tile"><img src="../src/frontend/public/icon/lootboxes.png" alt="Lootboxes" /></div>
+              <div class="asset-tile"><img src="../src/frontend/public/icon/marketplace.png" alt="Marketplace" /></div>
+              <div class="asset-tile"><img src="../src/frontend/public/icon/socials.png" alt="Socials" /></div>
+              <div class="asset-tile"><img src="../src/frontend/public/icon/games.png" alt="Games" /></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Loop">
+        <div class="content">
+          <div class="section-title">
+            <span class="kicker">Core Loop</span>
+            <h2>Four steps that keep the game moving.</h2>
+          </div>
+          <div class="cards four">
+            <div class="feature-card orange">
+              <div class="icon-box"><img src="../src/frontend/public/icon/lootboxes.png" alt="" /></div>
+              <h3>Open</h3>
+              <p>Spend Coal on lootboxes and reveal stoves from Common to Secret rarity.</p>
+            </div>
+            <div class="feature-card purple">
+              <div class="icon-box"><img src="../src/frontend/public/icon/marketplace.png" alt="" /></div>
+              <h3>Trade</h3>
+              <p>Sell duplicates, buy missing pieces, and negotiate with friends.</p>
+            </div>
+            <div class="feature-card green">
+              <div class="icon-box"><img src="../src/frontend/public/icon/the_forge.png" alt="" /></div>
+              <h3>Upgrade</h3>
+              <p>Use the Forge and Sparks to improve your collection and heat levels.</p>
+            </div>
+            <div class="feature-card blue">
+              <div class="icon-box"><img src="../src/frontend/public/icon/games.png" alt="" /></div>
+              <h3>Play</h3>
+              <p>Use your Coal in Poker, Blackjack, and Roulette for more risk and reward.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Lootboxes">
+        <div class="content split">
+          <div>
+            <span class="kicker">Lootboxes</span>
+            <h2>Every box is a small moment of suspense.</h2>
+            <p class="lead">Players open animated chests and receive stoves with different rarities. Higher rarity means higher value and more bragging rights.</p>
+            <ul class="text-list">
+              <li><span class="bullet">C</span><span>Common stoves are easy to get and useful for forging.</span></li>
+              <li><span class="bullet">L</span><span>Legendary and Secret stoves are rare, valuable, and visually special.</span></li>
+              <li><span class="bullet">H</span><span>Heat levels add another layer of value beyond rarity.</span></li>
+            </ul>
+          </div>
+          <div class="visual-stack">
+            <div class="showcase-card" style="--rotate:-12deg;--tx:-105px;--ty:18px">
+              <img src="../src/frontend/public/assets/stove_sprites/common/standard.png" alt="Common stove" />
+              <span class="badge common">Common</span>
+            </div>
+            <div class="showcase-card" style="--rotate:6deg;--tx:0;--ty:-22px">
+              <img src="../src/frontend/public/assets/stove_sprites/legendary/dragon.png" alt="Legendary dragon stove" />
+              <span class="badge legendary">Legendary</span>
+            </div>
+            <div class="showcase-card" style="--rotate:13deg;--tx:110px;--ty:35px">
+              <img src="../src/frontend/public/assets/stove_sprites/secret/galactic-dragon-stove.png" alt="Secret galactic stove" />
+              <span class="badge secret">Secret</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Marketplace">
+        <div class="content wide-grid">
+          <div>
+            <span class="kicker">Marketplace</span>
+            <h2>Prices are set by players, not by us.</h2>
+            <p class="lead">The marketplace lets players list stoves, buy instantly, inspect item history, and see what the community thinks something is worth.</p>
+          </div>
+          <div class="panel">
+            <div class="mini-grid">
+              <div class="mini-card">
+                <h3>List</h3>
+                <p>Players choose the price for their own stove listings.</p>
+              </div>
+              <div class="mini-card">
+                <h3>Buy</h3>
+                <p>Other players can buy listings directly with Coal.</p>
+              </div>
+              <div class="mini-card">
+                <h3>History</h3>
+                <p>Price graphs help players understand value over time.</p>
+              </div>
+              <div class="mini-card">
+                <h3>Trust</h3>
+                <p>Sold states, ownership transfer, and item details make trades clear.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Investing">
+        <div class="content wide-grid">
+          <div>
+            <span class="kicker">Investing</span>
+            <h2>A market view for stove collectors.</h2>
+            <p class="lead">The investing page turns item prices into something players can follow like a small stock market.</p>
+            <ul class="text-list">
+              <li><span class="bullet">G</span><span>Graphs show price movement and trends.</span></li>
+              <li><span class="bullet">V</span><span>Players can compare rarity, demand, and history.</span></li>
+              <li><span class="bullet">S</span><span>Smart trading becomes part of the gameplay.</span></li>
+            </ul>
+          </div>
+          <div class="panel chart-panel">
+            <div class="chart-label">Average Price History</div>
+            <div class="price-pill">30,264 Coal</div>
+            <div class="chart-line">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#f48c06" stop-opacity="0.35" />
+                    <stop offset="100%" stop-color="#f48c06" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M0 70 L16 58 L34 64 L50 38 L67 43 L84 24 L100 18 L100 100 L0 100 Z" fill="url(#chartFill)" />
+                <path d="M0 70 L16 58 L34 64 L50 38 L67 43 L84 24 L100 18" fill="none" stroke="#f48c06" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Social">
+        <div class="content">
+          <div class="section-title">
+            <span class="kicker">Socials</span>
+            <h2>Trading is better when players can talk.</h2>
+            <p class="lead">The social system brings friends, chat, marketplace conversations, read states, and direct trade offers together.</p>
+          </div>
+          <div class="cards">
+            <div class="feature-card purple">
+              <div class="icon-box"><img src="../src/frontend/public/icon/socials.png" alt="" /></div>
+              <h3>Friends</h3>
+              <p>Add friends, see conversations, and keep marketplace chat separate.</p>
+            </div>
+            <div class="feature-card orange">
+              <div class="icon-box"><img src="../src/frontend/public/icon/marketplace.png" alt="" /></div>
+              <h3>Trade Offers</h3>
+              <p>Send offers directly inside chat, inspect stoves, accept, or decline.</p>
+            </div>
+            <div class="feature-card green">
+              <div class="icon-box"><img src="../src/frontend/public/icon/collections.png" alt="" /></div>
+              <h3>Read State</h3>
+              <p>Unread counts, last message previews, and read signs make chats feel complete.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Forge">
+        <div class="content split">
+          <div class="panel">
+            <div class="asset-row">
+              <img src="../src/frontend/public/assets/forging-table.png" alt="Forge table" style="width:min(380px,100%);height:auto;filter:drop-shadow(0 24px 42px rgba(232,93,4,.28));" />
+            </div>
+          </div>
+          <div>
+            <span class="kicker">Forge And Collections</span>
+            <h2>Duplicates still matter.</h2>
+            <p class="lead">Players can turn extra stoves into progress instead of letting them sit unused.</p>
+            <ul class="text-list">
+              <li><span class="bullet">6x</span><span>Six stoves of one rarity can become one stove of the next rarity.</span></li>
+              <li><span class="bullet">S</span><span>Unwanted stoves can be salvaged into Sparks.</span></li>
+              <li><span class="bullet">+</span><span>Collections reward players for completing themed stove sets.</span></li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Games">
+        <div class="content">
+          <div class="section-title">
+            <span class="kicker">Mini-Games</span>
+            <h2>Real-time games give Coal more purpose.</h2>
+            <p class="lead">Poker, Blackjack, and Roulette let players risk Coal, compete with others, and keep the economy active.</p>
+          </div>
+          <div class="cards">
+            <div class="feature-card blue">
+              <div class="game-visuals">
+                <img class="card-img" src="../src/frontend/public/assets/poker_cards/spades_ace.png" alt="Ace of spades" />
+                <img class="card-img" src="../src/frontend/public/assets/poker_cards/hearts_king.png" alt="King of hearts" />
+              </div>
+              <h3>Poker</h3>
+              <p>Texas Hold'em with real-time room state and player actions.</p>
+            </div>
+            <div class="feature-card red">
+              <div class="game-visuals">
+                <img class="card-img" src="../src/frontend/public/assets/poker_cards/diamonds_queen.png" alt="Queen of diamonds" />
+                <img class="card-img" src="../src/frontend/public/assets/poker_cards/clubs_jack.png" alt="Jack of clubs" />
+              </div>
+              <h3>Blackjack</h3>
+              <p>Hit, stand, double, and try to get closest to 21.</p>
+            </div>
+            <div class="feature-card orange">
+              <div class="game-visuals">
+                <div class="roulette" aria-label="Roulette wheel"></div>
+              </div>
+              <h3>Roulette</h3>
+              <p>Pick a number, color, or range and watch the wheel decide.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Tech">
+        <div class="content">
+          <div class="section-title">
+            <span class="kicker">Technology</span>
+            <h2>Built as a full-stack web app.</h2>
+            <p class="lead">The project is not just UI. It includes database logic, authentication, real-time communication, security, and deployment.</p>
+          </div>
+          <div class="tech-grid">
+            <div class="tech-card">
+              <h3>Angular Frontend</h3>
+              <p>Standalone components, routing, services, signals, and a polished responsive interface.</p>
+            </div>
+            <div class="tech-card">
+              <h3>Express Backend</h3>
+              <p>TypeScript REST API with service layers for players, stoves, marketplace, chat, and games.</p>
+            </div>
+            <div class="tech-card">
+              <h3>PostgreSQL</h3>
+              <p>Persistent storage for accounts, inventory, trades, prices, messages, and game data.</p>
+            </div>
+            <div class="tech-card">
+              <h3>WebSockets</h3>
+              <p>Live chat, game rooms, read receipts, and real-time multiplayer state.</p>
+            </div>
+            <div class="tech-card">
+              <h3>Security</h3>
+              <p>Sessions, rate limiting, Turnstile, IP bans, honeypots, request logs, and admin protections.</p>
+            </div>
+            <div class="tech-card">
+              <h3>Deployment</h3>
+              <p>Production-ready build served through Render with health checks and scheduled jobs.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Sprint">
+        <div class="content split">
+          <div>
+            <span class="kicker">Final Sprint</span>
+            <h2>From working app to polished product.</h2>
+            <p class="lead">The final sprint focused on making the project feel complete, understandable, and ready to present.</p>
+          </div>
+          <div class="panel">
+            <ul class="text-list">
+              <li><span class="bullet">UI</span><span>Improved marketplace, socials, and page-level polish.</span></li>
+              <li><span class="bullet">UX</span><span>Clearer states for sold items, read messages, ownership, and scrolling.</span></li>
+              <li><span class="bullet">Data</span><span>More consistent graph and pricing behavior across pages.</span></li>
+              <li><span class="bullet">Demo</span><span>Presentation-ready explanation of what the project does and why it matters.</span></li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Closing">
+        <div class="closing">
+          <div class="logo-shell" style="width:130px;height:130px;margin-bottom:24px">
+            <div class="logo-card">
+              <img src="../src/frontend/public/Ember_Exchange_Logo.png" alt="EmberExchange logo" />
+            </div>
+          </div>
+          <p class="cheesy">Play and build your fortune on</p>
+          <strong class="domain">emberexchange.xyz</strong>
+        </div>
+      </article>
+    </section>
+
+    <div class="controls">
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-bar"></div>
+      </div>
+      <div class="slide-count"><span id="current">1</span>/<span id="total">12</span></div>
+    </div>
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const current = document.getElementById("current");
+    const total = document.getElementById("total");
+    const progress = document.querySelector(".progress-bar");
+    let index = 0;
+
+    total.textContent = String(slides.length);
+
+    function showSlide(nextIndex) {
+      const bounded = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      if (bounded === index) {
+        updateChrome();
+        return;
+      }
+
+      slides[index].classList.remove("active");
+      slides[index].classList.toggle("previous", bounded > index);
+      index = bounded;
+
+      slides.forEach((slide, slideIndex) => {
+        slide.classList.toggle("previous", slideIndex < index);
+      });
+      slides[index].classList.add("active");
+      updateChrome();
+    }
+
+    function updateChrome() {
+      current.textContent = String(index + 1);
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      document.title = `${slides[index].dataset.title} - EmberExchange Final Sprint`;
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+        event.preventDefault();
+        showSlide(index + 1);
+      }
+      if (["ArrowLeft", "PageUp"].includes(event.key)) {
+        event.preventDefault();
+        showSlide(index - 1);
+      }
+      if (event.key === "Home") {
+        event.preventDefault();
+        showSlide(0);
+      }
+      if (event.key === "End") {
+        event.preventDefault();
+        showSlide(slides.length - 1);
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      const x = event.clientX / window.innerWidth;
+      showSlide(index + (x > 0.5 ? 1 : -1));
+    });
+
+    updateChrome();
+  </script>
+</body>
+</html>
