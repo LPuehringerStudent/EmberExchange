@@ -361,6 +361,66 @@
     .feature-card.green { --card-color: var(--green); }
     .feature-card.red { --card-color: var(--danger); }
 
+    .games-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .game-row {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 22px;
+      align-items: center;
+      min-height: 138px;
+      padding: 20px 24px;
+      border-radius: 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+    }
+
+    .game-row h3 {
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: clamp(22px, 2.2vw, 30px);
+      font-weight: 950;
+    }
+
+    .game-row p {
+      max-width: 640px;
+      color: var(--muted);
+      font-size: clamp(15px, 1.35vw, 19px);
+      line-height: 1.45;
+    }
+
+    .game-art {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 92px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .game-art .card-img {
+      width: 50px;
+    }
+
+    .game-art .card-img:first-child {
+      transform: rotate(-10deg) translateX(8px);
+    }
+
+    .game-art .card-img:nth-child(2) {
+      transform: rotate(12deg) translateX(-8px);
+    }
+
+    .game-art .roulette {
+      width: 84px;
+      height: 84px;
+      border-width: 6px;
+    }
+
     .icon-box {
       display: grid;
       place-items: center;
@@ -607,15 +667,19 @@
 
     .domain {
       display: block;
-      margin-top: 18px;
-      font-size: clamp(56px, 9.5vw, 138px);
+      max-width: 100%;
+      margin: 18px auto 0;
+      padding: 0 0.05em;
+      font-size: clamp(44px, 7.5vw, 112px);
       font-weight: 1000;
-      line-height: 0.95;
+      line-height: 1.02;
       color: transparent;
       -webkit-background-clip: text;
       background-clip: text;
       background-image: linear-gradient(135deg, #fff7ed, #ffba08 35%, #f48c06 70%, #e85d04);
       filter: drop-shadow(0 20px 70px rgba(232, 93, 4, 0.34));
+      overflow-wrap: anywhere;
+      white-space: normal;
     }
 
     .controls {
@@ -718,6 +782,10 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      .game-row {
+        grid-template-columns: 112px minmax(0, 1fr);
+      }
+
       .visual-stack {
         min-height: 280px;
       }
@@ -748,7 +816,8 @@
       .cards.four,
       .tech-grid,
       .mini-grid,
-      .stats-row {
+      .stats-row,
+      .game-row {
         grid-template-columns: 1fr;
       }
 
@@ -819,13 +888,13 @@
       <article class="slide" data-title="Project">
         <div class="content split">
           <div>
-            <span class="kicker">The Idea</span>
-            <h2>Digital stove trading, made into a game.</h2>
-            <p class="lead">EmberExchange combines collecting, economy, social features, and casino-style mini-games into one web app.</p>
+            <span class="kicker">Project Overview</span>
+            <h2>A trading game for digital stoves.</h2>
+            <p class="lead">EmberExchange combines collection, marketplace trading, price tracking, chat, and multiplayer games in one web app.</p>
             <ul class="text-list">
               <li><span class="bullet">1</span><span>Players start with Coal, open lootboxes, and receive random stove collectibles.</span></li>
               <li><span class="bullet">2</span><span>Every stove has rarity, heat, collection value, and market history.</span></li>
-              <li><span class="bullet">3</span><span>The goal is simple: build the best collection and grow your fortune.</span></li>
+              <li><span class="bullet">3</span><span>The goal is to build a valuable collection and use the economy wisely.</span></li>
             </ul>
           </div>
           <div class="panel">
@@ -842,8 +911,8 @@
       <article class="slide" data-title="Loop">
         <div class="content">
           <div class="section-title">
-            <span class="kicker">Core Loop</span>
-            <h2>Four steps that keep the game moving.</h2>
+            <span class="kicker">Core Features</span>
+            <h2>The main parts of the project.</h2>
           </div>
           <div class="cards four">
             <div class="feature-card orange">
@@ -874,11 +943,11 @@
         <div class="content split">
           <div>
             <span class="kicker">Lootboxes</span>
-            <h2>Every box is a small moment of suspense.</h2>
-            <p class="lead">Players open animated chests and receive stoves with different rarities. Higher rarity means higher value and more bragging rights.</p>
+            <h2>Lootboxes and stove rarities.</h2>
+            <p class="lead">Players open animated chests and receive stoves with different rarities. Higher rarity usually means higher value.</p>
             <ul class="text-list">
               <li><span class="bullet">C</span><span>Common stoves are easy to get and useful for forging.</span></li>
-              <li><span class="bullet">L</span><span>Legendary and Secret stoves are rare, valuable, and visually special.</span></li>
+              <li><span class="bullet">L</span><span>Legendary and Secret stoves are rare, valuable, and visually distinct.</span></li>
               <li><span class="bullet">H</span><span>Heat levels add another layer of value beyond rarity.</span></li>
             </ul>
           </div>
@@ -903,7 +972,7 @@
         <div class="content wide-grid">
           <div>
             <span class="kicker">Marketplace</span>
-            <h2>Prices are set by players, not by us.</h2>
+            <h2>Player-driven buying and selling.</h2>
             <p class="lead">The marketplace lets players list stoves, buy instantly, inspect item history, and see what the community thinks something is worth.</p>
           </div>
           <div class="panel">
@@ -933,7 +1002,7 @@
         <div class="content wide-grid">
           <div>
             <span class="kicker">Investing</span>
-            <h2>A market view for stove collectors.</h2>
+            <h2>Price history and market data.</h2>
             <p class="lead">The investing page turns item prices into something players can follow like a small stock market.</p>
             <ul class="text-list">
               <li><span class="bullet">G</span><span>Graphs show price movement and trends.</span></li>
@@ -964,8 +1033,8 @@
         <div class="content">
           <div class="section-title">
             <span class="kicker">Socials</span>
-            <h2>Trading is better when players can talk.</h2>
-            <p class="lead">The social system brings friends, chat, marketplace conversations, read states, and direct trade offers together.</p>
+            <h2>Friends, chat, and trade offers.</h2>
+            <p class="lead">The social system brings friend conversations, marketplace messages, read states, and direct trade offers together.</p>
           </div>
           <div class="cards">
             <div class="feature-card purple">
@@ -996,8 +1065,8 @@
           </div>
           <div>
             <span class="kicker">Forge And Collections</span>
-            <h2>Duplicates still matter.</h2>
-            <p class="lead">Players can turn extra stoves into progress instead of letting them sit unused.</p>
+            <h2>Forge, Sparks, and collections.</h2>
+            <p class="lead">Players can turn extra stoves into upgrades, Sparks, and collection progress.</p>
             <ul class="text-list">
               <li><span class="bullet">6x</span><span>Six stoves of one rarity can become one stove of the next rarity.</span></li>
               <li><span class="bullet">S</span><span>Unwanted stoves can be salvaged into Sparks.</span></li>
@@ -1011,32 +1080,38 @@
         <div class="content">
           <div class="section-title">
             <span class="kicker">Mini-Games</span>
-            <h2>Real-time games give Coal more purpose.</h2>
-            <p class="lead">Poker, Blackjack, and Roulette let players risk Coal, compete with others, and keep the economy active.</p>
+            <h2>Real-time mini-games.</h2>
+            <p class="lead">Poker, Blackjack, and Roulette let players use Coal in live game rooms.</p>
           </div>
-          <div class="cards">
-            <div class="feature-card blue">
-              <div class="game-visuals">
+          <div class="games-list">
+            <div class="game-row">
+              <div class="game-art">
                 <img class="card-img" src="../src/frontend/public/assets/poker_cards/spades_ace.png" alt="Ace of spades" />
                 <img class="card-img" src="../src/frontend/public/assets/poker_cards/hearts_king.png" alt="King of hearts" />
               </div>
-              <h3>Poker</h3>
-              <p>Texas Hold'em with real-time room state and player actions.</p>
+              <div>
+                <h3>Poker</h3>
+                <p>Texas Hold'em with live rooms, turns, betting, and player actions.</p>
+              </div>
             </div>
-            <div class="feature-card red">
-              <div class="game-visuals">
+            <div class="game-row">
+              <div class="game-art">
                 <img class="card-img" src="../src/frontend/public/assets/poker_cards/diamonds_queen.png" alt="Queen of diamonds" />
                 <img class="card-img" src="../src/frontend/public/assets/poker_cards/clubs_jack.png" alt="Jack of clubs" />
               </div>
-              <h3>Blackjack</h3>
-              <p>Hit, stand, double, and try to get closest to 21.</p>
+              <div>
+                <h3>Blackjack</h3>
+                <p>Players hit, stand, double, and try to get closest to 21.</p>
+              </div>
             </div>
-            <div class="feature-card orange">
-              <div class="game-visuals">
+            <div class="game-row">
+              <div class="game-art">
                 <div class="roulette" aria-label="Roulette wheel"></div>
               </div>
-              <h3>Roulette</h3>
-              <p>Pick a number, color, or range and watch the wheel decide.</p>
+              <div>
+                <h3>Roulette</h3>
+                <p>Players bet on a number, color, or range before the wheel spins.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -1046,8 +1121,8 @@
         <div class="content">
           <div class="section-title">
             <span class="kicker">Technology</span>
-            <h2>Built as a full-stack web app.</h2>
-            <p class="lead">The project is not just UI. It includes database logic, authentication, real-time communication, security, and deployment.</p>
+            <h2>Full-stack implementation.</h2>
+            <p class="lead">The project includes database logic, authentication, real-time communication, security, and deployment.</p>
           </div>
           <div class="tech-grid">
             <div class="tech-card">
@@ -1082,15 +1157,15 @@
         <div class="content split">
           <div>
             <span class="kicker">Final Sprint</span>
-            <h2>From working app to polished product.</h2>
-            <p class="lead">The final sprint focused on making the project feel complete, understandable, and ready to present.</p>
+            <h2>Final sprint focus.</h2>
+            <p class="lead">The final sprint focused on polish, reliability, and a clear presentation of the finished app.</p>
           </div>
           <div class="panel">
             <ul class="text-list">
               <li><span class="bullet">UI</span><span>Improved marketplace, socials, and page-level polish.</span></li>
               <li><span class="bullet">UX</span><span>Clearer states for sold items, read messages, ownership, and scrolling.</span></li>
               <li><span class="bullet">Data</span><span>More consistent graph and pricing behavior across pages.</span></li>
-              <li><span class="bullet">Demo</span><span>Presentation-ready explanation of what the project does and why it matters.</span></li>
+              <li><span class="bullet">Demo</span><span>Presentation-ready explanation of what the project does.</span></li>
             </ul>
           </div>
         </div>
