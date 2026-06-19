@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EmberExchange — Awards Presentation</title>
+  <title>EmberExchange Awards Presentation</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -86,31 +86,40 @@
     }
 
     /* Title slide */
-    .title-slide {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+    .title-slide { text-align: center; }
+    .title-content {
+      display: inline-block;
       text-align: center;
+      vertical-align: middle;
     }
     .title-logo {
       height: 130px;
+      display: block;
+      margin: 0 auto 0.3em;
       filter: drop-shadow(0 0 28px rgba(255,107,53,0.5));
-      margin-bottom: 0.2em;
     }
     .title-slide h1 {
       font-size: 2.6em;
       background: linear-gradient(90deg, #fff5e6, #ffb347, #ff6b35);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin: 0;
+      margin: 0.1em 0;
     }
     .subtitle {
       color: var(--ember-amber);
       font-size: 1.05em;
-      margin-top: 0.2em;
+      margin-top: 0.3em;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+    .tagline {
+      display: inline-block;
+      text-align: left;
+      max-width: 700px;
+      margin-top: 0.7em;
+      font-size: 0.72em;
+      line-height: 1.45;
+      color: #e8ddd1;
     }
     .team { color: #aaa; font-size: 0.6em; margin-top: 1.4em; }
 
@@ -173,6 +182,32 @@
     }
     .feature-card h4 { font-size: 0.55em; margin: 0.15em 0; color: var(--ember-orange); }
     .feature-card p { font-size: 0.46em; color: #ccc; margin: 0; line-height: 1.2; }
+
+    /* Competitive advantage cards */
+    .compete-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.8em;
+      margin-top: 0.6em;
+    }
+    .compete-card {
+      background: var(--ember-card);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 107, 53, 0.35);
+      border-radius: 16px;
+      padding: 0.8em 0.9em;
+      text-align: left;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .compete-card:hover { transform: translateY(-4px); box-shadow: var(--ember-glow); }
+    .compete-card i {
+      font-size: 1.4em;
+      color: var(--ember-orange);
+      margin-bottom: 0.2em;
+      display: block;
+    }
+    .compete-card h4 { font-size: 0.72em; margin: 0.1em 0; color: var(--ember-orange); }
+    .compete-card p { font-size: 0.56em; color: #ddd; margin: 0; line-height: 1.35; }
 
     /* 3-pillar cards */
     .pillar-grid {
@@ -302,13 +337,15 @@
 
       <!-- 1. Title -->
       <section class="title-slide">
-        <img src="src/frontend/public/Ember_Exchange_Logo.png" class="title-logo" alt="EmberExchange Logo">
-        <h1>EmberExchange</h1>
-        <p class="subtitle">Open. Trade. Forge. Dominate.</p>
-        <p style="font-size:0.7em; color:#ccc; margin-top:0.8em; max-width:700px; text-align:center;">
-          A virtual marketplace &amp; collection game where every stove is unique, tradable, and worth showing off.
-        </p>
-        <p class="team">SYP 2026 · HTL Leonding</p>
+        <div class="title-content">
+          <img src="src/frontend/public/Ember_Exchange_Logo.png" class="title-logo" alt="EmberExchange Logo">
+          <h1>EmberExchange</h1>
+          <p class="subtitle">Open. Trade. Forge. Dominate.</p>
+          <p class="tagline">
+            A virtual marketplace &amp; collection game where every stove is unique, tradable, and worth showing off.
+          </p>
+          <p class="team">SYP 2026 · HTL Leonding</p>
+        </div>
       </section>
 
       <!-- 2. Hook -->
@@ -398,48 +435,65 @@
         </div>
       </section>
 
-      <!-- 6. Why we built it -->
+      <!-- 6. Why it's better -->
       <section>
-        <h2>Why we built it</h2>
-        <div class="two-col">
-          <div class="glass-panel">
-            <ul class="point-list">
-              <li><strong>Real product, not a demo.</strong> Deployed, secured, and played by real users.</li>
-              <li><strong>Learn by doing.</strong> Economy, real-time, security, and devops — all in one project.</li>
-              <li><strong>Competition drives fun.</strong> Rarity, leaderboards, and collections keep players engaged.</li>
-            </ul>
+        <h2>Why it's better than the rest</h2>
+        <p style="font-size:0.72em; color:#e8ddd1; margin-top:-0.2em; margin-bottom:0.7em;">
+          Most school projects are static demos. EmberExchange is a live, secure, social product.
+        </p>
+        <div class="compete-grid">
+          <div class="compete-card">
+            <i class="fa-solid fa-chart-line"></i>
+            <h4>Real Economy</h4>
+            <p>Live marketplace with supply, demand, and price history. Not a fake shop with fixed prices.</p>
           </div>
-          <div class="glass-panel">
-            <ul class="point-list">
-              <li><strong>Full-stack from scratch.</strong> Angular + Node + PostgreSQL + WebSockets.</li>
-              <li><strong>Security first.</strong> Anti-bot layers, audit logs, and admin tooling.</li>
-              <li><strong>Auto-deployed.</strong> Render builds and deploys on every push to main.</li>
-            </ul>
+          <div class="compete-card">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h4>Security First</h4>
+            <p>Turnstile, rate limits, bot traps, audit logs, and 2FA. Most prototypes skip this entirely.</p>
+          </div>
+          <div class="compete-card">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <h4>Actually Deployed</h4>
+            <p>Auto-deployed on Render with PostgreSQL. It runs 24/7, not just on a laptop.</p>
+          </div>
+          <div class="compete-card">
+            <i class="fa-solid fa-users-viewfinder"></i>
+            <h4>Social by Design</h4>
+            <p>Friends, chat, trading, glory showcases, and leaderboards. Not a single-player grind.</p>
           </div>
         </div>
       </section>
 
-      <!-- 7. Why award it -->
+      <!-- 7. Why it stands out -->
       <section>
-        <h2>Why this deserves an award</h2>
-        <div class="stat-grid">
+        <h2>Why EmberExchange stands out</h2>
+        <p style="font-size:0.72em; color:#e8ddd1; margin-top:-0.2em; margin-bottom:0.7em;">
+          A polished, playable, production-grade platform built from scratch.
+        </p>
+        <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
           <div class="stat-card">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
             <h4>Polished UX</h4>
-            <p>Dark casino aesthetic, smooth animations, responsive design.</p>
+            <p>Dark casino aesthetic, smooth animations, and a fully responsive layout.</p>
           </div>
           <div class="stat-card">
             <i class="fa-solid fa-server"></i>
             <h4>Live &amp; Scalable</h4>
-            <p>Hosted on Render with PostgreSQL and CDN assets.</p>
+            <p>Hosted on Render with PostgreSQL, WebSockets, and CDN assets.</p>
           </div>
           <div class="stat-card">
             <i class="fa-solid fa-lock"></i>
             <h4>Security Hardened</h4>
-            <p>Turnstile, rate limits, honeypots, request logging, admin audits.</p>
+            <p>Turnstile, rate limits, honeypots, request logging, and admin audits.</p>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-layer-group"></i>
+            <h4>Full-Stack Craft</h4>
+            <p>Angular, Node, TypeScript, and PostgreSQL built from the ground up.</p>
           </div>
         </div>
-        <p class="small-note">This is not a prototype — it is a deployed, playable product with a live economy.</p>
+        <p class="small-note">This is not a prototype. It is a deployed, playable product with a live economy.</p>
       </section>
 
       <!-- 8. Live Demo -->
@@ -448,7 +502,7 @@
         <h2>Live Demo</h2>
         <p style="text-align:center; font-size:0.78em; max-width:780px; margin:0.4em auto 0;">
           Watch us open a lootbox, browse the inventory, sell on the marketplace,<br>
-          forge a better stove, and claim a quest reward — all in real time.
+          forge a better stove, and claim a quest reward. All in real time.
         </p>
       </section>
 
@@ -485,7 +539,7 @@
       transition: 'fade',
       width: 1280,
       height: 720,
-      margin: 0.08
+      margin: 0.04
     });
   </script>
 </body>
