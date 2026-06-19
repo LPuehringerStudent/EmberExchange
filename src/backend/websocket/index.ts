@@ -43,6 +43,26 @@ export function setupWebSocketServer(server: http.Server): void {
         }
         wsConnectionsByIp.set(clientIp, currentCount + 1);
 
+        // Ensure the per-IP counter is always decremented when the socket closes,
+        // even for rejected or unauthenticated connections.
+        let activeSocketId = "";
+        ws.on("close", async () => {
+            const count = wsConnectionsByIp.get(clientIp) ?? 1;
+            if (count <= 1) {
+                wsConnectionsByIp.delete(clientIp);
+            } else {
+                wsConnectionsByIp.set(clientIp, count - 1);
+            }
+            if (!activeSocketId) {
+                return;
+            }
+            try {
+                await handleDisconnect(activeSocketId);
+            } catch (err) {
+                console.error(`[WebSocket] handleDisconnect error for socket ${activeSocketId}:`, err);
+            }
+        });
+
         // Read sessionId from WebSocket subprotocol header (avoids leaking it to logs/URL/history)
         const rawProtocol = req.headers["sec-websocket-protocol"];
         const sessionId = typeof rawProtocol === "string" ? rawProtocol.split(",")[0].trim() : undefined;
@@ -51,7 +71,6 @@ export function setupWebSocketServer(server: http.Server): void {
         // while authenticateSession runs asynchronously
         const messageQueue: WebSocket.RawData[] = [];
         let isProcessing = false;
-        let activeSocketId = "";
         let authComplete = false;
 
         async function processQueue(): Promise<void> {
@@ -105,20 +124,6 @@ export function setupWebSocketServer(server: http.Server): void {
             isProcessing = true;
             void processQueue();
         }
-
-        ws.on("close", async () => {
-            const count = wsConnectionsByIp.get(clientIp) ?? 1;
-            if (count <= 1) {
-                wsConnectionsByIp.delete(clientIp);
-            } else {
-                wsConnectionsByIp.set(clientIp, count - 1);
-            }
-            try {
-                await handleDisconnect(activeSocketId);
-            } catch (err) {
-                console.error(`[WebSocket] handleDisconnect error for socket ${activeSocketId}:`, err);
-            }
-        });
 
         ws.on("error", (err) => {
             console.error(`WebSocket error for socket ${activeSocketId}:`, err);

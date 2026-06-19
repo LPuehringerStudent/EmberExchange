@@ -62,7 +62,12 @@ export class GameRoomComponent implements OnInit, OnDestroy {
   chatUnread = this.ws.roomChatUnread;
 
   roomStatus = computed(() => {
-    const blobStatus = this.stateBlob()?.['status'] as string | undefined;
+    // Only trust the live state blob once the socket is actually open.
+    // A stale blob from a previous room could otherwise flip the UI to the
+    // active game before we have joined the new room.
+    const blobStatus = this.connectionState() === 'open'
+      ? (this.stateBlob()?.['status'] as string | undefined)
+      : undefined;
     return blobStatus === 'active' ? 'active' : this._httpRoomStatus();
   });
 

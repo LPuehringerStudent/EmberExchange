@@ -9,11 +9,17 @@
     >
       {{ phaseLabel() }}
     </span>
+    <div class="bj-header__meta hidden md:flex items-center justify-end gap-4 text-[0.8rem] text-[var(--text-muted)]">
+      @if (heroPlayer(); as hero) {
+        <span class="tabular-nums font-semibold text-[var(--orange)]">{{ hero.chips }} chips</span>
+      }
+      <span class="tabular-nums">Min: {{ minBet() }}</span>
+    </div>
   </header>
 
   <!-- Phase Announcement -->
   @if (showAnnouncement()) {
-    <div class="bj-announcement fixed inset-0 z-[150] flex items-center justify-center bg-black/50 pointer-events-none" role="status" aria-live="assertive">
+    <div class="bj-announcement fixed inset-0 z-[150] flex items-center justify-center bg-black/55 pointer-events-none" role="status" aria-live="assertive">
       <span class="bj-announcement__text">{{ announcementText() }}</span>
     </div>
   }
@@ -48,20 +54,38 @@
       <div class="bj-wrapper relative w-full flex flex-col items-center gap-4">
         <!-- Felt Table -->
         <div class="bj-felt relative w-full h-full overflow-hidden">
+          <!-- Spotlight & vignette overlays -->
+          <div class="bj-felt__spotlight"></div>
+          <div class="bj-felt__vignette"></div>
+
           <!-- Table Brand -->
           <div class="bj-felt__brand">Ember Exchange</div>
 
           <!-- Dealer -->
           <div class="bj-dealer absolute top-[8%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5 z-[5]">
-            <div class="bj-dealer__label text-[0.7rem] font-bold uppercase tracking-[0.14em] text-white/[0.55]">Dealer</div>
+            <div class="bj-dealer__spotlight"></div>
+            <div class="bj-dealer__plate">
+              <span class="bj-dealer__label">Dealer</span>
+              <span class="bj-dealer__button">D</span>
+            </div>
             <div class="bj-dealer__cards flex gap-2.5">
               @for (card of dealerHand(); track $index) {
-                <div class="bj-card bj-card--dealer overflow-hidden shrink-0 leading-none">
-                  @if (card.faceUp) {
-                    <img [src]="cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="bj-card-img w-full h-full object-cover block" />
-                  } @else {
-                    <img [src]="cardBackSrc()" alt="Hidden card" class="bj-card-img w-full h-full object-cover block" />
-                  }
+                <div
+                  class="card-flip card-flip--dealer"
+                  [class.face-down]="!card.faceUp"
+                  [class.face-up]="card.faceUp"
+                  [class.card-flip--entering]="enteringCardIds().has(card.cardId)"
+                >
+                  <div class="card-flip__inner">
+                    <div class="card-flip__front">
+                      @if (card.faceUp) {
+                        <img [src]="cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="card-flip__img" />
+                      }
+                    </div>
+                    <div class="card-flip__back">
+                      <img [src]="cardBackSrc()" alt="Hidden card" class="card-flip__img" />
+                    </div>
+                  </div>
                 </div>
               }
             </div>
@@ -70,7 +94,7 @@
             }
           </div>
 
-          <!-- Insurance marker (decorative) -->
+          <!-- Insurance marker -->
           <div class="bj-insurance absolute top-[42%] left-1/2 -translate-x-1/2 font-semibold tracking-[0.14em] uppercase text-white/[0.18] whitespace-nowrap pointer-events-none z-[1]">Insurance pays 2:1</div>
 
           <!-- Player Seats -->
@@ -80,38 +104,82 @@
                 class="bj-seat absolute flex flex-col items-center gap-1.5 z-10"
                 [class.bj-seat--hero]="isHeroSeat(i)"
                 [class.bj-seat--active]="player.isCurrentTurn"
+                [class.bj-seat--inactive]="!player.isCurrentTurn && (isPlaying() || isDealerTurn())"
                 [style.left.%]="seatPositions[i].x"
                 [style.top.%]="seatPositions[i].y"
               >
                 <!-- Name plate -->
                 <div class="bj-seat__plate flex flex-col items-center bg-[var(--seat-bg)] border border-[var(--seat-border)] rounded-lg px-2.5 py-1 min-w-[70px] text-center backdrop-blur-sm">
-                  <span class="bj-seat__name text-[11px] font-bold text-[var(--text-primary)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[90px]">{{ player.name }}</span>
+                  <div class="flex items-center gap-1">
+                    @if (player.isCurrentTurn) {
+                      <span class="bj-seat__turn-dot"></span>
+                    }
+                    <span class="bj-seat__name text-[11px] font-bold text-[var(--text-primary)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[90px]">{{ player.name }}</span>
+                  </div>
                   <span class="bj-seat__chips text-[11px] font-semibold text-[var(--orange)] tabular-nums">{{ player.chips }}</span>
                 </div>
 
                 <!-- Hands -->
                 <div class="bj-seat__hands flex flex-col items-center gap-2">
                   @for (hand of player.hands; track hand.handId) {
-                    <div class="bj-hand flex flex-col items-center gap-1" [class.bj-hand--active]="hand.isCurrentTurn">
+                    <div
+                      class="bj-hand flex flex-col items-center gap-1"
+                      [class.bj-hand--active]="hand.isCurrentTurn"
+                      [class.bj-hand--settled]="isShowdown()"
+                      [class.bj-hand--win]="hand.status === 'win' || hand.status === 'blackjack'"
+                      [class.bj-hand--blackjack]="hand.status === 'blackjack'"
+                      [class.bj-hand--lose]="hand.status === 'lose' || hand.status === 'bust'"
+                      [class.bj-hand--push]="hand.status === 'push'"
+                    >
+                      <!-- Bet circle with chips -->
+                      @if (hand.bet > 0) {
+                        <div class="bj-bet">
+                          <div class="bj-bet__circle"></div>
+                          <div class="bj-bet__stack">
+                            @for (chip of chipStack(hand.bet); track $index) {
+                              <div class="bj-chip" [class]="chip" [style.--chip-index]="$index"></div>
+                            }
+                          </div>
+                          <span class="bj-bet__amount">{{ hand.bet }}</span>
+                        </div>
+                      }
+
+                      <!-- Active-hand indicator -->
+                      @if (hand.isCurrentTurn) {
+                        <div class="bj-hand__arrow">
+                          <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12 21l-12-18h24z"/></svg>
+                        </div>
+                      }
+
                       <div class="bj-hand__cards flex gap-1.5">
                         @for (card of hand.cards; track $index) {
-                          <div class="bj-card bj-card--player overflow-hidden shrink-0 leading-none">
-                            @if (card.faceUp) {
-                              <img [src]="cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="bj-card-img w-full h-full object-cover block" />
-                            } @else {
-                              <img [src]="cardBackSrc()" alt="Hidden card" class="bj-card-img w-full h-full object-cover block" />
-                            }
+                          <div
+                            class="card-flip card-flip--player"
+                            [class.face-down]="!card.faceUp"
+                            [class.face-up]="card.faceUp"
+                            [class.card-flip--entering]="enteringCardIds().has(card.cardId)"
+                          >
+                            <div class="card-flip__inner">
+                              <div class="card-flip__front">
+                                @if (card.faceUp) {
+                                  <img [src]="cardSpriteSrc(card)" [alt]="card.rank + ' of ' + card.suit" class="card-flip__img" />
+                                }
+                              </div>
+                              <div class="card-flip__back">
+                                <img [src]="cardBackSrc()" alt="Hidden card" class="card-flip__img" />
+                              </div>
+                            </div>
                           </div>
                         }
                       </div>
                       <div class="bj-hand__meta flex gap-2 items-center text-[0.75rem]">
-                        @if (hand.bet > 0) {
-                          <span class="bj-hand__bet text-white/70 font-semibold">Bet: {{ hand.bet }}</span>
-                        }
                         <span
                           class="bj-hand__value font-bold px-2 py-0.5 rounded-lg"
                           [class.bj-hand__value--bust]="hand.status === 'bust'"
                           [class.bj-hand__value--blackjack]="hand.status === 'blackjack'"
+                          [class.bj-hand__value--win]="hand.status === 'win'"
+                          [class.bj-hand__value--lose]="hand.status === 'lose'"
+                          [class.bj-hand__value--push]="hand.status === 'push'"
                         >
                           {{ getHandValueDisplay(hand) }}
                         </span>
@@ -122,57 +190,83 @@
               </div>
             }
           }
-        </div>
 
-        <!-- Controls -->
-        <div class="bj-controls flex justify-center items-center min-h-[56px] gap-3 mt-4.5">
-          @if (isBetting() && canAction('bet')) {
-            <div class="bj-controls__group bj-controls__group--betting flex flex-col items-center gap-2.5">
-              <div class="bj-bet-slider flex flex-col items-center gap-1.5 min-w-[200px]">
-                <span class="bj-bet-slider__label text-base font-bold text-[var(--text-primary)]">Bet: {{ betAmount() }}</span>
-                <input
-                  type="range"
-                  class="bj-bet-slider__input w-full h-1.5 rounded-[3px] bg-[var(--border)] outline-none cursor-pointer"
-                  [min]="minBet()"
-                  [max]="maxBet()"
-                  [step]="10"
-                  [value]="betAmount()"
-                  (input)="betAmount.set(+$any($event.target).value)"
-                />
-                <div class="bj-bet-slider__range flex justify-between w-full text-[0.75rem] font-semibold text-[var(--text-muted)]">
-                  <span>{{ minBet() }}</span>
-                  <span>{{ maxBet() }}</span>
+          <!-- Floating Control Bar -->
+          <div class="bj-control-bar absolute bottom-[4%] left-1/2 -translate-x-1/2 z-20">
+            @if (isAnimating()) {
+              <div class="bj-control-bar__panel bj-control-bar__panel--message px-6 py-3">
+                <span class="bj-controls__message text-base font-semibold text-white/80 italic">{{ stageMessage() }}</span>
+              </div>
+            } @else {
+              @if (isBetting() && canAction('bet')) {
+                <div class="bj-control-bar__panel bj-control-bar__panel--betting flex flex-col items-center gap-3 px-6 py-4">
+                  <div class="flex flex-col items-center gap-1.5 w-full min-w-[220px]">
+                    <div class="flex items-center justify-between w-full">
+                      <span class="text-[0.75rem] font-semibold uppercase tracking-wider text-white/70">Bet</span>
+                      <span class="text-xl font-bold text-[var(--gold)] tabular-nums">{{ betAmount() }}</span>
+                    </div>
+                    <input
+                      type="range"
+                      class="bj-bet-slider__input w-full h-1.5 rounded-[3px] bg-white/20 outline-none cursor-pointer"
+                      [min]="minBet()"
+                      [max]="maxBet()"
+                      [step]="10"
+                      [value]="betAmount()"
+                      (input)="betAmount.set(+$any($event.target).value)"
+                    />
+                    <div class="flex justify-between w-full text-[0.7rem] font-semibold text-white/50">
+                      <span>{{ minBet() }}</span>
+                      <span>{{ maxBet() }}</span>
+                    </div>
+                  </div>
+                  <button class="bj-btn bj-btn--primary bj-btn--chip py-3 px-8 rounded-full border-none text-[0.95rem] font-bold cursor-pointer" (click)="executeBet()">Place Bet</button>
                 </div>
-              </div>
-              <button class="bj-btn bj-btn--primary py-3 px-7 rounded-[10px] border-none text-[0.9rem] font-bold cursor-pointer" (click)="executeBet()">Place Bet</button>
-            </div>
-          }
-
-          @if (isInsurance() && isHeroTurn()) {
-            <div class="bj-controls__group flex flex-col items-center gap-2">
-              <span class="text-sm font-semibold text-[var(--text-muted)]">Dealer shows Ace — Take Insurance?</span>
-              <div class="flex items-center gap-3">
-                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeInsurance()" [disabled]="!canAction('insurance')">Take Insurance</button>
-                <button class="bj-btn bj-btn--action py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeDeclineInsurance()" [disabled]="!canAction('decline_insurance')">Decline</button>
-              </div>
-            </div>
-          }
-
-          @if (isPlaying() && isHeroTurn()) {
-            <div class="bj-controls__group flex items-center gap-3">
-              <button class="bj-btn bj-btn--action py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeHit()" [disabled]="!canAction('hit')">Hit</button>
-              <button class="bj-btn bj-btn--action py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeStand()" [disabled]="!canAction('stand')">Stand</button>
-              @if (canAction('double')) {
-                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeDouble()">Double</button>
               }
-              @if (canAction('split')) {
-                <button class="bj-btn bj-btn--highlight py-3 px-7 rounded-[10px] text-[0.9rem] font-bold cursor-pointer" (click)="executeSplit()">Split</button>
-              }
-            </div>
-          }
 
-          @if (isDealerTurn()) {
-            <div class="bj-controls__message text-base font-semibold text-[var(--text-muted)] italic">Dealer is drawing…</div>
+              @if (isInsurance() && isHeroTurn()) {
+                <div class="bj-control-bar__panel flex flex-col items-center gap-3 px-6 py-4">
+                  <span class="text-sm font-semibold text-white/90">Dealer shows Ace — Take Insurance?</span>
+                  <div class="flex items-center gap-3">
+                    <button class="bj-btn bj-btn--highlight py-3 px-6 rounded-full text-[0.9rem] font-bold cursor-pointer" (click)="executeInsurance()" [disabled]="!canAction('insurance')">Take Insurance</button>
+                    <button class="bj-btn bj-btn--action py-3 px-6 rounded-full text-[0.9rem] font-bold cursor-pointer" (click)="executeDeclineInsurance()" [disabled]="!canAction('decline_insurance')">Decline</button>
+                  </div>
+                </div>
+              }
+
+              @if (isPlaying() && isHeroTurn()) {
+                <div class="bj-control-bar__panel flex items-center gap-3 px-5 py-3">
+                  <button class="bj-btn bj-btn--action bj-btn--round" (click)="executeHit()" [disabled]="!canAction('hit')" title="Hit">
+                    <span class="bj-btn__label">Hit</span>
+                  </button>
+                  <button class="bj-btn bj-btn--action bj-btn--round" (click)="executeStand()" [disabled]="!canAction('stand')" title="Stand">
+                    <span class="bj-btn__label">Stand</span>
+                  </button>
+                  @if (canAction('double')) {
+                    <button class="bj-btn bj-btn--highlight bj-btn--round" (click)="executeDouble()" title="Double">
+                      <span class="bj-btn__label">Double</span>
+                    </button>
+                  }
+                  @if (canAction('split')) {
+                    <button class="bj-btn bj-btn--highlight bj-btn--round" (click)="executeSplit()" title="Split">
+                      <span class="bj-btn__label">Split</span>
+                    </button>
+                  }
+                </div>
+              }
+
+              @if (isDealerTurn()) {
+                <div class="bj-control-bar__panel bj-control-bar__panel--message px-6 py-3">
+                  <span class="bj-controls__message text-base font-semibold text-white/80 italic">Dealer is drawing…</span>
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Start hint -->
+          @if (showStartHint()) {
+            <div class="bj-start-hint absolute top-[58%] left-1/2 -translate-x-1/2 z-10">
+              <span>Place your bet to start</span>
+            </div>
           }
         </div>
       </div>
@@ -218,5 +312,81 @@
         </div>
       }
     </aside>
+  </div>
+
+  <!-- Waiting / Empty overlay -->
+  @if (showWaitingOverlay()) {
+    <div class="bj-waiting fixed inset-0 z-[140] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div class="bj-waiting__panel flex flex-col items-center gap-4 px-8 py-10 rounded-2xl text-center">
+        <div class="bj-waiting__icon">🃏</div>
+        <h2 class="text-2xl font-bold text-[var(--text-primary)]" style="font-family: var(--font-display)">Waiting for players…</h2>
+        <p class="text-[0.9rem] text-[var(--text-muted)] max-w-[280px]">Grab a seat. The game starts once bets are placed.</p>
+      </div>
+    </div>
+  }
+
+  <!-- Results Overlay -->
+  @if (showResultsOverlay()) {
+    <div class="bj-overlay fixed inset-0 z-[160] flex items-center justify-center p-4">
+      <div class="bj-overlay__panel flex flex-col gap-5 px-8 py-8 rounded-2xl max-w-md w-full">
+        <h2 class="bj-overlay__title text-3xl font-bold text-center mb-1">Showdown</h2>
+
+        <div class="bj-overlay__results flex flex-col gap-2.5 max-h-[50vh] overflow-y-auto pr-1">
+          @for (row of resultRows(); track $index) {
+            <div class="bj-result-row flex items-center justify-between px-4 py-3 rounded-xl border" [class]="'bj-result-row--' + row.resultClass">
+              <div class="flex flex-col">
+                <span class="font-semibold text-[0.9rem] text-[var(--text-primary)]">{{ row.name }}</span>
+                @if (row.handName) {
+                  <span class="text-[0.75rem] text-[var(--text-muted)]">{{ row.handName }}</span>
+                }
+              </div>
+              <div class="flex flex-col items-end">
+                <span class="text-[0.75rem] font-bold uppercase tracking-wider" [class]="'bj-result-row__label--' + row.resultClass">{{ row.label }}</span>
+                <span class="text-[1rem] font-bold tabular-nums" [class]="row.amount >= 0 ? 'text-[var(--orange)]' : 'text-red-500'">
+                  {{ row.amount >= 0 ? '+' : '' }}{{ row.amount }}
+                </span>
+              </div>
+            </div>
+          } @empty {
+            <p class="text-center text-[var(--text-muted)] italic">No results to show.</p>
+          }
+        </div>
+
+        @if (winners().length > 0) {
+          <div class="bj-overlay__winners flex flex-wrap justify-center gap-2">
+            @for (winner of winners(); track $index) {
+              <div class="bj-overlay__winner-chip flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--gold)] bg-[var(--gold-dim)]">
+                <span class="text-[0.8rem] font-semibold text-[var(--text-primary)]">{{ getPlayerName(winner.playerId) }}</span>
+                <span class="text-[0.8rem] font-bold text-[var(--orange)] tabular-nums">+{{ winner.amount }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        @if (isHost()) {
+          <button class="bj-overlay__btn w-full py-3.5 px-7 rounded-xl border-none text-[0.95rem] font-bold cursor-pointer text-white" (click)="onNewRound()">Next Round</button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Mobile / tablet compact info bar -->
+  <div class="bj-mobile-bar md:hidden fixed bottom-0 left-0 right-0 z-[120] grid grid-cols-3 gap-2 px-4 py-3 border-t border-[var(--border)] bg-[var(--bg-card)]/95 backdrop-blur-md">
+    <div class="flex flex-col items-center justify-center">
+      <span class="text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">Phase</span>
+      <span class="text-[0.8rem] font-semibold text-[var(--text-primary)]">{{ phaseLabel() }}</span>
+    </div>
+    <div class="flex flex-col items-center justify-center">
+      <span class="text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">Bet</span>
+      <span class="text-[0.8rem] font-bold text-[var(--orange)] tabular-nums">{{ currentBet() }}</span>
+    </div>
+    <div class="flex flex-col items-center justify-center">
+      <span class="text-[0.65rem] uppercase tracking-wider text-[var(--text-muted)]">Stack</span>
+      @if (heroPlayer(); as hero) {
+        <span class="text-[0.8rem] font-bold text-[var(--orange)] tabular-nums">{{ hero.chips }}</span>
+      } @else {
+        <span class="text-[0.8rem] font-bold text-[var(--text-muted)]">—</span>
+      }
+    </div>
   </div>
 </div>

@@ -24,8 +24,11 @@ export class WebSocketService {
 
   private ws: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectionAttemptTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempts = 0;
   private readonly maxReconnectDelay = 8000;
+  private readonly maxReconnectAttempts = 10;
+  private readonly connectionTimeoutMs = 5000;
   private seq = 0;
   private shouldReconnect = true;
 
@@ -45,7 +48,14 @@ export class WebSocketService {
 
   connect(): void {
     if (this.ws) {
-      return;
+      // If the existing socket is still alive, there's nothing to do.
+      if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+        return;
+      }
+      // A dead/closed socket can leave connect() returning early forever.
+      // Clean it up so we can open a fresh connection.
+      this.ws.close();
+      this.ws = null;
     }
 
     const sessionId = this.auth.getSessionId();
@@ -58,9 +68,24 @@ export class WebSocketService {
     const url = `${protocol}//${window.location.host}/ws`;
 
     this.connectionState.set('connecting');
-    this.ws = new WebSocket(url, sessionId);
+    const socket = new WebSocket(url, sessionId);
+    this.ws = socket;
 
-    this.ws.onopen = () => {
+    // Guard against sockets that get stuck in CONNECTING (browser queue,
+    // network stall, etc.). Force a close/retry after a short timeout.
+    this.connectionAttemptTimer = setTimeout(() => {
+      this.connectionAttemptTimer = null;
+      if (this.ws === socket && socket.readyState !== WebSocket.OPEN) {
+        console.warn('WebSocket connection attempt timed out, forcing retry');
+        socket.close();
+      }
+    }, this.connectionTimeoutMs);
+
+    socket.onopen = () => {
+      if (this.connectionAttemptTimer) {
+        clearTimeout(this.connectionAttemptTimer);
+        this.connectionAttemptTimer = null;
+      }
       this.reconnectAttempts = 0;
       this.connectionState.set('open');
       this.lastError.set(null);
@@ -70,7 +95,7 @@ export class WebSocketService {
       }
     };
 
-    this.ws.onmessage = (event) => {
+    socket.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data) as Record<string, unknown>;
         this.handleServerMessage(msg);
@@ -79,8 +104,14 @@ export class WebSocketService {
       }
     };
 
-    this.ws.onclose = (event: CloseEvent) => {
-      this.ws = null;
+    socket.onclose = (event: CloseEvent) => {
+      if (this.connectionAttemptTimer) {
+        clearTimeout(this.connectionAttemptTimer);
+        this.connectionAttemptTimer = null;
+      }
+      if (this.ws === socket) {
+        this.ws = null;
+      }
       if (event.code === 1008) {
         // Permanent auth failure — stop reconnecting
         this.shouldReconnect = false;
@@ -96,7 +127,7 @@ export class WebSocketService {
       }
     };
 
-    this.ws.onerror = (err) => {
+    socket.onerror = (err) => {
       console.error('WebSocket error:', err);
     };
   }
@@ -106,6 +137,10 @@ export class WebSocketService {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    if (this.connectionAttemptTimer) {
+      clearTimeout(this.connectionAttemptTimer);
+      this.connectionAttemptTimer = null;
+    }
     this.reconnectAttempts = 0;
     this.shouldReconnect = true;
     this.currentRoomId = null;
@@ -114,6 +149,13 @@ export class WebSocketService {
       this.ws = null;
     }
     this.connectionState.set('closed');
+    // Reset room-specific state so a new room doesn't inherit stale data.
+    this.stateBlob.set(null);
+    this.playersInRoom.set([]);
+    this.currentVersion.set(0);
+    this.lastError.set(null);
+    this.roomChatMessages.set([]);
+    this.roomChatUnread.set(0);
   }
 
   joinRoom(roomId: string): void {
@@ -209,7 +251,14 @@ export class WebSocketService {
   }
 
   private scheduleReconnect(): void {
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), this.maxReconnectDelay);
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      this.connectionState.set('closed');
+      this.lastError.set({ code: 'CONNECTION_FAILED', message: 'Could not connect to the game server. Please refresh the page.' });
+      return;
+    }
+    const baseDelay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), this.maxReconnectDelay);
+    const jitter = Math.floor(Math.random() * 300);
+    const delay = baseDelay + jitter;
     this.reconnectAttempts++;
     this.reconnectTimer = setTimeout(() => {
       this.connect();
