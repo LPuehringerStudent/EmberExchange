@@ -28,7 +28,7 @@
     "@types/compression": "^1.8.1",
     "@types/passport": "^1.0.17",
     "@types/pg": "^8.20.0",
-    "axios": "^1.16.0",
+    "axios": "^1.18.0",
     "bcrypt": "^6.0.0",
     "chart.js": "^4.5.1",
     "compression": "^1.8.1",
