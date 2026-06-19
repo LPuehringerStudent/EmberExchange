@@ -49,16 +49,22 @@ export async function handleJoinRoom(socketId: string, payload: Record<string, u
         let seatIndex = -1;
 
         if (existingPlayer) {
-            if (existingPlayer.connectionState === "disconnected") {
-                await roomPlayerService.updateConnectionState(existingPlayer.roomPlayerId, "connected");
-                seatIndex = existingPlayer.seatIndex;
-            } else {
+            const liveSocketId = connectionManager.getSocketIdForPlayer(roomId, meta.playerId);
+            if (existingPlayer.connectionState !== "disconnected" && liveSocketId) {
+                // The player is genuinely still connected on another active socket.
                 connectionManager.sendToSocket(socketId, {
                     type: "error",
                     payload: { code: ErrorCode.INVALID_STATE, message: "Already in room", recoverable: true }
                 });
                 return;
             }
+
+            // Stale connected row (e.g. after a crash/reconnect or a socket that
+            // closed without cleaning up). Reclaim the seat and let them rejoin.
+            if (existingPlayer.connectionState === "disconnected") {
+                await roomPlayerService.updateConnectionState(existingPlayer.roomPlayerId, "connected");
+            }
+            seatIndex = existingPlayer.seatIndex;
         } else {
             const playerCount = await roomPlayerService.countPlayersInRoom(roomId);
             if (playerCount >= room.maxPlayers) {

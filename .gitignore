@@ -101,3 +101,5 @@ graphify-out/
 
 #Agent
 agent/
+# Superpowers skill working folder
+.superpowers/
