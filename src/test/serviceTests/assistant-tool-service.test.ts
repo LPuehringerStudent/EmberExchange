@@ -60,6 +60,32 @@ describe('AssistantToolService', () => {
     expect(llm.divineIntervention).toHaveBeenCalledWith('How do lootboxes work?');
   });
 
+  it('falls back to /home for unknown routes', async () => {
+    const service = new AssistantToolService({} as AssistantLlmService, mockUnit(), ctx);
+    const result = await service.handle('navigate_to', { route: 'unknown' });
+    expect(result).toEqual({ route: '/home' });
+  });
+
+  it('returns empty selector for unknown targets', async () => {
+    const service = new AssistantToolService({} as AssistantLlmService, mockUnit(), ctx);
+    const result = await service.handle('highlight_element', { target: 'unknown' });
+    expect(result).toEqual({ target: 'unknown', selector: '' });
+  });
+
+  it('defaults player summary to zero when player not found', async () => {
+    const stmt = mockStmt(null);
+    const unit = mockUnit(stmt);
+    const service = new AssistantToolService({} as AssistantLlmService, unit, ctx);
+    const result = await service.handle('get_player_summary', {});
+    expect(result).toEqual({ coins: 0, sparks: 0 });
+  });
+
+  it('rejects missing required arguments', async () => {
+    const service = new AssistantToolService({} as AssistantLlmService, mockUnit(), ctx);
+    await expect(service.handle('navigate_to', {})).rejects.toThrow('Missing required argument: route');
+    await expect(service.handle('divine_intervention', {})).rejects.toThrow('Missing required argument: question');
+  });
+
   it('returns error for unknown tools', async () => {
     const service = new AssistantToolService({} as AssistantLlmService, mockUnit(), ctx);
     const result = await service.handle('unknown_tool', {});

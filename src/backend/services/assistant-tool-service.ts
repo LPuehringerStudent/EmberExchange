@@ -1,6 +1,14 @@
 import { AssistantLlmService } from './assistant-llm-service';
 import { Unit } from '../utils/unit';
 
+function requireString(args: Record<string, unknown>, key: string): string {
+  const value = args[key];
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`Missing required argument: ${key}`);
+  }
+  return value;
+}
+
 export interface ToolContext {
   playerId: number;
   isAdmin: boolean;
@@ -16,15 +24,15 @@ export class AssistantToolService {
   async handle(name: string, args: Record<string, unknown>): Promise<unknown> {
     switch (name) {
       case 'navigate_to':
-        return this.navigateTo(String(args.route));
+        return this.navigateTo(requireString(args, 'route'));
       case 'highlight_element':
-        return { target: String(args.target), selector: this.targetToSelector(String(args.target)) };
+        return { target: requireString(args, 'target'), selector: this.targetToSelector(requireString(args, 'target')) };
       case 'trigger_action':
-        return { action: String(args.action), acknowledged: true };
+        return { action: requireString(args, 'action'), acknowledged: true };
       case 'get_player_summary':
         return await this.getPlayerSummary();
       case 'divine_intervention':
-        return await this.divineIntervention(String(args.question));
+        return await this.divineIntervention(requireString(args, 'question'));
       default:
         return { error: 'Unknown tool' };
     }
