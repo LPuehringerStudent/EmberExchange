@@ -17,7 +17,10 @@ function getClientIp(req: Request): string {
   const cf = req.headers['cf-connecting-ip'];
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof cf === 'string' && cf) return cf;
-  if (typeof forwarded === 'string' && forwarded) return forwarded.split(',')[0].trim();
+  if (typeof forwarded === 'string' && forwarded) {
+    const parts = forwarded.split(',');
+    return parts[parts.length - 1].trim();
+  }
   return req.ip ?? '';
 }
 
@@ -33,15 +36,12 @@ function validateMessages(body: unknown): OpenAI.Chat.ChatCompletionMessageParam
     if (!msg || typeof msg !== 'object') {
       throw new Error('Invalid message format.');
     }
-    const { role, content, tool_call_id: toolCallId } = msg as Record<string, unknown>;
-    if (typeof role !== 'string' || !['system', 'user', 'assistant', 'tool'].includes(role)) {
+    const { role, content } = msg as Record<string, unknown>;
+    if (typeof role !== 'string' || !['user', 'assistant'].includes(role)) {
       throw new Error('Invalid message role.');
     }
     if (typeof content !== 'string') {
       throw new Error('Invalid message content.');
-    }
-    if (role === 'tool' && typeof toolCallId !== 'string') {
-      throw new Error('Invalid tool message.');
     }
   }
   return messages as OpenAI.Chat.ChatCompletionMessageParam[];
