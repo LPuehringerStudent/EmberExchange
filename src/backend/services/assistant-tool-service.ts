@@ -13,7 +13,7 @@ export class AssistantToolService {
     private ctx: ToolContext
   ) {}
 
-  handle(name: string, args: Record<string, unknown>): unknown {
+  async handle(name: string, args: Record<string, unknown>): Promise<unknown> {
     switch (name) {
       case 'navigate_to':
         return this.navigateTo(String(args.route));
@@ -22,9 +22,9 @@ export class AssistantToolService {
       case 'trigger_action':
         return { action: String(args.action), acknowledged: true };
       case 'get_player_summary':
-        return this.getPlayerSummary();
+        return await this.getPlayerSummary();
       case 'divine_intervention':
-        return this.divineIntervention(String(args.question));
+        return await this.divineIntervention(String(args.question));
       default:
         return { error: 'Unknown tool' };
     }
