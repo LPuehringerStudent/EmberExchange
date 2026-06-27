@@ -104,3 +104,6 @@ agent/
 
 # Superpowers skill working folder
 .superpowers/
+
+# Git worktrees
+.worktrees/
