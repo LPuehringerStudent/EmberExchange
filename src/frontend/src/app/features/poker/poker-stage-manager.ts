@@ -60,8 +60,8 @@ export class PokerStageManager {
   private previousBets: Map<number, number> = new Map();
   private previousPot = 0;
 
-  private chipEventInternal = signal<PokerStageEvent | null>(null);
-  readonly chipEvent = this.chipEventInternal;
+  private chipEventQueueInternal = signal<PokerStageEvent[]>([]);
+  readonly chipEventQueue = this.chipEventQueueInternal.asReadonly();
 
   readonly displayedStateBlob = this.displayedStateBlobInternal;
   readonly stage = this.stageInternal;
@@ -76,6 +76,10 @@ export class PokerStageManager {
 
   setHeroPlayerId(id: number | null): void {
     this.heroPlayerId = id;
+  }
+
+  clearChipEvents(): void {
+    this.chipEventQueueInternal.set([]);
   }
 
   setTarget(blob: Record<string, unknown> | null): void {
@@ -268,7 +272,7 @@ export class PokerStageManager {
       case 'place_chips':
       case 'move_chips_to_pot':
       case 'payout_chips': {
-        this.chipEventInternal.set({ ...event });
+        this.chipEventQueueInternal.update((q) => [...q, event]);
         return;
       }
     }
@@ -321,14 +325,25 @@ export class PokerStageManager {
   ): void {
     const winners = (blob['winners'] as Array<{ playerId: number; amount: number }>) ?? [];
     for (const w of winners) {
-      events.push({
-        type: 'payout_chips',
-        stage: 'settling',
-        delay: events.length === 0 ? 0 : POKER_TIMING.chipFlightStagger,
-        playerId: w.playerId,
-        amount: w.amount,
-      });
+      if (w.amount > 0) {
+        events.push({
+          type: 'payout_chips',
+          stage: 'settling',
+          delay: events.length === 0 ? 0 : POKER_TIMING.chipFlightStagger,
+          playerId: w.playerId,
+          amount: w.amount,
+        });
+      }
     }
+  }
+
+  private syncTrackingState(blob: Record<string, unknown>): void {
+    const players = (blob['players'] as Array<Record<string, unknown>>) ?? [];
+    this.previousBets.clear();
+    for (const p of players) {
+      this.previousBets.set(p['playerId'] as number, (p['bet'] as number) ?? 0);
+    }
+    this.previousPot = (blob['pots'] as Array<{ amount: number }>)?.reduce((s, pot) => s + pot.amount, 0) ?? 0;
   }
 
   private buildEvents(blob: Record<string, unknown>): PokerStageEvent[] {
@@ -362,8 +377,6 @@ export class PokerStageManager {
           hasAnimatedCard = true;
         }
       }
-
-      this.buildPlaceChipEvents(blob, events);
     }
 
     // Community cards: flop (3), turn (1), river (1).
@@ -374,6 +387,7 @@ export class PokerStageManager {
 
       // Jump if we skipped a phase (reconnect / late join).
       if (targetIdx < 0 || displayedIdx < 0 || targetIdx - displayedIdx > 1) {
+        this.syncTrackingState(blob);
         return [{ type: 'reveal_opponent_cards', stage: 'idle', delay: 0 }];
       }
 
@@ -401,7 +415,6 @@ export class PokerStageManager {
       }
 
       this.buildMoveToPotEvents(blob, events);
-      this.buildPlaceChipEvents(blob, events);
     }
 
     // Showdown: reveal all hole cards, then settle.
@@ -409,6 +422,7 @@ export class PokerStageManager {
       // If we somehow jumped to showdown from far away, just snap.
       const riverOrShowdown = displayedPhase === 'river' || displayedPhase === 'showdown';
       if (!riverOrShowdown) {
+        this.syncTrackingState(blob);
         return [{ type: 'reveal_opponent_cards', stage: 'idle', delay: 0 }];
       }
 
@@ -419,13 +433,9 @@ export class PokerStageManager {
       events.push({ type: 'settle', stage: 'settling', delay: POKER_TIMING.settlePause });
     }
 
-    // Update tracking state.
-    const players = (blob['players'] as Array<Record<string, unknown>>) ?? [];
-    this.previousBets.clear();
-    for (const p of players) {
-      this.previousBets.set(p['playerId'] as number, (p['bet'] as number) ?? 0);
-    }
-    this.previousPot = (blob['pots'] as Array<{ amount: number }>)?.reduce((s, pot) => s + pot.amount, 0) ?? 0;
+    this.buildPlaceChipEvents(blob, events);
+
+    this.syncTrackingState(blob);
 
     return events;
   }
