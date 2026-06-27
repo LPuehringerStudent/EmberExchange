@@ -1,5 +1,6 @@
 import { AssistantLlmService } from './assistant-llm-service';
 import { Unit } from '../utils/unit';
+import { sanitizeAssistantOutput } from './assistant-sanitizer';
 
 function requireString(args: Record<string, unknown>, key: string): string {
   const value = args[key];
@@ -82,6 +83,6 @@ export class AssistantToolService {
 
   private async divineIntervention(question: string): Promise<{ answer: string }> {
     const answer = await this.llm.divineIntervention(question);
-    return { answer };
+    return { answer: sanitizeAssistantOutput(answer) };
   }
 }
