@@ -47,10 +47,10 @@ export class PokerStageManager {
   private pendingTarget: Record<string, unknown> | null = null;
   private lastProcessedJson = '';
 
-  readonly displayedStateBlob = this.displayedStateBlobInternal.asReadonly();
-  readonly stage = this.stageInternal.asReadonly();
-  readonly isAnimating = this.isAnimatingInternal.asReadonly();
-  readonly enteringCardIds = this.enteringCardIdsInternal.asReadonly();
+  readonly displayedStateBlob = this.displayedStateBlobInternal;
+  readonly stage = this.stageInternal;
+  readonly isAnimating = this.isAnimatingInternal;
+  readonly enteringCardIds = this.enteringCardIdsInternal;
 
   constructor(options: PokerStageManagerOptions = {}) {
     this.reducedMotion = options.reducedMotion ?? false;
@@ -127,7 +127,7 @@ export class PokerStageManager {
         this.applyEvent(event);
         step();
       } else {
-        window.setTimeout(() => {
+        setTimeout(() => {
           this.applyEvent(event);
           step();
         }, event.delay);
@@ -167,10 +167,9 @@ export class PokerStageManager {
         }
         tp['hand'] = hand;
         this.displayedStateBlobInternal.set(next);
-        this.enteringCardIdsInternal.update((set) => {
-          set.add(`hole-${event.playerId}-${event.cardIndex}`);
-          return new Set(set);
-        });
+        this.enteringCardIdsInternal.set(
+          new Set([...(this.enteringCardIdsInternal() as Set<string>), `hole-${event.playerId}-${event.cardIndex}`])
+        );
         return;
       }
 
@@ -183,10 +182,9 @@ export class PokerStageManager {
           cards[event.cardIndex] = event.card;
         }
         this.displayedStateBlobInternal.set(next);
-        this.enteringCardIdsInternal.update((set) => {
-          set.add(`community-${event.cardIndex}`);
-          return new Set(set);
-        });
+        this.enteringCardIdsInternal.set(
+          new Set([...(this.enteringCardIdsInternal() as Set<string>), `community-${event.cardIndex}`])
+        );
         return;
       }
 
@@ -215,6 +213,7 @@ export class PokerStageManager {
     const targetPhase = normalizePhase(String(blob['phase'] ?? ''));
 
     const events: PokerStageEvent[] = [];
+    let hasAnimatedCard = false;
 
     // New hand: clear the board, then animate hole cards being dealt.
     if (targetPhase === 'preflop' && displayedPhase !== 'preflop') {
@@ -231,11 +230,12 @@ export class PokerStageManager {
           events.push({
             type: 'deal_hole_card',
             stage: 'dealing',
-            delay: events.length === 0 ? 0 : POKER_TIMING.dealStagger,
+            delay: hasAnimatedCard ? POKER_TIMING.dealStagger : 0,
             playerId: tp?.['playerId'] as number,
             cardIndex: cardIdx,
             card,
           });
+          hasAnimatedCard = true;
         }
       }
     }
@@ -267,10 +267,11 @@ export class PokerStageManager {
         events.push({
           type: 'deal_community_card',
           stage: targetPhase,
-          delay: events.length === 0 ? 0 : POKER_TIMING.communityStagger,
+          delay: hasAnimatedCard ? POKER_TIMING.communityStagger : 0,
           cardIndex: idx,
           card,
         });
+        hasAnimatedCard = true;
       }
     }
 
