@@ -71,54 +71,56 @@
           <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Your Turn</span>
           <div class="sidebar-action-panel flex flex-col gap-2 mt-[6px]">
             @for (action of validActions(); track action.type) {
-              @if (action.type === 'raise') {
-                @let rMin = action.minAmount ?? 0;
-                @let rMax = action.maxAmount ?? rMin;
-                <div class="raise-row flex gap-[6px] items-center justify-center">
+              @if (canAction(action.type)) {
+                @if (action.type === 'raise') {
+                  @let rMin = action.minAmount ?? 0;
+                  @let rMax = action.maxAmount ?? rMin;
+                  <div class="raise-row flex gap-[6px] items-center justify-center">
+                    <button
+                      class="raise-stepper w-8 h-9 rounded-lg border border-[var(--border)] bg-[var(--bg-sidebar)] text-[var(--text-primary)] text-[1.1rem] font-bold cursor-pointer flex items-center justify-center"
+                      (click)="decrementRaise(rMin)"
+                      [disabled]="(raiseAmount() || rMin) <= rMin"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      class="raise-input w-16 py-2 px-[6px] rounded-lg border border-[var(--border)] bg-surface text-[var(--text-primary)] text-[0.95rem] font-semibold text-center"
+                      [min]="rMin"
+                      [max]="rMax"
+                      [value]="raiseAmount() || rMin"
+                      (input)="raiseAmount.set(+($any($event.target).value))"
+                      (focus)="initRaiseAmount(rMin)"
+                    />
+                    <button
+                      class="raise-stepper w-8 h-9 rounded-lg border border-[var(--border)] bg-[var(--bg-sidebar)] text-[var(--text-primary)] text-[1.1rem] font-bold cursor-pointer flex items-center justify-center"
+                      (click)="incrementRaise(rMin, rMax)"
+                      [disabled]="(raiseAmount() || rMin) >= rMax"
+                    >
+                      +
+                    </button>
+                  </div>
                   <button
-                    class="raise-stepper w-8 h-9 rounded-lg border border-[var(--border)] bg-[var(--bg-sidebar)] text-[var(--text-primary)] text-[1.1rem] font-bold cursor-pointer flex items-center justify-center"
-                    (click)="decrementRaise(rMin)"
-                    [disabled]="(raiseAmount() || rMin) <= rMin"
+                    class="action-btn action-btn--primary py-[10px] px-[22px] rounded-[10px] border text-[0.95rem] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1"
+                    (click)="executeRaise()"
                   >
-                    −
+                    Raise
                   </button>
-                  <input
-                    type="number"
-                    class="raise-input w-16 py-2 px-[6px] rounded-lg border border-[var(--border)] bg-surface text-[var(--text-primary)] text-[0.95rem] font-semibold text-center"
-                    [min]="rMin"
-                    [max]="rMax"
-                    [value]="raiseAmount() || rMin"
-                    (input)="raiseAmount.set(+($any($event.target).value))"
-                    (focus)="initRaiseAmount(rMin)"
-                  />
+                } @else {
                   <button
-                    class="raise-stepper w-8 h-9 rounded-lg border border-[var(--border)] bg-[var(--bg-sidebar)] text-[var(--text-primary)] text-[1.1rem] font-bold cursor-pointer flex items-center justify-center"
-                    (click)="incrementRaise(rMin, rMax)"
-                    [disabled]="(raiseAmount() || rMin) >= rMax"
+                    class="action-btn py-[10px] px-[22px] rounded-[10px] border border-[var(--border)] bg-surface text-[var(--text-primary)] text-[0.95rem] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1"
+                    [class.action-btn--primary]="action.type === 'all_in'"
+                    (click)="executeAction(action)"
                   >
-                    +
+                    {{ action.type | titlecase }}
+                    @if (action.amount) {
+                      <span class="action-btn__amount tabular-nums opacity-90 flex items-center gap-[2px]">
+                        <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
+                        {{ action.amount }}
+                      </span>
+                    }
                   </button>
-                </div>
-                <button
-                  class="action-btn action-btn--primary py-[10px] px-[22px] rounded-[10px] border text-[0.95rem] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1"
-                  (click)="executeRaise()"
-                >
-                  Raise
-                </button>
-              } @else {
-                <button
-                  class="action-btn py-[10px] px-[22px] rounded-[10px] border border-[var(--border)] bg-surface text-[var(--text-primary)] text-[0.95rem] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1"
-                  [class.action-btn--primary]="action.type === 'all_in'"
-                  (click)="executeAction(action)"
-                >
-                  {{ action.type | titlecase }}
-                  @if (action.amount) {
-                    <span class="action-btn__amount tabular-nums opacity-90 flex items-center gap-[2px]">
-                      <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
-                      {{ action.amount }}
-                    </span>
-                  }
-                </button>
+                }
               }
             }
           </div>

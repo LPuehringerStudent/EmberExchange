@@ -92,8 +92,7 @@ export class Poker {
   };
 
   /* ── Local UI state ── */
-  readonly gameStarted = signal(false);
-  readonly isLoading = signal(false);
+  private pendingAction = signal<string | null>(null);
   readonly showPhaseOverlay = signal(false);
   readonly phaseOverlayText = signal('');
 
@@ -129,6 +128,21 @@ export class Poker {
         this.triggerPhaseAnnouncement(currentPhase);
       }
       this.prevPhase = currentPhase;
+    });
+
+    // Release action lock once the backend removes the action, or after a safety timeout.
+    effect(() => {
+      const pending = this.pendingAction();
+      if (!pending) return;
+
+      const stillValid = this.validActions().some((a) => a.type === pending);
+      if (!stillValid) {
+        this.pendingAction.set(null);
+        return;
+      }
+
+      const timer = window.setTimeout(() => this.pendingAction.set(null), 10000);
+      return () => clearTimeout(timer);
     });
   }
 
@@ -327,8 +341,14 @@ export class Poker {
     return seatIdx === 0;
   }
 
+  private sendActionWithPending(type: string, data: Record<string, unknown> = {}): void {
+    if (this.pendingAction()) return;
+    this.pendingAction.set(type);
+    this.ws.sendAction(type, data);
+  }
+
   onNewRound(): void {
-    this.ws.sendAction('next_hand', {});
+    this.sendActionWithPending('next_hand', {});
   }
 
   getPlayerName(playerId: number): string {
@@ -355,7 +375,7 @@ export class Poker {
     const min = action.minAmount ?? amount;
     const max = action.maxAmount ?? amount;
     const clamped = Math.max(min, Math.min(max, amount));
-    this.ws.sendAction('raise', { amount: clamped });
+    this.sendActionWithPending('raise', { amount: clamped });
   }
 
   /* ─── Phase announcement overlay ─── */
@@ -399,7 +419,7 @@ export class Poker {
   /* ─── Play again flow ─── */
 
   handlePlayAgain(): void {
-    this.ws.sendAction('next_hand', {});
+    this.sendActionWithPending('next_hand', {});
   }
 
   readonly isHost = computed(() => {
@@ -430,7 +450,11 @@ export class Poker {
     if (typeof action.amount === 'number') {
       data['amount'] = action.amount;
     }
-    this.ws.sendAction(action.type, data);
+    this.sendActionWithPending(action.type, data);
+  }
+
+  canAction(type: string): boolean {
+    return !this.isAnimating() && !this.pendingAction() && this.validActions().some((a) => a.type === type);
   }
 
   onStartGame(): void {
