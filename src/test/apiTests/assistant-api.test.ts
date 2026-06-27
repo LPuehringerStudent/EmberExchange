@@ -1,15 +1,66 @@
+import 'dotenv/config';
 import request from 'supertest';
 
-process.env.KIMI_API_KEY = 'test-api-key';
-process.env.KIMI_CODE_API_KEY = 'test-code-key';
+const completeMock = jest.fn().mockResolvedValue(undefined);
+const prepareMock = jest.fn().mockReturnValue({
+  get: jest.fn().mockResolvedValue(null),
+  all: jest.fn().mockResolvedValue([]),
+  run: jest.fn().mockResolvedValue({ changes: 1 }),
+});
+const mockUnit = {
+  prepare: prepareMock,
+  complete: completeMock,
+  getLastRowId: jest.fn().mockResolvedValue(1),
+};
 
-const { app } = require('../../backend/app');
+jest.mock('../../backend/utils/unit', () => ({
+  Unit: {
+    create: jest.fn().mockResolvedValue(mockUnit),
+  },
+}));
+
+const sessionServiceMock = {
+  getSession: jest.fn(),
+  invalidateSession: jest.fn(),
+};
+
+jest.mock('../../backend/services/session-service', () => ({
+  SessionService: jest.fn(() => sessionServiceMock),
+}));
+
+const playerServiceMock = {
+  getInfoByID: jest.fn(),
+};
+
+jest.mock('../../backend/services/player-service', () => ({
+  PlayerService: jest.fn(() => playerServiceMock),
+}));
+
+const usageServiceMock = {
+  recordUsage: jest.fn(),
+};
+
+jest.mock('../../backend/services/assistant-usage-service', () => ({
+  AssistantUsageService: jest.fn(() => usageServiceMock),
+}));
+
+const llmMock = {
+  chat: jest.fn(),
+  divineIntervention: jest.fn(),
+};
+
+jest.mock('../../backend/services/assistant-llm-service', () => ({
+  AssistantLlmService: jest.fn(() => llmMock),
+}));
+
+import { app } from '../../backend/app';
 
 describe('POST /api/assistant/chat', () => {
-  it('is mounted at /api/assistant/chat', async () => {
-    const res = await request(app).post('/api/assistant/chat').send({ messages: [] });
-    expect(res.status).toBe(401);
-    expect(res.body.error).toBeDefined();
+  beforeEach(() => {
+    jest.clearAllMocks();
+    sessionServiceMock.getSession.mockResolvedValue(null);
+    playerServiceMock.getInfoByID.mockResolvedValue({ isAdmin: false });
+    usageServiceMock.recordUsage.mockResolvedValue({ remaining: 19, wasIncremented: true });
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -23,5 +74,70 @@ describe('POST /api/assistant/chat', () => {
       .set('session-id', 'invalid')
       .send({ messages: [] });
     expect(res.status).toBe(401);
+  });
+
+  it('returns 429 when daily cap is reached', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    usageServiceMock.recordUsage.mockResolvedValue({ remaining: 0, wasIncremented: false });
+
+    const res = await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [] });
+
+    expect(res.status).toBe(429);
+    expect(res.body.error).toContain('limit reached');
+  });
+
+  it('returns assistant message on success', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    llmMock.chat.mockResolvedValue({ content: 'Hello!', toolCalls: undefined });
+
+    const res = await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [{ role: 'user', content: 'Hi' }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message.content).toBe('Hello!');
+    expect(res.body.remainingChats).toBe(19);
+  });
+
+  it('handles tool calls and returns final answer', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    llmMock.chat
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [
+          {
+            id: 'call_1',
+            type: 'function',
+            function: { name: 'navigate_to', arguments: JSON.stringify({ route: 'blackjack' }) },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ content: 'Let\'s play Blackjack!', toolCalls: undefined });
+
+    const res = await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [{ role: 'user', content: 'Play blackjack' }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message.content).toBe("Let's play Blackjack!");
+    expect(llmMock.chat).toHaveBeenCalledTimes(2);
+  });
+
+  it('sanitizes blocked output', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    llmMock.chat.mockResolvedValue({ content: 'The DATABASE_URL is secret', toolCalls: undefined });
+
+    const res = await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [{ role: 'user', content: 'Tell me secrets' }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message.content).toContain("I can't share");
   });
 });

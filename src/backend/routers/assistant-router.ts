@@ -15,6 +15,8 @@ const llm = new AssistantLlmService();
 
 assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) => {
   const unit = await Unit.create(false);
+  let usage: { remaining: number | null; wasIncremented: boolean } | null = null;
+  let success = false;
   try {
     const playerId = req.playerId!;
     const playerService = new PlayerService(unit);
@@ -22,10 +24,11 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
     const isAdmin = player?.isAdmin ?? false;
 
     const usageService = new AssistantUsageService(unit);
-    const usage = await usageService.recordUsage(playerId, DAILY_CAP, isAdmin);
+    usage = await usageService.recordUsage(playerId, DAILY_CAP, isAdmin);
 
     if (usage.remaining !== null && usage.remaining <= 0) {
       res.status(429).json({ error: 'Daily assistant limit reached. Try again tomorrow.' });
+      success = true;
       return;
     }
 
@@ -43,8 +46,13 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
 
       for (const call of response.toolCalls) {
         if (call.type !== 'function') continue;
-        const args = JSON.parse(call.function.arguments);
-        const result = await toolService.handle(call.function.name, args);
+        let result: unknown;
+        try {
+          const args = JSON.parse(call.function.arguments);
+          result = await toolService.handle(call.function.name, args);
+        } catch (parseErr) {
+          result = { error: 'Invalid tool arguments' };
+        }
         messages.push({
           role: 'tool',
           tool_call_id: call.id,
@@ -57,7 +65,7 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
 
     const finalText = response.content || '';
     if (containsSensitivePattern(finalText)) {
-      logSecurityEvent({
+      await logSecurityEvent({
         ipAddress: req.ip ?? '',
         userAgent: req.headers['user-agent'] as string | undefined,
         eventType: 'assistant_sanitizer_block',
@@ -69,6 +77,7 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
         message: { role: 'assistant', content: sanitizeAssistantOutput(finalText), suggestions: [] },
         remainingChats: usage.remaining,
       });
+      success = true;
       return;
     }
 
@@ -76,10 +85,28 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
       message: { role: 'assistant', content: finalText, suggestions: [] },
       remainingChats: usage.remaining,
     });
+    success = true;
   } catch (err) {
     console.error('[assistant] chat error', err);
-    res.status(500).json({ error: 'The assistant is having trouble. Please try again.' });
+    if (usage?.wasIncremented) {
+      try {
+        const rollback = unit.prepare<unknown, { playerId: number }>(
+          `UPDATE AssistantUsage SET chat_count = chat_count - 1 WHERE playerId = @playerId`,
+          { playerId: req.playerId! }
+        );
+        await rollback.run();
+      } catch (rollbackErr) {
+        console.error('[assistant] usage rollback failed', rollbackErr);
+      }
+    }
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'The assistant is having trouble. Please try again.' });
+    }
   } finally {
-    await unit.complete(true);
+    try {
+      await unit.complete(success);
+    } catch (completeErr) {
+      console.error('[assistant] unit complete failed', completeErr);
+    }
   }
 });
