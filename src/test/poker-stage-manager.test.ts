@@ -9,8 +9,6 @@ jest.mock('@angular/core', () => ({
   },
 }));
 
-import { signal } from '@angular/core';
-
 import { PokerStageManager, POKER_TIMING } from '../frontend/src/app/features/poker/poker-stage-manager';
 
 // The stage manager runs in a browser context and uses window.setTimeout.
@@ -47,19 +45,15 @@ function makeBlob(
 }
 
 describe('PokerStageManager', () => {
+  let mgr: PokerStageManager;
+
   afterEach(() => {
+    mgr?.destroy();
     jest.clearAllTimers();
   });
 
-  it('mock signal works', () => {
-    const s = signal(new Set<string>());
-    const readonly = s;
-    readonly.set(new Set(['a']));
-    expect(readonly().has('a')).toBe(true);
-  });
-
   it('deals hole cards one at a time', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     mgr.setTarget(
       makeBlob('preflop', [
         makePlayer(1, ['Ah', 'Kd']),
@@ -88,7 +82,7 @@ describe('PokerStageManager', () => {
   });
 
   it('deals the flop three cards staggered', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     mgr.setTarget(
       makeBlob('preflop', [
         makePlayer(1, ['Ah', 'Kd']),
@@ -125,7 +119,7 @@ describe('PokerStageManager', () => {
   });
 
   it('deals turn and river one card each', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     mgr.setTarget(
       makeBlob(
         'flop',
@@ -169,7 +163,7 @@ describe('PokerStageManager', () => {
   });
 
   it('snaps to target on reconnect (phase skip)', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     mgr.setTarget(makeBlob('waiting', [], []));
     jest.advanceTimersByTime(100);
 
@@ -189,7 +183,7 @@ describe('PokerStageManager', () => {
   });
 
   it('tracks entering card ids during animation', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     mgr.setTarget(
       makeBlob('preflop', [
         makePlayer(1, ['Ah', 'Kd']),
@@ -204,7 +198,7 @@ describe('PokerStageManager', () => {
   });
 
   it('reveals all cards and settles at showdown', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     mgr.setTarget(
       makeBlob(
         'river',
@@ -239,7 +233,7 @@ describe('PokerStageManager', () => {
   });
 
   it('respects reduced motion and snaps instantly', () => {
-    const mgr = new PokerStageManager({ reducedMotion: true });
+    mgr = new PokerStageManager({ reducedMotion: true });
     mgr.setTarget(
       makeBlob('preflop', [
         makePlayer(1, ['Ah', 'Kd']),
@@ -252,7 +246,7 @@ describe('PokerStageManager', () => {
   });
 
   it('marks opponent cards as revealing at showdown', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     mgr.setTarget(
       makeBlob(
         'river',
@@ -279,12 +273,43 @@ describe('PokerStageManager', () => {
     expect(mgr.revealingCardIds().has('hole-2-0')).toBe(true);
     expect(mgr.revealingCardIds().has('hole-2-1')).toBe(true);
 
-    jest.advanceTimersByTime(600);
+    jest.advanceTimersByTime(POKER_TIMING.revealDuration + 10);
     expect(mgr.revealingCardIds().size).toBe(0);
   });
 
+  it('does not mark hero hole cards as revealing at showdown', () => {
+    mgr = new PokerStageManager({ heroPlayerId: 1 });
+    mgr.setTarget(
+      makeBlob(
+        'river',
+        [
+          makePlayer(1, ['Ah', 'Kd']),
+          makePlayer(2, ['back', 'back']),
+        ],
+        ['3c', '7h', 'Qs', '2d', '5s']
+      )
+    );
+    jest.advanceTimersByTime(10_000);
+
+    mgr.setTarget(
+      makeBlob(
+        'showdown',
+        [
+          makePlayer(1, ['Ah', 'Kd']),
+          makePlayer(2, ['Tc', 'Th']),
+        ],
+        ['3c', '7h', 'Qs', '2d', '5s']
+      )
+    );
+
+    expect(mgr.revealingCardIds().has('hole-2-0')).toBe(true);
+    expect(mgr.revealingCardIds().has('hole-2-1')).toBe(true);
+    expect(mgr.revealingCardIds().has('hole-1-0')).toBe(false);
+    expect(mgr.revealingCardIds().has('hole-1-1')).toBe(false);
+  });
+
   it('emits place_chips when a bet increases', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     mgr.setTarget(
       makeBlob('preflop', [
         makePlayer(1, ['Ah', 'Kd']),
@@ -302,7 +327,7 @@ describe('PokerStageManager', () => {
   });
 
   it('emits move_chips_to_pot when seat bets are collected', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     const p1 = makePlayer(1, ['Ah', 'Kd']);
     p1['bet'] = 10;
     const p2 = makePlayer(2, ['back', 'back']);
@@ -323,7 +348,7 @@ describe('PokerStageManager', () => {
   });
 
   it('emits payout_chips at showdown', () => {
-    const mgr = new PokerStageManager();
+    mgr = new PokerStageManager();
     mgr.setTarget(
       makeBlob(
         'river',
