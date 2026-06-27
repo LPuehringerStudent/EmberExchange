@@ -1,0 +1,11 @@
+.ai-highlight-pulse {
+  animation: ai-pulse 1s ease-in-out 3;
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+@keyframes ai-pulse {
+  0%, 100% { outline-color: var(--accent); }
+  50% { outline-color: transparent; }
+}

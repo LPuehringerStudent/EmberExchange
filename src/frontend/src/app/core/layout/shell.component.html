@@ -204,3 +204,8 @@
 @if (showOnboarding()) {
   <app-onboarding-overlay />
 }
+
+@if (isLoggedIn()) {
+  <app-ai-helper-button />
+  <app-ai-helper-drawer />
+}
