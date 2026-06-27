@@ -316,6 +316,21 @@
 
       </div>
       <!-- /pt-wrapper -->
+
+      <!-- Flying chips overlay -->
+      <div class="chip-flying-layer absolute inset-0 pointer-events-none z-[25]">
+        @for (chip of flyingChips(); track chip.id) {
+          <div
+            class="chip-flying"
+            [style.--start-x.%]="chip.startX"
+            [style.--start-y.%]="chip.startY"
+            [style.--end-x.%]="chip.endX"
+            [style.--end-y.%]="chip.endY"
+          >
+            <div class="chip chip--gold"></div>
+          </div>
+        }
+      </div>
     </main>
 
     <aside class="poker-sidebar poker-sidebar--right flex flex-col gap-[14px] bg-[var(--bg-sidebar)] px-[18px] py-6" aria-label="Player standings">

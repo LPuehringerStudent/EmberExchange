@@ -11,7 +11,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { WebSocketService } from '@core/services/websocket.service';
 import { AuthService } from '@core/services/auth.service';
-import { PokerStageManager } from './poker-stage-manager';
+import { PokerStageEvent, PokerStageManager } from './poker-stage-manager';
 
 export interface PokerCard {
   rank: string;
@@ -36,6 +36,18 @@ export interface ValidAction {
   amount?: number;
   minAmount?: number;
   maxAmount?: number;
+}
+
+export interface FlyingChip {
+  id: number;
+  playerId: number;
+  amount: number;
+  source: 'seat' | 'pot';
+  target: 'seat' | 'pot';
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
 }
 
 const SEAT_POSITIONS: Array<{ x: number; y: number }> = [
@@ -95,6 +107,10 @@ export class Poker implements OnDestroy {
   readonly enteringCardIds = this.stageManager.enteringCardIds;
   readonly revealingCardIds = this.stageManager.revealingCardIds;
   readonly lastError = this.ws.lastError;
+
+  private nextFlyingChipId = 0;
+  private flyingChipsInternal = signal<FlyingChip[]>([]);
+  readonly flyingChips = this.flyingChipsInternal;
 
   private readonly suitMap: Record<string, string> = {
     h: 'hearts',
@@ -167,6 +183,16 @@ export class Poker implements OnDestroy {
 
       const timer = window.setTimeout(() => this.pendingAction.set(null), 10000);
       return () => clearTimeout(timer);
+    });
+
+    /* Spawn flying chips from stage-manager chip events */
+    effect(() => {
+      const events = this.stageManager.chipEventQueue();
+      if (events.length === 0) return;
+      for (const ev of events) {
+        this.spawnFlyingChip(ev);
+      }
+      this.stageManager.clearChipEvents();
     });
   }
 
@@ -482,6 +508,57 @@ export class Poker implements OnDestroy {
 
   onStartGame(): void {
     // Handled by parent game-room component
+  }
+
+  /* ─── Flying chip helpers ─── */
+
+  private seatPositionFor(playerId: number): { x: number; y: number } | null {
+    const heroId = this.heroPlayerId();
+    const raw = this.rawPlayers();
+    const heroIdx = raw.findIndex((p) => Number(p['playerId']) === heroId);
+    const targetIdx = raw.findIndex((p) => Number(p['playerId']) === playerId);
+    if (targetIdx < 0) return null;
+
+    const count = raw.length;
+    let seatIdx: number;
+    if (count === 2 && heroIdx >= 0) {
+      seatIdx = targetIdx === heroIdx ? 0 : 1;
+    } else if (heroIdx >= 0) {
+      seatIdx = (targetIdx - heroIdx + count) % count;
+    } else {
+      seatIdx = targetIdx;
+    }
+
+    const positions = count === 2 ? TWO_PLAYER_SEATS : SEAT_POSITIONS;
+    return positions[seatIdx] ?? null;
+  }
+
+  private spawnFlyingChip(event: PokerStageEvent): void {
+    const playerId = event.playerId!;
+    const seatPos = this.seatPositionFor(playerId);
+    if (!seatPos) return;
+
+    const isPayout = event.type === 'payout_chips';
+    const start = isPayout ? { x: 50, y: 50 } : seatPos;
+    const end = isPayout ? seatPos : { x: 50, y: 50 };
+
+    const chip: FlyingChip = {
+      id: this.nextFlyingChipId++,
+      playerId,
+      amount: event.amount ?? 0,
+      source: isPayout ? 'pot' : 'seat',
+      target: isPayout ? 'seat' : 'pot',
+      startX: start.x,
+      startY: start.y,
+      endX: end.x,
+      endY: end.y,
+    };
+
+    this.flyingChipsInternal.update((chips) => [...chips, chip]);
+
+    window.setTimeout(() => {
+      this.flyingChipsInternal.update((chips) => chips.filter((c) => c.id !== chip.id));
+    }, 650);
   }
 
   /* ─── Private helpers ─── */

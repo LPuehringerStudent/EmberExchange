@@ -54,6 +54,50 @@
 .chip--black { background: radial-gradient(circle at 30% 30%, #757575, #212121); }
 .chip--gold  { background: radial-gradient(circle at 30% 30%, #ffd54f, #c8881a); }
 
+/* Flying chips */
+.chip-flying-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.chip-flying {
+  position: absolute;
+  left: var(--start-x);
+  top: var(--start-y);
+  z-index: 25;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1);
+  animation: chip-fly 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.chip-flying .chip {
+  position: relative;
+}
+
+@keyframes chip-fly {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip-flying {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* Pseudo-elements */
 .pt-table::after {
   content: '';
