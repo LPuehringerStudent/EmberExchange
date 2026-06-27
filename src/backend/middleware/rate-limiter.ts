@@ -176,8 +176,8 @@ export const readRateLimiter = new ExpressRateLimiter({
 
 /** Per-player burst limiter for AI assistant chat messages */
 export const assistantBurstLimiter = new ExpressRateLimiter({
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
     maxRequests: 5,
     keyGenerator: (req) => `assistant:${req.playerId ?? req.ip}`,
-    message: 'Too many assistant messages. Please slow down.',
+    message: "Too many assistant messages. Please slow down."
 });
