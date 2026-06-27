@@ -366,6 +366,31 @@
   box-shadow: 0 24px 70px rgba(0,0,0,0.50), 0 0 0 1px rgba(255,255,255,0.05);
 }
 
+/* Staged deal animations */
+.card-flip--entering {
+  animation: card-deal-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.poker-stage-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 20;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-flip--entering {
+    animation: none;
+  }
+}
+
 /* Responsive */
 @media (max-width: 760px) {
   .poker-main { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }

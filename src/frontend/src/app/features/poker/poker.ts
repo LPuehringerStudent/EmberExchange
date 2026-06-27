@@ -10,6 +10,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { WebSocketService } from '@core/services/websocket.service';
 import { AuthService } from '@core/services/auth.service';
+import { PokerStageManager } from './poker-stage-manager';
 
 export interface PokerCard {
   rank: string;
@@ -66,7 +67,14 @@ export class Poker {
   /* ── Tiny SVG coal icon used as currency symbol ── */
   readonly coalIconSrc = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e85d04"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="9" r="3" fill="%23f48c06" opacity="0.6"/><circle cx="16" cy="15" r="2" fill="%23f48c06" opacity="0.4"/></svg>';
 
-  readonly stateBlob = this.ws.stateBlob;
+  private stageManager = new PokerStageManager({
+    reducedMotion: typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  });
+
+  readonly stateBlob = this.stageManager.displayedStateBlob;
+  readonly isAnimating = this.stageManager.isAnimating;
+  readonly stage = this.stageManager.stage;
+  readonly enteringCardIds = this.stageManager.enteringCardIds;
   readonly lastError = this.ws.lastError;
 
   private readonly suitMap: Record<string, string> = {
@@ -107,6 +115,11 @@ export class Poker {
   ];
 
   constructor() {
+    /* Feed authoritative state into the stage manager */
+    effect(() => {
+      this.stageManager.setTarget(this.ws.stateBlob());
+    });
+
     /* Watch phase changes and trigger announcement overlay */
     effect(() => {
       const currentPhase = this.phase();
@@ -254,6 +267,26 @@ export class Poker {
     };
     return labels[phase] ?? phase;
   });
+
+  readonly stageMessage = computed(() => {
+    switch (this.stage()) {
+      case 'dealing': return 'Dealing hole cards…';
+      case 'flop': return 'The Flop…';
+      case 'turn': return 'The Turn…';
+      case 'river': return 'The River…';
+      case 'showdown': return 'Showdown!';
+      case 'settling': return 'Settling…';
+      default: return '';
+    }
+  });
+
+  isEnteringHoleCard(playerId: number, cardIndex: number): boolean {
+    return this.enteringCardIds().has(`hole-${playerId}-${cardIndex}`);
+  }
+
+  isEnteringCommunityCard(cardIndex: number): boolean {
+    return this.enteringCardIds().has(`community-${cardIndex}`);
+  }
 
   readonly seatPositions = SEAT_POSITIONS;
 

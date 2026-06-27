@@ -176,6 +176,7 @@
               <div
                 class="pt-card-slot rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]"
                 [class.pt-card-slot--filled]="card"
+                [class.card-flip--entering]="isEnteringCommunityCard($index)"
                 [attr.aria-label]="card ? (card.rank + ' of ' + card.suit) : 'Empty card slot'"
               >
                 @if (card) {
@@ -212,26 +213,9 @@
             </div>
           }
 
-          <!-- ── Start Game overlay ── -->
-          @if (!gameStarted() && isWaiting()) {
-            <div class="game-start-overlay absolute inset-0 rounded-xl flex items-center justify-center z-[50]" role="dialog" aria-modal="true" aria-label="Game not started">
-              <div class="game-start-overlay__inner flex flex-col items-center gap-[14px] px-10 py-8 rounded-2xl">
-                <p class="game-start-overlay__hint text-[0.75rem] font-medium tracking-[0.10em] uppercase text-[var(--text-muted)]">Waiting for game to begin</p>
-                <button class="game-start-btn py-[14px] px-[46px] text-white text-[0.95rem] font-bold tracking-[0.05em] uppercase border-none rounded-xl cursor-pointer" (click)="handleStartGame()" aria-label="Start the poker game">
-                  Start Game
-                </button>
-              </div>
-            </div>
-          }
-
-          <!-- ── Gathering Chips loading overlay ── -->
-          @if (isLoading()) {
-            <div class="game-gathering-overlay absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-5 z-[60]" role="status" aria-live="polite">
-              <div class="gathering-video-placeholder flex items-center justify-center" aria-hidden="true">
-                <div class="gathering-spinner w-16 h-16 rounded-full"></div>
-              </div>
-              <p class="gathering-text font-semibold tracking-[0.14em] uppercase text-white/70">Gathering Chips</p>
-            </div>
+          <!-- Stage message (dealing / flop / turn / river / showdown) -->
+          @if (stageMessage()) {
+            <div class="poker-stage-message">{{ stageMessage() }}</div>
           }
 
         </div>
@@ -266,7 +250,10 @@
                 @if (seatPlayer) {
                   <div class="pt-hole-cards absolute bottom-full left-1/2 -translate-x-1/2 mb-1 flex gap-1 justify-center">
                     @for (cardIdx of [0, 1]; track cardIdx) {
-                      <div class="pt-card-slot pt-card-slot--hole rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]">
+                      <div
+                        class="pt-card-slot pt-card-slot--hole rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]"
+                        [class.card-flip--entering]="isEnteringHoleCard(+seatPlayer.playerId, cardIdx)"
+                      >
                         @if (seatPlayer.cards?.[cardIdx]; as card) {
                           <div class="card-flip w-full h-full rounded-[var(--radius-card)]" [class.card-flip--face-up]="card.faceUp">
                             <div class="card-flip__inner w-full h-full relative rounded-[var(--radius-card)]">
