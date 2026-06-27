@@ -17,14 +17,28 @@ jest.mock('openai', () => {
 });
 
 describe('AssistantLlmService', () => {
-  const originalKey = process.env.KIMI_API_KEY;
+  const originalEnv: Record<string, string | undefined> = {};
 
   beforeAll(() => {
+    for (const key of ['KIMI_API_KEY', 'KIMI_CODE_API_KEY', 'KIMI_BASE_URL', 'KIMI_CODE_BASE_URL', 'KIMI_MODEL', 'KIMI_CODE_MODEL']) {
+      originalEnv[key] = process.env[key];
+    }
     process.env.KIMI_API_KEY = 'test-api-key';
+    process.env.KIMI_CODE_API_KEY = 'test-code-key';
+    delete process.env.KIMI_BASE_URL;
+    delete process.env.KIMI_CODE_BASE_URL;
+    delete process.env.KIMI_MODEL;
+    delete process.env.KIMI_CODE_MODEL;
   });
 
   afterAll(() => {
-    process.env.KIMI_API_KEY = originalKey;
+    for (const key of Object.keys(originalEnv)) {
+      if (originalEnv[key] === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = originalEnv[key];
+      }
+    }
   });
 
   beforeEach(() => {
