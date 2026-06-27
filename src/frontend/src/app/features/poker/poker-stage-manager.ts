@@ -6,6 +6,7 @@ export const POKER_TIMING = {
   revealPause: 400,
   settlePause: 600,
   revealDuration: 500,
+  chipFlightStagger: 100,
 };
 
 export interface PokerStageEvent {
@@ -55,6 +56,12 @@ export class PokerStageManager {
   private pendingTarget: Record<string, unknown> | null = null;
   private lastProcessedJson = '';
   private revealTimeoutId: ReturnType<typeof window.setTimeout> | null = null;
+
+  private previousBets: Map<number, number> = new Map();
+  private previousPot = 0;
+
+  private chipEventInternal = signal<PokerStageEvent | null>(null);
+  readonly chipEvent = this.chipEventInternal;
 
   readonly displayedStateBlob = this.displayedStateBlobInternal;
   readonly stage = this.stageInternal;
@@ -257,6 +264,70 @@ export class PokerStageManager {
         this.enteringCardIdsInternal.set(new Set());
         return;
       }
+
+      case 'place_chips':
+      case 'move_chips_to_pot':
+      case 'payout_chips': {
+        this.chipEventInternal.set({ ...event });
+        return;
+      }
+    }
+  }
+
+  private buildPlaceChipEvents(
+    blob: Record<string, unknown>,
+    events: PokerStageEvent[]
+  ): void {
+    const players = (blob['players'] as Array<Record<string, unknown>>) ?? [];
+    for (const p of players) {
+      const pid = p['playerId'] as number;
+      const bet = (p['bet'] as number) ?? 0;
+      const prev = this.previousBets.get(pid) ?? 0;
+      if (bet > prev) {
+        events.push({
+          type: 'place_chips',
+          stage: events.length === 0 ? 'idle' : events[events.length - 1].stage,
+          delay: 0,
+          playerId: pid,
+          amount: bet - prev,
+        });
+      }
+    }
+  }
+
+  private buildMoveToPotEvents(
+    blob: Record<string, unknown>,
+    events: PokerStageEvent[]
+  ): void {
+    const players = (blob['players'] as Array<Record<string, unknown>>) ?? [];
+    for (const p of players) {
+      const pid = p['playerId'] as number;
+      const bet = (p['bet'] as number) ?? 0;
+      if (bet > 0) {
+        events.push({
+          type: 'move_chips_to_pot',
+          stage: 'settling',
+          delay: events.length === 0 ? 0 : POKER_TIMING.chipFlightStagger,
+          playerId: pid,
+          amount: bet,
+        });
+      }
+    }
+  }
+
+  private buildPayoutChipEvents(
+    blob: Record<string, unknown>,
+    events: PokerStageEvent[]
+  ): void {
+    const winners = (blob['winners'] as Array<{ playerId: number; amount: number }>) ?? [];
+    for (const w of winners) {
+      events.push({
+        type: 'payout_chips',
+        stage: 'settling',
+        delay: events.length === 0 ? 0 : POKER_TIMING.chipFlightStagger,
+        playerId: w.playerId,
+        amount: w.amount,
+      });
     }
   }
 
@@ -291,6 +362,8 @@ export class PokerStageManager {
           hasAnimatedCard = true;
         }
       }
+
+      this.buildPlaceChipEvents(blob, events);
     }
 
     // Community cards: flop (3), turn (1), river (1).
@@ -326,6 +399,9 @@ export class PokerStageManager {
         });
         hasAnimatedCard = true;
       }
+
+      this.buildMoveToPotEvents(blob, events);
+      this.buildPlaceChipEvents(blob, events);
     }
 
     // Showdown: reveal all hole cards, then settle.
@@ -337,8 +413,19 @@ export class PokerStageManager {
       }
 
       events.push({ type: 'reveal_opponent_cards', stage: 'showdown', delay: 0 });
+
+      this.buildPayoutChipEvents(blob, events);
+
       events.push({ type: 'settle', stage: 'settling', delay: POKER_TIMING.settlePause });
     }
+
+    // Update tracking state.
+    const players = (blob['players'] as Array<Record<string, unknown>>) ?? [];
+    this.previousBets.clear();
+    for (const p of players) {
+      this.previousBets.set(p['playerId'] as number, (p['bet'] as number) ?? 0);
+    }
+    this.previousPot = (blob['pots'] as Array<{ amount: number }>)?.reduce((s, pot) => s + pot.amount, 0) ?? 0;
 
     return events;
   }
