@@ -13,10 +13,17 @@ export const assistantRouter = express.Router();
 const DAILY_CAP = parseInt(process.env.ASSISTANT_DAILY_CAP ?? '20', 10);
 const llm = new AssistantLlmService();
 
+function getClientIp(req: Request): string {
+  const cf = req.headers['cf-connecting-ip'];
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof cf === 'string' && cf) return cf;
+  if (typeof forwarded === 'string' && forwarded) return forwarded.split(',')[0].trim();
+  return req.ip ?? '';
+}
+
 assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) => {
   const unit = await Unit.create(false);
   let usage: { remaining: number | null; wasIncremented: boolean } | null = null;
-  let success = false;
   try {
     const playerId = req.playerId!;
     const playerService = new PlayerService(unit);
@@ -28,11 +35,15 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
 
     if (usage.remaining !== null && usage.remaining <= 0) {
       res.status(429).json({ error: 'Daily assistant limit reached. Try again tomorrow.' });
-      success = true;
       return;
     }
 
-    const messages = (req.body.messages ?? []) as OpenAI.Chat.ChatCompletionMessageParam[];
+    const rawMessages = req.body.messages;
+    if (!Array.isArray(rawMessages) || rawMessages.length > 50) {
+      res.status(400).json({ error: 'Invalid messages format.' });
+      return;
+    }
+    const messages = rawMessages as OpenAI.Chat.ChatCompletionMessageParam[];
     const toolService = new AssistantToolService(llm, unit, { playerId, isAdmin });
 
     let response = await llm.chat(messages);
@@ -66,7 +77,7 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
     const finalText = response.content || '';
     if (containsSensitivePattern(finalText)) {
       await logSecurityEvent({
-        ipAddress: req.ip ?? '',
+        ipAddress: getClientIp(req),
         userAgent: req.headers['user-agent'] as string | undefined,
         eventType: 'assistant_sanitizer_block',
         path: req.path,
@@ -77,7 +88,6 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
         message: { role: 'assistant', content: sanitizeAssistantOutput(finalText), suggestions: [] },
         remainingChats: usage.remaining,
       });
-      success = true;
       return;
     }
 
@@ -85,26 +95,14 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
       message: { role: 'assistant', content: finalText, suggestions: [] },
       remainingChats: usage.remaining,
     });
-    success = true;
   } catch (err) {
     console.error('[assistant] chat error', err);
-    if (usage?.wasIncremented) {
-      try {
-        const rollback = unit.prepare<unknown, { playerId: number }>(
-          `UPDATE AssistantUsage SET chat_count = chat_count - 1 WHERE playerId = @playerId`,
-          { playerId: req.playerId! }
-        );
-        await rollback.run();
-      } catch (rollbackErr) {
-        console.error('[assistant] usage rollback failed', rollbackErr);
-      }
-    }
     if (!res.headersSent) {
       res.status(500).json({ error: 'The assistant is having trouble. Please try again.' });
     }
   } finally {
     try {
-      await unit.complete(success);
+      await unit.complete(true);
     } catch (completeErr) {
       console.error('[assistant] unit complete failed', completeErr);
     }

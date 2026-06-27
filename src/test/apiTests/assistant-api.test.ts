@@ -53,11 +53,20 @@ jest.mock('../../backend/services/assistant-llm-service', () => ({
   AssistantLlmService: jest.fn(() => llmMock),
 }));
 
+const toolServiceMock = {
+  handle: jest.fn().mockResolvedValue({ route: '/games/blackjack/lobby' }),
+};
+
+jest.mock('../../backend/services/assistant-tool-service', () => ({
+  AssistantToolService: jest.fn(() => toolServiceMock),
+}));
+
 import { app } from '../../backend/app';
 
 describe('POST /api/assistant/chat', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    toolServiceMock.handle.mockResolvedValue({ route: '/games/blackjack/lobby' });
     sessionServiceMock.getSession.mockResolvedValue(null);
     playerServiceMock.getInfoByID.mockResolvedValue({ isAdmin: false });
     usageServiceMock.recordUsage.mockResolvedValue({ remaining: 19, wasIncremented: true });
@@ -139,5 +148,41 @@ describe('POST /api/assistant/chat', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.message.content).toContain("I can't share");
+  });
+
+  it('calls unit.complete(true) on success', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    llmMock.chat.mockResolvedValue({ content: 'Done', toolCalls: undefined });
+
+    await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [{ role: 'user', content: 'Hello' }] });
+
+    expect(completeMock).toHaveBeenCalledWith(true);
+  });
+
+  it('returns 400 for invalid messages payload', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+
+    const res = await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: 'not-an-array' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 500 when the LLM throws', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    llmMock.chat.mockRejectedValue(new Error('LLM down'));
+
+    const res = await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [{ role: 'user', content: 'Hello' }] });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toContain('trouble');
   });
 });
