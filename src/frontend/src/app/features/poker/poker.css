@@ -25,6 +25,32 @@
 
 .coal-icon { image-rendering: pixelated; }
 
+.poker-chip {
+  position: absolute;
+  bottom: calc(var(--chip-index, 0) * 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px dashed rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.25);
+}
+
+.poker-chip::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+}
+
+.chip--red   { background: radial-gradient(circle at 30% 30%, #ef5350, #b71c1c); }
+.chip--blue  { background: radial-gradient(circle at 30% 30%, #42a5f5, #0d47a1); }
+.chip--green { background: radial-gradient(circle at 30% 30%, #66bb6a, #1b5e20); }
+.chip--black { background: radial-gradient(circle at 30% 30%, #757575, #212121); }
+.chip--gold  { background: radial-gradient(circle at 30% 30%, #ffd54f, #c8881a); }
+
 /* Pseudo-elements */
 .pt-table::after {
   content: '';

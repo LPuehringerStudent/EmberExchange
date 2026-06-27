@@ -209,9 +209,13 @@
 
           <!-- Pot display -->
           @if (pot() > 0) {
-            <div class="pt-pot flex items-center gap-1 bg-black/32 border border-[var(--gold-dim)] rounded-[20px] px-4 py-1 text-[var(--gold)] z-[2]" aria-live="polite" aria-label="Current pot amount">
-              <img class="coal-icon coal-icon--pot inline-block align-middle w-6 h-auto mr-1 select-none pointer-events-none" [src]="coalIconSrc" alt="" />
-              <span class="pt-pot__amount text-[22px] font-bold tabular-nums">{{ pot() }}</span>
+            <div class="pt-pot flex flex-col items-center gap-1 bg-black/32 border border-[var(--gold-dim)] rounded-[20px] px-4 py-1 text-[var(--gold)] z-[2]" aria-live="polite" aria-label="Current pot amount">
+              <div class="pt-pot__stack relative w-[28px] h-[48px]">
+                @for (chip of chipStack(pot()); track $index) {
+                  <div class="poker-chip" [class]="chip" [style.--chip-index]="$index"></div>
+                }
+              </div>
+              <span class="pt-pot__amount text-[18px] font-bold tabular-nums">{{ pot() }}</span>
             </div>
           }
 
@@ -292,10 +296,12 @@
                     {{ p.chips }}
                   </span>
                   @if (p.currentBet > 0) {
-                    <span class="pt-seat__bet text-[10px] font-semibold text-[var(--gold)] flex items-center gap-[2px]">
-                      <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
-                      {{ p.currentBet }}
-                    </span>
+                    <div class="pt-seat__bet-stack absolute -top-8 left-1/2 -translate-x-1/2 w-[28px] h-[40px]">
+                      @for (chip of chipStack(p.currentBet); track $index) {
+                        <div class="poker-chip" [class]="chip" [style.--chip-index]="$index"></div>
+                      }
+                    </div>
+                    <span class="pt-seat__bet text-[10px] font-semibold text-[var(--gold)]">{{ p.currentBet }}</span>
                   }
                 } @else {
                   <span class="pt-seat__empty text-[11px] text-[var(--text-muted)] italic">Seat {{ $index + 1 }}</span>

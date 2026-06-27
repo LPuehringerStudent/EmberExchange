@@ -69,6 +69,13 @@ export class Poker implements OnDestroy {
     this.stageManager.destroy();
   }
 
+  chipStack(amount: number): string[] {
+    if (amount <= 0) return [];
+    const colors = ['chip--red', 'chip--blue', 'chip--green', 'chip--black', 'chip--gold'];
+    const count = Math.min(8, Math.max(1, Math.ceil(amount / 25)));
+    return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
+  }
+
   readonly heroPlayerId = computed(() => {
     const id = this.auth.getCurrentUser()?.playerId;
     return id == null ? -1 : Number(id);
