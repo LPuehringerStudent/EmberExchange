@@ -179,7 +179,6 @@
                 class="pt-card-slot rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]"
                 [class.pt-card-slot--filled]="card"
                 [class.card-flip--entering]="isEnteringCommunityCard($index)"
-                [class.card-flip--revealing]="false"
                 [attr.aria-label]="card ? (card.rank + ' of ' + card.suit) : 'Empty card slot'"
               >
                 @if (card) {

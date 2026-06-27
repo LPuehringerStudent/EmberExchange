@@ -6,6 +6,7 @@ export const POKER_TIMING = {
   revealPause: 400,
   settlePause: 600,
   enteringCardDuration: 450,
+  revealDuration: 500,
 };
 
 export interface PokerStageEvent {
@@ -15,6 +16,7 @@ export interface PokerStageEvent {
     | 'deal_community_card'
     | 'reveal_opponent_cards'
     | 'settle'
+    // Reserved for chip animation events implemented in Task 3
     | 'place_chips'
     | 'move_chips_to_pot'
     | 'payout_chips';
@@ -51,6 +53,7 @@ export class PokerStageManager {
   private queueRunning = false;
   private pendingTarget: Record<string, unknown> | null = null;
   private lastProcessedJson = '';
+  private revealTimeoutId: ReturnType<typeof window.setTimeout> | null = null;
 
   readonly displayedStateBlob = this.displayedStateBlobInternal;
   readonly stage = this.stageInternal;
@@ -102,7 +105,10 @@ export class PokerStageManager {
   }
 
   destroy(): void {
-    // No persistent timers; setTimeout callbacks are fire-and-forget.
+    if (this.revealTimeoutId) {
+      window.clearTimeout(this.revealTimeoutId);
+      this.revealTimeoutId = null;
+    }
   }
 
   private consumePending(): void {
@@ -120,11 +126,14 @@ export class PokerStageManager {
 
     const step = (): void => {
       if (i >= events.length) {
+        if (this.revealTimeoutId) {
+          window.clearTimeout(this.revealTimeoutId);
+          this.revealTimeoutId = null;
+        }
         this.queueRunning = false;
         this.isAnimatingInternal.set(false);
         this.stageInternal.set('idle');
         this.enteringCardIdsInternal.set(new Set());
-        this.revealingCardIdsInternal.set(new Set());
         this.consumePending();
         return;
       }
@@ -147,8 +156,16 @@ export class PokerStageManager {
   }
 
   private applyEvent(event: PokerStageEvent): void {
+    const clearRevealTimeout = (): void => {
+      if (this.revealTimeoutId) {
+        window.clearTimeout(this.revealTimeoutId);
+        this.revealTimeoutId = null;
+      }
+    };
+
     switch (event.type) {
       case 'reset_deal': {
+        clearRevealTimeout();
         const target = this.targetStateBlob();
         if (!target) return;
         const reset = clone(target);
@@ -199,6 +216,8 @@ export class PokerStageManager {
       }
 
       case 'reveal_opponent_cards': {
+        clearRevealTimeout();
+
         const target = this.targetStateBlob();
         if (!target) return;
         this.displayedStateBlobInternal.set(clone(target));
@@ -214,7 +233,10 @@ export class PokerStageManager {
         }
         this.revealingCardIdsInternal.set(ids);
 
-        window.setTimeout(() => this.revealingCardIdsInternal.set(new Set()), 500);
+        this.revealTimeoutId = window.setTimeout(() => {
+          this.revealingCardIdsInternal.set(new Set());
+          this.revealTimeoutId = null;
+        }, POKER_TIMING.revealDuration) as unknown as ReturnType<typeof window.setTimeout>;
         return;
       }
 

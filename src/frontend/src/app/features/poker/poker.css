@@ -371,6 +371,7 @@
   animation: card-deal-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Must match POKER_TIMING.revealDuration in poker-stage-manager.ts */
 .card-flip--revealing .card-flip__inner {
   animation: card-flip-reveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
