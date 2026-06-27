@@ -21,7 +21,41 @@ function getClientIp(req: Request): string {
   return req.ip ?? '';
 }
 
+function validateMessages(body: unknown): OpenAI.Chat.ChatCompletionMessageParam[] {
+  if (!body || typeof body !== 'object') {
+    throw new Error('Invalid request body.');
+  }
+  const { messages } = body as { messages?: unknown };
+  if (!Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
+    throw new Error('Invalid messages format.');
+  }
+  for (const msg of messages) {
+    if (!msg || typeof msg !== 'object') {
+      throw new Error('Invalid message format.');
+    }
+    const { role, content, tool_call_id: toolCallId } = msg as Record<string, unknown>;
+    if (typeof role !== 'string' || !['system', 'user', 'assistant', 'tool'].includes(role)) {
+      throw new Error('Invalid message role.');
+    }
+    if (typeof content !== 'string') {
+      throw new Error('Invalid message content.');
+    }
+    if (role === 'tool' && typeof toolCallId !== 'string') {
+      throw new Error('Invalid tool message.');
+    }
+  }
+  return messages as OpenAI.Chat.ChatCompletionMessageParam[];
+}
+
 assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) => {
+  let messages: OpenAI.Chat.ChatCompletionMessageParam[];
+  try {
+    messages = validateMessages(req.body);
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
+    return;
+  }
+
   const unit = await Unit.create(false);
   let usage: { remaining: number | null; wasIncremented: boolean } | null = null;
   try {
@@ -38,12 +72,6 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
       return;
     }
 
-    const rawMessages = req.body.messages;
-    if (!Array.isArray(rawMessages) || rawMessages.length > 50) {
-      res.status(400).json({ error: 'Invalid messages format.' });
-      return;
-    }
-    const messages = rawMessages as OpenAI.Chat.ChatCompletionMessageParam[];
     const toolService = new AssistantToolService(llm, unit, { playerId, isAdmin });
 
     let response = await llm.chat(messages);

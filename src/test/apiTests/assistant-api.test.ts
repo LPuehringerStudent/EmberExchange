@@ -92,7 +92,7 @@ describe('POST /api/assistant/chat', () => {
     const res = await request(app)
       .post('/api/assistant/chat')
       .set('session-id', 'valid-session')
-      .send({ messages: [] });
+      .send({ messages: [{ role: 'user', content: 'Hi' }] });
 
     expect(res.status).toBe(429);
     expect(res.body.error).toContain('limit reached');
@@ -184,5 +184,53 @@ describe('POST /api/assistant/chat', () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error).toContain('trouble');
+  });
+
+  it('returns 400 and does not record usage for invalid messages', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+
+    const res = await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [{ role: 'user' }] });
+
+    expect(res.status).toBe(400);
+    expect(usageServiceMock.recordUsage).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when messages exceed 50 items', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+
+    const messages = Array.from({ length: 51 }, (_, i) => ({ role: 'user', content: String(i) }));
+    const res = await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('calls unit.complete(true) on 500 errors', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    llmMock.chat.mockRejectedValue(new Error('LLM down'));
+
+    await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [{ role: 'user', content: 'Hello' }] });
+
+    expect(completeMock).toHaveBeenCalledWith(true);
+  });
+
+  it('calls unit.complete(true) on 429 rate limit', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    usageServiceMock.recordUsage.mockResolvedValue({ remaining: 0, wasIncremented: false });
+
+    await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [{ role: 'user', content: 'Hi' }] });
+
+    expect(completeMock).toHaveBeenCalledWith(true);
   });
 });
