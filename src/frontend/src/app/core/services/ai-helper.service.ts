@@ -43,6 +43,8 @@ export class AiHelperService {
   }
 
   async sendMessage(content: string): Promise<void> {
+    if (this.loading()) return;
+
     this.messages.update((m) => [...m, { role: 'user', content }]);
     this.loading.set(true);
     try {
