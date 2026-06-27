@@ -3,6 +3,8 @@ jest.mock('@angular/core', () => ({
     let value = initialValue;
     const fn = () => value;
     fn.set = (v: T) => { value = v; };
+    fn.update = (updater: (v: T) => T) => { value = updater(value); };
+    fn.asReadonly = () => fn;
     return fn;
   },
 }));
@@ -32,14 +34,15 @@ function makePlayer(id: number, hand: string[]): Record<string, unknown> {
 function makeBlob(
   phase: string,
   players: Record<string, unknown>[],
-  communityCards: string[] = []
+  community: string[] = [],
+  winners: Array<{ playerId: number; amount: number }> = []
 ): Record<string, unknown> {
   return {
     phase,
     players,
-    communityCards,
-    pot: 0,
-    currentBet: 20,
+    communityCards: community,
+    pots: [{ amount: 0, eligiblePlayers: players.map((p) => p['playerId']) }],
+    winners,
   };
 }
 
@@ -246,5 +249,107 @@ describe('PokerStageManager', () => {
 
     expect(mgr.isAnimating()).toBe(false);
     expect((mgr.displayedStateBlob()?.['players'] as any[])[0].hand).toEqual(['Ah', 'Kd']);
+  });
+
+  it('marks opponent cards as revealing at showdown', () => {
+    const mgr = new PokerStageManager();
+    mgr.setTarget(
+      makeBlob(
+        'river',
+        [
+          makePlayer(1, ['Ah', 'Kd']),
+          makePlayer(2, ['back', 'back']),
+        ],
+        ['3c', '7h', 'Qs', '2d', '5s']
+      )
+    );
+    jest.advanceTimersByTime(10_000);
+
+    mgr.setTarget(
+      makeBlob(
+        'showdown',
+        [
+          makePlayer(1, ['Ah', 'Kd']),
+          makePlayer(2, ['Tc', 'Th']),
+        ],
+        ['3c', '7h', 'Qs', '2d', '5s']
+      )
+    );
+
+    expect(mgr.revealingCardIds().has('hole-2-0')).toBe(true);
+    expect(mgr.revealingCardIds().has('hole-2-1')).toBe(true);
+
+    jest.advanceTimersByTime(600);
+    expect(mgr.revealingCardIds().size).toBe(0);
+  });
+
+  it('emits place_chips when a bet increases', () => {
+    const mgr = new PokerStageManager();
+    mgr.setTarget(
+      makeBlob('preflop', [
+        makePlayer(1, ['Ah', 'Kd']),
+        makePlayer(2, ['back', 'back']),
+      ])
+    );
+    jest.advanceTimersByTime(10_000);
+
+    const p2 = makePlayer(2, ['back', 'back']);
+    p2['bet'] = 20;
+    mgr.setTarget(makeBlob('preflop', [makePlayer(1, ['Ah', 'Kd']), p2]));
+
+    const events = mgr.chipEventQueue();
+    expect(events.some((e) => e.type === 'place_chips' && e.playerId === 2 && e.amount === 20)).toBe(true);
+  });
+
+  it('emits move_chips_to_pot when seat bets are collected', () => {
+    const mgr = new PokerStageManager();
+    const p1 = makePlayer(1, ['Ah', 'Kd']);
+    p1['bet'] = 10;
+    const p2 = makePlayer(2, ['back', 'back']);
+    p2['bet'] = 20;
+    mgr.setTarget(makeBlob('flop', [p1, p2], ['3c', '7h', 'Qs']));
+    jest.advanceTimersByTime(10_000);
+
+    const resetP1 = makePlayer(1, ['Ah', 'Kd']);
+    resetP1['bet'] = 0;
+    const resetP2 = makePlayer(2, ['back', 'back']);
+    resetP2['bet'] = 0;
+    mgr.setTarget(makeBlob('turn', [resetP1, resetP2], ['3c', '7h', 'Qs', '2d']));
+    jest.advanceTimersByTime(2_000);
+
+    const events = mgr.chipEventQueue();
+    expect(events.some((e) => e.type === 'move_chips_to_pot' && e.playerId === 1 && e.amount === 10)).toBe(true);
+    expect(events.some((e) => e.type === 'move_chips_to_pot' && e.playerId === 2 && e.amount === 20)).toBe(true);
+  });
+
+  it('emits payout_chips at showdown', () => {
+    const mgr = new PokerStageManager();
+    mgr.setTarget(
+      makeBlob(
+        'river',
+        [
+          makePlayer(1, ['Ah', 'Kd']),
+          makePlayer(2, ['back', 'back']),
+        ],
+        ['3c', '7h', 'Qs', '2d', '5s']
+      )
+    );
+    jest.advanceTimersByTime(10_000);
+
+    mgr.setTarget(
+      makeBlob(
+        'showdown',
+        [
+          makePlayer(1, ['Ah', 'Kd']),
+          makePlayer(2, ['Tc', 'Th']),
+        ],
+        ['3c', '7h', 'Qs', '2d', '5s'],
+        [{ playerId: 2, amount: 100 }]
+      )
+    );
+    jest.advanceTimersByTime(2_000);
+
+    const events = mgr.chipEventQueue();
+    expect(events.some((e) => e.type === 'payout_chips' && e.playerId === 2 && e.amount === 100)).toBe(true);
   });
 });
