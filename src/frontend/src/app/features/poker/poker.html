@@ -179,6 +179,7 @@
                 class="pt-card-slot rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]"
                 [class.pt-card-slot--filled]="card"
                 [class.card-flip--entering]="isEnteringCommunityCard($index)"
+                [class.card-flip--revealing]="false"
                 [attr.aria-label]="card ? (card.rank + ' of ' + card.suit) : 'Empty card slot'"
               >
                 @if (card) {
@@ -255,6 +256,7 @@
                       <div
                         class="pt-card-slot pt-card-slot--hole rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]"
                         [class.card-flip--entering]="isEnteringHoleCard(+seatPlayer.playerId, cardIdx)"
+                        [class.card-flip--revealing]="isRevealingHoleCard(+seatPlayer.playerId, cardIdx)"
                       >
                         @if (seatPlayer.cards?.[cardIdx]; as card) {
                           <div class="card-flip w-full h-full rounded-[var(--radius-card)]" [class.card-flip--face-up]="card.faceUp">

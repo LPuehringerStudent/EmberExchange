@@ -75,6 +75,7 @@ export class Poker {
   readonly isAnimating = this.stageManager.isAnimating;
   readonly stage = this.stageManager.stage;
   readonly enteringCardIds = this.stageManager.enteringCardIds;
+  readonly revealingCardIds = this.stageManager.revealingCardIds;
   readonly lastError = this.ws.lastError;
 
   private readonly suitMap: Record<string, string> = {
@@ -300,6 +301,10 @@ export class Poker {
 
   isEnteringCommunityCard(cardIndex: number): boolean {
     return this.enteringCardIds().has(`community-${cardIndex}`);
+  }
+
+  isRevealingHoleCard(playerId: number, cardIndex: number): boolean {
+    return this.revealingCardIds().has(`hole-${playerId}-${cardIndex}`);
   }
 
   readonly seatPositions = SEAT_POSITIONS;

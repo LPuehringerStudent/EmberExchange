@@ -14,12 +14,16 @@ export interface PokerStageEvent {
     | 'deal_hole_card'
     | 'deal_community_card'
     | 'reveal_opponent_cards'
-    | 'settle';
+    | 'settle'
+    | 'place_chips'
+    | 'move_chips_to_pot'
+    | 'payout_chips';
   stage: string;
   delay: number;
   playerId?: number;
   cardIndex?: number;
   card?: string;
+  amount?: number;
 }
 
 export interface PokerStageManagerOptions {
@@ -42,6 +46,7 @@ export class PokerStageManager {
   private stageInternal = signal<string>('idle');
   private isAnimatingInternal = signal(false);
   private enteringCardIdsInternal = signal<Set<string>>(new Set());
+  private revealingCardIdsInternal = signal<Set<string>>(new Set());
 
   private queueRunning = false;
   private pendingTarget: Record<string, unknown> | null = null;
@@ -51,6 +56,7 @@ export class PokerStageManager {
   readonly stage = this.stageInternal;
   readonly isAnimating = this.isAnimatingInternal;
   readonly enteringCardIds = this.enteringCardIdsInternal;
+  readonly revealingCardIds = this.revealingCardIdsInternal;
 
   constructor(options: PokerStageManagerOptions = {}) {
     this.reducedMotion = options.reducedMotion ?? false;
@@ -76,6 +82,7 @@ export class PokerStageManager {
       this.stageInternal.set('idle');
       this.isAnimatingInternal.set(false);
       this.enteringCardIdsInternal.set(new Set());
+      this.revealingCardIdsInternal.set(new Set());
       return;
     }
 
@@ -86,6 +93,7 @@ export class PokerStageManager {
       this.stageInternal.set('idle');
       this.isAnimatingInternal.set(false);
       this.enteringCardIdsInternal.set(new Set());
+      this.revealingCardIdsInternal.set(new Set());
       this.consumePending();
       return;
     }
@@ -116,6 +124,7 @@ export class PokerStageManager {
         this.isAnimatingInternal.set(false);
         this.stageInternal.set('idle');
         this.enteringCardIdsInternal.set(new Set());
+        this.revealingCardIdsInternal.set(new Set());
         this.consumePending();
         return;
       }
@@ -151,6 +160,7 @@ export class PokerStageManager {
         reset['validActions'] = [];
         this.displayedStateBlobInternal.set(reset);
         this.enteringCardIdsInternal.set(new Set());
+        this.revealingCardIdsInternal.set(new Set());
         return;
       }
 
@@ -192,7 +202,19 @@ export class PokerStageManager {
         const target = this.targetStateBlob();
         if (!target) return;
         this.displayedStateBlobInternal.set(clone(target));
-        this.enteringCardIdsInternal.set(new Set());
+
+        const ids = new Set<string>();
+        const players = (target['players'] as Array<Record<string, unknown>>) ?? [];
+        for (const p of players) {
+          const pid = p['playerId'] as number;
+          const hand = (p['hand'] as string[]) ?? [];
+          for (let i = 0; i < hand.length; i++) {
+            ids.add(`hole-${pid}-${i}`);
+          }
+        }
+        this.revealingCardIdsInternal.set(ids);
+
+        globalThis.setTimeout(() => this.revealingCardIdsInternal.set(new Set()), 500);
         return;
       }
 
