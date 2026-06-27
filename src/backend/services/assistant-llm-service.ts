@@ -10,11 +10,11 @@ export class AssistantLlmService {
 
   constructor() {
     this.mainClient = new OpenAI({
-      apiKey: process.env.KIMI_API_KEY ?? '',
+      apiKey: process.env.KIMI_API_KEY ?? 'missing-api-key',
       baseURL: process.env.KIMI_BASE_URL ?? 'https://api.moonshot.cn/v1',
     });
     this.codeClient = new OpenAI({
-      apiKey: process.env.KIMI_CODE_API_KEY ?? process.env.KIMI_API_KEY ?? '',
+      apiKey: process.env.KIMI_CODE_API_KEY ?? process.env.KIMI_API_KEY ?? 'missing-api-key',
       baseURL: process.env.KIMI_CODE_BASE_URL ?? 'https://api.moonshot.cn/v1',
     });
     this.context = this.loadContext();
