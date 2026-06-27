@@ -1547,6 +1547,14 @@ export class DB {
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_gloryvisit_visited ON GloryVisit(visitedPlayerId)`);
         await connection.query(`CREATE INDEX IF NOT EXISTS idx_playerachievement_lookup ON PlayerAchievement(playerId, achievementId)`);
 
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS AssistantUsage (
+                playerId INTEGER PRIMARY KEY REFERENCES Player(playerId) ON DELETE CASCADE,
+                chat_count INTEGER NOT NULL DEFAULT 0,
+                reset_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            )
+        `);
+
         // Add 2FA columns to Player if they don't exist (idempotent migration)
         await connection.query(`
             ALTER TABLE Player
