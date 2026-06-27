@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { getClientIp } from "../utils/bot-trap";
 import { logSecurityEvent } from "../services/security-event-service";
 
 interface Bucket {
@@ -178,6 +179,6 @@ export const readRateLimiter = new ExpressRateLimiter({
 export const assistantBurstLimiter = new ExpressRateLimiter({
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 5,
-    keyGenerator: (req) => `assistant:${req.playerId ?? req.ip}`,
+    keyGenerator: (req) => `assistant:${req.playerId ?? getClientIp(req)}`,
     message: "Too many assistant messages. Please slow down."
 });

@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 import { requireAuth } from "../middleware/require-auth";
 import { assistantBurstLimiter } from "../middleware/rate-limiter";
 import { Unit } from "../utils/unit";
@@ -40,12 +41,12 @@ function validateMessages(body: unknown): OpenAI.Chat.ChatCompletionMessageParam
     return normalized;
 }
 
-assistantRouter.post("/chat", requireAuth, assistantBurstLimiter.middleware(), async (req: Request, res: Response) => {
+assistantRouter.post("/chat", assistantBurstLimiter.middleware(), requireAuth, async (req: Request, res: Response) => {
     let messages: OpenAI.Chat.ChatCompletionMessageParam[];
     try {
         messages = validateMessages(req.body);
     } catch (err) {
-        res.status(400).json({ error: (err as Error).message });
+        res.status(StatusCodes.BAD_REQUEST).json({ error: (err as Error).message });
         return;
     }
 
@@ -61,7 +62,7 @@ assistantRouter.post("/chat", requireAuth, assistantBurstLimiter.middleware(), a
         const usage = await usageService.recordUsage(playerId, DAILY_CAP, isAdmin);
 
         if (usage.remaining !== null && usage.remaining <= 0) {
-            res.status(429).json({ error: "Daily assistant limit reached. Try again tomorrow." });
+            res.status(StatusCodes.TOO_MANY_REQUESTS).json({ error: "Daily assistant limit reached. Try again tomorrow." });
             committed = true;
             return;
         }
@@ -122,7 +123,7 @@ assistantRouter.post("/chat", requireAuth, assistantBurstLimiter.middleware(), a
     } catch (err) {
         console.error("[assistant] chat error", err);
         if (!res.headersSent) {
-            res.status(500).json({ error: "The assistant is having trouble. Please try again." });
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "The assistant is having trouble. Please try again." });
         }
     } finally {
         try {
