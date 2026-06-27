@@ -173,7 +173,7 @@ describe('POST /api/assistant/chat', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 500 when the LLM throws', async () => {
+  it('returns 500 when the LLM throws and rolls back', async () => {
     sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
     llmMock.chat.mockRejectedValue(new Error('LLM down'));
 
@@ -184,6 +184,7 @@ describe('POST /api/assistant/chat', () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error).toContain('trouble');
+    expect(completeMock).toHaveBeenCalledWith(false);
   });
 
   it('returns 400 and does not record usage for invalid messages', async () => {
@@ -233,7 +234,7 @@ describe('POST /api/assistant/chat', () => {
     expect(res.status).toBe(400);
   });
 
-  it('calls unit.complete(true) on 500 errors', async () => {
+  it('calls unit.complete(false) on 500 errors', async () => {
     sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
     llmMock.chat.mockRejectedValue(new Error('LLM down'));
 
@@ -242,7 +243,7 @@ describe('POST /api/assistant/chat', () => {
       .set('session-id', 'valid-session')
       .send({ messages: [{ role: 'user', content: 'Hello' }] });
 
-    expect(completeMock).toHaveBeenCalledWith(true);
+    expect(completeMock).toHaveBeenCalledWith(false);
   });
 
   it('calls unit.complete(true) on 429 rate limit', async () => {

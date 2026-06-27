@@ -49,7 +49,7 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
   }
 
   const unit = await Unit.create(false);
-  let usage: { remaining: number | null; wasIncremented: boolean } | null = null;
+  let committed = false;
   try {
     const playerId = req.playerId!;
     const playerService = new PlayerService(unit);
@@ -57,10 +57,11 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
     const isAdmin = player?.isAdmin ?? false;
 
     const usageService = new AssistantUsageService(unit);
-    usage = await usageService.recordUsage(playerId, DAILY_CAP, isAdmin);
+    const usage = await usageService.recordUsage(playerId, DAILY_CAP, isAdmin);
 
     if (usage.remaining !== null && usage.remaining <= 0) {
       res.status(429).json({ error: 'Daily assistant limit reached. Try again tomorrow.' });
+      committed = true;
       return;
     }
 
@@ -108,6 +109,7 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
         message: { role: 'assistant', content: sanitizeAssistantOutput(finalText), suggestions: [] },
         remainingChats: usage.remaining,
       });
+      committed = true;
       return;
     }
 
@@ -115,6 +117,7 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
       message: { role: 'assistant', content: finalText, suggestions: [] },
       remainingChats: usage.remaining,
     });
+    committed = true;
   } catch (err) {
     console.error('[assistant] chat error', err);
     if (!res.headersSent) {
@@ -122,7 +125,7 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
     }
   } finally {
     try {
-      await unit.complete(true);
+      await unit.complete(committed);
     } catch (completeErr) {
       console.error('[assistant] unit complete failed', completeErr);
     }
