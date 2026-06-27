@@ -212,7 +212,7 @@
             <div class="pt-pot flex flex-col items-center gap-1 bg-black/32 border border-[var(--gold-dim)] rounded-[20px] px-4 py-1 text-[var(--gold)] z-[2]" aria-live="polite" aria-label="Current pot amount">
               <div class="pt-pot__stack relative w-[28px] h-[48px]">
                 @for (chip of chipStack(pot()); track $index) {
-                  <div class="poker-chip" [class]="chip" [style.--chip-index]="$index"></div>
+                  <div class="poker-chip chip" [class]="chip" [style.--chip-index]="$index"></div>
                 }
               </div>
               <span class="pt-pot__amount text-[18px] font-bold tabular-nums">{{ pot() }}</span>
@@ -296,9 +296,9 @@
                     {{ p.chips }}
                   </span>
                   @if (p.currentBet > 0) {
-                    <div class="pt-seat__bet-stack absolute -top-8 left-1/2 -translate-x-1/2 w-[28px] h-[40px]">
+                    <div class="pt-seat__bet-stack absolute -top-16 left-1/2 -translate-x-1/2 w-[28px] h-[40px]">
                       @for (chip of chipStack(p.currentBet); track $index) {
-                        <div class="poker-chip" [class]="chip" [style.--chip-index]="$index"></div>
+                        <div class="poker-chip chip" [class]="chip" [style.--chip-index]="$index"></div>
                       }
                     </div>
                     <span class="pt-seat__bet text-[10px] font-semibold text-[var(--gold)]">{{ p.currentBet }}</span>
