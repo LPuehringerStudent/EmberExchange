@@ -12,11 +12,11 @@ export interface StageManagerOptions {
 }
 
 export const TIMING = {
-  dealStagger: 350,
-  holeFlip: 500,
-  dealerDrawPause: 700,
-  settlePause: 400,
-  enteringCardDuration: 450,
+  dealStagger: 500,
+  holeFlip: 750,
+  dealerDrawPause: 1000,
+  settlePause: 650,
+  enteringCardDuration: 600,
 };
 
 type AnimationEvent =
@@ -116,6 +116,19 @@ export class BlackjackStageManager {
 
     // Normal flow can skip insurance (betting -> playing), so allow that single step.
     if (displayedPhase === 'betting' && targetPhase === 'playing') return false;
+
+    // Backend resolves the dealer turn atomically: it never emits a dealer_turn
+    // state, instead sending settled (showdown) with the full dealer hand. If we
+    // already have a complete dealer baseline from the deal and no structural hand
+    // change (e.g. a split), animate the reveal and draws instead of snapping.
+    if (
+      displayedPhase === 'playing' &&
+      targetPhase === 'showdown' &&
+      displayedDealerHand.length >= 2 &&
+      !this.hasStructuralHandChange(blob)
+    ) {
+      return false;
+    }
 
     const order = ['betting', 'insurance', 'playing', 'dealer', 'showdown'];
     const dIdx = order.indexOf(displayedPhase);
@@ -219,33 +232,12 @@ export class BlackjackStageManager {
       }
     }
 
-    const dealerTarget = (blob['dealerHand'] as string[]) ?? [];
-    const dealerDisplayed = ((this.displayedStateBlob()?.['dealerHand'] as string[]) ?? []);
-
-    if (targetPhase === 'dealer' || targetPhase === 'showdown') {
-      if (dealerDisplayed[1] === 'back' && dealerTarget[1] && dealerTarget[1] !== 'back') {
-        events.push({
-          type: 'reveal_hole_card',
-          stage: 'dealer-turn',
-          delay: events.length === 0 ? 0 : TIMING.holeFlip,
-          card: dealerTarget[1],
-        });
-      }
-
-      for (let i = 2; i < dealerTarget.length; i++) {
-        if (i >= dealerDisplayed.length || dealerDisplayed[i] !== dealerTarget[i]) {
-          events.push({
-            type: 'dealer_draw',
-            stage: 'dealer-turn',
-            delay: TIMING.dealerDrawPause,
-            index: i,
-            card: dealerTarget[i],
-          });
-        }
-      }
-    }
-
-    if (targetPhase === 'playing' && displayedPhase === 'playing') {
+    // Player draws: animate any cards added during player_turn, including the
+    // final hit/double that the backend bundles into the settled state.
+    if (
+      displayedPhase === 'playing' &&
+      (targetPhase === 'playing' || targetPhase === 'dealer' || targetPhase === 'showdown')
+    ) {
       const targetPlayers = (blob['players'] as any[]) ?? [];
       const displayedPlayers = ((this.displayedStateBlob()?.['players'] as any[]) ?? []);
 
@@ -268,6 +260,32 @@ export class BlackjackStageManager {
               card: targetHands[h][i],
             });
           }
+        }
+      }
+    }
+
+    const dealerTarget = (blob['dealerHand'] as string[]) ?? [];
+    const dealerDisplayed = ((this.displayedStateBlob()?.['dealerHand'] as string[]) ?? []);
+
+    if (targetPhase === 'dealer' || targetPhase === 'showdown') {
+      if (dealerDisplayed[1] === 'back' && dealerTarget[1] && dealerTarget[1] !== 'back') {
+        events.push({
+          type: 'reveal_hole_card',
+          stage: 'dealer-turn',
+          delay: events.length === 0 ? 0 : TIMING.holeFlip,
+          card: dealerTarget[1],
+        });
+      }
+
+      for (let i = 2; i < dealerTarget.length; i++) {
+        if (i >= dealerDisplayed.length || dealerDisplayed[i] !== dealerTarget[i]) {
+          events.push({
+            type: 'dealer_draw',
+            stage: 'dealer-turn',
+            delay: events.length === 0 ? 0 : TIMING.dealerDrawPause,
+            index: i,
+            card: dealerTarget[i],
+          });
         }
       }
     }

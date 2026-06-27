@@ -276,7 +276,7 @@
 
 /* Only newly entering cards animate */
 .card-flip--entering {
-  animation: card-deal-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: card-deal-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .card-flip--dealer {
@@ -366,7 +366,8 @@
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  width: max-content;
+  width: auto;
+  max-width: min(90vw, 700px);
   margin-bottom: 0.5rem;
   z-index: 11;
 }
@@ -473,7 +474,7 @@
   border-radius: 50%;
   border: 3px dashed rgba(255,255,255,0.7);
   box-shadow: 0 2px 5px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.25);
-  animation: chip-place 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: chip-place 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: calc(var(--chip-index, 0) * 60ms);
 }
 
@@ -493,7 +494,7 @@
 
 .bj-hand--win .bj-chip,
 .bj-hand--blackjack .bj-chip {
-  animation: chip-payout 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: chip-payout 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes chip-payout {
@@ -832,7 +833,7 @@
 }
 
 .bj-overlay__winner-chip {
-  animation: chip-place 0.35s ease both;
+  animation: chip-place 0.5s ease both;
 }
 
 .bj-overlay__btn {

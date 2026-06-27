@@ -278,15 +278,25 @@ export class WebSocketService {
           this.currentVersion.set(version);
         }
         if (blob && Array.isArray(blob['players'])) {
-          this.playersInRoom.set(blob['players'] as PlayerInRoom[]);
+          const players = blob['players'] as Array<Record<string, unknown>>;
+
+          // Only treat this as a room-player list if it carries room metadata.
+          // During gameplay, state_update carries game players (hands, bets, stack)
+          // which must not overwrite the room roster used for host detection.
+          const isRoomPlayerList =
+            players.length === 0 ||
+            (typeof players[0]['connectionState'] === 'string' &&
+              typeof players[0]['seatIndex'] === 'number');
+          if (isRoomPlayerList) {
+            this.playersInRoom.set(players as unknown as PlayerInRoom[]);
+          }
 
           // Keep the header coin display in sync with the in-game stack
           const currentUser = this.auth.getCurrentUser();
           if (currentUser) {
-            const me = (blob['players'] as Array<{ playerId: number; stack?: number }>)
-              .find(p => p.playerId === currentUser.playerId);
-            if (me && typeof me.stack === 'number') {
-              this.auth.patchCurrentUserCoins(me.stack);
+            const me = players.find(p => p['playerId'] === currentUser.playerId);
+            if (me && typeof me['stack'] === 'number') {
+              this.auth.patchCurrentUserCoins(me['stack']);
             }
           }
         }

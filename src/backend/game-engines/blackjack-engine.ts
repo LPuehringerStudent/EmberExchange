@@ -86,6 +86,9 @@ export class BlackJackEngine implements GameEngine {
       if (amount <= 0) {
         return this._invalid("Bet must be positive", fullState);
       }
+      if (player.bets[0] > 0) {
+        return this._invalid("Bet already placed", fullState);
+      }
       if (amount > player.stack) {
         return this._invalid("Insufficient stack", fullState);
       }

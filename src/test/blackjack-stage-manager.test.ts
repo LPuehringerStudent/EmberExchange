@@ -63,24 +63,24 @@ describe('BlackjackStageManager', () => {
     expect((mgr.displayedStateBlob()?.['players'] as any[])[0].hands[0]).toEqual([]);
 
     // First player card
-    jest.advanceTimersByTime(350);
+    jest.advanceTimersByTime(TIMING.dealStagger);
     expect((mgr.displayedStateBlob()?.['players'] as any[])[0].hands[0]).toEqual(['Ah']);
     expect(mgr.enteringCardIds().has(buildPlayerCardId(1, 0, 0))).toBe(true);
 
     // Dealer upcard
-    jest.advanceTimersByTime(350);
+    jest.advanceTimersByTime(TIMING.dealStagger);
     expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h']);
 
     // Second player card
-    jest.advanceTimersByTime(350);
+    jest.advanceTimersByTime(TIMING.dealStagger);
     expect((mgr.displayedStateBlob()?.['players'] as any[])[0].hands[0]).toEqual(['Ah', '10d']);
 
     // Dealer hole
-    jest.advanceTimersByTime(350);
+    jest.advanceTimersByTime(TIMING.dealStagger);
     expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', 'back']);
 
     // Queue finishes
-    jest.advanceTimersByTime(350);
+    jest.advanceTimersByTime(TIMING.dealStagger);
     expect(mgr.isAnimating()).toBe(false);
     expect(mgr.stage()).toBe('idle');
   });
@@ -329,5 +329,101 @@ describe('BlackjackStageManager', () => {
     expect(mgr.isAnimating()).toBe(false);
     const hands = (mgr.displayedStateBlob()?.['players'] as any[])[0].hands;
     expect(hands).toEqual([['Ah'], ['10d', '3c']]);
+  });
+
+  it('animates dealer reveal and draws when backend skips dealer_turn and sends settled', () => {
+    const mgr = new BlackjackStageManager();
+    const player = {
+      playerId: 1,
+      username: 'Hero',
+      stack: 1000,
+      hands: [['Ah', '10d']],
+      bets: [20],
+      result: 'playing',
+    };
+
+    // Fully dealt playing state
+    mgr.setTarget(makeBlob('player_turn', ['5h', 'back'], [player]));
+    jest.advanceTimersByTime(10_000);
+
+    // Backend resolves dealer turn atomically and sends settled
+    mgr.setTarget(
+      makeBlob('settled', ['5h', '8c', 'Ks'], [
+        {
+          ...player,
+          stack: 1020,
+          result: 'won',
+          handResults: ['won'],
+        },
+      ])
+    );
+
+    expect(mgr.isAnimating()).toBe(true);
+    expect(mgr.stage()).toBe('dealer-turn');
+
+    // Hole card revealed immediately, then dealer draw scheduled
+    expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c']);
+
+    // Dealer draw
+    jest.advanceTimersByTime(TIMING.dealerDrawPause);
+    expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c', 'Ks']);
+
+    // Settle completes and result is revealed
+    jest.advanceTimersByTime(TIMING.settlePause);
+    expect((mgr.displayedStateBlob()?.['players'] as any[])[0].result).toBe('won');
+    expect((mgr.displayedStateBlob()?.['players'] as any[])[0].stack).toBe(1020);
+    expect(mgr.isAnimating()).toBe(false);
+  });
+
+  it('animates player hit before dealer reveal when backend skips to settled', () => {
+    const mgr = new BlackjackStageManager();
+    const player = {
+      playerId: 1,
+      username: 'Hero',
+      stack: 1000,
+      hands: [['Ah', '10d']],
+      bets: [20],
+      result: 'playing',
+    };
+
+    mgr.setTarget(makeBlob('player_turn', ['5h', 'back'], [player]));
+    jest.advanceTimersByTime(10_000);
+
+    // Player hit and backend immediately resolved dealer → settled
+    mgr.setTarget(
+      makeBlob('settled', ['5h', '8c', 'Ks'], [
+        {
+          ...player,
+          hands: [['Ah', '10d', '3c']],
+          stack: 1020,
+          result: 'won',
+          handResults: ['won'],
+        },
+      ])
+    );
+
+    expect(mgr.isAnimating()).toBe(true);
+    expect(mgr.stage()).toBe('player-turn');
+
+    // Player draw completes first
+    jest.advanceTimersByTime(TIMING.dealStagger);
+    expect((mgr.displayedStateBlob()?.['players'] as any[])[0].hands[0]).toEqual([
+      'Ah',
+      '10d',
+      '3c',
+    ]);
+
+    // Then dealer turn
+    jest.advanceTimersByTime(TIMING.holeFlip);
+    expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c']);
+
+    // Dealer draw
+    jest.advanceTimersByTime(TIMING.dealerDrawPause);
+    expect(mgr.displayedStateBlob()?.['dealerHand']).toEqual(['5h', '8c', 'Ks']);
+
+    // Settle
+    jest.advanceTimersByTime(TIMING.settlePause);
+    expect((mgr.displayedStateBlob()?.['players'] as any[])[0].result).toBe('won');
+    expect(mgr.isAnimating()).toBe(false);
   });
 });

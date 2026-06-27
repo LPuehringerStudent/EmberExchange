@@ -276,6 +276,7 @@ export class BlackjackComponent implements OnDestroy {
 
   // Betting state
   betAmount = signal<number>(20);
+  private pendingAction = signal<string | null>(null);
 
   // Rendering helpers
   readonly heroHasBet = computed(() => {
@@ -394,6 +395,22 @@ export class BlackjackComponent implements OnDestroy {
         this.showResultsOverlay.set(false);
       }
     });
+
+    // Release action lock once the backend has removed the action, or after a
+    // safety timeout in case an error response never arrives.
+    effect(() => {
+      const pending = this.pendingAction();
+      if (!pending) return;
+
+      const stillValid = this.validActions().some((a) => a.type === pending);
+      if (!stillValid) {
+        this.pendingAction.set(null);
+        return;
+      }
+
+      const timer = window.setTimeout(() => this.pendingAction.set(null), 10000);
+      return () => clearTimeout(timer);
+    });
   }
 
   ngOnDestroy(): void {
@@ -420,10 +437,17 @@ export class BlackjackComponent implements OnDestroy {
       const host = connected.sort((a, b) => a.seatIndex - b.seatIndex)[0];
       return host?.playerId === me;
     }
-    // Fallback when room state isn't synced (e.g. after reconnect): solo player is host
+    // Fallback when room state isn't synced (e.g. after reconnect mid-game):
+    // treat the first game player as host.
     const gamePlayers = this.players();
-    return gamePlayers.length === 1 && gamePlayers[0].playerId === me;
+    return gamePlayers.length > 0 && gamePlayers[0].playerId === me;
   });
+
+  private sendActionWithPending(type: string, data: Record<string, unknown> = {}): void {
+    if (this.pendingAction()) return;
+    this.pendingAction.set(type);
+    this.ws.sendAction(type, data);
+  }
 
   executeBet(): void {
     const action = this.validActions().find((a) => a.type === 'bet');
@@ -432,35 +456,37 @@ export class BlackjackComponent implements OnDestroy {
     const min = action.minAmount ?? this.currentBet();
     const max = action.maxAmount ?? amount;
     const clamped = Math.max(min, Math.min(max, amount));
-    this.ws.sendAction('bet', { amount: clamped });
+    this.sendActionWithPending('bet', { amount: clamped });
   }
 
   executeHit(): void {
-    this.ws.sendAction('hit', {});
+    this.sendActionWithPending('hit', {});
   }
 
   executeStand(): void {
-    this.ws.sendAction('stand', {});
+    this.sendActionWithPending('stand', {});
   }
 
   executeDouble(): void {
-    this.ws.sendAction('double', {});
+    this.sendActionWithPending('double', {});
   }
 
   executeSplit(): void {
-    this.ws.sendAction('split', {});
+    this.sendActionWithPending('split', {});
   }
 
   executeInsurance(): void {
-    this.ws.sendAction('insurance', {});
+    this.sendActionWithPending('insurance', {});
   }
 
   executeDeclineInsurance(): void {
-    this.ws.sendAction('decline_insurance', {});
+    this.sendActionWithPending('decline_insurance', {});
   }
 
   canAction(type: string): boolean {
-    return !this.isAnimating() && this.validActions().some((a) => a.type === type);
+    if (this.isAnimating() || this.pendingAction()) return false;
+    if (type === 'bet' && this.heroHasBet()) return false;
+    return this.validActions().some((a) => a.type === type);
   }
 
   getHandValueDisplay(hand: BlackjackHand): string {
