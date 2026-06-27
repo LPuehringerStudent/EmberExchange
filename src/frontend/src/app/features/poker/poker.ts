@@ -105,6 +105,7 @@ export class Poker implements OnDestroy {
   });
 
   readonly stateBlob = this.stageManager.displayedStateBlob;
+  readonly authStateBlob = this.ws.stateBlob;
   readonly isAnimating = this.stageManager.isAnimating;
   readonly stage = this.stageManager.stage;
   readonly enteringCardIds = this.stageManager.enteringCardIds;
@@ -204,7 +205,7 @@ export class Poker implements OnDestroy {
   /* ─── Computed selectors (unchanged core logic) ─── */
 
   readonly phase = computed(() => {
-    const blob = this.stateBlob();
+    const blob = this.authStateBlob();
     return (blob?.['phase'] as string) || 'waiting';
   });
 
@@ -212,34 +213,34 @@ export class Poker implements OnDestroy {
   readonly isShowdown = computed(() => this.phase() === 'showdown');
 
   readonly pot = computed(() => {
-    const blob = this.stateBlob();
+    const blob = this.authStateBlob();
     const pots = blob?.['pots'] as Array<{ amount: number }> | undefined;
     return pots?.reduce((sum, p) => sum + p.amount, 0) ?? 0;
   });
 
   readonly currentBet = computed(() => {
-    const blob = this.stateBlob();
+    const blob = this.authStateBlob();
     return (blob?.['currentBet'] as number) ?? 0;
   });
 
   readonly validActions = computed(() => {
-    const blob = this.stateBlob();
+    const blob = this.authStateBlob();
     return (blob?.['validActions'] as ValidAction[]) ?? [];
   });
 
   readonly isHeroTurn = computed(() => {
-    const blob = this.stateBlob();
+    const blob = this.authStateBlob();
     const activePlayer = blob?.['activePlayer'] as number | undefined;
     return activePlayer === this.heroPlayerId();
   });
 
   readonly dealerPosition = computed(() => {
-    const blob = this.stateBlob();
+    const blob = this.authStateBlob();
     return (blob?.['dealerPosition'] as number) ?? 0;
   });
 
   readonly rawPlayers = computed(() => {
-    const blob = this.stateBlob();
+    const blob = this.authStateBlob();
     return (blob?.['players'] as Array<Record<string, unknown>>) ?? [];
   });
 
@@ -366,7 +367,7 @@ export class Poker implements OnDestroy {
   });
 
   readonly winners = computed(() => {
-    const blob = this.stateBlob();
+    const blob = this.authStateBlob();
     return (
       (blob?.['winners'] as Array<{
         playerId: number;
@@ -587,7 +588,7 @@ export class Poker implements OnDestroy {
     const rawPlayers = this.rawPlayers();
     const dealerPlayerId = rawPlayers[this.dealerPosition()]?.['playerId'];
     const isDealer = p['playerId'] === dealerPlayerId;
-    const isCurrentTurn = p['playerId'] === this.stateBlob()?.['activePlayer'];
+    const isCurrentTurn = p['playerId'] === this.authStateBlob()?.['activePlayer'];
 
     const hand = p['hand'] as string[] | undefined;
     const isHeroPlayer = p['playerId'] === this.heroPlayerId();
