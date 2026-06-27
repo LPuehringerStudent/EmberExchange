@@ -53,6 +53,7 @@ import { pityRouter } from "./routers/pity-router";
 import { collectionRouter } from "./routers/collection-router";
 import { questRouter } from "./routers/quest-router";
 import { investmentRouter } from "./routers/investment-router";
+import { assistantRouter } from "./routers/assistant-router";
 import { honeypotRouter } from "./routers/honeypot-router";
 import { anomalyScorer } from "./middleware/anomaly-scorer";
 import { swaggerSpec } from "./swagger";
@@ -228,6 +229,7 @@ app.use("/api", pityRouter);
 app.use("/api", collectionRouter);
 app.use("/api", questRouter);
 app.use("/api", investmentRouter);
+app.use("/api", assistantRouter);
 
 // Health check endpoint (before admin router so it is not caught by requireAdmin)
 app.get("/api/health", (_req, res) => {
