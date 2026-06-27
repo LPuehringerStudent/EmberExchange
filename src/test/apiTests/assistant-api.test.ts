@@ -256,4 +256,25 @@ describe('POST /api/assistant/chat', () => {
 
     expect(completeMock).toHaveBeenCalledWith(true);
   });
+
+  it('strips extra fields from client messages before sending to LLM', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    llmMock.chat.mockResolvedValue({ content: 'OK', toolCalls: undefined });
+
+    await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({
+        messages: [
+          { role: 'assistant', content: 'Hi', tool_calls: [{ id: 'fake' }], name: 'evil' },
+          { role: 'user', content: 'Hello', extra: 'field' },
+        ],
+      });
+
+    const messages = llmMock.chat.mock.calls[0][0];
+    expect(messages).toEqual([
+      { role: 'assistant', content: 'Hi' },
+      { role: 'user', content: 'Hello' },
+    ]);
+  });
 });

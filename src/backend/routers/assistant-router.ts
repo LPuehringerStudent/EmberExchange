@@ -7,22 +7,12 @@ import { AssistantToolService } from '../services/assistant-tool-service';
 import { sanitizeAssistantOutput, containsSensitivePattern } from '../services/assistant-sanitizer';
 import { logSecurityEvent } from '../services/security-event-service';
 import { PlayerService } from '../services/player-service';
+import { getClientIp } from '../utils/bot-trap';
 import OpenAI from 'openai';
 
 export const assistantRouter = express.Router();
 const DAILY_CAP = parseInt(process.env.ASSISTANT_DAILY_CAP ?? '20', 10);
 const llm = new AssistantLlmService();
-
-function getClientIp(req: Request): string {
-  const cf = req.headers['cf-connecting-ip'];
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof cf === 'string' && cf) return cf;
-  if (typeof forwarded === 'string' && forwarded) {
-    const parts = forwarded.split(',');
-    return parts[parts.length - 1].trim();
-  }
-  return req.ip ?? '';
-}
 
 function validateMessages(body: unknown): OpenAI.Chat.ChatCompletionMessageParam[] {
   if (!body || typeof body !== 'object') {
@@ -32,6 +22,7 @@ function validateMessages(body: unknown): OpenAI.Chat.ChatCompletionMessageParam
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
     throw new Error('Invalid messages format.');
   }
+  const normalized: OpenAI.Chat.ChatCompletionMessageParam[] = [];
   for (const msg of messages) {
     if (!msg || typeof msg !== 'object') {
       throw new Error('Invalid message format.');
@@ -43,8 +34,9 @@ function validateMessages(body: unknown): OpenAI.Chat.ChatCompletionMessageParam
     if (typeof content !== 'string') {
       throw new Error('Invalid message content.');
     }
+    normalized.push({ role, content } as OpenAI.Chat.ChatCompletionMessageParam);
   }
-  return messages as OpenAI.Chat.ChatCompletionMessageParam[];
+  return normalized;
 }
 
 assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) => {
