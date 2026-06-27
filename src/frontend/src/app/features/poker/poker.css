@@ -54,6 +54,23 @@
 .chip--black { background: radial-gradient(circle at 30% 30%, #757575, #212121); }
 .chip--gold  { background: radial-gradient(circle at 30% 30%, #ffd54f, #c8881a); }
 
+.chip--inline {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+  flex-shrink: 0;
+}
+
+.chip--inline::after {
+  inset: 2px;
+  border-width: 1px;
+}
+
+.chip--inline.chip--gold { margin-right: 4px; }
+
 /* Flying chips */
 .chip-flying-layer {
   position: absolute;

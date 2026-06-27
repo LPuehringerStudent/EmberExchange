@@ -41,8 +41,8 @@
       @if (pot() > 0) {
         <div class="info-block info-block--highlight flex flex-col gap-1 px-4 py-[14px] bg-surface border border-[var(--border)] rounded-[10px]">
           <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">Pot</span>
-          <span class="info-block__value info-block__value--large text-[2rem] text-[var(--orange)] tabular-nums flex items-center gap-[2px]">
-            <img class="coal-icon coal-icon--small inline-block align-middle w-[22px] h-auto mr-[3px] -mt-[3px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
+          <span class="info-block__value info-block__value--large text-[2rem] text-[var(--gold)] tabular-nums flex items-center gap-[2px]">
+            <span class="chip chip--gold chip--inline"></span>
             {{ pot() }}
           </span>
         </div>
@@ -52,7 +52,7 @@
         <div class="info-block flex flex-col gap-1 px-4 py-[14px] bg-surface border border-[var(--border)] rounded-[10px]">
           <span class="info-block__label text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)]">To Call</span>
           <span class="info-block__value text-[1.05rem] font-semibold text-[var(--text-primary)] flex items-center gap-[2px]">
-            <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
+            <span class="chip chip--gold chip--inline"></span>
             {{ currentBet() }}
           </span>
         </div>
@@ -115,7 +115,7 @@
                     {{ action.type | titlecase }}
                     @if (action.amount) {
                       <span class="action-btn__amount tabular-nums opacity-90 flex items-center gap-[2px]">
-                        <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
+                        <span class="chip chip--gold chip--inline"></span>
                         {{ action.amount }}
                       </span>
                     }
@@ -291,8 +291,8 @@
                 <div class="pt-seat__chip flex flex-col items-center bg-[var(--seat-bg)] border border-[var(--seat-border)] rounded-lg px-[10px] py-1 min-w-[62px] text-center relative">
                 @if (seatPlayer; as p) {
                   <span class="pt-seat__name text-[10px] font-bold text-[var(--text-primary)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]">{{ p.name }}</span>
-                  <span class="pt-seat__chips text-[10px] font-semibold text-[var(--orange)] tabular-nums flex items-center gap-[2px]">
-                    <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
+                  <span class="pt-seat__chips text-[10px] font-semibold text-[var(--gold)] tabular-nums flex items-center gap-[2px]">
+                    <span class="chip chip--gold chip--inline"></span>
                     {{ p.chips }}
                   </span>
                   @if (p.currentBet > 0) {
@@ -346,8 +346,8 @@
                       {{ winner.playerId === heroPlayerId() ? 'You' : getPlayerName(winner.playerId) }}
                     </span>
                   </div>
-                  <span class="player-row__chips text-sm font-semibold text-[var(--orange)] tabular-nums shrink-0 flex items-center gap-[2px]">
-                    <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
+                  <span class="player-row__chips text-sm font-semibold text-[var(--gold)] tabular-nums shrink-0 flex items-center gap-[2px]">
+                    <span class="chip chip--gold chip--inline"></span>
                     {{ winner.amount }}
                   </span>
                 </div>
@@ -383,8 +383,8 @@
                   <span class="player-row__badge player-row__badge--dealer inline-flex items-center justify-center w-[18px] h-[18px] rounded-full text-[0.6rem] font-extrabold shrink-0" aria-label="Dealer">D</span>
                 }
               </div>
-              <span class="player-row__chips text-sm font-semibold text-[var(--orange)] tabular-nums shrink-0 flex items-center gap-[2px]" aria-label="{{ player.chips }} chips">
-                <img class="coal-icon coal-icon--inline inline-block align-middle w-[18px] h-auto mr-[2px] -mt-[2px] select-none pointer-events-none" [src]="coalIconSrc" alt="" />
+              <span class="player-row__chips text-sm font-semibold text-[var(--gold)] tabular-nums shrink-0 flex items-center gap-[2px]" aria-label="{{ player.chips }} chips">
+                <span class="chip chip--gold chip--inline"></span>
                 {{ player.chips }}
               </span>
             </div>
