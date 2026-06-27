@@ -17,8 +17,21 @@ export class AssistantLlmService {
       apiKey: process.env.KIMI_CODE_API_KEY ?? process.env.KIMI_API_KEY ?? '',
       baseURL: process.env.KIMI_CODE_BASE_URL ?? 'https://api.moonshot.cn/v1',
     });
-    const contextPath = path.resolve(__dirname, '../ai/context.md');
-    this.context = fs.existsSync(contextPath) ? fs.readFileSync(contextPath, 'utf-8') : '';
+    this.context = this.loadContext();
+  }
+
+  private loadContext(): string {
+    const candidates = [
+      path.resolve(__dirname, '../ai/context.md'),          // dist/backend/services -> dist/backend/ai
+      path.resolve(process.cwd(), 'dist/backend/ai/context.md'),
+      path.resolve(process.cwd(), 'src/backend/ai/context.md'),
+    ];
+    for (const candidate of candidates) {
+      if (fs.existsSync(candidate)) {
+        return fs.readFileSync(candidate, 'utf-8');
+      }
+    }
+    return '';
   }
 
   getTools(): ChatCompletionTool[] {
@@ -107,7 +120,7 @@ export class AssistantLlmService {
     const message = choice.message;
     return {
       content: message.content ?? '',
-      toolCalls: message.tool_calls as OpenAI.Chat.ChatCompletionMessageToolCall[] | undefined,
+      toolCalls: message.tool_calls,
     };
   }
 

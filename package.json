@@ -4,7 +4,8 @@
   "description": "Ember Exchange Application",
   "main": "dist/backend/app.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy-assets",
+    "copy-assets": "cp -r src/backend/ai dist/backend/ai 2>/dev/null || true",
     "start": "node dist/backend/app.js",
     "dev": "nodemon",
     "dev:full": "concurrently \"npm run dev\" \"npm run frontend:watch\"",
