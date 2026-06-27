@@ -83,7 +83,7 @@ export class AssistantLlmService {
         function: {
           name: 'get_player_summary',
           description: 'Get a short summary of the current player.',
-          parameters: { type: 'object', properties: {} },
+          parameters: { type: 'object', properties: {}, required: [] },
         },
       },
       {

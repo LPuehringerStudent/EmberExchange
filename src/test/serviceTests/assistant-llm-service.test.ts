@@ -98,4 +98,11 @@ describe('AssistantLlmService', () => {
     expect(call.messages[0].role).toBe('system');
     expect(call.messages[1]).toEqual({ role: 'user', content: 'How does lootbox rarity work?' });
   });
+
+  it('loads onboarding context from context.md', () => {
+    const service = new AssistantLlmService();
+    const context = (service as unknown as { context: string }).context;
+    expect(context).toContain('EmberExchange');
+    expect(context).toContain('/lootboxes');
+  });
 });
