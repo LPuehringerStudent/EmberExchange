@@ -10,6 +10,25 @@
 
 ---
 
+## LLM API configuration
+
+Environment variables (no defaults; required in production):
+
+| Variable | Purpose |
+|---|---|
+| `KIMI_API_KEY` | API key for the main assistant (Kimi K2.7). |
+| `KIMI_BASE_URL` | Base URL for Kimi K2.7 (default: `https://api.moonshot.ai/v1`). |
+| `KIMI_MODEL` | Model id for onboarding assistant (default: `kimi-k2.7`). |
+| `KIMI_CODE_API_KEY` | API key for `divine_intervention` / theme generation (Kimi Code 2.7 subscription). |
+| `KIMI_CODE_BASE_URL` | Base URL for Kimi Code 2.7 (default: `https://api.moonshot.ai/v1`). |
+| `KIMI_CODE_MODEL` | Model id for Kimi Code 2.7 subscription (default: `kimi-for-coding`). |
+
+Both endpoints are OpenAI-compatible, so the backend can use a single HTTP client (e.g., the `openai` package) instantiated twice with different base URLs/keys/model IDs.
+
+**`divine_intervention` context policy:** `divine_intervention` receives only the user's question plus the same curated feature docs used by Kimi K2.7. It does **not** read raw source files, file paths, SQL schemas, or environment values. This keeps answers safe and prevents accidental leakage of honeypots, security config, or internal architecture.
+
+---
+
 ## User-visible behavior
 
 - A floating assistant button appears on the bottom-right of every authenticated page.
