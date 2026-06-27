@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { AssistantLlmService } from '../../backend/services/assistant-llm-service';
 
 const createMock = jest.fn();
