@@ -140,6 +140,7 @@ export class PokerStageManager {
         this.isAnimatingInternal.set(false);
         this.stageInternal.set('idle');
         this.enteringCardIdsInternal.set(new Set());
+        this.revealingCardIdsInternal.set(new Set());
         this.consumePending();
         return;
       }
@@ -235,6 +236,7 @@ export class PokerStageManager {
           if (pid === this.heroPlayerId) continue;
           const hand = (p['hand'] as string[]) ?? [];
           for (let i = 0; i < hand.length; i++) {
+            if (hand[i] === 'back') continue;
             ids.add(`hole-${pid}-${i}`);
           }
         }

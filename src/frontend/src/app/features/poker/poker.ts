@@ -4,6 +4,7 @@ import {
   computed,
   effect,
   inject,
+  OnDestroy,
   signal,
   untracked,
 } from '@angular/core';
@@ -60,9 +61,13 @@ const TWO_PLAYER_SEATS: Array<{ x: number; y: number }> = [
   styleUrl: './poker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Poker {
+export class Poker implements OnDestroy {
   private ws = inject(WebSocketService);
   private auth = inject(AuthService);
+
+  ngOnDestroy(): void {
+    this.stageManager.destroy();
+  }
 
   readonly heroPlayerId = computed(() => {
     const id = this.auth.getCurrentUser()?.playerId;

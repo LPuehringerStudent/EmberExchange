@@ -61,7 +61,26 @@ private revealingCardIdsInternal = signal<Set<string>>(new Set());
 readonly revealingCardIds = this.revealingCardIdsInternal;
 ```
 
-In `applyEvent` under `case 'reveal_opponent_cards':`, populate the set:
+Add `heroPlayerId` to options so the manager can skip the hero's already-face-up cards:
+
+```ts
+export interface PokerStageManagerOptions {
+  reducedMotion?: boolean;
+  heroPlayerId?: number | null;
+}
+```
+
+Store it:
+
+```ts
+private heroPlayerId: number | null = null;
+
+setHeroPlayerId(id: number | null): void {
+  this.heroPlayerId = id;
+}
+```
+
+In `applyEvent` under `case 'reveal_opponent_cards':`, populate the set for non-hero players only:
 
 ```ts
 case 'reveal_opponent_cards': {
@@ -73,6 +92,7 @@ case 'reveal_opponent_cards': {
   const players = (target['players'] as Array<Record<string, unknown>>) ?? [];
   for (const p of players) {
     const pid = p['playerId'] as number;
+    if (pid === this.heroPlayerId) continue;
     const hand = (p['hand'] as string[]) ?? [];
     for (let i = 0; i < hand.length; i++) {
       ids.add(`hole-${pid}-${i}`);
@@ -80,7 +100,14 @@ case 'reveal_opponent_cards': {
   }
   this.revealingCardIdsInternal.set(ids);
 
-  window.setTimeout(() => this.revealingCardIdsInternal.set(new Set()), 500);
+  if (this.revealTimeoutId) {
+    window.clearTimeout(this.revealTimeoutId);
+    this.revealTimeoutId = null;
+  }
+  this.revealTimeoutId = window.setTimeout(() => {
+    this.revealingCardIdsInternal.set(new Set());
+    this.revealTimeoutId = null;
+  }, POKER_TIMING.revealDuration);
   return;
 }
 ```
@@ -92,7 +119,24 @@ this.enteringCardIdsInternal.set(new Set());
 this.revealingCardIdsInternal.set(new Set());
 ```
 
-### Step 2: Add helpers to `poker.ts`
+### Step 2: Wire heroPlayerId and add helpers to `poker.ts`
+
+Pass the hero ID to the stage manager and keep it in sync:
+
+```ts
+private stageManager = new PokerStageManager({
+  reducedMotion: typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  heroPlayerId: this.heroPlayerId(),
+});
+
+constructor(...) {
+  effect(() => {
+    this.stageManager.setHeroPlayerId(this.heroPlayerId());
+  });
+}
+```
+
+Add the reveal helper:
 
 ```ts
 isRevealingHoleCard(playerId: number, cardIndex: number): boolean {
