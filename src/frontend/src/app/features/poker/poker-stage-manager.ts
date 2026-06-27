@@ -5,7 +5,6 @@ export const POKER_TIMING = {
   communityStagger: 350,
   revealPause: 400,
   settlePause: 600,
-  enteringCardDuration: 450,
   revealDuration: 500,
 };
 
@@ -30,6 +29,7 @@ export interface PokerStageEvent {
 
 export interface PokerStageManagerOptions {
   reducedMotion?: boolean;
+  heroPlayerId?: number | null;
 }
 
 function clone<T>(value: T): T {
@@ -42,6 +42,7 @@ function normalizePhase(raw: string): string {
 
 export class PokerStageManager {
   private readonly reducedMotion: boolean;
+  private heroPlayerId: number | null = null;
 
   private targetStateBlob = signal<Record<string, unknown> | null>(null);
   private displayedStateBlobInternal = signal<Record<string, unknown> | null>(null);
@@ -63,6 +64,11 @@ export class PokerStageManager {
 
   constructor(options: PokerStageManagerOptions = {}) {
     this.reducedMotion = options.reducedMotion ?? false;
+    this.heroPlayerId = options.heroPlayerId ?? null;
+  }
+
+  setHeroPlayerId(id: number | null): void {
+    this.heroPlayerId = id;
   }
 
   setTarget(blob: Record<string, unknown> | null): void {
@@ -226,6 +232,7 @@ export class PokerStageManager {
         const players = (target['players'] as Array<Record<string, unknown>>) ?? [];
         for (const p of players) {
           const pid = p['playerId'] as number;
+          if (pid === this.heroPlayerId) continue;
           const hand = (p['hand'] as string[]) ?? [];
           for (let i = 0; i < hand.length; i++) {
             ids.add(`hole-${pid}-${i}`);

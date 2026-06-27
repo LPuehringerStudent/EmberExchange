@@ -64,11 +64,17 @@ export class Poker {
   private ws = inject(WebSocketService);
   private auth = inject(AuthService);
 
+  readonly heroPlayerId = computed(() => {
+    const id = this.auth.getCurrentUser()?.playerId;
+    return id == null ? -1 : Number(id);
+  });
+
   /* ── Tiny SVG coal icon used as currency symbol ── */
   readonly coalIconSrc = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e85d04"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="9" r="3" fill="%23f48c06" opacity="0.6"/><circle cx="16" cy="15" r="2" fill="%23f48c06" opacity="0.4"/></svg>';
 
   private stageManager = new PokerStageManager({
     reducedMotion: typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    heroPlayerId: this.heroPlayerId(),
   });
 
   readonly stateBlob = this.stageManager.displayedStateBlob;
@@ -115,6 +121,11 @@ export class Poker {
   ];
 
   constructor() {
+    /* Keep the stage manager in sync with the hero identity */
+    effect(() => {
+      this.stageManager.setHeroPlayerId(this.heroPlayerId());
+    });
+
     /* Feed authoritative state into the stage manager */
     effect(() => {
       this.stageManager.setTarget(this.ws.stateBlob());
@@ -148,11 +159,6 @@ export class Poker {
   }
 
   /* ─── Computed selectors (unchanged core logic) ─── */
-
-  readonly heroPlayerId = computed(() => {
-    const id = this.auth.getCurrentUser()?.playerId;
-    return id == null ? -1 : Number(id);
-  });
 
   readonly phase = computed(() => {
     const blob = this.stateBlob();

@@ -102,14 +102,13 @@ isRevealingHoleCard(playerId: number, cardIndex: number): boolean {
 
 ### Step 3: Update card class bindings in `poker.html`
 
-Community cards:
+Community cards (deal-in animation only — community cards do not flip):
 
 ```html
 <div
   class="pt-card-slot rounded-[var(--radius-card)] overflow-visible flex items-center justify-center shrink-0 z-[2]"
   [class.pt-card-slot--filled]="card"
   [class.card-flip--entering]="isEnteringCommunityCard($index)"
-  [class.card-flip--revealing]="false"
   [attr.aria-label]="card ? (card.rank + ' of ' + card.suit) : 'Empty card slot'"
 >
 ```
