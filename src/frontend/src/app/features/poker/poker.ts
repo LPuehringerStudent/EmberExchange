@@ -6,7 +6,6 @@ import {
   inject,
   OnDestroy,
   signal,
-  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WebSocketService } from '@core/services/websocket.service';
@@ -195,6 +194,7 @@ export class Poker implements OnDestroy {
       const events = this.stageManager.chipEventQueue();
       if (events.length === 0) return;
       for (const ev of events) {
+        if (ev.type === 'place_chips') continue;
         this.spawnFlyingChip(ev);
       }
       this.stageManager.clearChipEvents();
@@ -539,6 +539,7 @@ export class Poker implements OnDestroy {
   }
 
   private spawnFlyingChip(event: PokerStageEvent): void {
+    if (event.type !== 'move_chips_to_pot' && event.type !== 'payout_chips') return;
     const playerId = event.playerId!;
     const seatPos = this.seatPositionFor(playerId);
     if (!seatPos) return;
