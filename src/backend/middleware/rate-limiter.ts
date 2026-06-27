@@ -18,7 +18,7 @@ interface LimiterConfig {
  * Simple in-memory token-bucket rate limiter for Express.
  * No external dependencies — uses a Map that is pruned automatically.
  */
-class ExpressRateLimiter {
+export class ExpressRateLimiter {
     private buckets = new Map<string, Bucket>();
     private readonly windowMs: number;
     private readonly maxRequests: number;
@@ -172,4 +172,12 @@ export const readRateLimiter = new ExpressRateLimiter({
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 100,
     message: "Too many requests. Please slow down."
+});
+
+/** Per-player burst limiter for AI assistant chat messages */
+export const assistantBurstLimiter = new ExpressRateLimiter({
+    windowMs: 60_000,
+    maxRequests: 5,
+    keyGenerator: (req) => `assistant:${req.playerId ?? req.ip}`,
+    message: 'Too many assistant messages. Please slow down.',
 });

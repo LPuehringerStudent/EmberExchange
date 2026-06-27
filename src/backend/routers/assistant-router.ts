@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { requireAuth } from '../middleware/require-auth';
+import { assistantBurstLimiter } from '../middleware/rate-limiter';
 import { Unit } from '../utils/unit';
 import { AssistantUsageService } from '../services/assistant-usage-service';
 import { AssistantLlmService } from '../services/assistant-llm-service';
@@ -39,7 +40,7 @@ function validateMessages(body: unknown): OpenAI.Chat.ChatCompletionMessageParam
   return normalized;
 }
 
-assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) => {
+assistantRouter.post('/chat', requireAuth, assistantBurstLimiter.middleware(), async (req: Request, res: Response) => {
   let messages: OpenAI.Chat.ChatCompletionMessageParam[];
   try {
     messages = validateMessages(req.body);

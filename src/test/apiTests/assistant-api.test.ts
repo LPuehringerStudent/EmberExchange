@@ -62,10 +62,12 @@ jest.mock('../../backend/services/assistant-tool-service', () => ({
 }));
 
 import { app } from '../../backend/app';
+import { assistantBurstLimiter } from '../../backend/middleware/rate-limiter';
 
 describe('POST /api/assistant/chat', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (assistantBurstLimiter as any).buckets.clear();
     toolServiceMock.handle.mockResolvedValue({ route: '/games/blackjack/lobby' });
     sessionServiceMock.getSession.mockResolvedValue(null);
     playerServiceMock.getInfoByID.mockResolvedValue({ isAdmin: false });
@@ -277,5 +279,27 @@ describe('POST /api/assistant/chat', () => {
       { role: 'assistant', content: 'Hi' },
       { role: 'user', content: 'Hello' },
     ]);
+  });
+
+  it('returns 429 after exceeding burst limit', async () => {
+    sessionServiceMock.getSession.mockResolvedValue({ playerId: 1 });
+    llmMock.chat.mockResolvedValue({ content: 'OK', toolCalls: undefined });
+
+    // First 5 requests should succeed
+    for (let i = 0; i < 5; i++) {
+      const res = await request(app)
+        .post('/api/assistant/chat')
+        .set('session-id', 'valid-session')
+        .send({ messages: [{ role: 'user', content: String(i) }] });
+      expect(res.status).toBe(200);
+    }
+
+    // 6th request should be rate limited
+    const res = await request(app)
+      .post('/api/assistant/chat')
+      .set('session-id', 'valid-session')
+      .send({ messages: [{ role: 'user', content: 'too many' }] });
+    expect(res.status).toBe(429);
+    expect(res.body.error).toContain('slow down');
   });
 });
