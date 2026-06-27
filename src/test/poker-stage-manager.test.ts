@@ -11,6 +11,9 @@ import { signal } from '@angular/core';
 
 import { PokerStageManager, POKER_TIMING } from '../frontend/src/app/features/poker/poker-stage-manager';
 
+// The stage manager runs in a browser context and uses window.setTimeout.
+(globalThis as any).window = globalThis;
+
 jest.useFakeTimers();
 
 function makePlayer(id: number, hand: string[]): Record<string, unknown> {

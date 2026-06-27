@@ -214,7 +214,7 @@ export class PokerStageManager {
         }
         this.revealingCardIdsInternal.set(ids);
 
-        globalThis.setTimeout(() => this.revealingCardIdsInternal.set(new Set()), 500);
+        window.setTimeout(() => this.revealingCardIdsInternal.set(new Set()), 500);
         return;
       }
 
