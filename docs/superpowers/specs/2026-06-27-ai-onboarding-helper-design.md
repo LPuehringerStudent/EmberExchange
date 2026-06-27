@@ -204,8 +204,8 @@ The assistant must never:
 
 ### Table: `AssistantUsage`
 ```sql
-CREATE TABLE IF NOT EXISTS assistant_usage (
-  player_id INTEGER PRIMARY KEY REFERENCES player(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS AssistantUsage (
+  playerId INTEGER PRIMARY KEY REFERENCES Player(playerId) ON DELETE CASCADE,
   chat_count INTEGER NOT NULL DEFAULT 0,
   reset_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
