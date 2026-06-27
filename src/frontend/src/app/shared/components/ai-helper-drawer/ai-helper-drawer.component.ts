@@ -23,10 +23,12 @@ export class AiHelperDrawerComponent {
   private scrollContainer = viewChild.required<ElementRef>('scrollContainer');
   private textInput = viewChild.required<ElementRef>('textInput');
   private drawerContainer = viewChild.required<ElementRef>('drawerContainer');
+  private previousFocus: Element | null = null;
 
   constructor() {
     effect(() => {
       if (this.isOpen()) {
+        this.previousFocus = document.activeElement;
         window.setTimeout(() => this.textInput().nativeElement.focus(), 50);
       }
     });
@@ -34,6 +36,10 @@ export class AiHelperDrawerComponent {
 
   close(): void {
     this.service.close();
+    const target = this.previousFocus;
+    if (target instanceof HTMLElement) {
+      window.setTimeout(() => target.focus(), 0);
+    }
   }
 
   async send(): Promise<void> {
@@ -99,6 +105,18 @@ export class AiHelperDrawerComponent {
     } else if (!event.shiftKey && document.activeElement === last) {
       event.preventDefault();
       first.focus();
+    }
+  }
+
+  onFocusOut(event: FocusEvent): void {
+    const container = this.drawerContainer().nativeElement as HTMLElement;
+    if (!container.contains(event.relatedTarget as Node)) {
+      const focusable = Array.from(
+        container.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+      ).filter((el) => !(el as HTMLButtonElement).disabled && el.offsetParent !== null);
+      if (focusable.length > 0) {
+        focusable[0].focus();
+      }
     }
   }
 }
