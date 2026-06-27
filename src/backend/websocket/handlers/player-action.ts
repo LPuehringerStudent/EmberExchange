@@ -190,19 +190,23 @@ export async function handlePlayerAction(socketId: string, payload: Record<strin
             console.error("[coins] processAction: zero players synced despite players array present");
         }
 
-        // Record mini-game sessions when a hand settles (e.g. blackjack)
+        // Record mini-game sessions when a hand settles (blackjack: settled, poker: showdown)
         const newPhase = (result.newFullState! as Record<string, unknown>).phase as string;
-        if (newPhase === "settled") {
+        if (newPhase === "settled" || newPhase === "showdown") {
             try {
                 const miniGameSessionService = new MiniGameSessionService(unit);
                 const gamePlayers = (result.newFullState! as Record<string, unknown>).players as Array<Record<string, unknown>>;
                 const winners = ((result.newFullState! as Record<string, unknown>).winners ?? []) as Array<{ playerId: number; amount: number }>;
                 for (const p of gamePlayers) {
                     const pid = p.playerId as number;
-                    const pResult = p.result as string;
                     const payout = winners
                         .filter(w => w.playerId === pid)
                         .reduce((sum, w) => sum + w.amount, 0);
+                    // Blackjack already sets per-player result; poker derives it from winners.
+                    let pResult = p.result as string | undefined;
+                    if (!pResult) {
+                        pResult = payout > 0 ? "win" : "lose";
+                    }
                     await miniGameSessionService.create(pid, room.gameType, pResult, payout);
                 }
             } catch (err) {
