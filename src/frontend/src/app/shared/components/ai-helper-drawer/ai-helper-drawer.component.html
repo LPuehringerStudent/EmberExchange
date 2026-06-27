@@ -1,5 +1,7 @@
 @if (isOpen()) {
   <div
+    #drawerContainer
+    (keydown)="onKeydown($event)"
     class="fixed top-16 bottom-0 right-0 w-80 max-w-full bg-surface border-l border-border shadow-2xl z-[95] flex flex-col"
     role="dialog"
     aria-modal="true"
@@ -41,6 +43,7 @@
     <div class="p-3 border-t border-border">
       <div class="flex gap-2">
         <input
+          #textInput
           type="text"
           class="flex-1 px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm"
           placeholder="Ask me anything…"

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { AiHelperService, AssistantAction } from '../../../core/services/ai-helper.service';
 import { Router } from '@angular/router';
 
@@ -21,6 +21,16 @@ export class AiHelperDrawerComponent {
 
   input = signal('');
   private scrollContainer = viewChild.required<ElementRef>('scrollContainer');
+  private textInput = viewChild.required<ElementRef>('textInput');
+  private drawerContainer = viewChild.required<ElementRef>('drawerContainer');
+
+  constructor() {
+    effect(() => {
+      if (this.isOpen()) {
+        window.setTimeout(() => this.textInput().nativeElement.focus(), 50);
+      }
+    });
+  }
 
   close(): void {
     this.service.close();
@@ -67,5 +77,28 @@ export class AiHelperDrawerComponent {
       const el = this.scrollContainer().nativeElement;
       el.scrollTop = el.scrollHeight;
     }, 50);
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+
+    const focusable = Array.from(
+      this.drawerContainer().nativeElement.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) as NodeListOf<HTMLElement>
+    ).filter((el) => !(el as HTMLInputElement).disabled && el.offsetParent !== null);
+
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 }
