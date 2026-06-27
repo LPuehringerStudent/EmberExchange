@@ -1,4 +1,4 @@
-import { Component, inject, signal, viewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { AiHelperService, AssistantAction } from '../../../core/services/ai-helper.service';
 import { Router } from '@angular/router';
 
@@ -7,8 +7,10 @@ import { Router } from '@angular/router';
   standalone: true,
   templateUrl: './ai-helper-drawer.component.html',
   styleUrls: ['./ai-helper-drawer.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AiHelperDrawerComponent {
+  @HostListener('document:keydown.escape') onEscape(): void { this.close(); }
   private service = inject(AiHelperService);
   private router = inject(Router);
 
@@ -32,6 +34,10 @@ export class AiHelperDrawerComponent {
     this.scrollToBottom();
   }
 
+  onInput(event: Event): void {
+    this.input.set((event.target as HTMLInputElement).value);
+  }
+
   runAction(action: AssistantAction): void {
     switch (action.type) {
       case 'navigate_to':
@@ -42,7 +48,7 @@ export class AiHelperDrawerComponent {
         this.highlight(action.target);
         break;
       case 'trigger_action':
-        // Dispatch to a registered handler or show a toast
+        window.dispatchEvent(new CustomEvent('assistant-trigger-action', { detail: action.action }));
         break;
     }
   }
