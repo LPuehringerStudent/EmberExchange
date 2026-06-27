@@ -212,7 +212,7 @@
             <div class="pt-pot flex flex-col items-center gap-1 bg-black/32 border border-[var(--gold-dim)] rounded-[20px] px-4 py-1 text-[var(--gold)] z-[2]" aria-live="polite" aria-label="Current pot amount">
               <div class="pt-pot__stack relative w-[28px] h-[48px]">
                 @for (chip of chipStack(pot()); track $index) {
-                  <div class="poker-chip chip" [class]="chip" [style.--chip-index]="$index"></div>
+                  <div [class]="'poker-chip chip ' + chip" [style.--chip-index]="$index"></div>
                 }
               </div>
               <span class="pt-pot__amount text-[18px] font-bold tabular-nums">{{ pot() }}</span>
@@ -298,7 +298,7 @@
                   @if (p.currentBet > 0) {
                     <div class="pt-seat__bet-stack absolute -top-16 left-1/2 -translate-x-1/2 w-[28px] h-[40px]">
                       @for (chip of chipStack(p.currentBet); track $index) {
-                        <div class="poker-chip chip" [class]="chip" [style.--chip-index]="$index"></div>
+                        <div [class]="'poker-chip chip ' + chip" [style.--chip-index]="$index"></div>
                       }
                     </div>
                     <span class="pt-seat__bet text-[10px] font-semibold text-[var(--gold)]">{{ p.currentBet }}</span>
@@ -314,23 +314,22 @@
         }
         <!-- /seats -->
 
+        <!-- Flying chips overlay -->
+        <div class="chip-flying-layer absolute inset-0 pointer-events-none z-[25]">
+          @for (chip of flyingChips(); track chip.id) {
+            <div
+              class="chip-flying"
+              [style.left.%]="chip.startX"
+              [style.top.%]="chip.startY"
+              [style.--end-x]="chip.endX + '%'"
+              [style.--end-y]="chip.endY + '%'"
+            >
+              <div class="chip chip--gold"></div>
+            </div>
+          }
+        </div>
       </div>
       <!-- /pt-wrapper -->
-
-      <!-- Flying chips overlay -->
-      <div class="chip-flying-layer absolute inset-0 pointer-events-none z-[25]">
-        @for (chip of flyingChips(); track chip.id) {
-          <div
-            class="chip-flying"
-            [style.--start-x.%]="chip.startX"
-            [style.--start-y.%]="chip.startY"
-            [style.--end-x.%]="chip.endX"
-            [style.--end-y.%]="chip.endY"
-          >
-            <div class="chip chip--gold"></div>
-          </div>
-        }
-      </div>
     </main>
 
     <aside class="poker-sidebar poker-sidebar--right flex flex-col gap-[14px] bg-[var(--bg-sidebar)] px-[18px] py-6" aria-label="Player standings">

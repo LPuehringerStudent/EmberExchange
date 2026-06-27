@@ -64,8 +64,6 @@
 
 .chip-flying {
   position: absolute;
-  left: var(--start-x);
-  top: var(--start-y);
   z-index: 25;
   pointer-events: none;
   transform: translate(-50%, -50%) scale(1);
@@ -78,8 +76,6 @@
 
 @keyframes chip-fly {
   0% {
-    left: var(--start-x);
-    top: var(--start-y);
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }

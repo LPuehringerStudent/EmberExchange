@@ -79,6 +79,10 @@ export class Poker implements OnDestroy {
 
   ngOnDestroy(): void {
     this.stageManager.destroy();
+    for (const id of this.flyingChipTimeouts) {
+      window.clearTimeout(id);
+    }
+    this.flyingChipTimeouts.clear();
   }
 
   chipStack(amount: number): string[] {
@@ -111,6 +115,7 @@ export class Poker implements OnDestroy {
   private nextFlyingChipId = 0;
   private flyingChipsInternal = signal<FlyingChip[]>([]);
   readonly flyingChips = this.flyingChipsInternal;
+  private flyingChipTimeouts = new Set<ReturnType<typeof window.setTimeout>>();
 
   private readonly suitMap: Record<string, string> = {
     h: 'hearts',
@@ -556,9 +561,11 @@ export class Poker implements OnDestroy {
 
     this.flyingChipsInternal.update((chips) => [...chips, chip]);
 
-    window.setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
+      this.flyingChipTimeouts.delete(timeoutId);
       this.flyingChipsInternal.update((chips) => chips.filter((c) => c.id !== chip.id));
     }, 650);
+    this.flyingChipTimeouts.add(timeoutId);
   }
 
   /* ─── Private helpers ─── */
