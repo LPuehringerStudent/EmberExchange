@@ -229,7 +229,7 @@ app.use("/api", pityRouter);
 app.use("/api", collectionRouter);
 app.use("/api", questRouter);
 app.use("/api", investmentRouter);
-app.use("/api", assistantRouter);
+app.use("/api/assistant", assistantRouter);
 
 // Health check endpoint (before admin router so it is not caught by requireAdmin)
 app.get("/api/health", (_req, res) => {

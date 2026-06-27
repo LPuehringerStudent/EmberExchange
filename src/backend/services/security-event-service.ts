@@ -12,7 +12,8 @@ export type SecurityEventType =
     | "suspicious_request"
     | "registration_blocked"
     | "admin_access_denied"
-    | "ticket_abuse";
+    | "ticket_abuse"
+    | "assistant_sanitizer_block";
 
 export interface SecurityEventData {
     ipAddress: string;

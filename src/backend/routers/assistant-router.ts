@@ -5,7 +5,7 @@ import { AssistantUsageService } from '../services/assistant-usage-service';
 import { AssistantLlmService } from '../services/assistant-llm-service';
 import { AssistantToolService } from '../services/assistant-tool-service';
 import { sanitizeAssistantOutput, containsSensitivePattern } from '../services/assistant-sanitizer';
-import { logSecurityEvent, SecurityEventType } from '../services/security-event-service';
+import { logSecurityEvent } from '../services/security-event-service';
 import { PlayerService } from '../services/player-service';
 import OpenAI from 'openai';
 
@@ -60,7 +60,7 @@ assistantRouter.post('/chat', requireAuth, async (req: Request, res: Response) =
       logSecurityEvent({
         ipAddress: req.ip ?? '',
         userAgent: req.headers['user-agent'] as string | undefined,
-        eventType: 'assistant_sanitizer_block' as SecurityEventType,
+        eventType: 'assistant_sanitizer_block',
         path: req.path,
         method: req.method,
         details: 'Blocked assistant output containing sensitive pattern.',

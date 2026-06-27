@@ -6,6 +6,12 @@ process.env.KIMI_CODE_API_KEY = 'test-code-key';
 const { app } = require('../../backend/app');
 
 describe('POST /api/assistant/chat', () => {
+  it('is mounted at /api/assistant/chat', async () => {
+    const res = await request(app).post('/api/assistant/chat').send({ messages: [] });
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBeDefined();
+  });
+
   it('returns 401 when not authenticated', async () => {
     const res = await request(app).post('/api/assistant/chat').send({ messages: [] });
     expect(res.status).toBe(401);
