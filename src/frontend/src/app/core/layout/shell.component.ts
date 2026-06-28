@@ -6,11 +6,13 @@ import { OnboardingService } from '../services/onboarding.service';
 import { NotificationBellComponent } from '../../shared/components/notification-bell.component';
 import { OnboardingOverlayComponent } from '../components/onboarding-overlay/onboarding-overlay.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
+import { AiHelperButtonComponent } from '../../shared/components/ai-helper-button/ai-helper-button.component';
+import { AiHelperDrawerComponent } from '../../shared/components/ai-helper-drawer/ai-helper-drawer.component';
 
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, OnboardingOverlayComponent, InfoTooltipComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, OnboardingOverlayComponent, InfoTooltipComponent, AiHelperButtonComponent, AiHelperDrawerComponent],
   templateUrl: './shell.component.html',
   styleUrls: ['./shell.component.css']
 })

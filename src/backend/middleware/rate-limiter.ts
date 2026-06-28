@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { getClientIp } from "../utils/bot-trap";
 import { logSecurityEvent } from "../services/security-event-service";
 
 interface Bucket {
@@ -18,7 +19,7 @@ interface LimiterConfig {
  * Simple in-memory token-bucket rate limiter for Express.
  * No external dependencies — uses a Map that is pruned automatically.
  */
-class ExpressRateLimiter {
+export class ExpressRateLimiter {
     private buckets = new Map<string, Bucket>();
     private readonly windowMs: number;
     private readonly maxRequests: number;
@@ -54,6 +55,8 @@ class ExpressRateLimiter {
                 bucket.lastRefill = now;
 
                 if (bucket.tokens < 1) {
+                    // eslint-disable-next-line no-console
+                    console.warn("[rate-limiter] limit hit for key:", key);
                     logSecurityEvent({
                         ipAddress: this.getClientIp(req),
                         userAgent: req.headers["user-agent"] as string | undefined,
@@ -172,4 +175,12 @@ export const readRateLimiter = new ExpressRateLimiter({
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 100,
     message: "Too many requests. Please slow down."
+});
+
+/** Per-player burst limiter for AI assistant chat messages */
+export const assistantBurstLimiter = new ExpressRateLimiter({
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 5,
+    keyGenerator: (req) => `assistant:${req.playerId ?? getClientIp(req)}`,
+    message: "Too many assistant messages. Please slow down."
 });

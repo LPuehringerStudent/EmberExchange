@@ -4,7 +4,8 @@
   "description": "Ember Exchange Application",
   "main": "dist/backend/app.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy-assets",
+    "copy-assets": "rm -rf dist/backend/ai && cp -r src/backend/ai dist/backend/ai",
     "start": "node dist/backend/app.js",
     "dev": "nodemon",
     "dev:full": "concurrently \"npm run dev\" \"npm run frontend:watch\"",
@@ -41,6 +42,7 @@
     "helmet": "^8.2.0",
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.10",
+    "openai": "^6.45.0",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",

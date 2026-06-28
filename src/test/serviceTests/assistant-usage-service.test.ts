@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { AssistantUsageService } from '../../backend/services/assistant-usage-service';
 import { Unit } from '../../backend/utils/unit';
 
