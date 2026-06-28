@@ -68,7 +68,7 @@ export class AssistantLlmService {
         type: 'function',
         function: {
           name: 'trigger_action',
-          description: 'Trigger a safe UI action.',
+          description: 'Trigger a safe UI action. Only use when the user explicitly asks you to perform the action.',
           parameters: {
             type: 'object',
             properties: {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { AiHelperService, AssistantAction } from '../../../core/services/ai-helper.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MarkdownPipe } from '../../pipes/markdown.pipe';
 import { Router } from '@angular/router';
 
@@ -14,6 +15,7 @@ import { Router } from '@angular/router';
 export class AiHelperDrawerComponent {
   @HostListener('document:keydown.escape') onEscape(): void { this.close(); }
   private service = inject(AiHelperService);
+  private auth = inject(AuthService);
   private router = inject(Router);
 
   isOpen = this.service.isOpen;
@@ -31,7 +33,10 @@ export class AiHelperDrawerComponent {
     effect(() => {
       if (this.isOpen()) {
         this.previousFocus = document.activeElement;
-        window.setTimeout(() => this.textInput().nativeElement.focus(), 50);
+        window.setTimeout(() => {
+          this.scrollToBottom();
+          this.textInput().nativeElement.focus();
+        }, 50);
       }
     });
 
@@ -75,7 +80,7 @@ export class AiHelperDrawerComponent {
     this.router.navigateByUrl(href);
   }
 
-  runAction(action: AssistantAction): void {
+  async runAction(action: AssistantAction): Promise<void> {
     switch (action.type) {
       case 'navigate_to':
         this.router.navigate([action.route]);
@@ -85,8 +90,33 @@ export class AiHelperDrawerComponent {
         this.highlight(action.target);
         break;
       case 'trigger_action':
-        window.dispatchEvent(new CustomEvent('assistant-trigger-action', { detail: action.action }));
+        await this.handleTriggerAction(action.action);
         break;
+    }
+  }
+
+  private async handleTriggerAction(action: string): Promise<void> {
+    switch (action) {
+      case 'claim_daily_reward':
+        try {
+          await this.service.claimDailyReward();
+          await this.auth.refreshUser();
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to claim daily reward:', err);
+        }
+        this.service.close();
+        break;
+      case 'open_first_lootbox':
+        this.router.navigate(['/lootboxes']);
+        this.service.close();
+        break;
+      case 'open_quests':
+        this.router.navigate(['/quests']);
+        this.service.close();
+        break;
+      default:
+        window.dispatchEvent(new CustomEvent('assistant-trigger-action', { detail: action }));
     }
   }
 

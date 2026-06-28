@@ -69,4 +69,14 @@ export class AiHelperService {
       this.loading.set(false);
     }
   }
+
+  async claimDailyReward(): Promise<{ message: string; reward: { coins: number; lootboxes: number }; newStreak: number }> {
+    return firstValueFrom(
+      this.http.post<{ message: string; reward: { coins: number; lootboxes: number }; newStreak: number }>(
+        '/shop/claim-daily',
+        null,
+        { headers: this.getHeaders() }
+      )
+    );
+  }
 }
