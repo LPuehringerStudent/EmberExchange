@@ -35,16 +35,36 @@
       background: var(--ember-dark);
     }
 
-    .reveal::before {
+.reveal::before {
       content: '';
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(circle at 15% 20%, rgba(255,107,53,0.18) 0%, transparent 35%),
-        radial-gradient(circle at 85% 80%, rgba(255,179,71,0.12) 0%, transparent 35%),
+        radial-gradient(circle at 15% 20%, rgba(255,107,53,0.22) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(255,70,20,0.18) 0%, transparent 40%),
+        radial-gradient(circle at 50% 120%, rgba(255,107,53,0.28) 0%, transparent 50%),
         linear-gradient(135deg, #1a0f0a 0%, #120a07 50%, #0f0806 100%);
       background-size: 200% 200%;
-      animation: gradient-shift 16s ease infinite;
+      animation: gradient-shift 12s ease infinite;
+      z-index: -2;
+    }
+
+    /* Animated fire background from site assets, tinted orange */
+    .fire-bg {
+      position: fixed;
+      inset: 0;
+      background: url('src/frontend/public/assets/animation/blue-fire.gif') center bottom / cover no-repeat;
+      filter: sepia(1) saturate(5) hue-rotate(-35deg) brightness(1.2);
+      opacity: 0.45;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      z-index: -3;
+    }
+    .vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 35%, rgba(0,0,0,0.65) 100%);
+      pointer-events: none;
       z-index: -2;
     }
 
@@ -55,12 +75,12 @@
       letter-spacing: -0.02em;
       margin: 0.2em 0;
     }
-    .reveal h1 { font-size: 2.4em; line-height: 1.05; }
-    .reveal h2 { font-size: 1.6em; color: var(--ember-orange); }
-    .reveal h3 { font-size: 1.1em; color: var(--ember-amber); }
+    .reveal h1 { font-size: 3.6em; line-height: 1.0; }
+    .reveal h2 { font-size: 3.2em; color: var(--ember-orange); }
+    .reveal h3 { font-size: 1.5em; color: var(--ember-amber); }
     .reveal p, .reveal li {
       color: #e8ddd1;
-      font-size: 0.72em;
+      font-size: 0.9em;
       line-height: 1.45;
     }
     .reveal ul { display: block; }
@@ -69,11 +89,11 @@
     .reveal .slides { text-align: left; }
     .reveal .slides section { padding: 0 1em; height: 100%; box-sizing: border-box; }
     .reveal .slides section.center {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      text-align: center !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
 
     .glass-panel {
@@ -92,10 +112,10 @@
       vertical-align: middle;
     }
     .title-logo {
-      height: 130px;
+      height: 160px;
       display: block;
       margin: 0 auto 0.3em;
-      filter: drop-shadow(0 0 28px rgba(255,107,53,0.5));
+      filter: drop-shadow(0 0 36px rgba(255,107,53,0.6));
       animation: logo-pulse 3s ease-in-out infinite;
     }
     @keyframes logo-pulse {
@@ -115,15 +135,15 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: 40vh;
-      background: radial-gradient(ellipse at 50% 100%, rgba(255,107,53,0.18) 0%, rgba(255,70,20,0.08) 30%, transparent 65%);
+      height: 55vh;
+      background: radial-gradient(ellipse at 50% 120%, rgba(255,107,53,0.28) 0%, rgba(255,70,20,0.12) 35%, transparent 70%);
       pointer-events: none;
       z-index: -1;
-      animation: fire-breathe 5s ease-in-out infinite;
+      animation: fire-breathe 4s ease-in-out infinite;
     }
     @keyframes fire-breathe {
-      0%, 100% { opacity: 0.55; transform: scaleY(1); }
-      50% { opacity: 0.85; transform: scaleY(1.08); }
+      0%, 100% { opacity: 0.7; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.1); }
     }
     .ember {
       position: absolute;
@@ -147,20 +167,23 @@
       100% { transform: translateX(40px); }
     }
     .title-slide h1 {
-      font-size: 2.8em;
+      font-size: 4.4em;
       background: linear-gradient(90deg, #fff5e6, #ffb347, #ff6b35);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin: 0.1em 0;
+      margin: 0.05em 0;
+      filter: drop-shadow(0 0 36px rgba(255,107,53,0.5));
     }
     .subtitle {
       color: var(--ember-amber);
-      font-size: 1.1em;
+      font-size: 1.5em;
       margin-top: 0.3em;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
+      font-weight: 800;
+      text-shadow: 0 0 24px rgba(255,107,53,0.4);
     }
-    .team { color: #aaa; font-size: 0.6em; margin-top: 1.4em; }
+    .reveal .team { color: #aaa; font-size: 0.65em; margin-top: 1.6em; }
 
     .floating-stove {
       position: fixed;
@@ -174,46 +197,71 @@
     .floating-stove.s3 { top: 15%; right: 8%; height: 100px; animation-delay: 3s; }
     .floating-stove.s4 { bottom: 12%; right: 12%; height: 120px; animation-delay: 4.5s; }
 
-    .big-statement {
-      font-size: 1.6em;
-      font-weight: 800;
+    .reveal .big-statement {
+      font-size: 4.2em;
+      font-weight: 900;
       color: var(--ember-text);
-      line-height: 1.2;
+      line-height: 1.0;
       text-align: center;
-      text-shadow: 0 4px 24px rgba(0,0,0,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      text-shadow:
+        0 0 60px rgba(255,107,53,0.6),
+        0 0 120px rgba(255,70,20,0.4),
+        0 8px 40px rgba(0,0,0,0.85);
+      max-width: 95%;
     }
-    .big-answer {
-      font-size: 1.05em;
+    .reveal .big-answer {
+      font-size: 2.0em;
+      font-weight: 800;
       color: var(--ember-amber);
       text-align: center;
-      margin-top: 0.6em;
+      margin-top: 0.5em;
+      text-shadow: 0 0 50px rgba(255,107,53,0.5);
     }
 
     .loop-diagram {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5em;
-      margin-top: 1em;
-      flex-wrap: wrap;
+      gap: 0.4em;
+      margin-top: 0.8em;
+      flex-wrap: nowrap;
+      width: 100%;
     }
     .loop-node {
       background: var(--ember-card);
-      border: 1px solid rgba(255, 107, 53, 0.4);
-      border-radius: 14px;
-      padding: 0.5em 0.7em;
+      border: 1px solid rgba(255, 107, 53, 0.55);
+      border-radius: 22px;
+      padding: 1.1em 0.6em;
       text-align: center;
-      min-width: 130px;
-      backdrop-filter: blur(6px);
+      min-width: 185px;
+      flex: 1 1 0;
+      max-width: 230px;
+      backdrop-filter: blur(10px);
       transition: transform 0.25s, box-shadow 0.25s;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,179,71,0.1);
     }
-    .loop-node:hover { transform: translateY(-4px); box-shadow: var(--ember-glow); }
-    .loop-node img { height: 38px; display: block; margin: 0 auto 0.15em; }
-    .loop-node span { font-size: 0.52em; color: var(--ember-text); display: block; font-weight: 700; }
-    .loop-arrow { color: var(--ember-amber); font-size: 1.2em; font-weight: 700; }
+    .loop-node:hover { transform: translateY(-8px) scale(1.05); box-shadow: var(--ember-glow), 0 14px 40px rgba(0,0,0,0.45); }
+    .loop-node img { height: 84px; display: block; margin: 0 auto 0.25em; filter: drop-shadow(0 0 14px rgba(255,107,53,0.45)); }
+    .loop-node span { font-size: 0.95em; color: var(--ember-text); display: block; font-weight: 900; letter-spacing: 0.02em; }
+    .loop-arrow {
+      color: var(--ember-amber);
+      font-size: 1.8em;
+      font-weight: 900;
+      text-shadow: 0 0 18px rgba(255,179,71,0.6);
+      animation: arrow-pulse 1.4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes arrow-pulse {
+      0%, 100% { opacity: 0.7; transform: translateX(0); }
+      50% { opacity: 1; transform: translateX(6px); }
+    }
 
     .demo-video-wrap {
       margin-top: 0.6em;
+      width: 100%;
+      max-width: 1100px;
       border-radius: 16px;
       overflow: hidden;
       border: 1px solid rgba(255, 107, 53, 0.35);
@@ -234,33 +282,37 @@
     .video-placeholder .play-mark {
       width: 0;
       height: 0;
-      border-left: 28px solid var(--ember-orange);
-      border-top: 16px solid transparent;
-      border-bottom: 16px solid transparent;
-      margin-bottom: 0.3em;
-      filter: drop-shadow(0 0 12px rgba(255,107,53,0.6));
+      border-left: 48px solid var(--ember-orange);
+      border-top: 28px solid transparent;
+      border-bottom: 28px solid transparent;
+      margin-bottom: 0.4em;
+      filter: drop-shadow(0 0 20px rgba(255,107,53,0.8));
+      animation: pulse-glow 2s ease-in-out infinite;
     }
-    .video-placeholder span { font-size: 0.6em; color: var(--ember-amber); }
+    .video-placeholder span { font-size: 0.9em; color: var(--ember-amber); font-weight: 700; }
     .clip-duration {
       position: absolute;
-      bottom: 12px;
-      right: 12px;
+      bottom: 16px;
+      right: 16px;
       background: rgba(0,0,0,0.6);
       color: var(--ember-amber);
-      font-size: 0.5em;
-      padding: 0.2em 0.5em;
-      border-radius: 6px;
+      font-size: 0.7em;
+      font-weight: 700;
+      padding: 0.25em 0.6em;
+      border-radius: 8px;
       border: 1px solid rgba(255,107,53,0.4);
     }
 
     .chapter-bridge {
       text-align: center;
-      font-size: 0.85em;
+      font-size: 1.1em;
+      font-weight: 700;
       color: var(--ember-amber);
       margin-top: 0.2em;
+      text-shadow: 0 0 16px rgba(255,107,53,0.35);
     }
     .chapter-icon {
-      height: 0.85em;
+      height: 0.9em;
       width: auto;
       vertical-align: middle;
       margin-right: 0.2em;
@@ -289,13 +341,19 @@
     .qr-code { margin-top: 0.6em; }
     .qr-code img { height: 170px; width: 170px; border-radius: 14px; border: 2px solid rgba(255,107,53,0.4); }
 
-    .small-note { font-size: 0.5em; color: #888; margin-top: 0.8em; text-align: center; }
+    .reveal .small-note { font-size: 0.62em; color: #b8a89a; margin-top: 0.8em; text-align: center; }
 
     .fragment.fade-in { opacity: 0; transition: opacity 0.5s ease; }
     .fragment.fade-in.visible { opacity: 1; }
   </style>
 </head>
 <body>
+
+  <!-- Animated fire background -->
+  <div class="fire-bg"></div>
+
+  <!-- Vignette for cinematic focus -->
+  <div class="vignette"></div>
 
   <!-- Animated embers / sparks -->
   <div class="embers-container" id="embers"></div>
@@ -313,7 +371,7 @@
     <div class="slides">
 
       <!-- 1. Title -->
-      <section class="title-slide">
+      <section class="title-slide center">
         <div class="title-content">
           <img src="src/frontend/public/Ember_Exchange_Logo.png" class="title-logo" alt="EmberExchange Logo">
           <h1>EmberExchange</h1>
@@ -468,7 +526,7 @@
 
       <!-- 11. Thank you -->
       <section class="center">
-        <h1>Thank you.</h1>
+        <h1 style="font-size: 4.4em;">Thank you.</h1>
         <p class="subtitle">Questions?</p>
         <p class="team">EmberExchange · SYP 2026 · HTL Leonding</p>
       </section>
@@ -480,13 +538,13 @@
   <script>
     (function () {
       const container = document.getElementById('embers');
-      const count = 40;
+      const count = 60;
       for (let i = 0; i < count; i++) {
         const ember = document.createElement('div');
         ember.className = 'ember';
-        const size = 2 + Math.random() * 5;
+        const size = 2 + Math.random() * 7;
         ember.style.setProperty('--size', size + 'px');
-        ember.style.setProperty('--opacity', 0.2 + Math.random() * 0.5);
+        ember.style.setProperty('--opacity', 0.3 + Math.random() * 0.6);
         ember.style.setProperty('--duration', (6 + Math.random() * 8) + 's');
         ember.style.setProperty('--drift', (3 + Math.random() * 4) + 's');
         ember.style.setProperty('--delay', (Math.random() * 8) + 's');
@@ -504,8 +562,9 @@
       transition: 'fade',
       width: 1280,
       height: 720,
-      margin: 0.04
+      margin: 0.02
     });
+
   </script>
 </body>
 </html>
