@@ -54,7 +54,9 @@ export class AiHelperService {
       );
       this.messages.update((m) => [...m, res.message]);
       this.remainingChats.set(res.remainingChats);
-    } catch {
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Assistant chat error:', err);
       this.messages.update((m) => [...m, { role: 'assistant', content: 'Sorry, I couldn\'t reach the assistant. Please try again.' }]);
     } finally {
       this.loading.set(false);

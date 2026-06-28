@@ -42,6 +42,8 @@ function validateMessages(body: unknown): OpenAI.Chat.ChatCompletionMessageParam
 }
 
 assistantRouter.post("/chat", assistantBurstLimiter.middleware(), requireAuth, async (req: Request, res: Response) => {
+    // eslint-disable-next-line no-console
+    console.log("[assistant] /chat request from player", req.playerId);
     let messages: OpenAI.Chat.ChatCompletionMessageParam[];
     try {
         messages = validateMessages(req.body);
@@ -69,7 +71,11 @@ assistantRouter.post("/chat", assistantBurstLimiter.middleware(), requireAuth, a
 
         const toolService = new AssistantToolService(llm, unit, { playerId, isAdmin });
 
+        // eslint-disable-next-line no-console
+        console.log("[assistant] calling LLM", { model: process.env.KIMI_MODEL ?? "default", messageCount: messages.length });
         let response = await llm.chat(messages);
+        // eslint-disable-next-line no-console
+        console.log("[assistant] LLM response", { contentLength: response.content.length, toolCalls: response.toolCalls?.length ?? 0 });
 
         if (response.toolCalls && response.toolCalls.length > 0) {
             messages.push({

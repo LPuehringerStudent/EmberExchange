@@ -55,6 +55,8 @@ export class ExpressRateLimiter {
                 bucket.lastRefill = now;
 
                 if (bucket.tokens < 1) {
+                    // eslint-disable-next-line no-console
+                    console.warn("[rate-limiter] limit hit for key:", key);
                     logSecurityEvent({
                         ipAddress: this.getClientIp(req),
                         userAgent: req.headers["user-agent"] as string | undefined,
