@@ -1,6 +1,7 @@
-import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from './auth.service';
 
 export interface AssistantMessage {
   role: 'user' | 'assistant';
@@ -32,7 +33,13 @@ export class AiHelperService {
   readonly remainingChats = signal<number | null>(null);
   readonly loading = signal(false);
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+  private auth = inject(AuthService);
+
+  private getHeaders(): HttpHeaders | undefined {
+    const sessionId = this.auth.getSessionId();
+    return sessionId ? new HttpHeaders({ 'session-id': sessionId }) : undefined;
+  }
 
   toggle(): void {
     this.isOpen.update((v) => !v);
@@ -50,7 +57,7 @@ export class AiHelperService {
     try {
       const history = this.messages().map((m) => ({ role: m.role, content: m.content }));
       const res = await firstValueFrom(
-        this.http.post<ChatResponse>('/api/assistant/chat', { messages: history })
+        this.http.post<ChatResponse>('/api/assistant/chat', { messages: history }, { headers: this.getHeaders() })
       );
       this.messages.update((m) => [...m, res.message]);
       this.remainingChats.set(res.remainingChats);
