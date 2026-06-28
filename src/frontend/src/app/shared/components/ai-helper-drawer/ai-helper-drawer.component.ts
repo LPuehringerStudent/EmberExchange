@@ -56,6 +56,18 @@ export class AiHelperDrawerComponent {
     this.input.set((event.target as HTMLInputElement).value);
   }
 
+  onMessageClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    const anchor = target.closest('a') as HTMLAnchorElement | null;
+    if (!anchor) return;
+
+    const href = anchor.getAttribute('href');
+    if (!href || href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+
+    event.preventDefault();
+    this.router.navigateByUrl(href);
+  }
+
   runAction(action: AssistantAction): void {
     switch (action.type) {
       case 'navigate_to':

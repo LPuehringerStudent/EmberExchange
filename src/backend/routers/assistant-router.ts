@@ -16,6 +16,30 @@ export const assistantRouter = express.Router();
 const DAILY_CAP = parseInt(process.env.ASSISTANT_DAILY_CAP ?? "20", 10);
 const llm = new AssistantLlmService();
 
+function pushSuggestion(
+    suggestions: Array<{ label: string; action: { type: string; [key: string]: unknown } }>,
+    toolName: string,
+    result: Record<string, unknown>
+): void {
+    if (toolName === "navigate_to" && typeof result.route === "string") {
+        const name = result.route.split("/").pop() || result.route;
+        suggestions.push({
+            label: `Take me to ${name.replace(/-/g, " ")}`,
+            action: { type: "navigate_to", route: result.route },
+        });
+    } else if (toolName === "highlight_element" && typeof result.target === "string") {
+        suggestions.push({
+            label: `Show me ${result.target}`,
+            action: { type: "highlight_element", target: result.target },
+        });
+    } else if (toolName === "trigger_action" && typeof result.action === "string") {
+        suggestions.push({
+            label: String(result.action),
+            action: { type: "trigger_action", action: result.action },
+        });
+    }
+}
+
 function validateMessages(body: unknown): OpenAI.Chat.ChatCompletionMessageParam[] {
     if (!body || typeof body !== "object") {
         throw new Error("Invalid request body.");
@@ -77,6 +101,8 @@ assistantRouter.post("/chat", assistantBurstLimiter.middleware(), requireAuth, a
         // eslint-disable-next-line no-console
         console.log("[assistant] LLM response", { contentLength: response.content.length, toolCalls: response.toolCalls?.length ?? 0 });
 
+        const suggestions: Array<{ label: string; action: { type: string; [key: string]: unknown } }> = [];
+
         if (response.toolCalls && response.toolCalls.length > 0) {
             messages.push({
                 role: "assistant",
@@ -98,6 +124,7 @@ assistantRouter.post("/chat", assistantBurstLimiter.middleware(), requireAuth, a
                     tool_call_id: call.id,
                     content: JSON.stringify(result),
                 });
+                pushSuggestion(suggestions, call.function.name, result as Record<string, unknown>);
             }
 
             response = await llm.chat(messages);
@@ -114,7 +141,7 @@ assistantRouter.post("/chat", assistantBurstLimiter.middleware(), requireAuth, a
                 details: "Blocked assistant output containing sensitive pattern.",
             });
             res.json({
-                message: { role: "assistant", content: sanitizeAssistantOutput(finalText), suggestions: [] },
+                message: { role: "assistant", content: sanitizeAssistantOutput(finalText), suggestions },
                 remainingChats: usage.remaining,
             });
             committed = true;
@@ -122,7 +149,7 @@ assistantRouter.post("/chat", assistantBurstLimiter.middleware(), requireAuth, a
         }
 
         res.json({
-            message: { role: "assistant", content: finalText, suggestions: [] },
+            message: { role: "assistant", content: finalText, suggestions },
             remainingChats: usage.remaining,
         });
         committed = true;
