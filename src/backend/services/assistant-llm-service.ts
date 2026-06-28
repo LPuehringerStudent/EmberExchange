@@ -11,11 +11,11 @@ export class AssistantLlmService {
   constructor() {
     this.mainClient = new OpenAI({
       apiKey: process.env.KIMI_API_KEY ?? 'missing-api-key',
-      baseURL: process.env.KIMI_BASE_URL ?? 'https://api.moonshot.cn/v1',
+      baseURL: process.env.KIMI_BASE_URL ?? 'https://api.moonshot.ai/v1',
     });
     this.codeClient = new OpenAI({
       apiKey: process.env.KIMI_CODE_API_KEY ?? process.env.KIMI_API_KEY ?? 'missing-api-key',
-      baseURL: process.env.KIMI_CODE_BASE_URL ?? 'https://api.moonshot.cn/v1',
+      baseURL: process.env.KIMI_CODE_BASE_URL ?? 'https://api.moonshot.ai/v1',
     });
     this.context = this.loadContext();
   }
@@ -105,7 +105,7 @@ export class AssistantLlmService {
 
   async chat(messages: ChatCompletionMessageParam[]): Promise<{ content: string; toolCalls?: OpenAI.Chat.ChatCompletionMessageToolCall[] }> {
     const response = await this.mainClient.chat.completions.create({
-      model: process.env.KIMI_MODEL ?? 'kimi-k2.7',
+      model: process.env.KIMI_MODEL ?? 'kimi-k2.6',
       messages: [
         { role: 'system', content: this.buildSystemPrompt() },
         ...messages,
@@ -126,7 +126,7 @@ export class AssistantLlmService {
 
   async divineIntervention(question: string): Promise<string> {
     const response = await this.codeClient.chat.completions.create({
-      model: process.env.KIMI_CODE_MODEL ?? 'kimi-for-coding',
+      model: process.env.KIMI_CODE_MODEL ?? 'kimi-k2.7-code',
       messages: [
         { role: 'system', content: this.buildSystemPrompt() },
         { role: 'user', content: question },

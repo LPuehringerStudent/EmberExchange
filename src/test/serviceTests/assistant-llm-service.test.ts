@@ -76,7 +76,7 @@ describe('AssistantLlmService', () => {
     expect(result.content).toBe('Hello!');
     expect(createMock).toHaveBeenCalledTimes(1);
     const call = createMock.mock.calls[0][0];
-    expect(call.model).toBe('kimi-k2.7');
+    expect(call.model).toBe('kimi-k2.6');
     expect(call.messages[0].role).toBe('system');
     expect(call.messages[1]).toEqual({ role: 'user', content: 'Hi' });
     expect(call.tools).toEqual(service.getTools());
@@ -94,7 +94,7 @@ describe('AssistantLlmService', () => {
     expect(answer).toBe('Code answer');
     expect(createMock).toHaveBeenCalledTimes(1);
     const call = createMock.mock.calls[0][0];
-    expect(call.model).toBe('kimi-for-coding');
+    expect(call.model).toBe('kimi-k2.7-code');
     expect(call.messages[0].role).toBe('system');
     expect(call.messages[1]).toEqual({ role: 'user', content: 'How does lootbox rarity work?' });
   });
