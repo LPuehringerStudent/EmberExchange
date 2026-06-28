@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EmberExchange Awards Presentation</title>
+  <title>EmberExchange — WMC-3 Presentation</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <style>
     :root {
       --ember-orange: #ff6b35;
@@ -30,17 +29,12 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-    @keyframes subtle-zoom {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.08); }
-    }
 
     .reveal {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: var(--ember-dark);
     }
 
-    /* Animated background layer */
     .reveal::before {
       content: '';
       position: fixed;
@@ -61,9 +55,9 @@
       letter-spacing: -0.02em;
       margin: 0.2em 0;
     }
-    .reveal h1 { font-size: 2.2em; line-height: 1.05; }
-    .reveal h2 { font-size: 1.5em; color: var(--ember-orange); }
-    .reveal h3 { font-size: 1.05em; color: var(--ember-amber); }
+    .reveal h1 { font-size: 2.4em; line-height: 1.05; }
+    .reveal h2 { font-size: 1.6em; color: var(--ember-orange); }
+    .reveal h3 { font-size: 1.1em; color: var(--ember-amber); }
     .reveal p, .reveal li {
       color: #e8ddd1;
       font-size: 0.72em;
@@ -74,7 +68,13 @@
     .reveal a { color: var(--ember-orange); }
     .reveal .slides { text-align: left; }
     .reveal .slides section { padding: 0 1em; height: 100%; box-sizing: border-box; }
-    .reveal .slides section.center { text-align: center; }
+    .reveal .slides section.center {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
 
     .glass-panel {
       background: var(--ember-card);
@@ -85,7 +85,6 @@
       box-shadow: 0 8px 32px rgba(0,0,0,0.35);
     }
 
-    /* Title slide */
     .title-slide { text-align: center; }
     .title-content {
       display: inline-block;
@@ -97,9 +96,58 @@
       display: block;
       margin: 0 auto 0.3em;
       filter: drop-shadow(0 0 28px rgba(255,107,53,0.5));
+      animation: logo-pulse 3s ease-in-out infinite;
+    }
+    @keyframes logo-pulse {
+      0%, 100% { filter: drop-shadow(0 0 28px rgba(255,107,53,0.45)); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 48px rgba(255,107,53,0.75)); transform: scale(1.03); }
+    }
+
+    .embers-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      overflow: hidden;
+    }
+    .fire-glow {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40vh;
+      background: radial-gradient(ellipse at 50% 100%, rgba(255,107,53,0.18) 0%, rgba(255,70,20,0.08) 30%, transparent 65%);
+      pointer-events: none;
+      z-index: -1;
+      animation: fire-breathe 5s ease-in-out infinite;
+    }
+    @keyframes fire-breathe {
+      0%, 100% { opacity: 0.55; transform: scaleY(1); }
+      50% { opacity: 0.85; transform: scaleY(1.08); }
+    }
+    .ember {
+      position: absolute;
+      bottom: -10px;
+      width: var(--size);
+      height: var(--size);
+      background: radial-gradient(circle, rgba(255,179,71,0.9) 0%, rgba(255,107,53,0.4) 40%, transparent 70%);
+      border-radius: 50%;
+      opacity: var(--opacity);
+      animation: rise var(--duration) linear infinite, drift var(--drift) ease-in-out infinite alternate;
+      animation-delay: var(--delay);
+    }
+    @keyframes rise {
+      0% { transform: translateY(0) scale(1); opacity: 0; }
+      10% { opacity: var(--opacity); }
+      90% { opacity: var(--opacity); }
+      100% { transform: translateY(-110vh) scale(0.5); opacity: 0; }
+    }
+    @keyframes drift {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(40px); }
     }
     .title-slide h1 {
-      font-size: 2.6em;
+      font-size: 2.8em;
       background: linear-gradient(90deg, #fff5e6, #ffb347, #ff6b35);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -107,19 +155,10 @@
     }
     .subtitle {
       color: var(--ember-amber);
-      font-size: 1.05em;
+      font-size: 1.1em;
       margin-top: 0.3em;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-    }
-    .tagline {
-      display: inline-block;
-      text-align: left;
-      max-width: 700px;
-      margin-top: 0.7em;
-      font-size: 0.72em;
-      line-height: 1.45;
-      color: #e8ddd1;
     }
     .team { color: #aaa; font-size: 0.6em; margin-top: 1.4em; }
 
@@ -135,12 +174,11 @@
     .floating-stove.s3 { top: 15%; right: 8%; height: 100px; animation-delay: 3s; }
     .floating-stove.s4 { bottom: 12%; right: 12%; height: 120px; animation-delay: 4.5s; }
 
-    /* Big question slide */
-    .big-question {
-      font-size: 1.7em;
+    .big-statement {
+      font-size: 1.6em;
       font-weight: 800;
       color: var(--ember-text);
-      line-height: 1.15;
+      line-height: 1.2;
       text-align: center;
       text-shadow: 0 4px 24px rgba(0,0,0,0.6);
     }
@@ -151,156 +189,91 @@
       margin-top: 0.6em;
     }
 
-    /* Feature cards */
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.7em;
-      margin-top: 0.6em;
-    }
-    .feature-card, .pillar-card {
-      background: var(--ember-card);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 107, 53, 0.3);
-      border-radius: 14px;
-      padding: 0.55em 0.45em 0.45em;
-      text-align: center;
-      transition: transform 0.25s, box-shadow 0.25s;
-    }
-    .feature-card:hover, .pillar-card:hover { transform: translateY(-5px); box-shadow: var(--ember-glow); }
-    .feature-card img, .pillar-card img {
-      height: 42px;
-      width: auto;
-      margin-bottom: 0.2em;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-    }
-    .feature-card i {
-      font-size: 1.6em;
-      color: var(--ember-orange);
-      margin-bottom: 0.15em;
-      display: block;
-    }
-    .feature-card h4 { font-size: 0.55em; margin: 0.15em 0; color: var(--ember-orange); }
-    .feature-card p { font-size: 0.46em; color: #ccc; margin: 0; line-height: 1.2; }
-
-    /* Competitive advantage cards */
-    .compete-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.8em;
-      margin-top: 0.6em;
-    }
-    .compete-card {
-      background: var(--ember-card);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 107, 53, 0.35);
-      border-radius: 16px;
-      padding: 0.8em 0.9em;
-      text-align: left;
-      transition: transform 0.25s, box-shadow 0.25s;
-    }
-    .compete-card:hover { transform: translateY(-4px); box-shadow: var(--ember-glow); }
-    .compete-card i {
-      font-size: 1.4em;
-      color: var(--ember-orange);
-      margin-bottom: 0.2em;
-      display: block;
-    }
-    .compete-card h4 { font-size: 0.72em; margin: 0.1em 0; color: var(--ember-orange); }
-    .compete-card p { font-size: 0.56em; color: #ddd; margin: 0; line-height: 1.35; }
-
-    /* 3-pillar cards */
-    .pillar-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.8em;
-      margin-top: 0.7em;
-    }
-    .pillar-card {
-      padding: 0.7em 0.55em;
-    }
-    .pillar-card img {
-      height: 62px;
-      margin-bottom: 0.25em;
-    }
-    .pillar-card h4 { font-size: 0.7em; color: var(--ember-orange); margin: 0.15em 0; }
-    .pillar-card p { font-size: 0.52em; color: #ccc; margin: 0; line-height: 1.25; }
-
-    /* Core loop */
-    .loop-row {
+    .loop-diagram {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.35em;
-      margin-top: 0.8em;
+      gap: 0.5em;
+      margin-top: 1em;
       flex-wrap: wrap;
     }
-    .loop-step {
+    .loop-node {
       background: var(--ember-card);
-      border: 1px solid rgba(255, 107, 53, 0.35);
-      border-radius: 12px;
-      padding: 0.45em 0.5em;
+      border: 1px solid rgba(255, 107, 53, 0.4);
+      border-radius: 14px;
+      padding: 0.5em 0.7em;
       text-align: center;
-      min-width: 120px;
+      min-width: 130px;
       backdrop-filter: blur(6px);
+      transition: transform 0.25s, box-shadow 0.25s;
     }
-    .loop-step img { height: 34px; display: block; margin: 0 auto 0.15em; }
-    .loop-step span { font-size: 0.5em; color: var(--ember-text); display: block; }
-    .loop-arrow { color: var(--ember-amber); font-size: 0.9em; }
+    .loop-node:hover { transform: translateY(-4px); box-shadow: var(--ember-glow); }
+    .loop-node img { height: 38px; display: block; margin: 0 auto 0.15em; }
+    .loop-node span { font-size: 0.52em; color: var(--ember-text); display: block; font-weight: 700; }
+    .loop-arrow { color: var(--ember-amber); font-size: 1.2em; font-weight: 700; }
 
-    /* Two column */
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1em;
-      align-items: center;
-    }
-    .point-list { margin-top: 0.4em; }
-    .point-list li { font-size: 0.72em; }
-
-    /* Showcase image strip */
-    .stove-strip {
-      display: flex;
-      justify-content: center;
-      gap: 0.25em;
+    .demo-video-wrap {
       margin-top: 0.6em;
-      flex-wrap: wrap;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 107, 53, 0.35);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      background: #000;
+      position: relative;
     }
-    .stove-strip img {
-      height: 80px;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
-      animation: float 5s ease-in-out infinite;
+    .demo-video-wrap video { display: block; width: 100%; height: auto; }
+    .video-placeholder {
+      aspect-ratio: 16/9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--ember-text);
+      background: radial-gradient(circle at center, rgba(255,107,53,0.1), transparent 60%);
     }
-    .stove-strip img:nth-child(2n) { animation-delay: 1s; }
-    .stove-strip img:nth-child(3n) { animation-delay: 2s; }
+    .video-placeholder .play-mark {
+      width: 0;
+      height: 0;
+      border-left: 28px solid var(--ember-orange);
+      border-top: 16px solid transparent;
+      border-bottom: 16px solid transparent;
+      margin-bottom: 0.3em;
+      filter: drop-shadow(0 0 12px rgba(255,107,53,0.6));
+    }
+    .video-placeholder span { font-size: 0.6em; color: var(--ember-amber); }
+    .clip-duration {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(0,0,0,0.6);
+      color: var(--ember-amber);
+      font-size: 0.5em;
+      padding: 0.2em 0.5em;
+      border-radius: 6px;
+      border: 1px solid rgba(255,107,53,0.4);
+    }
 
-    /* Stats / award cards */
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.8em;
-      margin-top: 0.8em;
-    }
-    .stat-card {
-      background: var(--ember-card);
-      border: 1px solid rgba(255, 107, 53, 0.3);
-      border-radius: 14px;
-      padding: 0.7em 0.5em;
+    .chapter-bridge {
       text-align: center;
-      animation: pulse-glow 4s ease-in-out infinite;
+      font-size: 0.85em;
+      color: var(--ember-amber);
+      margin-top: 0.2em;
     }
-    .stat-card:nth-child(2) { animation-delay: 1.3s; }
-    .stat-card:nth-child(3) { animation-delay: 2.6s; }
-    .stat-card i { font-size: 1.5em; color: var(--ember-orange); margin-bottom: 0.15em; display: block; }
-    .stat-card h4 { font-size: 0.65em; margin: 0.1em 0; color: var(--ember-text); }
-    .stat-card p { font-size: 0.48em; color: #bbb; margin: 0; }
+    .chapter-icon {
+      height: 0.85em;
+      width: auto;
+      vertical-align: middle;
+      margin-right: 0.2em;
+      display: inline-block;
+    }
+    .chapter-logo {
+      height: 1em;
+      width: auto;
+      vertical-align: middle;
+      margin-right: 0.2em;
+      display: inline-block;
+    }
 
-    /* Demo slide */
-    .demo-slide { text-align: center; }
-    .demo-slide i { font-size: 2.4em; color: var(--ember-orange); margin-bottom: 0.15em; filter: drop-shadow(0 0 16px rgba(255,107,53,0.5)); }
-    .demo-slide h2 { text-align: center; }
-
-    /* CTA */
     .cta-box {
       background: rgba(255, 107, 53, 0.1);
       border: 2px solid var(--ember-orange);
@@ -318,13 +291,17 @@
 
     .small-note { font-size: 0.5em; color: #888; margin-top: 0.8em; text-align: center; }
 
-    .img-rounded { border-radius: 12px; border: 1px solid rgba(255,107,53,0.3); }
-
     .fragment.fade-in { opacity: 0; transition: opacity 0.5s ease; }
     .fragment.fade-in.visible { opacity: 1; }
   </style>
 </head>
 <body>
+
+  <!-- Animated embers / sparks -->
+  <div class="embers-container" id="embers"></div>
+
+  <!-- Bottom fire glow -->
+  <div class="fire-glow"></div>
 
   <!-- Floating background stoves -->
   <img src="src/frontend/public/assets/stove_sprites/legendary/red-dragon-stove.png" class="floating-stove s1" alt="">
@@ -340,185 +317,156 @@
         <div class="title-content">
           <img src="src/frontend/public/Ember_Exchange_Logo.png" class="title-logo" alt="EmberExchange Logo">
           <h1>EmberExchange</h1>
-          <p class="subtitle">Open. Trade. Forge. Dominate.</p>
-          <p class="tagline">
-            A virtual marketplace &amp; collection game where every stove is unique, tradable, and worth showing off.
-          </p>
+          <p class="subtitle">Earn · Collect · Trade · Play · Progress</p>
           <p class="team">SYP 2026 · HTL Leonding</p>
         </div>
       </section>
 
       <!-- 2. Hook -->
       <section class="center">
-        <p class="big-question">What if your school project became a real marketplace?</p>
+        <p class="big-statement">
+          EmberExchange is not a single feature demo.<br>
+          <span style="color: var(--ember-orange);">It is a complete virtual economy.</span>
+        </p>
         <p class="big-answer fragment">
-          We built a live economy where opening a lootbox, striking a deal, and forging a legendary item actually matters.
+          Earn, collect, trade, play, and progress — all in one live web app.
         </p>
       </section>
 
-      <!-- 3. What is it? -->
-      <section>
-        <h2>What is EmberExchange?</h2>
-        <p>
-          EmberExchange is a full-stack web app that turns collecting virtual stoves into a competitive social experience.
-        </p>
-        <div class="pillar-grid">
-          <div class="pillar-card">
-            <img src="src/frontend/public/icon/lootboxes.png" alt="Lootbox">
-            <h4>Open Lootboxes</h4>
-            <p>Discover common, rare, epic, legendary &amp; secret stoves.</p>
-          </div>
-          <div class="pillar-card">
-            <img src="src/frontend/public/icon/marketplace.png" alt="Marketplace">
-            <h4>Trade on the Market</h4>
-            <p>List, buy, sell, and watch prices move in real time.</p>
-          </div>
-          <div class="pillar-card">
-            <img src="src/frontend/public/assets/forging-table.png" alt="Forge">
-            <h4>Forge Upgrades</h4>
-            <p>Merge duplicates into rarer, more valuable stoves.</p>
-          </div>
-        </div>
-        <div class="stove-strip">
-          <img src="src/frontend/public/assets/stove_sprites/common/standard.png" alt="">
-          <img src="src/frontend/public/assets/stove_sprites/rare/bronze.png" alt="">
-          <img src="src/frontend/public/assets/stove_sprites/epic/white-dragon-stove.png" alt="">
-          <img src="src/frontend/public/assets/stove_sprites/legendary/dragon.png" alt="">
-          <img src="src/frontend/public/assets/stove_sprites/secret/earthbound-stove.png" alt="">
-        </div>
-      </section>
-
-      <!-- 4. Core loop -->
-      <section>
-        <h2>The Core Loop</h2>
-        <div class="loop-row">
-          <div class="loop-step">
-            <img src="src/frontend/public/icon/lootboxes.png" alt="">
-            <span>Open Lootbox</span>
-          </div>
-          <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-          <div class="loop-step">
-            <img src="src/frontend/public/icon/collections.png" alt="">
-            <span>Build Inventory</span>
-          </div>
-          <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-          <div class="loop-step">
-            <img src="src/frontend/public/icon/marketplace.png" alt="">
-            <span>Sell or Trade</span>
-          </div>
-          <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-          <div class="loop-step">
-            <img src="src/frontend/public/assets/forging-table.png" alt="">
-            <span>Forge Better</span>
-          </div>
-          <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
-          <div class="loop-step">
-            <img src="src/frontend/public/icon/quests.png" alt="">
-            <span>Complete Quests</span>
-          </div>
-        </div>
-        <p class="small-note">Every action feeds back into the economy: coins, sparks, collections, and leaderboard glory.</p>
-      </section>
-
-      <!-- 5. Feature overview -->
-      <section>
-        <h2>Everything inside EmberExchange</h2>
-        <div class="feature-grid">
-          <div class="feature-card"><img src="src/frontend/public/icon/lootboxes.png" alt=""><h4>Lootboxes</h4><p>Daily &amp; seasonal crates with rarity tiers.</p></div>
-          <div class="feature-card"><img src="src/frontend/public/icon/collections.png" alt=""><h4>Inventory</h4><p>Manage, inspect, and organize your stoves.</p></div>
-          <div class="feature-card"><img src="src/frontend/public/icon/marketplace.png" alt=""><h4>Marketplace</h4><p>Listings, price history, instant buy/sell.</p></div>
-          <div class="feature-card"><img src="src/frontend/public/assets/forging-table.png" alt=""><h4>Forgery</h4><p>Craft rarer stoves from duplicates.</p></div>
-          <div class="feature-card"><img src="src/frontend/public/icon/quests.png" alt=""><h4>Quests</h4><p>Daily &amp; weekly goals with real rewards.</p></div>
-          <div class="feature-card"><i class="fa-solid fa-medal"></i><h4>Glory</h4><p>Titles, banners, trophies &amp; showcases.</p></div>
-          <div class="feature-card"><i class="fa-solid fa-users"></i><h4>Social</h4><p>Friends, chat, visits, hall of glory.</p></div>
-          <div class="feature-card"><i class="fa-solid fa-shield-halved"></i><h4>Security</h4><p>Rate limits, bot traps, OAuth, 2FA, audits.</p></div>
-        </div>
-      </section>
-
-      <!-- 6. Why it's better -->
-      <section>
-        <h2>Why it's better than the rest</h2>
-        <p style="font-size:0.72em; color:#e8ddd1; margin-top:-0.2em; margin-bottom:0.7em;">
-          Most school projects are static demos. EmberExchange is a live, secure, social product.
-        </p>
-        <div class="compete-grid">
-          <div class="compete-card">
-            <i class="fa-solid fa-chart-line"></i>
-            <h4>Real Economy</h4>
-            <p>Live marketplace with supply, demand, and price history. Not a fake shop with fixed prices.</p>
-          </div>
-          <div class="compete-card">
-            <i class="fa-solid fa-shield-halved"></i>
-            <h4>Security First</h4>
-            <p>Turnstile, rate limits, bot traps, audit logs, and 2FA. Most prototypes skip this entirely.</p>
-          </div>
-          <div class="compete-card">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <h4>Actually Deployed</h4>
-            <p>Auto-deployed on Render with PostgreSQL. It runs 24/7, not just on a laptop.</p>
-          </div>
-          <div class="compete-card">
-            <i class="fa-solid fa-users-viewfinder"></i>
-            <h4>Social by Design</h4>
-            <p>Friends, chat, trading, glory showcases, and leaderboards. Not a single-player grind.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- 7. Why it stands out -->
-      <section>
-        <h2>Why EmberExchange stands out</h2>
-        <p style="font-size:0.72em; color:#e8ddd1; margin-top:-0.2em; margin-bottom:0.7em;">
-          A polished, playable, production-grade platform built from scratch.
-        </p>
-        <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
-          <div class="stat-card">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <h4>Polished UX</h4>
-            <p>Dark casino aesthetic, smooth animations, and a fully responsive layout.</p>
-          </div>
-          <div class="stat-card">
-            <i class="fa-solid fa-server"></i>
-            <h4>Live &amp; Scalable</h4>
-            <p>Hosted on Render with PostgreSQL, WebSockets, and CDN assets.</p>
-          </div>
-          <div class="stat-card">
-            <i class="fa-solid fa-lock"></i>
-            <h4>Security Hardened</h4>
-            <p>Turnstile, rate limits, honeypots, request logging, and admin audits.</p>
-          </div>
-          <div class="stat-card">
-            <i class="fa-solid fa-layer-group"></i>
-            <h4>Full-Stack Craft</h4>
-            <p>Angular, Node, TypeScript, and PostgreSQL built from the ground up.</p>
-          </div>
-        </div>
-        <p class="small-note">This is not a prototype. It is a deployed, playable product with a live economy.</p>
-      </section>
-
-      <!-- 8. Live Demo -->
-      <section class="demo-slide">
-        <i class="fa-solid fa-play"></i>
-        <h2>Live Demo</h2>
-        <p style="text-align:center; font-size:0.78em; max-width:780px; margin:0.4em auto 0;">
-          Watch us open a lootbox, browse the inventory, sell on the marketplace,<br>
-          forge a better stove, and claim a quest reward. All in real time.
-        </p>
-      </section>
-
-      <!-- 9. Where is it? -->
+      <!-- 3. Core Loop Upfront -->
       <section class="center">
-        <h2>Where can you play?</h2>
+        <h2>How it works</h2>
+        <div class="loop-diagram">
+          <div class="loop-node">
+            <img src="src/frontend/public/icon/lucky_wheel.png" alt="">
+            <span>Earn Coins</span>
+          </div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-node">
+            <img src="src/frontend/public/icon/lootboxes.png" alt="">
+            <span>Collect Stoves</span>
+          </div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-node">
+            <img src="src/frontend/public/icon/marketplace.png" alt="">
+            <span>Trade</span>
+          </div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-node">
+            <img src="src/frontend/public/icon/games.png" alt="">
+            <span>Play</span>
+          </div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-node">
+            <img src="src/frontend/public/icon/collections.png" alt="">
+            <span>Progress</span>
+          </div>
+        </div>
+        <p class="small-note" style="margin-top: 1.2em;">
+          Everything loops back. Quests, rewards, marketplace sales, and game wins all feed the same economy.
+        </p>
+      </section>
+
+      <!-- 4. Earn -->
+      <section class="center">
+        <h2><img src="src/frontend/public/icon/lucky_wheel.png" class="chapter-icon" alt=""> Earn</h2>
+        <p class="chapter-bridge">How do you get coins?</p>
+        <div class="demo-video-wrap">
+          <div class="video-placeholder">
+            <div class="play-mark"></div>
+            <span>Clip: <strong>clips/earn.mp4</strong></span>
+          </div>
+          <div class="clip-duration">Target: 0:45</div>
+        </div>
+        <p class="small-note">Daily reward, login streak, quests, lucky wheel.</p>
+      </section>
+
+      <!-- 5. Collect -->
+      <section class="center">
+        <h2><img src="src/frontend/public/icon/lootboxes.png" class="chapter-icon" alt=""> Collect</h2>
+        <p class="chapter-bridge">Spend coins to open lootboxes and get rare stoves.</p>
+        <div class="demo-video-wrap">
+          <div class="video-placeholder">
+            <div class="play-mark"></div>
+            <span>Clip: <strong>clips/collect.mp4</strong></span>
+          </div>
+          <div class="clip-duration">Target: 1:00</div>
+        </div>
+        <p class="small-note">Inventory, crate types, opening animation, rarity reveal.</p>
+      </section>
+
+      <!-- 6. Trade -->
+      <section class="center">
+        <h2><img src="src/frontend/public/icon/marketplace.png" class="chapter-icon" alt=""> Trade</h2>
+        <p class="chapter-bridge">Once you own stoves, sell or trade them.</p>
+        <div class="demo-video-wrap">
+          <div class="video-placeholder">
+            <div class="play-mark"></div>
+            <span>Clip: <strong>clips/trade.mp4</strong></span>
+          </div>
+          <div class="clip-duration">Target: 1:00</div>
+        </div>
+        <p class="small-note">Marketplace filters, price charts, ownership chain, buy/sell.</p>
+      </section>
+
+      <!-- 7. Play -->
+      <section class="center">
+        <h2><img src="src/frontend/public/icon/games.png" class="chapter-icon" alt=""> Play</h2>
+        <p class="chapter-bridge">Risk your coins in live casino games.</p>
+        <div class="demo-video-wrap">
+          <div class="video-placeholder">
+            <div class="play-mark"></div>
+            <span>Clip: <strong>clips/play.mp4</strong></span>
+          </div>
+          <div class="clip-duration">Target: 1:15</div>
+        </div>
+        <p class="small-note">Blackjack, Poker, Roulette — real-time multiplayer.</p>
+      </section>
+
+      <!-- 8. Ask -->
+      <section class="center">
+        <h2><img src="src/frontend/public/Ember_Exchange_Logo.png" class="chapter-logo" alt=""> Ask</h2>
+        <p class="chapter-bridge">Lost? The AI guide shows you around.</p>
+        <div class="demo-video-wrap">
+          <div class="video-placeholder">
+            <div class="play-mark"></div>
+            <span>Clip: <strong>clips/ask.mp4</strong></span>
+          </div>
+          <div class="clip-duration">Target: 0:45</div>
+        </div>
+        <p class="small-note">AI assistant, natural questions, clickable action chips.</p>
+      </section>
+
+      <!-- 9. Progress -->
+      <section class="center">
+        <h2><img src="src/frontend/public/icon/collections.png" class="chapter-icon" alt=""> Progress</h2>
+        <p class="chapter-bridge">Everything you do builds your reputation.</p>
+        <div class="demo-video-wrap">
+          <div class="video-placeholder">
+            <div class="play-mark"></div>
+            <span>Clip: <strong>clips/progress.mp4</strong></span>
+          </div>
+          <div class="clip-duration">Target: 0:30</div>
+        </div>
+        <p class="small-note">Profile stats, Hall of Glory, collections.</p>
+      </section>
+
+      <!-- 10. Closing -->
+      <section class="center">
+        <h1 style="font-size: 2em;">Everything you saw is live.</h1>
+        <p class="big-answer" style="margin-bottom: 0.8em;">
+          One account. One balance. One economy.
+        </p>
         <div class="cta-box">
           <h2>emberexchange.xyz</h2>
-          <p>Open it, create an account, and start collecting.</p>
+          <p>Open it and try it yourself.</p>
         </div>
         <div class="qr-code">
           <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://emberexchange.xyz" alt="QR code for emberexchange.xyz">
         </div>
       </section>
 
-      <!-- 10. Thank you -->
+      <!-- 11. Thank you -->
       <section class="center">
         <h1>Thank you.</h1>
         <p class="subtitle">Questions?</p>
@@ -530,6 +478,23 @@
 
   <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
   <script>
+    (function () {
+      const container = document.getElementById('embers');
+      const count = 40;
+      for (let i = 0; i < count; i++) {
+        const ember = document.createElement('div');
+        ember.className = 'ember';
+        const size = 2 + Math.random() * 5;
+        ember.style.setProperty('--size', size + 'px');
+        ember.style.setProperty('--opacity', 0.2 + Math.random() * 0.5);
+        ember.style.setProperty('--duration', (6 + Math.random() * 8) + 's');
+        ember.style.setProperty('--drift', (3 + Math.random() * 4) + 's');
+        ember.style.setProperty('--delay', (Math.random() * 8) + 's');
+        ember.style.left = (Math.random() * 100) + 'vw';
+        container.appendChild(ember);
+      }
+    })();
+
     Reveal.initialize({
       hash: true,
       slideNumber: false,
