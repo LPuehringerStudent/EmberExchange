@@ -1,88 +1,125 @@
 # WMC-3 Presentation Plan — EmberExchange
 
 **Date:** 29 June 2026  
-**Slot:** ~8 minutes total (aim for 6 minutes talk + 2 minutes demo video + buffer for questions)  
-**Goal:** Leave the jury with the impression that EmberExchange is a polished, full-stack product, not just a school project.
+**Slot:** ~8 minutes  
+**Goal:** Make the jury understand *and* believe that EmberExchange is the biggest, most polished, most feature-complete project on stage.
 
-## Overall Narrative
+## Strategy
 
-> “A marketplace and collection game built around virtual stoves, with gambling, trading, and an AI guide — all in one smooth web app.”
+Do **not** present the tech stack. The jury does not care what framework we used.
+Our competitors show one or two features. We turn our breadth into an advantage: a fast, relentless demo that keeps dropping new things.
 
-Lead with the **product hook** (collecting and trading stoves is fun and visual), then prove it with **tech depth** (real-time games, AI assistant, security). Finish with a short, punchy demo video that the jury remembers after you leave the stage.
-
----
-
-## 6-Minute Talk Sketch
-
-### 1. Hook — 0:00–0:30
-- Open with the landing page on the projector.
-- One-liner: *“What if Steam Marketplace, CS:GO cases, and a casino card room had a baby — and that baby sold stoves?”*
-- Why stoves? Unique, memorable, instantly gives the project personality.
-
-### 2. The Product — 0:30–1:30
-- **Core loop** in one slide:
-  1. Earn coins / claim daily reward.
-  2. Open lootboxes to get rare stoves.
-  3. Trade stoves on the marketplace.
-  4. Play games to earn more.
-- Show the home dashboard, inventory, and marketplace in 2–3 quick screengrabs.
-- Mention the economy: coin balance, supply-limited lootboxes, 30-day price history, ownership chain.
-
-### 3. Live Demo / Core Features — 1:30–3:30
-Pick **two** of the most visual features and run through them live (or in the video if risky):
-
-- **Lootbox opening** — animated reveal, rarity glow, reward added to inventory.
-- **Marketplace** — filter by rarity, inspect a stove, view price chart and ownership history, buy/sell.
-- **Daily reward claim** — quick, satisfying feedback (coins added, streak updated).
-
-Tip: keep the live part to ~2 minutes and use the video for anything timing-sensitive (games, AI chat).
-
-### 4. Tech Highlights — 3:30–5:00
-- **Full-stack TypeScript:** Angular 21 + Express + PostgreSQL.
-- **Real-time multiplayer:** WebSocket card games (Poker, Blackjack, Roulette) with in-memory game engines and per-player state.
-- **Security stack:** rate limiting, Cloudflare Turnstile, honeypots, IP bans, behavior guard, request logging.
-- **AI onboarding helper:** Kimi K2.6 + Code 2.7, tool calls that navigate, highlight UI, claim rewards, and answer questions from project context.
-
-Keep this fast — one keyword or icon per bullet on a slide.
-
-### 5. Closing — 5:00–6:00
-- Return to the landing page / logo.
-- One-sentence takeaway: *“EmberExchange is a complete, secure, real-time trading and gambling platform — and we built it ourselves.”*
-- Optional: invite the jury to try the assistant or open a lootbox.
+> **Show, don’t explain.** Use a loud, cinematic demo video with quick cuts, big text overlays, and satisfying UI moments. Talk only enough to bridge the clips.
 
 ---
 
-## 2-Minute Demo Video Storyboard
+## 8-Minute Structure
 
-A looping, no-voiceover montage with upbeat background music. Each shot is 10–20 seconds.
+### 1. Hook — 0:00–0:45
+- **On stage:** Black screen → EmberExchange logo fades in.
+- **One line:** *“Most projects here show one game. We built an entire economy.”*
+- **Transition straight into video.**
 
-| Time | Shot | Why it impresses |
-|------|------|------------------|
-| 0:00 | Slow landing-page hero pan, logo reveal. | First impression / branding. |
-| 0:15 | Login / Google OAuth → home screen. | Smooth auth, personalized dashboard. |
-| 0:30 | Daily reward claim: button press, coin counter animates, streak updates. | Instant feedback, polish. |
-| 0:50 | Lootbox inventory → click open → spinner/reveal → rare stove appears with glow. | Visual reward moment. |
-| 1:10 | Marketplace browse with rarity filters, click a legendary stove, price chart, ownership chain. | Depth of the economy. |
-| 1:30 | Blackjack or Poker room: cards dealt, chips, chat, real-time turn. | “This is multiplayer live.” |
-| 1:45 | Open AI assistant, ask “Where can I gamble?” → chips appear → click → navigate to games. | Modern AI integration. |
-| 1:55 | Final shot: profile page with animated stats, then cut to logo. | Personalization + memorable end frame. |
+### 2. Demo Video / Live Demo Montage — 0:45–6:45
+A 6-minute trailer with music and text overlays. Split into chapters so the jury can follow the product without getting lost.
+
+| Chapter | Length | What to show | On-screen text |
+|---------|--------|--------------|----------------|
+| **The World** | 0:45 | Landing page, login, dashboard, coin balance, top bar, daily reward claim. | “Welcome to EmberExchange” |
+| **Get Rich** | 0:45 | Daily streak, lucky wheel/spins, quests completion, coin counter animations. | “Earn Coins” |
+| **Get Stoves** | 1:00 | Inventory, multiple lootbox types, opening animation, rare/legendary/secret reveal, item added to inventory. | “Open Lootboxes” |
+| **Get Paid** | 1:00 | Marketplace: list a stove, filters, inspect item, price history chart, ownership chain, buy/sell, coin transfer. | “Trade on the Marketplace” |
+| **Get Lucky** | 1:30 | Blackjack, Poker, Roulette — cards dealt, chips moving, turn timer, win/lose. Show that other players are real. | “Play Live Casino Games” |
+| **Get Help** | 0:45 | AI assistant drawer opens, user asks “Where can I gamble?”, assistant navigates to games, asks “What are my odds?”, answers from context. | “Your Personal Guide” |
+| **Get Recognized** | 0:30 | Profile page, stats, Hall of Glory, collections. | “Build Your Reputation” |
+
+**Live moments inside the montage:**
+- Start the daily reward claim live so the audience sees real feedback.
+- End the video with a live assistant question, e.g. *“What should I do now?”* and let the assistant navigate to the final screen.
+
+### 3. Closing — 6:45–7:45
+- Return to logo / landing page.
+- **One line:** *“Everything you just saw is live, connected, and working right now.”*
+- **Optional callout:** *“Try the assistant. Open a lootbox. Play a hand.”*
+- Stop talking before the buzzer. Leave them wanting more.
 
 ---
 
-## Most Visually Impressive Features (Ranked)
+## Demo Video Storyboard (6 minutes)
 
-Use these as the backbone of both the live demo and the video:
+### 0:00–0:45 — The World
+- Slow zoom into the EmberExchange logo on the landing page.
+- Quick cut to Google/GitHub OAuth login.
+- Dashboard reveal with coin balance and spark count in the top bar.
+- Daily reward claim: button press, coins fly up, streak updates.
+- Text overlay: **“Welcome to EmberExchange”**
 
-1. **Lootbox opening animation** — anticipation, rarity reveal, reward feedback.
-2. **Real-time card games** — moving cards, chips, turn timers, multiplayer feel.
-3. **AI assistant drawer** — smooth slide-out, markdown responses, clickable action chips.
-4. **Marketplace price charts + ownership chain** — looks like a real trading platform.
-5. **Daily reward / animated coin counters** — small but satisfying.
-6. **Responsive dark orange theme** — cohesive, professional, stands out from generic Bootstrap projects.
+### 0:45–1:30 — Get Rich
+- Login streak calendar flipping through days.
+- Lucky Wheel spin (if available) or quest completion.
+- Coin counter ticking up.
+- Text overlays: **“Earn Coins”**, **“Complete Quests”**, **“Daily Rewards”**
+
+### 1:30–2:30 — Get Stoves
+- Inventory grid with stove sprites.
+- Click a lootbox → open animation → rarity glow.
+- Slow-motion reveal of a legendary/secret stove.
+- Stove added to inventory, collection counter updates.
+- Text overlays: **“Open Lootboxes”**, **“Collect Rare Stoves”**, **“Secret Tier”**
+
+### 2:30–3:30 — Get Paid
+- Marketplace browse with rarity filters.
+- Click a stove → inspect panel → 30-day price chart.
+- Ownership chain scrolling.
+- Buy now → coins deduct → item appears in inventory.
+- List a stove for sale.
+- Text overlays: **“Trade on the Marketplace”**, **“Price History”**, **“Ownership Chain”**
+
+### 3:30–5:00 — Get Lucky
+- Enter Blackjack room.
+- Cards dealt, chips on table, hit/stand.
+- Cut to Poker table with multiple player avatars.
+- Cut to Roulette wheel spinning.
+- Win animation, coins awarded.
+- Text overlays: **“Blackjack”**, **“Poker”**, **“Roulette”**, **“Real-Time Multiplayer”**
+
+### 5:00–5:45 — Get Help
+- Open AI assistant drawer.
+- User types: *“Where can I gamble?”*
+- Assistant answers, suggestion chips appear.
+- Click chip → drawer closes → page navigates to games.
+- Second query: *“What are the odds of a secret lootbox?”*
+- Assistant answers with percentages.
+- Text overlays: **“Your Personal Guide”**, **“Answers + Actions”**
+
+### 5:45–6:15 — Get Recognized
+- Profile page loading.
+- Animated stats: stoves owned, coins earned, games won.
+- Hall of Glory / leaderboard.
+- Collections page showing completed sets.
+- Text overlays: **“Profile”**, **“Stats”**, **“Hall of Glory”**
+
+### 6:15–6:45 — Outro / Live Handoff
+- Fast montage of all previous clips, 1 second each.
+- Cut back to the presenter on the landing page.
+- Presenter opens the assistant and asks: *“What should I do now?”*
+- Assistant navigates to the final screen.
+- Fade to logo.
 
 ---
 
-## Backup Ideas
+## Presentation Rules
 
-- If live internet is risky, run the video twice and skip live clicking.
-- Prepare a single “wow” sentence for the Q&A: *“Everything you saw is persisted in PostgreSQL, secured by rate limits and bot detection, and deployed automatically from GitHub to Render.”*
+1. **No tech stack slides.** No Angular, no Express, no PostgreSQL.
+2. **No code.** The jury sees the product, not the repo.
+3. **One feature per chapter.** Even though we have dozens, group them into clear verbs: Earn, Collect, Trade, Play, Ask, Brag.
+4. **Every shot must move.** Static screenshots kill energy. Use screen recordings, animations, and transitions.
+5. **End strong.** The last 30 seconds are what they remember.
+
+---
+
+## Backup Plan
+
+- If live internet is unstable, run the full 6-minute video and skip the live assistant moment.
+- If the demo video fails, fall back to a 3-minute live walkthrough of: lootbox → marketplace → Blackjack.
+- Prepare one “wow” sentence for Q&A: *“Everything in the video is one live system: one account, one balance, one economy.”*
