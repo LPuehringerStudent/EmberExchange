@@ -1,6 +1,7 @@
 import { AssistantLlmService } from './assistant-llm-service';
 import { Unit } from '../utils/unit';
 import { sanitizeAssistantOutput } from './assistant-sanitizer';
+import { ShopService } from './shop-service';
 
 function requireString(args: Record<string, unknown>, key: string): string {
   const value = args[key];
@@ -29,7 +30,7 @@ export class AssistantToolService {
       case 'highlight_element':
         return { target: requireString(args, 'target'), selector: this.targetToSelector(requireString(args, 'target')) };
       case 'trigger_action':
-        return { action: requireString(args, 'action'), acknowledged: true };
+        return await this.triggerAction(requireString(args, 'action'));
       case 'get_player_summary':
         return await this.getPlayerSummary();
       case 'divine_intervention':
@@ -79,6 +80,15 @@ export class AssistantToolService {
       coins: row?.coins ?? 0,
       sparks: row?.sparks ?? 0,
     };
+  }
+
+  private async triggerAction(action: string): Promise<unknown> {
+    if (action === 'claim_daily_reward') {
+      const shop = new ShopService(this.unit);
+      const result = await shop.claimDailyReward(this.ctx.playerId);
+      return { action, ...result };
+    }
+    return { action, acknowledged: true };
   }
 
   private async divineIntervention(question: string): Promise<{ answer: string }> {

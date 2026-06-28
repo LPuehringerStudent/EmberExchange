@@ -46,6 +46,21 @@ export class AiHelperDrawerComponent {
       const _loading = this.loading();
       this.scrollToBottom();
     });
+
+    effect(() => {
+      // Auto-execute a single navigation suggestion (e.g. "Take me to Marketplace").
+      const open = this.isOpen();
+      const msgs = this.messages();
+      if (!open || msgs.length === 0) return;
+      const last = msgs[msgs.length - 1];
+      if (
+        last.role === 'assistant' &&
+        last.suggestions?.length === 1 &&
+        last.suggestions[0].action.type === 'navigate_to'
+      ) {
+        void this.runAction(last.suggestions[0].action);
+      }
+    });
   }
 
   close(): void {

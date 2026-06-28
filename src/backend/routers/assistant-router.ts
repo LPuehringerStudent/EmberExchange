@@ -21,6 +21,10 @@ function pushSuggestion(
     toolName: string,
     result: Record<string, unknown>
 ): void {
+    // Backend already executed claim_daily_reward, so don't offer it again as a chip.
+    if (toolName === "trigger_action" && result.action === "claim_daily_reward") {
+        return;
+    }
     if (toolName === "navigate_to" && typeof result.route === "string") {
         const name = result.route.split("/").pop() || result.route;
         suggestions.push({
