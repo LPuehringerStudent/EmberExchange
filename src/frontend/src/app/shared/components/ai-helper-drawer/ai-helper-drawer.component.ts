@@ -28,6 +28,7 @@ export class AiHelperDrawerComponent {
   private textInput = viewChild.required<ElementRef>('textInput');
   private drawerContainer = viewChild.required<ElementRef>('drawerContainer');
   private previousFocus: Element | null = null;
+  private autoExecutedIndexes = new Set<number>();
 
   constructor() {
     effect(() => {
@@ -48,16 +49,19 @@ export class AiHelperDrawerComponent {
     });
 
     effect(() => {
-      // Auto-execute a single navigation suggestion (e.g. "Take me to Marketplace").
+      // Auto-execute a single navigation suggestion once, right after it arrives.
       const open = this.isOpen();
       const msgs = this.messages();
       if (!open || msgs.length === 0) return;
-      const last = msgs[msgs.length - 1];
+      const lastIndex = msgs.length - 1;
+      const last = msgs[lastIndex];
       if (
+        !this.autoExecutedIndexes.has(lastIndex) &&
         last.role === 'assistant' &&
         last.suggestions?.length === 1 &&
         last.suggestions[0].action.type === 'navigate_to'
       ) {
+        this.autoExecutedIndexes.add(lastIndex);
         void this.runAction(last.suggestions[0].action);
       }
     });
