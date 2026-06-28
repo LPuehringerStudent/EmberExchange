@@ -17,13 +17,18 @@
       @for (msg of messages(); track $index) {
         <div class="text-sm" [class.text-right]="msg.role === 'user'">
           <div
-            class="inline-block px-3 py-2 rounded-lg max-w-[90%]"
+            class="inline-block px-3 py-2 rounded-lg max-w-[90%] text-left"
             [class.bg-surface-secondary]="msg.role === 'assistant'"
             [class.text-text-primary]="msg.role === 'assistant'"
             [class.bg-accent]="msg.role === 'user'"
             [class.text-white]="msg.role === 'user'"
+            [class.assistant-markdown]="msg.role === 'assistant'"
           >
-            {{ msg.content }}
+            @if (msg.role === 'assistant') {
+              <div [innerHTML]="msg.content | markdown"></div>
+            } @else {
+              {{ msg.content }}
+            }
           </div>
           @if (msg.suggestions && msg.suggestions.length > 0) {
             <div class="mt-2 flex flex-wrap gap-2 justify-start">

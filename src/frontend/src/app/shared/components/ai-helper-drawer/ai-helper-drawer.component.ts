@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, effect, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { AiHelperService, AssistantAction } from '../../../core/services/ai-helper.service';
+import { MarkdownPipe } from '../../pipes/markdown.pipe';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-ai-helper-drawer',
   standalone: true,
+  imports: [MarkdownPipe],
   templateUrl: './ai-helper-drawer.component.html',
   styleUrls: ['./ai-helper-drawer.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -8,5 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "marked": "^18.0.5"
+  }
 }
