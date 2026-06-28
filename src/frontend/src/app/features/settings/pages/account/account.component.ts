@@ -28,6 +28,10 @@ export class AccountComponent implements OnInit {
   profileError = signal<string>('');
   usernameError = signal<string>('');
 
+  avatarPreview = signal<string | null>(null);
+  avatarLoading = signal<boolean>(false);
+  avatarError = signal<string>('');
+
   private _authService = inject(AuthService);
   private _router = inject(Router);
   private _toastService = inject(ToastService);
@@ -44,6 +48,7 @@ export class AccountComponent implements OnInit {
         motto: (user as unknown as Record<string, string>)['motto'] || ''
       });
       this.isPublic.set((user as unknown as Record<string, boolean>)['isPublic'] ?? true);
+      this.avatarPreview.set((user as unknown as Record<string, string | null>)['avatarUrl'] ?? null);
     } else {
       void this._router.navigate(['/login']);
     }
@@ -97,5 +102,53 @@ export class AccountComponent implements OnInit {
     }
   }
 
+  async onAvatarSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
 
+    this.avatarError.set('');
+
+    if (file.size > 1_500_000) {
+      this.avatarError.set('Image must be smaller than 1.5 MB');
+      return;
+    }
+
+    const dataUrl = await this.readFileAsDataUrl(file);
+    this.avatarLoading.set(true);
+    try {
+      const result = await this._authService.updateAvatar(this.playerId(), dataUrl);
+      this.avatarPreview.set(result.avatarUrl);
+      this._toastService.success('Profile picture updated');
+    } catch (err) {
+      this.avatarError.set(err instanceof Error ? err.message : 'Failed to update profile picture');
+      this._toastService.error('Upload failed', err instanceof Error ? err.message : 'Failed to update profile picture');
+    } finally {
+      this.avatarLoading.set(false);
+      input.value = '';
+    }
+  }
+
+  async clearAvatar(): Promise<void> {
+    this.avatarLoading.set(true);
+    this.avatarError.set('');
+    try {
+      await this._authService.updateAvatar(this.playerId(), null);
+      this.avatarPreview.set(null);
+      this._toastService.success('Profile picture removed');
+    } catch (err) {
+      this.avatarError.set(err instanceof Error ? err.message : 'Failed to remove profile picture');
+    } finally {
+      this.avatarLoading.set(false);
+    }
+  }
+
+  private readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read image'));
+      reader.readAsDataURL(file);
+    });
+  }
 }

@@ -15,7 +15,7 @@ export class PlayerService extends ServiceBase {
         const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
             `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
                     isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
-                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt, avatarUrl
              FROM Player`
         );
         return await stmt.all();
@@ -30,7 +30,7 @@ export class PlayerService extends ServiceBase {
             Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin" | "provider" | "providerId" | "bannedAt" | "banReason" | "emailVerified" | "verifiedAt">
         >(
             `SELECT playerId, username, motto, coins, sparks, lootboxCount,
-                    isPublic, joinedAt, totpEnabled
+                    isPublic, joinedAt, totpEnabled, avatarUrl
              FROM Player
              WHERE isPublic = 1`
         );
@@ -46,7 +46,7 @@ export class PlayerService extends ServiceBase {
         const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
             `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
                     isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
-                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt, avatarUrl
              FROM Player WHERE playerId = @id`,
             { id }
         );
@@ -76,7 +76,7 @@ export class PlayerService extends ServiceBase {
             Omit<PlayerRow, "password" | "totpSecret" | "email" | "isAdmin" | "provider" | "providerId" | "bannedAt" | "banReason" | "emailVerified" | "verifiedAt">
         >(
             `SELECT playerId, username, motto, coins, sparks, lootboxCount,
-                    isPublic, joinedAt, totpEnabled
+                    isPublic, joinedAt, totpEnabled, avatarUrl
              FROM Player WHERE playerId = @id`,
             { id }
         );
@@ -365,7 +365,7 @@ export class PlayerService extends ServiceBase {
         const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
             `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
                     isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
-                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt, avatarUrl
              FROM Player WHERE username = @username`,
             { username }
         );
@@ -395,7 +395,7 @@ export class PlayerService extends ServiceBase {
         const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
             `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
                     isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
-                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt, avatarUrl
              FROM Player WHERE email = @email`,
             { email }
         );
@@ -506,6 +506,15 @@ export class PlayerService extends ServiceBase {
         return result.changes === 1;
     }
 
+    async updatePlayerAvatar(id: number, avatarUrl: string | null): Promise<boolean> {
+        const stmt = this.unit.prepare(
+            "UPDATE Player SET avatarUrl = @avatarUrl WHERE playerId = @id",
+            { id, avatarUrl }
+        );
+        const result = await stmt.run();
+        return result.changes === 1;
+    }
+
     /**
      * Finds a player by OAuth provider and provider ID (excluding sensitive fields).
      * @param provider - The OAuth provider ('google' or 'github').
@@ -516,7 +525,7 @@ export class PlayerService extends ServiceBase {
         const stmt = this.unit.prepare<Omit<PlayerRow, "password" | "totpSecret">>(
             `SELECT playerId, username, email, motto, coins, sparks, lootboxCount,
                     isAdmin, isPublic, joinedAt, provider, providerId, totpEnabled,
-                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt
+                    bannedAt, banReason, emailVerified, verifiedAt, violationCount, lastViolationAt, avatarUrl
              FROM Player WHERE provider = @provider AND providerId = @providerId`,
             { provider, providerId }
         );

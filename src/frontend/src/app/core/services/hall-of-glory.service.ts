@@ -56,6 +56,7 @@ export interface GloryProfile {
   playerId: number;
   username: string;
   motto: string;
+  avatarUrl: string | null;
   coins: number;
   joinedAt: string;
   isAdmin: boolean;

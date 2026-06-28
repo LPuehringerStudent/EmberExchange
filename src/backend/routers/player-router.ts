@@ -501,6 +501,63 @@ playerRouter.patch("/players/:id/settings", async (req, res) => {
     }
 });
 
+playerRouter.post("/players/:id/avatar", async (req, res) => {
+    const sessionId = req.headers["session-id"] as string;
+    if (!sessionId) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing session-id header" });
+        return;
+    }
+
+    const id = req.params.id;
+    if (isNullOrWhiteSpace(id) || isNaN(Number(id))) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "ID must be a valid number" });
+        return;
+    }
+
+    const playerId = Number(id);
+    const { avatarUrl } = req.body;
+    if (avatarUrl !== null && (typeof avatarUrl !== "string" || !avatarUrl.startsWith("data:image/"))) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "avatarUrl must be a base64 data:image URL or null" });
+        return;
+    }
+    if (avatarUrl && avatarUrl.length > 2_000_000) {
+        res.status(StatusCodes.BAD_REQUEST).json({ error: "Avatar image is too large" });
+        return;
+    }
+
+    const unit = await Unit.create(false);
+    const sessionService = new SessionService(unit);
+    const playerService = new PlayerService(unit);
+    let ok = false;
+
+    try {
+        const session = await sessionService.getSession(sessionId);
+        if (!session || session.playerId !== playerId) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ error: "Unauthorized" });
+            await unit.complete(false);
+            return;
+        }
+
+        if (await checkPlayerBanned(unit, playerId, res)) {
+            await unit.complete(false);
+            return;
+        }
+
+        const success = await playerService.updatePlayerAvatar(playerId, avatarUrl || null);
+        if (success) {
+            ok = true;
+            res.status(StatusCodes.OK).json({ message: "Avatar updated", avatarUrl: avatarUrl || null });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ error: "Player not found" });
+        }
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    } finally {
+        await unit.complete(ok);
+    }
+});
+
 playerRouter.get("/players/:id", readRateLimiter.middleware(), async (req, res) => {
     const unit = await Unit.create(true);
     const service = new PlayerService(unit);
@@ -689,6 +746,7 @@ async function buildGloryProfile(
         playerId: player.playerId,
         username: player.username,
         motto: player.motto,
+        avatarUrl: player.avatarUrl,
         coins: player.coins,
         joinedAt: player.joinedAt,
         isAdmin: false,  // Never expose admin status on public profiles

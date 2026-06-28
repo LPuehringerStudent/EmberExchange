@@ -6,6 +6,7 @@ const COLUMN_MAP: Record<string, string> = {
     "acquiredhow": "acquiredHow",
     "achievementid": "achievementId",
     "authorid": "authorId",
+    "avatarurl": "avatarUrl",
     "awardedat": "awardedAt",
     "actualdroprate": "actualDropRate",
     "activeplayers": "activePlayers",
@@ -429,6 +430,10 @@ export class DB {
 
         await connection.query(`
             ALTER TABLE Player ADD COLUMN IF NOT EXISTS lastViolationAt TEXT
+        `);
+
+        await connection.query(`
+            ALTER TABLE Player ADD COLUMN IF NOT EXISTS avatarUrl TEXT
         `);
 
         await connection.query(`

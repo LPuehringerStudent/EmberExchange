@@ -29,6 +29,7 @@ const options: swaggerJsdoc.Options = {
                         joinedAt: { type: "string", format: "date-time", description: "Join timestamp" },
                         provider: { type: "string", enum: ["google", "github"], nullable: true, description: "OAuth provider" },
                         providerId: { type: "string", nullable: true, description: "OAuth provider user ID" },
+                        avatarUrl: { type: "string", nullable: true, description: "Base64 data URL of the player's avatar" },
                     },
                     required: ["playerId", "username", "email", "coins", "lootboxCount", "isAdmin", "joinedAt"],
                 },

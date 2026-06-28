@@ -32,6 +32,36 @@
       </div>
     </div>
 
+    <div class="input-group" style="grid-column: 1 / -1;">
+      <label>Profile Picture</label>
+      <div class="flex items-center gap-4 mt-2">
+        <div class="w-16 h-16 rounded-full overflow-hidden border border-border bg-surface-secondary flex items-center justify-center">
+          @if (avatarPreview()) {
+            <img [src]="avatarPreview()" alt="Avatar preview" class="w-full h-full object-cover" />
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-8 h-8 text-text-muted">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          }
+        </div>
+        <div class="flex flex-col gap-2">
+          <input type="file" accept="image/*" #avatarInput class="hidden" (change)="onAvatarSelected($event)" />
+          <div class="flex gap-2">
+            <button type="button" class="btn-primary text-sm" (click)="avatarInput.click()" [disabled]="avatarLoading()">
+              {{ avatarLoading() ? 'Uploading...' : 'Upload Picture' }}
+            </button>
+            @if (avatarPreview()) {
+              <button type="button" class="btn-secondary text-sm" (click)="clearAvatar()" [disabled]="avatarLoading()">Remove</button>
+            }
+          </div>
+          @if (avatarError()) {
+            <small class="text-red-500 text-xs">{{ avatarError() }}</small>
+          }
+        </div>
+      </div>
+    </div>
+
     <div class="toggle-card mt-4" (click)="isPublic.update(v => !v)">
       <div class="toggle-info">
         <span class="toggle-title">Public Profile</span>

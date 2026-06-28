@@ -47,7 +47,14 @@
         <div class="hero-avatar-wrap">
           <div class="hero-avatar-ring" [class.own-profile]="isOwnProfile()">
             <div class="hero-avatar">
-              <img [src]="'assets/images/default-avatar.png'" [alt]="profile()?.username" />
+              @if (profile()?.avatarUrl) {
+                <img [src]="profile()?.avatarUrl" [alt]="profile()?.username" class="w-full h-full object-cover" />
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-16 h-16 text-text-muted">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              }
             </div>
           </div>
         </div>

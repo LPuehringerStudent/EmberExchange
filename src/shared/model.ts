@@ -28,6 +28,7 @@ export interface Player {
     verifiedAt: Date | null;
     violationCount: number;
     lastViolationAt: Date | null;
+    avatarUrl: string | null;
 }
 
 export interface PlayerRow extends Player {

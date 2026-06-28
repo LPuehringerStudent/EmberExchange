@@ -490,6 +490,16 @@ export class AuthService {
     await this.refreshUser();
   }
 
+  async updateAvatar(playerId: number, avatarUrl: string | null): Promise<{ message: string; avatarUrl: string | null }> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) throw new Error('Not authenticated');
+    const result = await firstValueFrom(
+      this.api.post<{ message: string; avatarUrl: string | null }>(`/players/${playerId}/avatar`, { avatarUrl }, new HttpHeaders({ 'session-id': sessionId }))
+    );
+    await this.refreshUser();
+    return result;
+  }
+
   async getNotificationSettings(playerId: number): Promise<{ playerId: number; notifyFriendRequests: boolean; notifyChatMessages: boolean; notifyTradeOffers: boolean; notifyDailyReward: boolean; notifyShopPurchases: boolean; hasCompletedOnboarding?: boolean }> {
     const sessionId = this.getSessionId();
     if (!sessionId) throw new Error('Not authenticated');
