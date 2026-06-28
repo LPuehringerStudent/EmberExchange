@@ -34,6 +34,13 @@ export class AiHelperDrawerComponent {
         window.setTimeout(() => this.textInput().nativeElement.focus(), 50);
       }
     });
+
+    effect(() => {
+      // React to message count and loading state so the drawer auto-scrolls to the latest message.
+      const _count = this.messages().length;
+      const _loading = this.loading();
+      this.scrollToBottom();
+    });
   }
 
   close(): void {
