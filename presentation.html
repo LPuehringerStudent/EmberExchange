@@ -270,7 +270,7 @@
       background: #000;
       position: relative;
     }
-    .demo-video-wrap video { display: block; width: 100%; height: auto; }
+    .demo-video-wrap video { display: block; width: 100%; height: auto; aspect-ratio: 16/9; background: #000; }
     .video-placeholder {
       aspect-ratio: 16/9;
       display: flex;
@@ -427,11 +427,8 @@
         <h2><img src="src/frontend/public/icon/lucky_wheel.png" class="chapter-icon" alt=""> Earn</h2>
         <p class="chapter-bridge">How do you get coins?</p>
         <div class="demo-video-wrap">
-          <div class="video-placeholder">
-            <div class="play-mark"></div>
-            <span>Clip: <strong>clips/earn.mp4</strong></span>
-          </div>
-          <div class="clip-duration">Target: 0:45</div>
+          <video class="demo-video" src="clips/earn.mp4" muted loop playsinline preload="metadata"></video>
+          <div class="clip-duration">0:44</div>
         </div>
         <p class="small-note">Daily reward, login streak, quests, lucky wheel.</p>
       </section>
@@ -441,11 +438,8 @@
         <h2><img src="src/frontend/public/icon/lootboxes.png" class="chapter-icon" alt=""> Collect</h2>
         <p class="chapter-bridge">Spend coins to open lootboxes and get rare stoves.</p>
         <div class="demo-video-wrap">
-          <div class="video-placeholder">
-            <div class="play-mark"></div>
-            <span>Clip: <strong>clips/collect.mp4</strong></span>
-          </div>
-          <div class="clip-duration">Target: 1:00</div>
+          <video class="demo-video" src="clips/collect.mp4" muted loop playsinline preload="metadata"></video>
+          <div class="clip-duration">0:58</div>
         </div>
         <p class="small-note">Inventory, crate types, opening animation, rarity reveal.</p>
       </section>
@@ -455,11 +449,8 @@
         <h2><img src="src/frontend/public/icon/marketplace.png" class="chapter-icon" alt=""> Trade</h2>
         <p class="chapter-bridge">Once you own stoves, sell or trade them.</p>
         <div class="demo-video-wrap">
-          <div class="video-placeholder">
-            <div class="play-mark"></div>
-            <span>Clip: <strong>clips/trade.mp4</strong></span>
-          </div>
-          <div class="clip-duration">Target: 1:00</div>
+          <video class="demo-video" src="clips/trade.mp4" muted loop playsinline preload="metadata"></video>
+          <div class="clip-duration">0:54</div>
         </div>
         <p class="small-note">Marketplace filters, price charts, ownership chain, buy/sell.</p>
       </section>
@@ -469,11 +460,8 @@
         <h2><img src="src/frontend/public/icon/games.png" class="chapter-icon" alt=""> Play</h2>
         <p class="chapter-bridge">Risk your coins in live casino games.</p>
         <div class="demo-video-wrap">
-          <div class="video-placeholder">
-            <div class="play-mark"></div>
-            <span>Clip: <strong>clips/play.mp4</strong></span>
-          </div>
-          <div class="clip-duration">Target: 1:15</div>
+          <video class="demo-video" src="clips/play.mp4" muted loop playsinline preload="metadata"></video>
+          <div class="clip-duration">1:12</div>
         </div>
         <p class="small-note">Blackjack, Poker, Roulette, real-time multiplayer.</p>
       </section>
@@ -483,11 +471,8 @@
         <h2><img src="src/frontend/public/Ember_Exchange_Logo.png" class="chapter-logo" alt=""> Ask</h2>
         <p class="chapter-bridge">Lost? The AI guide shows you around.</p>
         <div class="demo-video-wrap">
-          <div class="video-placeholder">
-            <div class="play-mark"></div>
-            <span>Clip: <strong>clips/ask.mp4</strong></span>
-          </div>
-          <div class="clip-duration">Target: 0:45</div>
+          <video class="demo-video" src="clips/ask.mp4" muted loop playsinline preload="metadata"></video>
+          <div class="clip-duration">0:43</div>
         </div>
         <p class="small-note">AI assistant, natural questions, clickable action chips.</p>
       </section>
@@ -497,11 +482,8 @@
         <h2><img src="src/frontend/public/icon/collections.png" class="chapter-icon" alt=""> Progress</h2>
         <p class="chapter-bridge">Everything you do builds your reputation.</p>
         <div class="demo-video-wrap">
-          <div class="video-placeholder">
-            <div class="play-mark"></div>
-            <span>Clip: <strong>clips/progress.mp4</strong></span>
-          </div>
-          <div class="clip-duration">Target: 0:30</div>
+          <video class="demo-video" src="clips/progress.mp4" muted loop playsinline preload="metadata"></video>
+          <div class="clip-duration">0:25</div>
         </div>
         <p class="small-note">Profile stats, Hall of Glory, collections.</p>
       </section>
@@ -562,6 +544,20 @@
       margin: 0.02
     });
 
+    // Only play the video on the current slide; pause all others
+    function manageSlideVideos(currentSlide) {
+      document.querySelectorAll('video.demo-video').forEach(function(v) {
+        v.pause();
+        v.currentTime = 0;
+      });
+      var currentVideo = (currentSlide || document.querySelector('.slides section.present')).querySelector('video.demo-video');
+      if (currentVideo) {
+        currentVideo.currentTime = 0;
+        currentVideo.play().catch(function() {});
+      }
+    }
+    Reveal.on('ready', function(event) { manageSlideVideos(event.currentSlide); });
+    Reveal.on('slidechanged', function(event) { manageSlideVideos(event.currentSlide); });
   </script>
 </body>
 </html>
