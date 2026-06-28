@@ -9,117 +9,166 @@
 Do **not** present the tech stack. The jury does not care what framework we used.
 Our competitors show one or two features. We turn our breadth into an advantage: a fast, relentless demo that keeps dropping new things.
 
-> **Show, don’t explain.** Use a loud, cinematic demo video with quick cuts, big text overlays, and satisfying UI moments. Talk only enough to bridge the clips.
+**Hybrid narrative:** explain the core loop up front in 60–90 seconds, then prove every step with a matching demo-video chapter. The jury knows what they are looking at *before* each clip starts.
+
+> **Show, don’t explain — but first, explain what to look for.**
 
 ---
 
-## 8-Minute Structure
+## Upfront Loop Explanation (60–90 seconds)
 
-### 1. Hook — 0:00–0:45
-- **On stage:** Black screen → EmberExchange logo fades in.
-- **One line:** *“Most projects here show one game. We built an entire economy.”*
-- **Transition straight into video.**
+**Slide:** A simple circular diagram on screen the whole time.
 
-### 2. Demo Video / Live Demo Montage — 0:45–6:45
-A 6-minute trailer with music and text overlays. Split into chapters so the jury can follow the product without getting lost.
+```
+       Earn Coins
+          ↑
+   Progress  ←  Play Games
+     (Stats)        ↓
+       ↑        Trade/Bet
+       Collect Stoves
+```
 
-| Chapter | Length | What to show | On-screen text |
-|---------|--------|--------------|----------------|
-| **The World** | 0:45 | Landing page, login, dashboard, coin balance, top bar, daily reward claim. | “Welcome to EmberExchange” |
-| **Get Rich** | 0:45 | Daily streak, lucky wheel/spins, quests completion, coin counter animations. | “Earn Coins” |
-| **Get Stoves** | 1:00 | Inventory, multiple lootbox types, opening animation, rare/legendary/secret reveal, item added to inventory. | “Open Lootboxes” |
-| **Get Paid** | 1:00 | Marketplace: list a stove, filters, inspect item, price history chart, ownership chain, buy/sell, coin transfer. | “Trade on the Marketplace” |
-| **Get Lucky** | 1:30 | Blackjack, Poker, Roulette — cards dealt, chips moving, turn timer, win/lose. Show that other players are real. | “Play Live Casino Games” |
-| **Get Help** | 0:45 | AI assistant drawer opens, user asks “Where can I gamble?”, assistant navigates to games, asks “What are my odds?”, answers from context. | “Your Personal Guide” |
-| **Get Recognized** | 0:30 | Profile page, stats, Hall of Glory, collections. | “Build Your Reputation” |
+**Presenter script (approximate):**
 
-**Live moments inside the montage:**
-- Start the daily reward claim live so the audience sees real feedback.
-- End the video with a live assistant question, e.g. *“What should I do now?”* and let the assistant navigate to the final screen.
+> “EmberExchange is a closed economy built around collecting and trading stoves.
+> You **Earn** coins through daily rewards and quests.
+> You spend those coins to **Collect** stoves from lootboxes.
+> You can **Trade** them on the marketplace or **Play** casino games to win more coins.
+> Everything feeds back into your **Progress**: stats, streaks, and reputation.
+> We are going to walk through that loop now, one step at a time.”
 
-### 3. Closing — 6:45–7:45
-- Return to logo / landing page.
-- **One line:** *“Everything you just saw is live, connected, and working right now.”*
-- **Optional callout:** *“Try the assistant. Open a lootbox. Play a hand.”*
-- Stop talking before the buzzer. Leave them wanting more.
+This slide stays visible as a subtle background or sidebar during the demo chapters.
 
 ---
 
-## Demo Video Storyboard (6 minutes)
+## Demo Video / Live Demo Chapters (5–6 minutes)
 
-### 0:00–0:45 — The World
-- Slow zoom into the EmberExchange logo on the landing page.
-- Quick cut to Google/GitHub OAuth login.
-- Dashboard reveal with coin balance and spark count in the top bar.
-- Daily reward claim: button press, coins fly up, streak updates.
-- Text overlay: **“Welcome to EmberExchange”**
+The video is divided into six chapters. Each chapter is introduced by one sentence from the presenter and a matching title card in the video. Put a 1–2 second black/pause between chapters so the presenter can breathe and bridge.
 
-### 0:45–1:30 — Get Rich
-- Login streak calendar flipping through days.
-- Lucky Wheel spin (if available) or quest completion.
-- Coin counter ticking up.
-- Text overlays: **“Earn Coins”**, **“Complete Quests”**, **“Daily Rewards”**
+### 1. Earn — 0:45
+**Presenter bridge:** *“First, how do you get coins?”*
 
-### 1:30–2:30 — Get Stoves
-- Inventory grid with stove sprites.
-- Click a lootbox → open animation → rarity glow.
-- Slow-motion reveal of a legendary/secret stove.
-- Stove added to inventory, collection counter updates.
-- Text overlays: **“Open Lootboxes”**, **“Collect Rare Stoves”**, **“Secret Tier”**
+**Video content:**
+- Login streak calendar.
+- Daily reward claim with coin counter animation.
+- Quest completion.
+- Lucky Wheel spin (if available).
 
-### 2:30–3:30 — Get Paid
+**Text overlay:** **Earn Coins**
+
+---
+
+### 2. Collect — 1:00
+**Presenter bridge:** *“With coins you open lootboxes and collect stoves.”*
+
+**Video content:**
+- Inventory grid.
+- Click a lootbox → opening animation → rarity glow.
+- Slow-motion reveal of legendary/secret stove.
+- Stove added to inventory.
+
+**Text overlay:** **Collect Stoves**
+
+---
+
+### 3. Trade — 1:00
+**Presenter bridge:** *“Once you own stoves, you can trade them.”*
+
+**Video content:**
 - Marketplace browse with rarity filters.
-- Click a stove → inspect panel → 30-day price chart.
+- Inspect a stove → 30-day price chart.
 - Ownership chain scrolling.
-- Buy now → coins deduct → item appears in inventory.
+- Buy now → coins deducted → item moves to inventory.
 - List a stove for sale.
-- Text overlays: **“Trade on the Marketplace”**, **“Price History”**, **“Ownership Chain”**
 
-### 3:30–5:00 — Get Lucky
+**Text overlay:** **Trade on the Marketplace**
+
+---
+
+### 4. Play — 1:15
+**Presenter bridge:** *“Or you can risk your coins in live casino games.”*
+
+**Video content:**
 - Enter Blackjack room.
-- Cards dealt, chips on table, hit/stand.
-- Cut to Poker table with multiple player avatars.
-- Cut to Roulette wheel spinning.
-- Win animation, coins awarded.
-- Text overlays: **“Blackjack”**, **“Poker”**, **“Roulette”**, **“Real-Time Multiplayer”**
+- Cards dealt, chips moving, hit/stand.
+- Cut to Poker table with multiple players.
+- Cut to Roulette wheel.
+- Win/lose animation.
 
-### 5:00–5:45 — Get Help
+**Text overlay:** **Play Live Games**
+
+---
+
+### 5. Ask — 0:45
+**Presenter bridge:** *“If you ever get lost, the AI guide helps you.”*
+
+**Video content:**
 - Open AI assistant drawer.
-- User types: *“Where can I gamble?”*
+- Type: *“Where can I gamble?”*
 - Assistant answers, suggestion chips appear.
-- Click chip → drawer closes → page navigates to games.
+- Click chip → navigate to games.
 - Second query: *“What are the odds of a secret lootbox?”*
 - Assistant answers with percentages.
-- Text overlays: **“Your Personal Guide”**, **“Answers + Actions”**
 
-### 5:45–6:15 — Get Recognized
+**Text overlay:** **Ask Your Guide**
+
+---
+
+### 6. Progress — 0:30
+**Presenter bridge:** *“Everything you do builds your profile.”*
+
+**Video content:**
 - Profile page loading.
 - Animated stats: stoves owned, coins earned, games won.
 - Hall of Glory / leaderboard.
-- Collections page showing completed sets.
-- Text overlays: **“Profile”**, **“Stats”**, **“Hall of Glory”**
+- Collections page.
 
-### 6:15–6:45 — Outro / Live Handoff
-- Fast montage of all previous clips, 1 second each.
-- Cut back to the presenter on the landing page.
-- Presenter opens the assistant and asks: *“What should I do now?”*
-- Assistant navigates to the final screen.
+**Text overlay:** **Progress & Reputation**
+
+---
+
+## Closing (30–45 seconds)
+
+**Presenter:**
+
+> “That is EmberExchange: earn, collect, trade, play, progress — all in one live system.”
+
+- Return to logo / landing page.
+- Optional live button-press: open the assistant and ask *“What should I do now?”*; let it navigate to the final screen.
 - Fade to logo.
 
 ---
 
-## Presentation Rules
+## Slide / Reveal.js Layout Sketch
 
-1. **No tech stack slides.** No Angular, no Express, no PostgreSQL.
-2. **No code.** The jury sees the product, not the repo.
-3. **One feature per chapter.** Even though we have dozens, group them into clear verbs: Earn, Collect, Trade, Play, Ask, Brag.
-4. **Every shot must move.** Static screenshots kill energy. Use screen recordings, animations, and transitions.
-5. **End strong.** The last 30 seconds are what they remember.
+| Slide | What is on screen | What you say |
+|-------|-------------------|--------------|
+| 1 | Black → EmberExchange logo | Hook sentence |
+| 2 | Core loop diagram (stays visible) | Explain the loop |
+| 3 | Video: Earn chapter | Bridge: “First, how do you get coins?” |
+| 4 | Video: Collect chapter | Bridge: “With coins you collect stoves.” |
+| 5 | Video: Trade chapter | Bridge: “Then you trade them.” |
+| 6 | Video: Play chapter | Bridge: “Or you gamble them.” |
+| 7 | Video: Ask chapter | Bridge: “And the AI guide helps you.” |
+| 8 | Video: Progress chapter | Bridge: “Everything builds your profile.” |
+| 9 | Logo / landing page | Closing line |
+
+The loop diagram from slide 2 can stay as a faint watermark or small corner graphic during the video slides so the jury always has a map.
+
+---
+
+## Demo Video Editing Notes
+
+- Use a single music track with consistent energy.
+- Each chapter gets a bold title card that matches the presenter’s bridge.
+- Add 1–2 second black/pause between chapters for the presenter to speak.
+- Keep every shot moving: scrolling, hovering, clicking, animating.
+- No voiceover in the video — the presenter is the voice.
 
 ---
 
 ## Backup Plan
 
-- If live internet is unstable, run the full 6-minute video and skip the live assistant moment.
-- If the demo video fails, fall back to a 3-minute live walkthrough of: lootbox → marketplace → Blackjack.
+- If the video fails, fall back to a 3-minute live walkthrough: daily reward → lootbox → marketplace → Blackjack.
+- If live internet is unstable, run the full video without live handoffs.
 - Prepare one “wow” sentence for Q&A: *“Everything in the video is one live system: one account, one balance, one economy.”*
