@@ -112,7 +112,6 @@ export class AssistantLlmService {
       ],
       tools: this.getTools(),
       tool_choice: 'auto',
-      temperature: 0.7,
       max_completion_tokens: 1024,
     });
 
@@ -131,7 +130,6 @@ export class AssistantLlmService {
         { role: 'system', content: this.buildSystemPrompt() },
         { role: 'user', content: question },
       ],
-      temperature: 0.3,
       max_completion_tokens: 1024,
     });
     return response.choices[0].message.content ?? '';
