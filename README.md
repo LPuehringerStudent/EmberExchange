@@ -1,6 +1,8 @@
 # EmberExchange
 
-A virtual marketplace and collection game for trading unique stoves, with real-time multiplayer card games. Built for SYP 2026.
+> **Final state — SYP 2026.** This project is no longer actively developed. The repo is published as-is for reference.
+
+A virtual marketplace and collection game for trading unique stoves, with real-time multiplayer card games. Built for SYP 2026 at HTL Leonding.
 
 ## What is this?
 
@@ -27,8 +29,8 @@ EmberExchange is a full-stack web app where players can:
 ```bash
 npm install
 
-# Create a .env file (see .env.example)
-cp .env.example .env
+# Create a .env file (see example.env)
+cp example.env .env
 
 # Development mode (backend + frontend watch)
 npm run dev:full
@@ -107,11 +109,6 @@ dist/                      # Compiled output
 - Game state updates broadcast to all room players
 - Optimistic locking on game state (`version` field)
 - Turn timer with auto-fold/stand on timeout
-
-## Branches
-
-- `main` — production release (auto-deploys to Render)
-- `develop` — active development
 
 ## Team
 
