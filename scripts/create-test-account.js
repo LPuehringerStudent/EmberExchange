@@ -2,7 +2,12 @@ const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
-const DATABASE_URL = 'postgresql://neondb_owner:npg_IyCxg3cBG1Aa@ep-lively-meadow-al28ifgx-pooler.c-3.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+    console.error('DATABASE_URL env var is required');
+    process.exit(1);
+}
 
 const USERNAME = 'testuser';
 const EMAIL = 'test@emberexchange.local';
